@@ -113,66 +113,66 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LEG-01 | TBD | Pending |
-| LEG-02 | TBD | Pending |
-| LEG-03 | TBD | Pending |
-| LEG-04 | TBD | Pending |
-| LEG-05 | TBD | Pending |
-| OUT-01 | TBD | Pending |
-| OUT-02 | TBD | Pending |
-| OUT-03 | TBD | Pending |
-| OUT-04 | TBD | Pending |
-| OUT-05 | TBD | Pending |
-| OUT-06 | TBD | Pending |
-| OUT-07 | TBD | Pending |
-| OUT-08 | TBD | Pending |
-| PARS-01 | TBD | Pending |
-| PARS-02 | TBD | Pending |
-| PARS-03 | TBD | Pending |
-| PARS-04 | TBD | Pending |
-| PARS-05 | TBD | Pending |
-| PARS-06 | TBD | Pending |
-| PARS-07 | TBD | Pending |
-| PARS-08 | TBD | Pending |
-| PARS-09 | TBD | Pending |
-| PARS-10 | TBD | Pending |
-| PARS-11 | TBD | Pending |
-| AGG-01 | TBD | Pending |
-| AGG-02 | TBD | Pending |
-| AGG-03 | TBD | Pending |
-| AGG-04 | TBD | Pending |
-| AGG-05 | TBD | Pending |
-| AGG-06 | TBD | Pending |
-| AGG-07 | TBD | Pending |
-| AGG-08 | TBD | Pending |
-| AGG-09 | TBD | Pending |
-| AGG-10 | TBD | Pending |
-| AGG-11 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| TEST-05 | TBD | Pending |
-| TEST-06 | TBD | Pending |
-| WORK-01 | TBD | Pending |
-| WORK-02 | TBD | Pending |
-| WORK-03 | TBD | Pending |
-| WORK-04 | TBD | Pending |
-| WORK-05 | TBD | Pending |
-| WORK-06 | TBD | Pending |
-| WORK-07 | TBD | Pending |
-| WORK-08 | TBD | Pending |
-| WORK-09 | TBD | Pending |
+| LEG-01 | Phase 1 | Pending |
+| LEG-02 | Phase 1 | Pending |
+| LEG-03 | Phase 1 | Pending |
+| LEG-04 | Phase 1 | Pending |
+| LEG-05 | Phase 1 | Pending |
+| OUT-01 | Phase 2 | Pending |
+| OUT-02 | Phase 2 | Pending |
+| OUT-03 | Phase 2 | Pending |
+| OUT-04 | Phase 2 | Pending |
+| OUT-05 | Phase 2 | Pending |
+| OUT-06 | Phase 2 | Pending |
+| OUT-07 | Phase 2 | Pending |
+| OUT-08 | Phase 3 | Pending |
+| PARS-01 | Phase 3 | Pending |
+| PARS-02 | Phase 3 | Pending |
+| PARS-03 | Phase 3 | Pending |
+| PARS-04 | Phase 3 | Pending |
+| PARS-05 | Phase 3 | Pending |
+| PARS-06 | Phase 3 | Pending |
+| PARS-07 | Phase 3 | Pending |
+| PARS-08 | Phase 4 | Pending |
+| PARS-09 | Phase 4 | Pending |
+| PARS-10 | Phase 4 | Pending |
+| PARS-11 | Phase 4 | Pending |
+| AGG-01 | Phase 4 | Pending |
+| AGG-02 | Phase 4 | Pending |
+| AGG-03 | Phase 4 | Pending |
+| AGG-04 | Phase 4 | Pending |
+| AGG-05 | Phase 4 | Pending |
+| AGG-06 | Phase 4 | Pending |
+| AGG-07 | Phase 4 | Pending |
+| AGG-08 | Phase 4 | Pending |
+| AGG-09 | Phase 4 | Pending |
+| AGG-10 | Phase 4 | Pending |
+| AGG-11 | Phase 4 | Pending |
+| CLI-01 | Phase 5 | Pending |
+| CLI-02 | Phase 5 | Pending |
+| CLI-03 | Phase 5 | Pending |
+| CLI-04 | Phase 5 | Pending |
+| TEST-01 | Phase 5 | Pending |
+| TEST-02 | Phase 5 | Pending |
+| TEST-03 | Phase 5 | Pending |
+| TEST-04 | Phase 5 | Pending |
+| TEST-05 | Phase 5 | Pending |
+| TEST-06 | Phase 5 | Pending |
+| WORK-01 | Phase 6 | Pending |
+| WORK-02 | Phase 6 | Pending |
+| WORK-03 | Phase 6 | Pending |
+| WORK-04 | Phase 6 | Pending |
+| WORK-05 | Phase 6 | Pending |
+| WORK-06 | Phase 6 | Pending |
+| WORK-07 | Phase 6 | Pending |
+| WORK-08 | Phase 7 | Pending |
+| WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 54 total
-- Mapped to phases: 0
-- Unmapped: 54
+- Mapped to phases: 54
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-24 after initial definition*
+*Last updated: 2026-04-24 after roadmap creation*
