@@ -52,6 +52,19 @@ The current historical reference data lives at `~/sg_stats`:
 - `~/sg_stats/lists/replaysList.json` contains replay list metadata.
 - The archive is for tests and golden validation only, not production import.
 
+The old parser lives at `/home/afgan0r/Projects/SolidGames/replays-parser` and is a required behavioral reference for this project. The Rust parser is a replacement, but it must be based on the old parser's observed parsing behavior, statistics semantics, output fields, runtime assumptions, and known exclusions before deliberately changing anything.
+
+Important old parser facts:
+
+- It is a TypeScript/Node project named `sg-replay-parser`.
+- Main parse command: `pnpm run parse`, which runs `tsx src/start.ts`.
+- Compiled parse command: `pnpm run parse:dist`, which runs `node dist/start.js`.
+- Existing architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md`.
+- Main runtime entrypoints include `src/start.ts`, `src/index.ts`, `src/schedule.ts`, `src/jobs/prepareReplaysList/start.ts`, and `src/!yearStatistics/index.ts`.
+- The old pipeline stages are replay discovery/download in `src/jobs/prepareReplaysList/*`, replay selection/worker dispatch in `src/1 - replays/*`, single-replay parsing in `src/2 - parseReplayInfo/*`, aggregation in `src/3 - statistics/*`, and output publication in `src/4 - output/*`.
+- The old parser uses worker threads and a file-backed runtime rooted at `~/sg_stats`.
+- Existing config exclusions in the old parser, such as `config/excludeReplays.json`, `config/includeReplays.json`, and `config/excludePlayers.json`, are compatibility inputs to understand before defining parity.
+
 Existing result fields include `kills`, `killsFromVehicle`, `vehicleKills`, `teamkills`, `deaths`, `kdRatio`, `killsFromVehicleCoef`, `score`, `totalPlayedGames`, `week`, `startDate`, and `endDate`.
 
 Observed OCAP top-level keys include `EditorMarkers`, `Markers`, `captureDelay`, `endFrame`, `entities`, `events`, `missionAuthor`, `missionName`, `playersCount`, and `worldName`.
@@ -88,6 +101,7 @@ Open implementation details for later phases:
 - **Database ownership**: `server-2` owns PostgreSQL persistence - parser does not mutate business tables in v1.
 - **Identity**: Parser preserves observed identifiers only - canonical player matching belongs to `server-2`.
 - **History reprocessing**: Server may overwrite derived results in v1 - parser must make output repeatable and versioned.
+- **Brownfield reference**: `/home/afgan0r/Projects/SolidGames/replays-parser` - new behavior must be grounded in old parser semantics and comparison tests.
 
 ## Key Decisions
 
@@ -101,6 +115,7 @@ Open implementation details for later phases:
 | Keep canonical identity outside parser | Nicknames, SteamIDs, and real players are many-to-many; `server-2` owns matching. | - Pending |
 | Keep PostgreSQL persistence outside parser | Parser output should be an explicit contract, not direct table mutation. | - Pending |
 | Version the parser output contract | `server-2` must be able to audit, compare, and recalculate safely. | - Pending |
+| Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
 
 ## Evolution
 
