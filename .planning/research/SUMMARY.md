@@ -50,6 +50,7 @@ The product should not become a broader stats platform. Parser-owned output is o
 - Connected-player backfill and duplicate-slot merge compatibility - required for old aggregate parity.
 - Kill/death/teamkill extraction - core event semantics for stats and bounty inputs.
 - Vehicle kill context - preserve old `killsFromVehicle` and `vehicleKills` semantics while adding audit references.
+- Vehicle score metric from GitHub issue #13 - derive weighted vehicle-only score from normalized vehicle kill/teamkill events and clamp teamkill penalty weights below 1 up to 1.
 - Observed identity preservation - no canonical player matching in parser output.
 - Versioned normalized output contract - include parser/contract version, source checksum, job/replay metadata, and schema.
 - Source references for audit - aggregate contributions must point back to replay/event/entity evidence.
@@ -142,13 +143,13 @@ Based on research, suggested phase structure:
 
 **Rationale:** Kill/death/teamkill semantics and aggregate formulas are where most migration risk lives. These must be derived from normalized events, not raw tuples.
 
-**Delivers:** normalized kill/death/teamkill events, vehicle context, death classification, commander-side candidates, winner/outcome unknown/inferred handling, bounty input artifact, legacy-compatible aggregate projection for player/squad/rotation/weekly/weapon/vehicle/relationship fields, rule-level provenance.
+**Delivers:** normalized kill/death/teamkill events, vehicle context, vehicle score metric from GitHub issue #13, death classification, commander-side candidates, winner/outcome unknown/inferred handling, bounty input artifact, legacy-compatible aggregate projection for player/squad/rotation/weekly/weapon/vehicle/relationship fields, rule-level provenance.
 
 **Uses:** Phase 1 old parser behavior mapping and Phase 2 contract source refs.
 
 **Implements:** aggregate-from-normalized-events architecture pattern.
 
-**Avoids:** teamkill/enemy-kill mistakes, vehicle attribution drift, aggregate totals without audit trail, missing outcome treated as negative fact.
+**Avoids:** teamkill/enemy-kill mistakes, vehicle attribution drift, vehicle score teamkill penalty mistakes, aggregate totals without audit trail, missing outcome treated as negative fact.
 
 ### Phase 5: CLI, Golden Parity, and Benchmarks
 
@@ -200,7 +201,7 @@ Based on research, suggested phase structure:
 
 Phases likely needing deeper research during planning:
 - **Phase 1:** local old-parser behavior and corpus profiling are project-specific; run `/gsd-research-phase` or an equivalent spike if old command execution, output paths, skip rules, or corpus shape inventory are unclear.
-- **Phase 4:** commander-side/winner extraction, temporal vehicle context, and exact legacy formulas need deeper corpus-backed research before locking acceptance criteria.
+- **Phase 4:** commander-side/winner extraction, temporal vehicle context, vehicle score issue #13 semantics, and exact legacy formulas need deeper corpus-backed research before locking acceptance criteria.
 - **Phase 6:** exact `server-2` RabbitMQ exchange/routing keys, retry/DLX policy, checksum algorithm, object key conventions, and artifact payload/reference choice need integration research with `server-2`.
 - **Phase 7:** resource limits, container health semantics, and S3-compatible behavior should be validated against the actual deployment target, not only AWS docs.
 
@@ -229,6 +230,7 @@ Phases with standard patterns where generic research can usually be skipped:
 - RabbitMQ policy: exchange names, routing keys, queue names, prefetch, retry attempts, backoff, DLQ, and publisher-confirm requirements are not finalized.
 - S3-compatible storage behavior: endpoint, bucket, path-style mode, checksum algorithm, size limits, and corrupt-object handling must be validated against the chosen service.
 - Commander-side and winner examples: need representative replays with present, absent, free-text, and ambiguous outcome/KS data.
+- Vehicle score examples: issue #13 defines the matrix and formula, but implementation planning should confirm exact entity type mapping, output field name, and comparison examples against historical replays.
 - Performance target baseline: the 10x goal must be measured against equivalent old/new workloads in release mode with bytes/sec, events/sec, RSS, and output parity status.
 
 ## Sources
@@ -238,6 +240,7 @@ Phases with standard patterns where generic research can usually be skipped:
 - `.planning/PROJECT.md` - project scope, constraints, old parser requirement, `server-2` boundary, corpus context.
 - `.planning/research/STACK.md` - stack versions, crate choices, testing/benchmark tools, worker integration recommendations.
 - `.planning/research/FEATURES.md` - table-stakes features, differentiators, anti-features, MVP definition, dependency map.
+- GitHub issue #13, Vehicle score: https://github.com/solid-stats/sg-replay-parser/issues/13 - requested vehicle score formula and weight matrix.
 - `.planning/research/ARCHITECTURE.md` - service boundaries, component responsibilities, Cargo workspace shape, old parser migration map, build order.
 - `.planning/research/PITFALLS.md` - critical pitfalls, phase mapping, integration gotchas, recovery strategies.
 - `/home/afgan0r/Projects/SolidGames/replays-parser` - required old parser behavioral reference. Key areas include `package.json`, `docs/architecture.md`, `src/start.ts`, `src/index.ts`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, and `src/4 - output/*`.

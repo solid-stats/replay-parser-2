@@ -19,6 +19,7 @@ Features users assume exist. Missing these = v1 is not a credible replacement fo
 | Duplicate-slot player merge | Players can change slots and appear as multiple entities in one replay. The old parser merges same-name entities to avoid overcounting games. | MEDIUM | Merge duplicate observed names within a replay while summing kills/deaths/weapons/vehicles/other-player relationships. Mark this as legacy-compatible, not canonical identity matching. |
 | Kill/death/teamkill extraction | This is the core parser value. Server bounty, player stats, and audit all depend on accurate event normalization. | HIGH | Support `killed` events with killer entity, killed entity, weapon, distance, null killer, same-side teamkill, suicide, player killed, and vehicle killed cases. |
 | Vehicle kill context | Existing outputs distinguish infantry kills, kills from vehicles, and vehicle kills. | HIGH | Preserve old rule where a kill weapon matching a vehicle name counts as `killsFromVehicle`; killed vehicle events increment `vehicleKills`. Also emit normalized context so this rule can be audited later. |
+| Vehicle score metric | User requested GitHub issue #13 during project initialization. The metric uses only kills from vehicles, weighted by attacker vehicle type and killed entity type, then averaged over games where the player had at least one vehicle kill. | MEDIUM | Implement as a derived aggregate from normalized vehicle kill/teamkill events. Teamkill penalties must clamp matrix values below 1 up to 1. Keep source references for each score contribution. |
 | Death classification | Old score/KD formulas depend on total deaths and deaths by teamkill. | MEDIUM | Emit `is_dead`, `is_dead_by_teamkill`, `death_kind`, killer/victim source references, and aggregate `deaths.total` / `deaths.byTeamkills`. |
 | Observed identity preservation | Project constraints explicitly forbid canonical player matching in the parser. | MEDIUM | Output observed nickname, squad prefix if parsed, SteamID if present in future data, side, group, role/description, and null/unknown states. Do not decide canonical player IDs in Rust v1. |
 | Legacy name-normalization compatibility mode | Old parser strips squad prefixes and applies `nameChanges.csv` during aggregation. v1 must compare against old outputs even if canonical identity moves to `server-2`. | MEDIUM | Put this behind a clearly named compatibility aggregation step. New normalized events should retain raw observed names. |
@@ -137,6 +138,7 @@ Minimum viable product for migration and service integration.
 - [ ] OCAP JSON parser for the historical corpus - required to parse existing `~/sg_stats/raw_replays`.
 - [ ] Normalized replay metadata, entity observations, kill/death/teamkill events, vehicle context, and explicit unknowns - required for audit and server persistence.
 - [ ] Legacy-compatible aggregate projection - required for old output fields and migration confidence.
+- [ ] Vehicle score metric from GitHub issue #13 - required by the current project brief update and depends on audited vehicle kill context.
 - [ ] Versioned JSON output contract with source references - required for `server-2` integration and recalculation.
 - [ ] CLI parse mode - required for reproducible local debugging and golden tests.
 - [ ] Golden corpus tests and old-vs-new diff harness - required to prove parity and detect regressions.
@@ -175,6 +177,7 @@ Features to defer until v1 is trusted.
 | Entity normalization | HIGH | HIGH | P1 |
 | Kill/death/teamkill extraction | HIGH | HIGH | P1 |
 | Vehicle kill context | HIGH | HIGH | P1 |
+| Vehicle score metric | MEDIUM | MEDIUM | P1 |
 | Legacy-compatible aggregate projection | HIGH | HIGH | P1 |
 | Versioned output contract | HIGH | MEDIUM | P1 |
 | Source references for audit | HIGH | MEDIUM | P1 |

@@ -23,6 +23,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [ ] Emit deterministic normalized event output for replay metadata, observed player/entity identity, kill/death/teamkill events, vehicle context, commander-side data, and winner/outcome where present.
 - [ ] Emit aggregate summaries for current Solid Stats fields and new stats needed by player, squad, rotation, commander-side, and bounty point calculations.
+- [ ] Support the vehicle score metric from GitHub issue #13, based only on kills from vehicles, weighted by attacker vehicle type and killed entity type, with teamkill penalties clamped to at least 1.
 - [ ] Version the parser output contract and include source references that allow aggregates to be traced back to normalized events.
 - [ ] Preserve observed identifiers from the replay without attempting canonical player matching.
 - [ ] Represent missing winner, SteamID, and other absent identity fields explicitly as unknown/null states.
@@ -81,11 +82,28 @@ In this domain, "KS" means commander of a side. The parser should detect command
 
 Bounty points are calculated by `server-2`, but parser output must support the required inputs. For each valid kill event, the parser should output killer and victim observed identity, enemy-kill/teamkill classification, kill timestamp/frame, relevant vehicle/infantry context, replay context, and side context. Only valid enemy kills award bounty points in v1; teamkills do not.
 
+GitHub issue #13 adds a required vehicle score statistic: https://github.com/solid-stats/sg-replay-parser/issues/13. The score counts kills from vehicles only, divides by the count of games where the player had at least one kill from a vehicle, and uses a weight matrix where the attacker vehicle type is the row and killed entity type is the column.
+
+Vehicle score weight matrix:
+
+| Attacker vehicle | Static weapon | Car | Truck | APC | Tank | Heli | Plane | Player |
+|------------------|---------------|-----|-------|-----|------|------|-------|--------|
+| Static weapon | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
+| Car | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
+| Truck | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
+| APC | 0.5 | 1 | 1 | 1 | 1 | 2 | 2 | 2 |
+| Tank | 0.25 | 0.5 | 0.5 | 0.5 | 1 | 1.5 | 2 | 2 |
+| Heli | 0.5 | 0.5 | 1 | 1 | 1.5 | 1.5 | 2 | 2 |
+| Plane | 0.25 | 0.5 | 0.5 | 0.5 | 1 | 1.5 | 2 | 2 |
+
+For teamkills, the penalty multiplier must not be below 1 even if the normal matrix value is lower. The parser output must expose enough source references to audit each contribution to this score.
+
 Open implementation details for later phases:
 
 - Exact old parser command used for baseline benchmark.
 - Exact old/new comparison tolerances.
 - Final normalized JSON schema names and field types.
+- Final contract field name for vehicle score and whether `server-2` stores the derived score or recalculates it from parser-provided vehicle score inputs.
 - Whether parse result payload is sent directly over RabbitMQ or stored as an artifact in S3.
 - Exact RabbitMQ exchange and routing key naming.
 
@@ -116,6 +134,7 @@ Open implementation details for later phases:
 | Keep PostgreSQL persistence outside parser | Parser output should be an explicit contract, not direct table mutation. | - Pending |
 | Version the parser output contract | `server-2` must be able to audit, compare, and recalculate safely. | - Pending |
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
+| Include vehicle score from issue #13 | Explicit user-requested statistic that depends on correct vehicle kill context and teamkill penalty semantics. | - Pending |
 
 ## Evolution
 
