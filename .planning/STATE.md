@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 Phase: 1 of 7 (Legacy Baseline and Corpus)
 Plan: TBD in current phase
 Status: Ready to plan
-Last activity: 2026-04-25 - Completed quick task 260425-fro: clarified product-wide GSD rules and risk-based compatibility checks.
+Last activity: 2026-04-25 - Completed quick task 260425-fxa: added `openapi-typescript` API typing guidance to all project briefs.
 
 Progress: [----------] 0%
 
@@ -51,6 +51,7 @@ Recent decisions affecting current work:
 - AI agents must challenge requests that conflict with project logic, architecture, quality, maintainability, or proportional scope; they should explain the risk, offer safer alternatives, and ask for explicit confirmation before a risky override.
 - Solid Stats consists of `sg-replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
 - GSD workflow rules apply product-wide across all three apps; compatibility checks are risk-based, escalating from local docs/briefs to adjacent app docs/repos or a user question when cross-app risk exists.
+- Frontend API typing should use `openapi-typescript` generated from the `server-2` OpenAPI schema; parser contract changes that surface in APIs must account for this type-generation flow.
 
 ### Pending Todos
 
@@ -70,6 +71,7 @@ None yet.
 | 260425-fln | Added AI pushback and safer-alternative workflow requirements | 2026-04-25 | docs-only | [260425-fln-ai-pushback-policy](./quick/260425-fln-ai-pushback-policy/) |
 | 260425-fnz | Added multi-project product compatibility requirements | 2026-04-25 | docs-only | [260425-fnz-sg-replay-parser-2-server-2-web](./quick/260425-fnz-sg-replay-parser-2-server-2-web/) |
 | 260425-fro | Clarified product-wide GSD rules and risk-based compatibility checks | 2026-04-25 | docs-only | [260425-fro-clarify-product-wide-gsd-rules-and-risk-](./quick/260425-fro-clarify-product-wide-gsd-rules-and-risk-/) |
+| 260425-fxa | Added `openapi-typescript` API typing guidance to all project briefs | 2026-04-25 | docs-only | [260425-fxa-add-openapi-typescript-to-web-typing-bri](./quick/260425-fxa-add-openapi-typescript-to-web-typing-bri/) |
 
 ## Deferred Items
 

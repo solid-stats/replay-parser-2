@@ -52,6 +52,7 @@ Make SolidGames statistics easy to inspect, filter, trust, and correct through a
 - TanStack Query.
 - Nano Stores.
 - vanilla-extract.
+- `openapi-typescript` for generated API types from the `server-2` OpenAPI schema.
 
 ## Users
 
@@ -227,7 +228,14 @@ Make SolidGames statistics easy to inspect, filter, trust, and correct through a
 - Admin rotations.
 - Job/failure visibility.
 
-Prefer generated API types or a shared OpenAPI/schema contract so frontend and backend can evolve independently.
+`web` must use `openapi-typescript` (https://github.com/openapi-ts/openapi-typescript) to generate TypeScript API types from the `server-2` OpenAPI 3.x schema. The generated types are the default source of truth for frontend API request/response typing.
+
+Type safety rules:
+
+- `server-2` owns the OpenAPI schema and keeps it versioned with API changes.
+- `web` regenerates types when the OpenAPI schema changes and does not hand-write duplicate API DTO types.
+- Generated API types should be used by API clients, TanStack Query hooks, request forms, moderation/admin screens, and public stats views.
+- TypeScript should enable `noUncheckedIndexedAccess` for stricter generated-type safety.
 
 ## Suggested Requirements
 
@@ -238,6 +246,8 @@ Prefer generated API types or a shared OpenAPI/schema contract so frontend and b
 - **APP-03**: Nano Stores is configured for lightweight client state.
 - **APP-04**: vanilla-extract is configured for styling and design tokens.
 - **APP-05**: RU+EN i18n foundation exists.
+- **APP-06**: `openapi-typescript` is configured to generate API types from the `server-2` OpenAPI schema.
+- **APP-07**: Frontend API clients and TanStack Query usage consume generated API types instead of duplicated hand-written DTO types.
 
 ### Public Stats
 
@@ -293,6 +303,7 @@ Prefer generated API types or a shared OpenAPI/schema contract so frontend and b
 | Frontend stack | React + TSX |
 | Router | TanStack Router |
 | Data fetching | TanStack Query |
+| API typing | `openapi-typescript` generated from the `server-2` OpenAPI schema |
 | Client state | Nano Stores |
 | Styling | vanilla-extract |
 | Auth source | Steam OAuth through `server-2` |
@@ -306,6 +317,6 @@ Prefer generated API types or a shared OpenAPI/schema contract so frontend and b
 
 - Exact visual identity tokens: palette, typography, spacing, component density.
 - Exact i18n library.
-- Exact generated API type strategy.
+- Exact OpenAPI schema URL/path, `openapi-typescript` generation command, output path, and stale-generated-types CI check.
 - Exact mobile table patterns after API payloads are known.
 - Whether replay upload/job views are admin-only in v1 or deferred.

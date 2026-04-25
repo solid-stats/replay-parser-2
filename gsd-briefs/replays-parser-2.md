@@ -145,6 +145,8 @@ Recommended message flow:
 
 Parser should not directly mutate `server-2` business tables in v1. This keeps the app independently testable and makes the contract explicit.
 
+Because `web` consumes generated API types from the `server-2` OpenAPI schema through `openapi-typescript`, parser output contract changes that affect API payloads must be coordinated with `server-2` schema changes before `web` consumes new fields.
+
 ## Suggested Requirements
 
 ### Parser Core
@@ -163,6 +165,7 @@ Parser should not directly mutate `server-2` business tables in v1. This keeps t
 - **OUT-02**: Output includes raw/normalized events and aggregate summaries.
 - **OUT-03**: Output includes parser contract version.
 - **OUT-04**: Output includes enough source references to trace aggregates back to events.
+- **OUT-05**: Parser contract changes that affect `server-2` API payloads include a cross-project compatibility note for the OpenAPI schema and `web` generated types.
 
 ### Worker Integration
 
@@ -208,5 +211,6 @@ Parser should not directly mutate `server-2` business tables in v1. This keeps t
 - Exact old parser command used for baseline benchmark.
 - Exact old/new comparison tolerances.
 - Final normalized JSON schema names and field types.
+- Exact way parser contract changes flow into the `server-2` OpenAPI schema and `web` `openapi-typescript` generation.
 - Whether parse result payload is sent directly over RabbitMQ or stored as an artifact in S3.
 - Exact RabbitMQ exchange/routing key naming.
