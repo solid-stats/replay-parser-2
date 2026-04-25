@@ -4,7 +4,7 @@
   "stats": {
     "total": 16,
     "answered": 0,
-    "chat_more": 0,
+    "chat_more": 1,
     "remaining": 16
   },
   "sections": [
@@ -225,8 +225,8 @@
             }
           ],
           "answer": null,
-          "chat_more": "",
-          "status": "unanswered"
+          "chat_more": "User clarification: yearly statistics are a separate legacy entity, not just regular aggregate results. The legacy repo has src/!yearStatistics and ~/sg_stats/year_results with unique New Year-style nominations that do not exist in normal player/squad/rotation statistics. Phase 1 should document this separate yearly-statistics surface and keep it out of the generic regular-stats bucket.",
+          "status": "chat-more"
         },
         {
           "id": "Q-08",
