@@ -47,7 +47,7 @@ No full old-parser baseline was run by Plan 00.
 
 ## Plan 00 Gate Decision
 
-Gate decision: repair-source-command; workflow auto-advance selected the first checkpoint option and applied a separate source-runtime compatibility repair before any full baseline run.
+Gate decision: source command unblocked; workflow auto-advance selected `repair-source-command` and applied a separate source-runtime compatibility repair before any full baseline run.
 
 Compatibility repair:
 
