@@ -30,7 +30,7 @@ Read these planning files before planning or implementing:
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
-- Roadmap has 7 phases and maps all 64 v1 requirements.
+- Roadmap has 7 phases and maps all 67 v1 requirements.
 
 ## Stack Direction
 
@@ -58,3 +58,5 @@ Keep Node/pnpm only as a development dependency for running the legacy parser ba
 - `README.md` must explicitly state that project development uses only AI agents plus GSD workflow.
 - Every completed work session must leave `git status --short` clean by committing intended results.
 - Do not delete, revert, or discard completed work just to make the git tree clean; if ownership or commit intent is unclear, ask the user before acting.
+- Do not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, test/quality standards, maintainability, or proportional scope.
+- When a request is risky or harmful, explain the concrete reason, propose 1-3 safer alternatives, and ask for explicit confirmation before any risky override.

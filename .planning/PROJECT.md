@@ -32,6 +32,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
 - [ ] Keep root `README.md` current with project scope, current GSD phase, architecture direction, validation data, user-facing commands, and the required AI + GSD-only development workflow.
 - [ ] Leave the git working tree clean after every completed work session by committing intended results; never delete completed work just to make the tree clean, and ask the user when ownership or commit intent is unclear.
+- [ ] Require AI agents to challenge instructions that conflict with architecture, current logic, accepted decisions, test/quality standards, maintainability, or proportional scope; agents must explain the risk, propose safer alternatives, and ask for explicit confirmation before any risky override.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -127,6 +128,7 @@ Open implementation details for later phases:
 - **Test coverage**: 100% reachable-code statement, branch, function, and line coverage is a release gate; exclusions must be explicit, justified, and allowlisted.
 - **Development workflow**: Project development is performed only by AI agents using GSD; README and planning artifacts must make that workflow visible and current.
 - **Git hygiene**: Completed work must end with a clean git working tree by committing intended results, not by deleting or reverting them; ambiguous changes require asking the user.
+- **AI pushback**: Agents must not blindly execute requests that violate current architecture, logic, quality, maintainability, or proportional scope; they must explain the issue, propose better options, and ask for explicit confirmation before a risky override.
 
 ## Key Decisions
 
@@ -145,6 +147,7 @@ Open implementation details for later phases:
 | Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
 | Maintain README as current public project context | README is the first repository-facing contract for scope, status, commands, and workflow; it must clearly state that development happens only through AI + GSD. | - Pending |
 | Require clean git tree after completed work | Clean status makes handoff and review reliable; intended results should be committed, while ambiguous or user-owned changes require explicit user direction. | - Pending |
+| Require AI pushback on bad instructions | Blind compliance can damage architecture and project velocity; agents should explain why a request is risky and offer safer GSD-compatible alternatives. | - Pending |
 
 ## Evolution
 
@@ -164,4 +167,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after adding clean git tree workflow requirements*
+*Last updated: 2026-04-25 after adding AI pushback and safer-alternative workflow requirements*

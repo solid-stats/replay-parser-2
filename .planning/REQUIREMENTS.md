@@ -16,6 +16,9 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 - [ ] **WF-01**: Every completed agent or GSD work session must leave the repository with a clean git working tree; intended results must be committed atomically instead of left as uncommitted changes.
 - [ ] **WF-02**: Agents must never delete, revert, or discard completed work merely to make the git tree clean; if it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, the agent must ask the user before acting.
+- [ ] **WF-03**: Agents must challenge or decline user instructions that conflict with current project logic, architecture, domain boundaries, accepted planning decisions, test/quality standards, maintainability, or require a disproportionately large change for the stated goal.
+- [ ] **WF-04**: When challenging an instruction, agents must not stop at refusal; they must explain the concrete project risk, cite the relevant architecture/planning concern where possible, and propose 1-3 safer alternatives or a smaller GSD path.
+- [ ] **WF-05**: If the user still wants the risky direction after the explanation, agents must ask for explicit confirmation before proceeding and record the warning, user decision, and chosen alternative or override in the relevant GSD artifact or summary.
 
 ### Legacy Baseline
 
@@ -133,6 +136,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-02 | Phase 1 | Pending |
 | WF-01 | Phase 1 | Pending |
 | WF-02 | Phase 1 | Pending |
+| WF-03 | Phase 1 | Pending |
+| WF-04 | Phase 1 | Pending |
+| WF-05 | Phase 1 | Pending |
 | LEG-01 | Phase 1 | Pending |
 | LEG-02 | Phase 1 | Pending |
 | LEG-03 | Phase 1 | Pending |
@@ -195,10 +201,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 64 total
-- Mapped to phases: 64
+- v1 requirements: 67 total
+- Mapped to phases: 67
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after adding clean git tree workflow requirements*
+*Last updated: 2026-04-25 after adding AI pushback and safer-alternative workflow requirements*

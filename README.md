@@ -12,11 +12,13 @@ Direct non-GSD development is out of process. Project-changing work must be capt
 
 Completed work must leave the git working tree clean. Intended results are committed; they are not deleted or reverted just to make `git status` clean. If it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, ask before acting.
 
+AI agents must not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, quality standards, maintainability, or proportional scope. The expected response is to explain why the request is risky, propose safer alternatives, and ask for explicit confirmation before any risky override.
+
 ## Current Status
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
-- v1 requirements: 64 mapped requirements.
+- v1 requirements: 67 mapped requirements.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
 
 ## Scope
