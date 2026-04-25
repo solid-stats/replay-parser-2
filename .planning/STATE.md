@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 Phase: 1 of 7 (Legacy Baseline and Corpus)
 Plan: TBD in current phase
 Status: Ready to plan
-Last activity: 2026-04-25 - Completed quick task 260425-fd2: added mandatory 100% test coverage requirements.
+Last activity: 2026-04-25 - Completed quick task 260425-fgb: added README maintenance and AI+GSD development requirements.
 
 Progress: [----------] 0%
 
@@ -46,6 +46,7 @@ Recent decisions affecting current work:
 - `~/sg_stats` historical data is the golden/test baseline, not a production import source.
 - Parser output preserves observed identifiers only; canonical player matching and PostgreSQL persistence belong to `server-2`.
 - Vehicle score from GitHub issue #13 is in Phase 4 event/aggregate semantics.
+- README.md must stay current and explicitly state that project development uses only AI agents plus GSD workflow.
 
 ### Pending Todos
 
@@ -60,6 +61,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260425-fd2 | Added mandatory 100% test coverage requirements using `unit-tests-philosophy` | 2026-04-25 | docs-only | [260425-fd2-sg-replay-parser-2-100-unit-tests-philos](./quick/260425-fd2-sg-replay-parser-2-100-unit-tests-philos/) |
+| 260425-fgb | Added README maintenance and AI+GSD development workflow requirements | 2026-04-25 | docs-only | [260425-fgb-readme-md-gsd](./quick/260425-fgb-readme-md-gsd/) |
 
 ## Deferred Items
 

@@ -30,7 +30,7 @@ Read these planning files before planning or implementing:
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
-- Roadmap has 7 phases and maps all 54 v1 requirements.
+- Roadmap has 7 phases and maps all 62 v1 requirements.
 
 ## Stack Direction
 
@@ -54,3 +54,5 @@ Keep Node/pnpm only as a development dependency for running the legacy parser ba
 - Do not write parser results directly into `server-2` business tables.
 - Keep CLI and worker modes using the same parser core.
 - Prove parity and determinism before optimizing for speed.
+- Keep root `README.md` current when project scope, current phase, commands, architecture direction, validation data, or development workflow changes.
+- `README.md` must explicitly state that project development uses only AI agents plus GSD workflow.

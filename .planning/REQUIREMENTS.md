@@ -7,6 +7,11 @@
 
 Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
+### Project Documentation
+
+- [ ] **DOC-01**: Repository has a root `README.md` that is kept current with project purpose, scope, current GSD phase, architecture direction, validation data, user-facing commands, and integration/development workflow whenever those facts change.
+- [ ] **DOC-02**: `README.md` explicitly states that project development is performed only by AI agents using the GSD workflow; direct non-GSD development is out of process, and project-changing work must be captured in GSD planning, phase, or quick-task artifacts.
+
 ### Legacy Baseline
 
 - [ ] **LEG-01**: Developer can run and document the old parser baseline from `/home/afgan0r/Projects/SolidGames/replays-parser`.
@@ -119,6 +124,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| DOC-01 | Phase 1 | Pending |
+| DOC-02 | Phase 1 | Pending |
 | LEG-01 | Phase 1 | Pending |
 | LEG-02 | Phase 1 | Pending |
 | LEG-03 | Phase 1 | Pending |
@@ -181,10 +188,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 60 total
-- Mapped to phases: 60
+- v1 requirements: 62 total
+- Mapped to phases: 62
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after adding mandatory 100% test coverage requirements*
+*Last updated: 2026-04-25 after adding README maintenance and AI+GSD development requirements*

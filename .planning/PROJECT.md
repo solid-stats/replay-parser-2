@@ -30,6 +30,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Produce structured parse failures tied to replay file and job identifiers.
 - [ ] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
+- [ ] Keep root `README.md` current with project scope, current GSD phase, architecture direction, validation data, user-facing commands, and the required AI + GSD-only development workflow.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -101,6 +102,7 @@ For teamkills, the penalty multiplier must not be below 1 even if the normal mat
 
 Open implementation details for later phases:
 
+- Exact README sections and command examples once the Rust workspace, CLI, worker, validation, and benchmark commands exist.
 - Exact old parser command used for baseline benchmark.
 - Exact old/new comparison tolerances.
 - Final normalized JSON schema names and field types.
@@ -122,6 +124,7 @@ Open implementation details for later phases:
 - **History reprocessing**: Server may overwrite derived results in v1 - parser must make output repeatable and versioned.
 - **Brownfield reference**: `/home/afgan0r/Projects/SolidGames/replays-parser` - new behavior must be grounded in old parser semantics and comparison tests.
 - **Test coverage**: 100% reachable-code statement, branch, function, and line coverage is a release gate; exclusions must be explicit, justified, and allowlisted.
+- **Development workflow**: Project development is performed only by AI agents using GSD; README and planning artifacts must make that workflow visible and current.
 
 ## Key Decisions
 
@@ -138,6 +141,7 @@ Open implementation details for later phases:
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
 | Include vehicle score from issue #13 | Explicit user-requested statistic that depends on correct vehicle kill context and teamkill penalty semantics. | - Pending |
 | Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
+| Maintain README as current public project context | README is the first repository-facing contract for scope, status, commands, and workflow; it must clearly state that development happens only through AI + GSD. | - Pending |
 
 ## Evolution
 
@@ -157,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after adding mandatory 100% test coverage requirements*
+*Last updated: 2026-04-25 after adding README maintenance and AI+GSD development requirements*
