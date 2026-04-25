@@ -64,6 +64,7 @@ Provide a reliable backend source of truth that turns parsed replay data into pu
 - Google Forms.
 - Full historical import from `~/sg_stats` into production.
 - Versioned parse result history. v1 can overwrite derived parse results.
+- Annual/yearly nomination statistics. Legacy `src/!yearStatistics` and `~/sg_stats/year_results` are separate historical references; product support is deferred to v2.
 
 ## Architecture
 

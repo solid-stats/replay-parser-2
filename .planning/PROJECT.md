@@ -47,6 +47,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - Replay formats other than OCAP JSON - v1 targets OCAP JSON only.
 - Production Kubernetes deployment - container/worker readiness is needed, production orchestration is not.
 - Financial rewards or payout logic - parser only emits bounty calculation inputs.
+- Annual/yearly nomination statistics - legacy `src/!yearStatistics` and `~/sg_stats/year_results` are separate from normal stats and are deferred to v2.
 
 ## Context
 
@@ -70,6 +71,7 @@ The current historical reference data lives at `~/sg_stats`:
 
 - `~/sg_stats/raw_replays` contains around 3,938 OCAP JSON replay files.
 - `~/sg_stats/results` contains existing calculated results.
+- `~/sg_stats/year_results` contains legacy annual nomination outputs and is a v2 reference, not ordinary v1 stats.
 - `~/sg_stats/lists/replaysList.json` contains replay list metadata.
 - The archive is for tests and golden validation only, not production import.
 
@@ -83,6 +85,7 @@ Important old parser facts:
 - Existing architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md`.
 - Main runtime entrypoints include `src/start.ts`, `src/index.ts`, `src/schedule.ts`, `src/jobs/prepareReplaysList/start.ts`, and `src/!yearStatistics/index.ts`.
 - The old pipeline stages are replay discovery/download in `src/jobs/prepareReplaysList/*`, replay selection/worker dispatch in `src/1 - replays/*`, single-replay parsing in `src/2 - parseReplayInfo/*`, aggregation in `src/3 - statistics/*`, and output publication in `src/4 - output/*`.
+- The old yearly statistics pipeline under `src/!yearStatistics` is a separate legacy surface that produces annual nomination outputs in `~/sg_stats/year_results`; v1 should treat it as historical reference material only, with product support deferred to v2.
 - The old parser uses worker threads and a file-backed runtime rooted at `~/sg_stats`.
 - Existing config exclusions in the old parser, such as `config/excludeReplays.json`, `config/includeReplays.json`, and `config/excludePlayers.json`, are compatibility inputs to understand before defining parity.
 
@@ -127,6 +130,7 @@ Open implementation details for later phases:
 - Final contract field name for vehicle score and whether `server-2` stores the derived score or recalculates it from parser-provided vehicle score inputs.
 - Whether parse result payload is sent directly over RabbitMQ or stored as an artifact in S3.
 - Exact RabbitMQ exchange and routing key naming.
+- How v2 should model annual/yearly nomination statistics across parser evidence, `server-2` calculation, and `web` presentation.
 
 ## Constraints
 
@@ -168,6 +172,7 @@ Open implementation details for later phases:
 | Require AI pushback on bad instructions | Blind compliance can damage architecture and project velocity; agents should explain why a request is risky and offer safer GSD-compatible alternatives. | - Pending |
 | Treat Solid Stats as a multi-project product | Parser work must remain compatible with `server-2` and `web`; checking adjacent application contracts prevents local parser changes from breaking product flows. | - Pending |
 | Apply GSD rules product-wide with risk-based checks | The same AI/GSD standards should apply across parser, backend, and web; compatibility checks should be deep only when the requested change can affect another app. | - Pending |
+| Defer annual nomination statistics to v2 | Legacy yearly statistics are a separate nomination surface, not ordinary player/squad/rotation stats; v1 should preserve the old pipeline and outputs as references without implementing product support. | - Pending |
 
 ## Evolution
 
@@ -187,4 +192,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after clarifying product-wide GSD rules and risk-based compatibility checks*
+*Last updated: 2026-04-25 after deferring annual nomination statistics to v2*

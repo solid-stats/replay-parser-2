@@ -116,6 +116,7 @@ Deferred to future release. Tracked but not in current roadmap.
 - **FUT-03**: Parser can expose a streaming event API for live or incremental consumers.
 - **FUT-04**: Parser can emit advanced anomaly detection reports after normalized event semantics are stable.
 - **FUT-05**: Parser can provide richer replay quality reports for user-facing correction workflows if `server-2` needs parser-specific evidence.
+- **FUT-06**: Solid Stats can support annual/yearly nomination statistics as a separate v2 product surface. The legacy `src/!yearStatistics` pipeline and `~/sg_stats/year_results` outputs are historical references only in v1 and must not be folded into ordinary player, squad, rotation, weekly, or bounty statistics.
 
 ## Out of Scope
 
@@ -132,6 +133,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Replay formats other than OCAP JSON in v1 | v1 migration value is OCAP JSON parity. |
 | Production Kubernetes deployment | Container/worker readiness is in scope, cluster deployment is not. |
 | Financial rewards or payout logic | Parser emits bounty inputs; reward rules belong to `server-2`. |
+| Annual/yearly nomination statistics in v1 | These are a separate legacy surface with unique nominations; defer product support to v2 while preserving `src/!yearStatistics` and `~/sg_stats/year_results` as historical references. |
 
 ## Traceability
 
@@ -218,4 +220,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after clarifying product-wide GSD rules and risk-based compatibility checks*
+*Last updated: 2026-04-25 after deferring annual nomination statistics to v2*

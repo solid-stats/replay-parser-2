@@ -119,6 +119,7 @@ Make SolidGames statistics easy to inspect, filter, trust, and correct through a
 - Google Forms.
 - Financial reward/payment UI.
 - Supporting replay upload UX beyond the API-backed flows explicitly required by `server-2`.
+- Annual/yearly nomination statistics and nomination pages; these are a separate v2 product surface.
 - Full marketing/news portal unless later added.
 
 ## UX Requirements

@@ -38,6 +38,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - Current reference data lives at `~/sg_stats`.
 - `~/sg_stats/raw_replays` contains around 3,938 OCAP JSON replay files.
 - `~/sg_stats/results` contains existing calculated results.
+- `~/sg_stats/year_results` contains legacy annual nomination outputs and is a v2 reference, not ordinary v1 stats.
 - `~/sg_stats/lists/replaysList.json` contains replay list metadata.
 - The archive is for tests/golden validation only, not production import.
 - Example weekly result fields seen in existing data: `kills`, `killsFromVehicle`, `vehicleKills`, `teamkills`, `deaths`, `kdRatio`, `killsFromVehicleCoef`, `score`, `totalPlayedGames`, `week`, `startDate`, `endDate`.
@@ -68,6 +69,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - Supporting replay formats other than OCAP JSON.
 - Production Kubernetes deployment.
 - Financial rewards or payout logic.
+- Annual/yearly nomination statistics. Legacy `src/!yearStatistics` and `~/sg_stats/year_results` are historical references only in v1; product support is deferred to v2.
 
 ## Parsing Responsibilities
 

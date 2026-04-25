@@ -53,6 +53,7 @@ The parser will not own:
 - Replay formats other than OCAP JSON in v1.
 - Production Kubernetes deployment.
 - Financial reward or payout logic.
+- Annual/yearly nomination statistics and nomination pages; these are a separate v2 product surface.
 
 ## Data and References
 
@@ -61,9 +62,11 @@ The old parser and historical data define the v1 compatibility baseline:
 - Legacy parser: `/home/afgan0r/Projects/SolidGames/replays-parser`.
 - Historical raw replays: `~/sg_stats/raw_replays`.
 - Historical calculated results: `~/sg_stats/results`.
+- Legacy annual nomination outputs: `~/sg_stats/year_results`.
 - Replay list metadata: `~/sg_stats/lists/replaysList.json`.
 
 The historical archive is for tests, golden validation, and benchmarks. It is not a production import source.
+Annual/yearly nomination statistics are a separate legacy surface and are deferred to v2.
 
 ## Architecture Direction
 
