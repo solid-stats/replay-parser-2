@@ -36,10 +36,10 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 ## Existing Reference Data
 
 - Current reference data lives at `~/sg_stats`.
-- `~/sg_stats/raw_replays` contains around 3,938 OCAP JSON replay files.
-- `~/sg_stats/results` contains existing calculated results.
-- `~/sg_stats/year_results` contains legacy annual nomination outputs and is a v2 reference, not ordinary v1 stats.
-- `~/sg_stats/lists/replaysList.json` contains replay list metadata.
+- `~/sg_stats/raw_replays` contains 23,473 raw replay JSON files in the current full-history corpus.
+- `~/sg_stats/lists/replaysList.json` contains 23,456 replay-list rows prepared at `2026-04-25T04:42:54.889Z`.
+- `~/sg_stats/results` contains 88,485 existing calculated result files.
+- `~/sg_stats/year_results` contains 14 legacy annual nomination output files and is a v2 reference, not ordinary v1 stats.
 - The archive is for tests/golden validation only, not production import.
 - Example weekly result fields seen in existing data: `kills`, `killsFromVehicle`, `vehicleKills`, `teamkills`, `deaths`, `kdRatio`, `killsFromVehicleCoef`, `score`, `totalPlayedGames`, `week`, `startDate`, `endDate`.
 - Example OCAP top-level keys: `EditorMarkers`, `Markers`, `captureDelay`, `endFrame`, `entities`, `events`, `missionAuthor`, `missionName`, `playersCount`, `worldName`.

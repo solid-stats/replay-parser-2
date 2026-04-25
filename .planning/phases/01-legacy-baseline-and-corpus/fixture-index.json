@@ -1,0 +1,65 @@
+[
+  {
+    "source_file": ".json",
+    "reason": "Malformed raw file with an HTML document body and empty basename; covers malformed corpus evidence not selected by replay-list baseline.",
+    "game_type_from_replays_list": null,
+    "old_parser_skip_expected": true,
+    "cross_app_relevance": "Parser should produce structured failure evidence; server-2/web should not receive ordinary stats from malformed input."
+  },
+  {
+    "source_file": "2021_10_31__00_13_51_ocap.json",
+    "reason": "Largest raw replay file in the current corpus; covers memory and large-payload parsing behavior.",
+    "game_type_from_replays_list": null,
+    "old_parser_skip_expected": false,
+    "cross_app_relevance": "Large valid replay affects parser throughput and server-2 artifact sizing assumptions."
+  },
+  {
+    "source_file": "2021_12_05__21_36_40__1_ocap.json",
+    "reason": "Only `sgs` replay-list prefix sample; old parser excludes `sgs` from normal `sg` selection.",
+    "game_type_from_replays_list": "sgs",
+    "old_parser_skip_expected": true,
+    "cross_app_relevance": "Parity harness must preserve old filtering without making `sgs` a parser-core contract rule."
+  },
+  {
+    "source_file": "2025_03_04__23_06_34__1_ocap.json",
+    "reason": "Malformed replay selected by replay-list metadata; old baseline logs an unexpected end of JSON input warning.",
+    "game_type_from_replays_list": null,
+    "old_parser_skip_expected": true,
+    "cross_app_relevance": "Parser failure contract should expose file/replay identifiers for server-2 job failure handling."
+  },
+  {
+    "source_file": "2025_09_18__15_47_29__1_ocap.json",
+    "reason": "`other` mission-prefix sample from replay-list metadata.",
+    "game_type_from_replays_list": "other",
+    "old_parser_skip_expected": true,
+    "cross_app_relevance": "Parity harness needs explicit classification for non-v1 game type selection."
+  },
+  {
+    "source_file": "2026_04_19__21_50_28__1_ocap.json",
+    "reason": "`sm` replay-list prefix sample from the current full-history corpus.",
+    "game_type_from_replays_list": "sm",
+    "old_parser_skip_expected": false,
+    "cross_app_relevance": "Covers ordinary selected output used by downstream comparison and public stats."
+  },
+  {
+    "source_file": "2026_04_24__20_08_26__1_ocap.json",
+    "reason": "`mace` replay-list prefix sample from the dominant corpus bucket.",
+    "game_type_from_replays_list": "mace",
+    "old_parser_skip_expected": false,
+    "cross_app_relevance": "Mace skip rules and minimum-player behavior can affect downstream aggregate availability."
+  },
+  {
+    "source_file": "2026_04_25__00_52_18__1_ocap.json",
+    "reason": "`sg` replay-list prefix sample from the latest prepared replay list.",
+    "game_type_from_replays_list": "sg",
+    "old_parser_skip_expected": false,
+    "cross_app_relevance": "Covers ordinary selected SolidGames public stats flow."
+  },
+  {
+    "source_file": "2025_04_06__22_47_17__2_ocap.json",
+    "reason": "Raw file present in raw_replays but absent from replaysList.json; covers raw/list discrepancy handling.",
+    "game_type_from_replays_list": null,
+    "old_parser_skip_expected": true,
+    "cross_app_relevance": "Corpus profiler can see the file, but legacy baseline selection should not silently add it to comparable results."
+  }
+]
