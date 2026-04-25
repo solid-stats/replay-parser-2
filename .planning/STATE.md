@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 Phase: 1 of 7 (Legacy Baseline and Corpus)
 Plan: TBD in current phase
 Status: Ready to plan
-Last activity: 2026-04-25 - Completed quick task 260425-fxa: added `openapi-typescript` API typing guidance to all project briefs.
+Last activity: 2026-04-25 - Completed quick task 260425-g0r: rewrote README as a human-facing project entry point.
 
 Progress: [----------] 0%
 
@@ -52,6 +52,7 @@ Recent decisions affecting current work:
 - Solid Stats consists of `sg-replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
 - GSD workflow rules apply product-wide across all three apps; compatibility checks are risk-based, escalating from local docs/briefs to adjacent app docs/repos or a user question when cross-app risk exists.
 - Frontend API typing should use `openapi-typescript` generated from the `server-2` OpenAPI schema; parser contract changes that surface in APIs must account for this type-generation flow.
+- README.md should primarily serve humans and developers as the repository entry point; AI/GSD workflow rules belong in a dedicated development section, not as the whole document.
 
 ### Pending Todos
 
@@ -72,6 +73,7 @@ None yet.
 | 260425-fnz | Added multi-project product compatibility requirements | 2026-04-25 | docs-only | [260425-fnz-sg-replay-parser-2-server-2-web](./quick/260425-fnz-sg-replay-parser-2-server-2-web/) |
 | 260425-fro | Clarified product-wide GSD rules and risk-based compatibility checks | 2026-04-25 | docs-only | [260425-fro-clarify-product-wide-gsd-rules-and-risk-](./quick/260425-fro-clarify-product-wide-gsd-rules-and-risk-/) |
 | 260425-fxa | Added `openapi-typescript` API typing guidance to all project briefs | 2026-04-25 | docs-only | [260425-fxa-add-openapi-typescript-to-web-typing-bri](./quick/260425-fxa-add-openapi-typescript-to-web-typing-bri/) |
+| 260425-g0r | Rewrote README as a human-facing project entry point | 2026-04-25 | docs-only | [260425-g0r-rewrite-readme-for-humans-and-developers](./quick/260425-g0r-rewrite-readme-for-humans-and-developers/) |
 
 ## Deferred Items
 

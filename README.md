@@ -1,72 +1,129 @@
 # sg-replay-parser-2
 
-Rust replacement for the legacy SolidGames OCAP replay parser.
+`sg-replay-parser-2` is the planned Rust replacement for the legacy SolidGames OCAP replay parser.
 
-`sg-replay-parser-2` parses OCAP JSON replay files into deterministic normalized events and aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public Solid Stats.
-
-## Product Context
-
-Solid Stats is a multi-project product made of:
-
-- `sg-replay-parser-2`: Rust parser, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
-- `server-2`: backend source of truth, PostgreSQL persistence, APIs, canonical identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate/bounty calculation, and operations visibility.
-- `web`: browser UI, public stats pages, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
-
-Before executing project-changing work, agents must verify that the change does not contradict the other applications and remains compatible with their contracts, data ownership, and user-facing expectations.
-
-GSD workflow rules are product-wide standards for all three applications. Compatibility checks are risk-based:
-
-- Local-only parser changes can rely on this repo's planning docs, README, AGENTS rules, and `gsd-briefs`.
-- Parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require checking adjacent app docs/repos when available.
-- If compatibility evidence is missing or contradictory, ask before proceeding and propose a smaller GSD path or cross-project plan.
-
-## Development Mode
-
-This project is developed only by AI agents using the GSD workflow.
-
-Direct non-GSD development is out of process. Project-changing work must be captured through GSD planning, phase execution, or quick-task artifacts under `.planning/`.
-
-Completed work must leave the git working tree clean. Intended results are committed; they are not deleted or reverted just to make `git status` clean. If it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, ask before acting.
-
-AI agents must not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, quality standards, maintainability, or proportional scope. The expected response is to explain why the request is risky, propose safer alternatives, and ask for explicit confirmation before any risky override.
+The parser will turn OCAP JSON replay files into deterministic, versioned artifacts: normalized replay events, source references, structured parse failures, and aggregate outputs that the Solid Stats backend can persist, audit, compare against golden data, and use for public statistics.
 
 ## Current Status
 
-- Current focus: Phase 1, `Legacy Baseline and Corpus`.
+This repository is currently in planning phase. It does not yet contain a runnable Rust workspace, CLI, worker, or test suite.
+
+- Current phase: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
-- Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
+- Next planning step: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
 
-## Scope
+Until implementation starts, there are no build, parse, benchmark, or test commands to run from this repository.
 
-In scope:
+## Product Context
 
-- Rust parser for historical OCAP JSON replay files.
-- Deterministic normalized event output and aggregate projections.
-- Versioned parser output contract with source references.
-- CLI parsing and schema/export tooling.
+Solid Stats is a multi-project SolidGames statistics product:
+
+- `sg-replay-parser-2` owns replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and parity with the old parser.
+- `server-2` owns PostgreSQL persistence, public and private APIs, canonical player identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate and bounty calculation, and operations visibility.
+- `web` owns the browser UI, public stats pages, authenticated request flows, moderator/admin screens, and typed API consumption from `server-2`.
+
+This project only owns parser behavior and parser output contracts. Website behavior, authentication, canonical identity matching, moderation workflows, and PostgreSQL business-table writes belong to the adjacent applications.
+
+## What v1 Should Deliver
+
+The first release should provide:
+
+- A Rust parser for historical OCAP JSON replay files.
+- A local CLI for parsing a replay file and writing normalized JSON output.
+- A RabbitMQ/S3 worker mode for `server-2` integration.
+- Deterministic normalized event output with source references.
+- Explicit unknown/null states for missing winner, SteamID, killer, commander, or source fields.
+- Legacy-compatible aggregate projections for current SolidGames statistics.
+- Vehicle score support from GitHub issue #13.
 - Golden corpus comparisons against `~/sg_stats`.
-- RabbitMQ/S3 worker mode for `server-2` integration.
-- Benchmarks against the pinned legacy parser baseline.
+- Benchmarks against the pinned legacy parser baseline, targeting roughly 10x faster parsing on comparable workloads.
+- 100% reachable-code statement, branch, function, and line coverage as a release gate, with behavior-focused tests.
 
-Out of scope:
+## Out of Scope
 
-- Public website and UI.
+The parser will not own:
+
+- Public website or UI.
 - Steam OAuth.
 - Canonical player identity matching.
 - PostgreSQL business-table persistence.
-- User moderation and correction workflows.
-- Final financial reward or payout rules.
+- User roles, moderation, or correction request workflows.
+- Direct stat editing or correction.
+- Replay formats other than OCAP JSON in v1.
+- Production Kubernetes deployment.
+- Financial reward or payout logic.
 
-## Required References
+## Data and References
 
-- Planning source of truth: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, `.planning/ROADMAP.md`, `.planning/STATE.md`.
-- Legacy parser reference: `/home/afgan0r/Projects/SolidGames/replays-parser`.
-- Historical corpus and golden data: `~/sg_stats`.
-- Project agent rules: `AGENTS.md`.
+The old parser and historical data define the v1 compatibility baseline:
+
+- Legacy parser: `/home/afgan0r/Projects/SolidGames/replays-parser`.
+- Historical raw replays: `~/sg_stats/raw_replays`.
+- Historical calculated results: `~/sg_stats/results`.
+- Replay list metadata: `~/sg_stats/lists/replaysList.json`.
+
+The historical archive is for tests, golden validation, and benchmarks. It is not a production import source.
+
+## Architecture Direction
+
+The expected implementation shape is:
+
+- Rust 2024 Cargo workspace.
+- Pure parser core shared by CLI, worker, tests, benchmarks, and comparison tools.
+- Thin runtime adapters for CLI and RabbitMQ/S3 worker mode.
+- `serde` / `serde_json` for correctness-first OCAP JSON parsing.
+- Deterministic contract serialization with stable ordering.
+- `schemars` and semantic versioning for machine-readable parser contracts.
+- `tracing` and structured `ParseFailure` output for diagnostics.
+
+Parser output must preserve observed replay identity fields only, such as nickname, side, squad/group fields, entity IDs, and SteamID when available. Canonical player matching belongs to `server-2`.
+
+## Planned User Commands
+
+These commands are not implemented yet. They describe the intended shape of the developer and operator interface:
+
+```bash
+# Parse one replay file to a normalized artifact
+sg-replay-parser parse path/to/replay.json --output path/to/artifact.json
+
+# Emit the current parser contract schema
+sg-replay-parser schema --output path/to/schema.json
+
+# Compare new parser output against legacy or golden data
+sg-replay-parser compare --replay path/to/replay.json --golden path/to/expected.json
+
+# Run worker mode for server integration
+sg-replay-parser worker
+```
+
+Exact command names and flags will be finalized during the CLI phase.
+
+## Development Workflow
+
+Project development is performed only by AI agents using the GSD workflow. Direct non-GSD development is out of process for this repository.
+
+For project-changing work:
+
+- Use GSD planning, phase execution, or quick-task artifacts under `.planning/`.
+- Keep README and planning docs current when scope, commands, architecture, validation data, benchmark expectations, integration workflow, or development workflow changes.
+- End completed work with a clean git working tree by committing intended results.
+- Do not delete completed work just to make `git status` clean.
+- Ask the user when change ownership, commit intent, or cross-project compatibility is unclear.
+- Challenge requests that conflict with current architecture, accepted decisions, quality standards, maintainability, or proportional scope; explain the risk and propose safer alternatives.
+
+## Documentation Map
+
+- `.planning/PROJECT.md`: full project context, active requirements, constraints, and decisions.
+- `.planning/REQUIREMENTS.md`: v1 requirements and phase traceability.
+- `.planning/ROADMAP.md`: milestone phase plan.
+- `.planning/STATE.md`: current GSD state and completed quick tasks.
+- `.planning/research/SUMMARY.md`: technical research and architecture rationale.
+- `gsd-briefs/`: project briefs for `sg-replay-parser-2`, `server-2`, and `web`.
+- `AGENTS.md`: repository-specific instructions for AI agents.
 
 ## README Maintenance
 
-Keep this README current whenever project scope, current GSD phase, architecture direction, commands, validation data, benchmark expectations, integration workflow, or development workflow changes.
+This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-The README must always state that development is performed only by AI agents using GSD.
+Last updated: 2026-04-25.
