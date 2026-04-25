@@ -39,7 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans
 **Execution waves**: Wave 1 runs `01-00-PLAN.md`; Wave 2 runs `01-01-PLAN.md`, `01-02-PLAN.md`, and `01-03-PLAN.md`; Wave 3 runs `01-04-PLAN.md`.
 Plans:
-- [ ] 01-00-PLAN.md — Generated-artifact hygiene and canonical source-command gate.
+- [x] 01-00-PLAN.md — Generated-artifact hygiene and canonical source-command gate.
 - [ ] 01-01-PLAN.md — Non-destructive isolated old-parser baseline command/runtime evidence.
 - [ ] 01-02-PLAN.md — Full-history corpus manifest, profile evidence, and fixture index.
 - [ ] 01-03-PLAN.md — Legacy filters, skip rules, config inputs, identity compatibility, and output surfaces.
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Legacy Baseline and Corpus | 0/5 | Not started | - |
+| 1. Legacy Baseline and Corpus | 1/5 | In Progress | - |
 | 2. Versioned Output Contract | 0/TBD | Not started | - |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
