@@ -12,7 +12,7 @@ This roadmap replaces the legacy TypeScript replay parser with a deterministic R
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity.
+- [x] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity. (completed 2026-04-25)
 - [ ] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract.
 - [ ] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts.
 - [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates.
@@ -43,7 +43,7 @@ Plans:
 - [x] 01-01-PLAN.md — Non-destructive isolated old-parser baseline command/runtime evidence.
 - [x] 01-02-PLAN.md — Full-history corpus manifest, profile evidence, and fixture index.
 - [x] 01-03-PLAN.md — Legacy filters, skip rules, config inputs, identity compatibility, and output surfaces.
-- [ ] 01-04-PLAN.md — Mismatch taxonomy, cross-app interface notes, README update, and final coverage checks.
+- [x] 01-04-PLAN.md — Mismatch taxonomy, cross-app interface notes, README update, and final coverage checks.
 
 ### Phase 2: Versioned Output Contract
 **Goal**: `server-2` and parser tooling can rely on a stable, machine-checkable parse artifact and failure contract.
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Legacy Baseline and Corpus | 4/5 | In Progress | - |
+| 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 0/TBD | Not started | - |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |

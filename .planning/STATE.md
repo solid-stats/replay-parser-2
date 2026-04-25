@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: ready_to_plan
 stopped_at: Roadmap and initial state created.
-last_updated: "2026-04-25T08:24:24Z"
-last_activity: 2026-04-25 -- Phase 01 Wave 2 completed
+last_updated: "2026-04-25T08:32:19Z"
+last_activity: 2026-04-25 -- Phase 1 completed; ready to plan Phase 2
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 14
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-25)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 01 — legacy-baseline-and-corpus
+**Current focus:** Phase 2 — versioned-output-contract
 
 ## Current Position
 
-Phase: 01 (legacy-baseline-and-corpus) — EXECUTING
-Plan: 5 of 5
-Status: Executing Phase 01
-Last activity: 2026-04-25 -- Phase 01 Wave 2 completed
+Phase: 2
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-04-25 -- Phase 1 completed; ready to plan Phase 2
 
-Progress: [########--] 80%
+Progress: [#---------] 14%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -44,7 +44,7 @@ Progress: [########--] 80%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -107,4 +107,5 @@ Last session: 2026-04-24 22:51 +07
 Stopped at: Roadmap and initial state created.
 Resume file: None
 
-**Planned Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25T07:22:29.387Z
+**Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
+**Next Phase:** 2 (Versioned Output Contract) — not planned yet

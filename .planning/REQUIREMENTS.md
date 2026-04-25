@@ -9,31 +9,31 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Project Documentation
 
-- [ ] **DOC-01**: Repository has a root `README.md` that is kept current with project purpose, scope, current GSD phase, architecture direction, validation data, user-facing commands, and integration/development workflow whenever those facts change.
-- [ ] **DOC-02**: `README.md` explicitly states that project development is performed only by AI agents using the GSD workflow; direct non-GSD development is out of process, and project-changing work must be captured in GSD planning, phase, or quick-task artifacts.
+- [x] **DOC-01**: Repository has a root `README.md` that is kept current with project purpose, scope, current GSD phase, architecture direction, validation data, user-facing commands, and integration/development workflow whenever those facts change.
+- [x] **DOC-02**: `README.md` explicitly states that project development is performed only by AI agents using the GSD workflow; direct non-GSD development is out of process, and project-changing work must be captured in GSD planning, phase, or quick-task artifacts.
 
 ### Project Workflow
 
-- [ ] **WF-01**: Every completed agent or GSD work session must leave the repository with a clean git working tree; intended results must be committed atomically instead of left as uncommitted changes.
-- [ ] **WF-02**: Agents must never delete, revert, or discard completed work merely to make the git tree clean; if it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, the agent must ask the user before acting.
-- [ ] **WF-03**: Agents must challenge or decline user instructions that conflict with current project logic, architecture, domain boundaries, accepted planning decisions, test/quality standards, maintainability, or require a disproportionately large change for the stated goal.
-- [ ] **WF-04**: When challenging an instruction, agents must not stop at refusal; they must explain the concrete project risk, cite the relevant architecture/planning concern where possible, and propose 1-3 safer alternatives or a smaller GSD path.
-- [ ] **WF-05**: If the user still wants the risky direction after the explanation, agents must ask for explicit confirmation before proceeding and record the warning, user decision, and chosen alternative or override in the relevant GSD artifact or summary.
+- [x] **WF-01**: Every completed agent or GSD work session must leave the repository with a clean git working tree; intended results must be committed atomically instead of left as uncommitted changes.
+- [x] **WF-02**: Agents must never delete, revert, or discard completed work merely to make the git tree clean; if it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, the agent must ask the user before acting.
+- [x] **WF-03**: Agents must challenge or decline user instructions that conflict with current project logic, architecture, domain boundaries, accepted planning decisions, test/quality standards, maintainability, or require a disproportionately large change for the stated goal.
+- [x] **WF-04**: When challenging an instruction, agents must not stop at refusal; they must explain the concrete project risk, cite the relevant architecture/planning concern where possible, and propose 1-3 safer alternatives or a smaller GSD path.
+- [x] **WF-05**: If the user still wants the risky direction after the explanation, agents must ask for explicit confirmation before proceeding and record the warning, user decision, and chosen alternative or override in the relevant GSD artifact or summary.
 
 ### Product Integration
 
-- [ ] **INT-01**: Solid Stats is treated as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
-- [ ] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
-- [ ] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `sg-replay-parser-2`, `server-2`, and `web`.
-- [ ] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
+- [x] **INT-01**: Solid Stats is treated as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
+- [x] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
+- [x] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `sg-replay-parser-2`, `server-2`, and `web`.
+- [x] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
 
 ### Legacy Baseline
 
-- [ ] **LEG-01**: Developer can run and document the old parser baseline from `/home/afgan0r/Projects/SolidGames/replays-parser`.
-- [ ] **LEG-02**: Developer can identify the exact old parser command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
-- [ ] **LEG-03**: System has a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.
-- [ ] **LEG-04**: System documents old parser game-type filters, skip rules, exclusions, and known config inputs from `config/excludeReplays.json`, `config/includeReplays.json`, and `config/excludePlayers.json`.
-- [ ] **LEG-05**: System defines a mismatch taxonomy for old-vs-new comparisons, including compatible, intentional change, old bug preserved, old bug fixed, new bug, insufficient data, and human review.
+- [x] **LEG-01**: Developer can run and document the old parser baseline from `/home/afgan0r/Projects/SolidGames/replays-parser`.
+- [x] **LEG-02**: Developer can identify the exact old parser command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
+- [x] **LEG-03**: System has a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.
+- [x] **LEG-04**: System documents old parser game-type filters, skip rules, exclusions, and known config inputs from `config/excludeReplays.json`, `config/includeReplays.json`, and `config/excludePlayers.json`.
+- [x] **LEG-05**: System defines a mismatch taxonomy for old-vs-new comparisons, including compatible, intentional change, old bug preserved, old bug fixed, new bug, insufficient data, and human review.
 
 ### Output Contract
 
@@ -141,22 +141,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOC-01 | Phase 1 | Pending |
-| DOC-02 | Phase 1 | Pending |
-| WF-01 | Phase 1 | Pending |
-| WF-02 | Phase 1 | Pending |
-| WF-03 | Phase 1 | Pending |
-| WF-04 | Phase 1 | Pending |
-| WF-05 | Phase 1 | Pending |
-| INT-01 | Phase 1 | Pending |
-| INT-02 | Phase 1 | Pending |
-| INT-03 | Phase 1 | Pending |
-| INT-04 | Phase 1 | Pending |
-| LEG-01 | Phase 1 | Pending |
-| LEG-02 | Phase 1 | Pending |
-| LEG-03 | Phase 1 | Pending |
-| LEG-04 | Phase 1 | Pending |
-| LEG-05 | Phase 1 | Pending |
+| DOC-01 | Phase 1 | Complete |
+| DOC-02 | Phase 1 | Complete |
+| WF-01 | Phase 1 | Complete |
+| WF-02 | Phase 1 | Complete |
+| WF-03 | Phase 1 | Complete |
+| WF-04 | Phase 1 | Complete |
+| WF-05 | Phase 1 | Complete |
+| INT-01 | Phase 1 | Complete |
+| INT-02 | Phase 1 | Complete |
+| INT-03 | Phase 1 | Complete |
+| INT-04 | Phase 1 | Complete |
+| LEG-01 | Phase 1 | Complete |
+| LEG-02 | Phase 1 | Complete |
+| LEG-03 | Phase 1 | Complete |
+| LEG-04 | Phase 1 | Complete |
+| LEG-05 | Phase 1 | Complete |
 | OUT-01 | Phase 2 | Pending |
 | OUT-02 | Phase 2 | Pending |
 | OUT-03 | Phase 2 | Pending |
