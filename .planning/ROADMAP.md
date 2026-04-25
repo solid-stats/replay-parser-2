@@ -25,13 +25,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 1: Legacy Baseline and Corpus
 **Goal**: Developers can reproduce and inspect the legacy parser and historical data baseline that define v1 parity.
 **Depends on**: Nothing (first phase)
-**Requirements**: DOC-01, DOC-02, LEG-01, LEG-02, LEG-03, LEG-04, LEG-05
+**Requirements**: DOC-01, DOC-02, WF-01, WF-02, LEG-01, LEG-02, LEG-03, LEG-04, LEG-05
 **Success Criteria** (what must be TRUE):
   1. Repository has a current `README.md` that documents project purpose, scope, current GSD phase, architecture direction, validation data, and the AI + GSD-only development workflow.
-  2. Developer can run the pinned old parser baseline and see the command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
-  3. Developer can inspect a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.
-  4. Developer can inspect documented old parser game-type filters, skip rules, exclusions, and config inputs.
-  5. Developer can classify any old-vs-new difference using the agreed mismatch taxonomy.
+  2. Completed GSD/agent work leaves a clean git working tree by committing intended results, never by deleting or discarding completed work; unclear cases are escalated to the user.
+  3. Developer can run the pinned old parser baseline and see the command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
+  4. Developer can inspect a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.
+  5. Developer can inspect documented old parser game-type filters, skip rules, exclusions, and config inputs.
+  6. Developer can classify any old-vs-new difference using the agreed mismatch taxonomy.
 **Plans**: TBD
 
 ### Phase 2: Versioned Output Contract

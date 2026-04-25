@@ -10,11 +10,13 @@ This project is developed only by AI agents using the GSD workflow.
 
 Direct non-GSD development is out of process. Project-changing work must be captured through GSD planning, phase execution, or quick-task artifacts under `.planning/`.
 
+Completed work must leave the git working tree clean. Intended results are committed; they are not deleted or reverted just to make `git status` clean. If it is unclear whether changes should be committed, preserved uncommitted, or excluded from the task, ask before acting.
+
 ## Current Status
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
-- v1 requirements: 62 mapped requirements.
+- v1 requirements: 64 mapped requirements.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
 
 ## Scope
