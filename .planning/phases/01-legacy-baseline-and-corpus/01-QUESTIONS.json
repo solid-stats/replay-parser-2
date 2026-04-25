@@ -3,9 +3,9 @@
   "generated_at": "2026-04-25T11:41:21+07:00",
   "stats": {
     "total": 16,
-    "answered": 0,
-    "chat_more": 1,
-    "remaining": 16
+    "answered": 16,
+    "chat_more": 5,
+    "remaining": 0
   },
   "sections": [
     {
@@ -38,9 +38,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "a",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-02",
@@ -68,9 +68,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-03",
@@ -98,9 +98,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-04",
@@ -128,9 +128,9 @@
               "description": ""
             }
           ],
-          "answer": null,
-          "chat_more": "",
-          "status": "unanswered"
+          "answer": "c",
+          "chat_more": "Safety guard: full baseline execution must be planned as non-destructive or explicitly backed up/isolated. The plan should not overwrite current ~/sg_stats/results or year_results without preserving the historical baseline first.",
+          "status": "answered"
         }
       ]
     },
@@ -164,9 +164,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-06",
@@ -194,9 +194,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-07",
@@ -224,9 +224,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "User decision: annual/yearly statistics are a separate legacy entity, not regular aggregate results, and can be implemented later in v2. The legacy repo has src/!yearStatistics and ~/sg_stats/year_results with unique New Year-style nominations that do not exist in normal player/squad/rotation statistics. Phase 1 should document this separate yearly-statistics surface as historical reference material and keep it out of the v1 ordinary-stats scope.",
-          "status": "chat-more"
+          "status": "answered"
         },
         {
           "id": "Q-08",
@@ -254,9 +254,9 @@
               "description": ""
             }
           ],
-          "answer": null,
-          "chat_more": "",
-          "status": "unanswered"
+          "answer": "d",
+          "chat_more": "Custom policy: commit compact dossier/summary plus small deterministic fixture or index files when useful; keep full raw corpus, bulky profiler outputs, full hashes, regenerated results, and heavy reports local/generated or ignored.",
+          "status": "answered"
         }
       ]
     },
@@ -290,9 +290,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "a",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-10",
@@ -320,9 +320,9 @@
               "description": ""
             }
           ],
-          "answer": null,
-          "chat_more": "",
-          "status": "unanswered"
+          "answer": "d",
+          "chat_more": "Custom decision: split observed identity from legacy compatibility identity. Phase 1 should map every old identity/name rule; Phase 2 contract should keep observed identity raw; later aggregate parity may use a named compatibility identity layer where required.",
+          "status": "answered"
         },
         {
           "id": "Q-11",
@@ -350,9 +350,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-12",
@@ -380,9 +380,9 @@
               "description": ""
             }
           ],
-          "answer": null,
-          "chat_more": "",
-          "status": "unanswered"
+          "answer": "d",
+          "chat_more": "Custom field-map scope: Phase 1 should inventory every legacy output surface/path, but detailed v1 field mapping is required only for ordinary stats. Annual/yearly nomination outputs are listed as v2-deferred references, not folded into v1 ordinary aggregates.",
+          "status": "answered"
         }
       ]
     },
@@ -416,9 +416,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-14",
@@ -446,9 +446,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-15",
@@ -476,9 +476,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "b",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         },
         {
           "id": "Q-16",
@@ -506,9 +506,9 @@
               "description": ""
             }
           ],
-          "answer": null,
+          "answer": "c",
           "chat_more": "",
-          "status": "unanswered"
+          "status": "answered"
         }
       ]
     }
