@@ -1,0 +1,516 @@
+{
+  "phase": "01-legacy-baseline-and-corpus",
+  "generated_at": "2026-04-25T11:41:21+07:00",
+  "stats": {
+    "total": 16,
+    "answered": 0,
+    "chat_more": 0,
+    "remaining": 16
+  },
+  "sections": [
+    {
+      "id": "legacy-baseline",
+      "title": "Legacy Baseline",
+      "questions": [
+        {
+          "id": "Q-01",
+          "title": "Baseline command",
+          "context": "Old parser package.json exposes pnpm run parse -> tsx src/start.ts and pnpm run parse:dist -> node dist/start.js. Current old repo commit is 3392ca2 and working tree is clean.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Source command as canonical",
+              "description": "Use pnpm run parse as the primary parity baseline because it executes the TypeScript entrypoint directly and matches current development behavior."
+            },
+            {
+              "id": "b",
+              "label": "Compiled command as canonical",
+              "description": "Use pnpm run parse:dist as the primary baseline because it resembles production binary execution, with build output pinned before the run."
+            },
+            {
+              "id": "c",
+              "label": "Record both",
+              "description": "Run or document both commands, designate one canonical baseline, and record any command-level differences as Phase 1 evidence."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-02",
+          "title": "Runtime pinning",
+          "context": "Local runtime check found Node v22.16.0 and pnpm 10.26.1, while old package.json declares packageManager pnpm@10.33.0. Phase 1 requires command, commit, runtime versions, env inputs, worker count, logs, and outputs.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Record observed local runtime",
+              "description": "Capture the current local Node/pnpm versions and mark deviations from packageManager as baseline facts without enforcing a toolchain yet."
+            },
+            {
+              "id": "b",
+              "label": "Require exact package manager",
+              "description": "Planner should include steps to run or install the declared pnpm version before considering the old-parser baseline reproducible."
+            },
+            {
+              "id": "c",
+              "label": "Create reproducible manifest",
+              "description": "Record commit, Node, pnpm, lockfile hash, env vars, command, worker count, log path, and output hashes in a versioned baseline manifest."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-03",
+          "title": "Worker count baseline",
+          "context": "Old runtimeConfig clamps WORKER_COUNT to 1..64 and defaults to CPU count minus one. Worker count affects old parser runtime and logs, even if outputs should be stable.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Use legacy default",
+              "description": "Let the old parser choose CPU count minus one so the baseline mirrors normal historical operation."
+            },
+            {
+              "id": "b",
+              "label": "Pin WORKER_COUNT=1",
+              "description": "Prefer the most reproducible single-worker baseline first, then separately measure the legacy default for performance."
+            },
+            {
+              "id": "c",
+              "label": "Pin two profiles",
+              "description": "Capture a deterministic profile with WORKER_COUNT=1 and a benchmark profile using the legacy default or explicit production-like worker count."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-04",
+          "title": "Baseline run scope",
+          "context": "~/sg_stats contains 3,938 raw replay files totaling about 6.0G and results totaling about 142M. A full legacy parse may be expensive; Phase 1 still needs reproducible baseline evidence.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Inventory first",
+              "description": "Only document commands, inputs, existing results, and hashes in Phase 1; defer expensive full old-parser execution to the parity/benchmark phase."
+            },
+            {
+              "id": "b",
+              "label": "Curated subset run",
+              "description": "Run the old parser or equivalent harness on selected representative replays to prove command viability without full-corpus cost."
+            },
+            {
+              "id": "c",
+              "label": "Full baseline run",
+              "description": "Phase 1 should execute the old parser on the full available corpus and capture logs/output hashes as the authoritative baseline."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        }
+      ]
+    },
+    {
+      "id": "corpus-manifest",
+      "title": "Corpus Manifest",
+      "questions": [
+        {
+          "id": "Q-05",
+          "title": "Manifest depth",
+          "context": "Roadmap Phase 1 requires a corpus manifest for ~/sg_stats/raw_replays, ~/sg_stats/results, and ~/sg_stats/lists/replaysList.json. Local facts: 3,938 raw files, 8,843 result files, and replaysList.json has 23,140 records.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Counts and sizes",
+              "description": "Create a lightweight manifest with directory counts, byte sizes, timestamps, and notable files; fast and easy to keep committed."
+            },
+            {
+              "id": "b",
+              "label": "Per-file checksums",
+              "description": "Create a full per-file manifest with paths, byte sizes, hashes, and replay-list linkage for reliable drift detection."
+            },
+            {
+              "id": "c",
+              "label": "Schema profiler",
+              "description": "Include top-level keys, event/entity shape summaries, largest files, malformed files, and game-type distribution so Phase 3 has input-shape evidence."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-06",
+          "title": "Fixture selection",
+          "context": "Research calls for representative normal, malformed, partial, old-format, winner-present, winner-missing, vehicle-kill, teamkill, and commander-side cases where available.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Representative matrix",
+              "description": "Select fixtures by game type, date era, map/world, file size, event count, and known legacy edge cases."
+            },
+            {
+              "id": "b",
+              "label": "Edge cases first",
+              "description": "Prioritize hard cases such as teamkills, vehicle kills, null killers, duplicate names, connected-player backfill, missing winner, and commander hints."
+            },
+            {
+              "id": "c",
+              "label": "Full corpus first",
+              "description": "Profile every replay first, then choose fixtures based on actual distribution and anomaly reports."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-07",
+          "title": "Historical results role",
+          "context": "~/sg_stats/results contains existing published outputs for sg, mace, and sm. Project docs say the archive is for tests/golden validation, not production import.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Immutable golden inputs",
+              "description": "Treat current results as historical golden evidence and compare against them without rewriting during Phase 1."
+            },
+            {
+              "id": "b",
+              "label": "Regenerated old outputs",
+              "description": "Prefer outputs regenerated from the pinned old parser command, using current results only as a cross-check."
+            },
+            {
+              "id": "c",
+              "label": "Dual evidence",
+              "description": "Record both current published results and regenerated old-parser outputs, then classify any differences explicitly."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-08",
+          "title": "Large artifact policy",
+          "context": "Raw replay data is about 6.0G. Planning docs should stay reviewable; AGENTS requires clean git status after completed sessions.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Commit summary only",
+              "description": "Commit compact manifests and instructions; keep raw data and bulky generated reports local or ignored."
+            },
+            {
+              "id": "b",
+              "label": "Commit deterministic indexes",
+              "description": "Commit machine-readable per-file indexes if they are compact enough, while excluding raw corpus and heavy outputs."
+            },
+            {
+              "id": "c",
+              "label": "Local artifacts only",
+              "description": "Do not commit corpus-derived files in Phase 1; document commands that regenerate them on machines with ~/sg_stats."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        }
+      ]
+    },
+    {
+      "id": "legacy-rules",
+      "title": "Legacy Rules",
+      "questions": [
+        {
+          "id": "Q-09",
+          "title": "Filter ownership",
+          "context": "Old getReplays filters by mission_name prefix sg/mace/sm, excludes sgs, applies an sm date cutoff after 2023-01-01 by month, and Phase 1 must document old filters, skip rules, and config inputs.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Harness owns filters",
+              "description": "Treat old game-type filters and skip rules as legacy comparison behavior owned by the parity harness, not by the parser core contract."
+            },
+            {
+              "id": "b",
+              "label": "Parser emits metadata",
+              "description": "Parser core should emit enough metadata for filters, while harness/server decide which replays count for compatibility and public stats."
+            },
+            {
+              "id": "c",
+              "label": "Preserve in compatibility projection",
+              "description": "Include legacy filter decisions as named compatibility rules in parser aggregate projections for old-vs-new comparisons."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-10",
+          "title": "Identity compatibility",
+          "context": "Old parser uses entity IDs, connected events, same-name merging, getPlayerName, getPlayerId, excludePlayers.json, and ~/sg_stats/config/nameChanges.csv. New parser must preserve observed identity only; canonical matching belongs to server-2.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Compatibility only",
+              "description": "Document old identity/name-change behavior only as a legacy aggregate compatibility layer, never as normalized identity truth."
+            },
+            {
+              "id": "b",
+              "label": "Strict old aggregates",
+              "description": "Require old name-change and same-name behavior to be reproduced exactly in aggregate projections while raw events keep observed identities."
+            },
+            {
+              "id": "c",
+              "label": "Document before deciding",
+              "description": "Phase 1 should map each old identity rule and defer exact preservation choices to contract/core planning."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-11",
+          "title": "Legacy bug policy",
+          "context": "Research warns against treating the old parser as either absolute truth or disposable legacy. Phase 1 must define mismatch categories including old bug preserved, old bug fixed, new bug, insufficient data, and human review.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Preserve by default",
+              "description": "Any comparable old behavior is preserved unless Phase 1 evidence names it as an intentional future change."
+            },
+            {
+              "id": "b",
+              "label": "Fix with evidence",
+              "description": "Allow the planner to mark obvious old bugs as candidates for fixing when source/corpus evidence and server/web impact are documented."
+            },
+            {
+              "id": "c",
+              "label": "Human review gate",
+              "description": "All suspected old bugs become human-review items; no preservation or fix decision is locked without explicit user approval."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-12",
+          "title": "Legacy field map",
+          "context": "Old types include kills, killsFromVehicle, vehicleKills, teamkills, deaths, kdRatio, killsFromVehicleCoef, totalPlayedGames, killed/killer and teamkill relationship lists. Phase 4 will implement event semantics, but Phase 1 can map fields.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Map core stats now",
+              "description": "Map the known player/global fields needed for initial parity and leave rare output folders for later discovery."
+            },
+            {
+              "id": "b",
+              "label": "Map all old outputs",
+              "description": "Phase 1 should inventory every published result file/folder and field before Phase 2 contract planning starts."
+            },
+            {
+              "id": "c",
+              "label": "Map by roadmap phase",
+              "description": "Phase 1 maps only legacy baseline fields; each later phase extends the map when it owns that behavior."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        }
+      ]
+    },
+    {
+      "id": "handoff-and-taxonomy",
+      "title": "Handoff and Taxonomy",
+      "questions": [
+        {
+          "id": "Q-13",
+          "title": "Mismatch taxonomy shape",
+          "context": "Roadmap success requires any old-vs-new difference to be classified. server-2 will later persist parser artifacts, and web only sees data through server-2 APIs.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Standard categories",
+              "description": "Use the planned categories as-is: compatible, intentional change, old bug preserved, old bug fixed, new bug, insufficient data, and human review."
+            },
+            {
+              "id": "b",
+              "label": "Add severity and owner",
+              "description": "Extend each mismatch with severity, owner app, affected field, replay evidence, and required follow-up before it can be accepted."
+            },
+            {
+              "id": "c",
+              "label": "Add server/web impact",
+              "description": "Classify mismatches by whether they affect parser-only artifacts, server persistence/recalculation, or UI-visible public stats."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-14",
+          "title": "Cross-app depth",
+          "context": "Phase 1 includes product-wide compatibility rules. Local briefs state server-2 owns PostgreSQL, canonical identity, APIs, parse orchestration, and bounty calculation; web owns UI and generated OpenAPI types.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Briefs are enough",
+              "description": "For Phase 1 baseline docs, rely on this repo's planning docs and gsd-briefs; deeper adjacent repo inspection waits for contract or worker phases."
+            },
+            {
+              "id": "b",
+              "label": "Inspect adjacent repos",
+              "description": "Have the planner include checks against server-2 and web repositories now, even though Phase 1 is mostly parser baseline documentation."
+            },
+            {
+              "id": "c",
+              "label": "Create interface notes",
+              "description": "Produce a small handoff note listing which Phase 1 discoveries can affect server-2/web later, without changing adjacent apps now."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-15",
+          "title": "Phase 1 docs shape",
+          "context": "README and planning docs are current; no Rust workspace exists yet. Phase 1 needs downstream agents to find the baseline, corpus manifest, filters/skip rules, and mismatch taxonomy without re-discovery.",
+          "options": [
+            {
+              "id": "a",
+              "label": "One dossier",
+              "description": "Create one legacy-baseline dossier markdown that links to generated manifests and captures commands, rules, corpus facts, and taxonomy."
+            },
+            {
+              "id": "b",
+              "label": "Separate docs",
+              "description": "Create focused files for baseline command, corpus manifest, legacy rules, and mismatch taxonomy so each can evolve independently."
+            },
+            {
+              "id": "c",
+              "label": "Plan artifacts only",
+              "description": "Keep Phase 1 decisions in GSD PLAN/SUMMARY files first, and only promote stable docs after implementation produces evidence."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        },
+        {
+          "id": "Q-16",
+          "title": "Planning strictness",
+          "context": "Project requires 100% reachable-code coverage later, clean git handoff every completed session, and pushback on risky instructions. Phase 1 itself is documentation and local discovery work.",
+          "options": [
+            {
+              "id": "a",
+              "label": "Evidence-gated docs",
+              "description": "Require every Phase 1 claim to cite a local command, file path, or observed corpus fact before the plan can mark it done."
+            },
+            {
+              "id": "b",
+              "label": "Pragmatic notes",
+              "description": "Allow some Phase 1 notes to be marked as assumptions when command execution would be too expensive or risky, with clear follow-up tasks."
+            },
+            {
+              "id": "c",
+              "label": "Strict verification",
+              "description": "Plan must include verification commands for every deliverable and fail the phase if any baseline/corpus claim cannot be reproduced locally."
+            },
+            {
+              "id": "d",
+              "label": "Custom",
+              "description": ""
+            }
+          ],
+          "answer": null,
+          "chat_more": "",
+          "status": "unanswered"
+        }
+      ]
+    }
+  ]
+}
