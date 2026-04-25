@@ -11,7 +11,8 @@ This repository is currently in planning phase. It does not yet contain a runnab
 - Current phase: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
-- Next planning step: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
+- Phase execution command: `$gsd-execute-phase 1`.
+- Phase 1 review target: the committed baseline, corpus, legacy-rules, and mismatch-taxonomy dossiers under `.planning/phases/01-legacy-baseline-and-corpus/`.
 
 Until implementation starts, there are no build, parse, benchmark, or test commands to run from this repository.
 
@@ -65,8 +66,22 @@ The old parser and historical data define the v1 compatibility baseline:
 - Legacy annual nomination outputs: `~/sg_stats/year_results`.
 - Replay list metadata: `~/sg_stats/lists/replaysList.json`.
 
+Current full-history validation facts:
+
+- `~/sg_stats/raw_replays` contains 23,473 raw replay JSON files.
+- `~/sg_stats/lists/replaysList.json` contains 23,456 replay-list rows prepared at `2026-04-25T04:42:54.889Z`.
+- `~/sg_stats/results` contains 88,485 existing result files.
+- `~/sg_stats/year_results` contains 14 yearly reference files.
+
 The historical archive is for tests, golden validation, and benchmarks. It is not a production import source.
 Annual/yearly nomination statistics are a separate legacy surface and are deferred to v2.
+
+Phase 1 dossiers:
+
+- `baseline-command-runtime.md`: canonical old-parser command, runtime versions, fake-HOME baseline runs, logs, and output hashes.
+- `corpus-manifest.md`: current full-history corpus counts, schema/profile evidence, malformed files, game-type distribution, and fixture seed rationale.
+- `legacy-rules-output-surfaces.md`: old parser game-type filters, skip rules, config inputs, identity compatibility rules, ordinary output surfaces, and v2-deferred yearly references.
+- `mismatch-taxonomy-interface-notes.md`: old-vs-new mismatch categories plus parser artifact, `server-2`, and `web` impact dimensions.
 
 ## Architecture Direction
 
@@ -122,6 +137,10 @@ For project-changing work:
 - `.planning/ROADMAP.md`: milestone phase plan.
 - `.planning/STATE.md`: current GSD state and completed quick tasks.
 - `.planning/research/SUMMARY.md`: technical research and architecture rationale.
+- `.planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md`: Phase 1 legacy parser command/runtime baseline.
+- `.planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md`: Phase 1 full-history corpus profile summary.
+- `.planning/phases/01-legacy-baseline-and-corpus/legacy-rules-output-surfaces.md`: Phase 1 legacy filters, identity, and output-surface inventory.
+- `.planning/phases/01-legacy-baseline-and-corpus/mismatch-taxonomy-interface-notes.md`: Phase 1 mismatch taxonomy and cross-app interface notes.
 - `gsd-briefs/`: project briefs for `sg-replay-parser-2`, `server-2`, and `web`.
 - `AGENTS.md`: repository-specific instructions for AI agents.
 
