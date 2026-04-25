@@ -37,7 +37,7 @@ Read these planning files before planning or implementing:
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
-- Roadmap has 7 phases and maps all 69 v1 requirements.
+- Roadmap has 7 phases and maps all 71 v1 requirements.
 
 ## Stack Direction
 
@@ -68,3 +68,5 @@ Keep Node/pnpm only as a development dependency for running the legacy parser ba
 - Do not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, test/quality standards, maintainability, or proportional scope.
 - When a request is risky or harmful, explain the concrete reason, propose 1-3 safer alternatives, and ask for explicit confirmation before any risky override.
 - Check cross-application compatibility before implementation: parser contract changes must account for `server-2`, and parser output/data-shape changes must account for `web` needs through `server-2` APIs.
+- Apply these AI/GSD workflow rules as product-wide standards across `sg-replay-parser-2`, `server-2`, and `web`.
+- Use risk-based compatibility depth: local-only parser changes can rely on this repo's planning docs and `gsd-briefs`; parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require adjacent app docs/repos or a user question.

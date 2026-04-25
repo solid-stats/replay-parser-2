@@ -14,6 +14,12 @@ Solid Stats is a multi-project product made of:
 
 Before executing project-changing work, agents must verify that the change does not contradict the other applications and remains compatible with their contracts, data ownership, and user-facing expectations.
 
+GSD workflow rules are product-wide standards for all three applications. Compatibility checks are risk-based:
+
+- Local-only parser changes can rely on this repo's planning docs, README, AGENTS rules, and `gsd-briefs`.
+- Parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require checking adjacent app docs/repos when available.
+- If compatibility evidence is missing or contradictory, ask before proceeding and propose a smaller GSD path or cross-project plan.
+
 ## Development Mode
 
 This project is developed only by AI agents using the GSD workflow.
@@ -28,7 +34,7 @@ AI agents must not blindly execute instructions that conflict with current logic
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
-- v1 requirements: 69 mapped requirements.
+- v1 requirements: 71 mapped requirements.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
 
 ## Scope

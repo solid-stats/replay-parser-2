@@ -24,6 +24,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 - [ ] **INT-01**: Solid Stats is treated as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
 - [ ] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
+- [ ] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `sg-replay-parser-2`, `server-2`, and `web`.
+- [ ] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
 
 ### Legacy Baseline
 
@@ -146,6 +148,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WF-05 | Phase 1 | Pending |
 | INT-01 | Phase 1 | Pending |
 | INT-02 | Phase 1 | Pending |
+| INT-03 | Phase 1 | Pending |
+| INT-04 | Phase 1 | Pending |
 | LEG-01 | Phase 1 | Pending |
 | LEG-02 | Phase 1 | Pending |
 | LEG-03 | Phase 1 | Pending |
@@ -208,10 +212,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 69 total
-- Mapped to phases: 69
+- v1 requirements: 71 total
+- Mapped to phases: 71
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after adding multi-project product compatibility requirements*
+*Last updated: 2026-04-25 after clarifying product-wide GSD rules and risk-based compatibility checks*

@@ -12,6 +12,23 @@ Solid Stats is a public SolidGames statistics website and moderation interface. 
 
 `web` owns the browser UI and user experience. It consumes APIs from `server-2`. It does not parse replay files directly and does not own PostgreSQL/RabbitMQ/S3 infrastructure.
 
+## Product-Wide GSD Workflow
+
+Development across `replays-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
+
+The following standards apply product-wide:
+
+- Keep README and planning docs current when scope, commands, architecture, validation data, or workflow changes.
+- End completed work with a clean git tree by committing intended results; do not delete completed work just to make status clean.
+- Push back on requests that conflict with architecture, current logic, quality, maintainability, or proportional scope; explain the risk and propose safer alternatives.
+- Check cross-application compatibility before execution.
+
+Compatibility checks are risk-based:
+
+- Local-only changes can rely on local planning docs, AGENTS rules, and these `gsd-briefs`.
+- Parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require checking adjacent app docs/repos when available.
+- If evidence is missing or contradictory, ask the user before proceeding.
+
 ## Core Value
 
 Make SolidGames statistics easy to inspect, filter, trust, and correct through a fast public website and clear request/moderation flows.
@@ -292,4 +309,3 @@ Prefer generated API types or a shared OpenAPI/schema contract so frontend and b
 - Exact generated API type strategy.
 - Exact mobile table patterns after API payloads are known.
 - Whether replay upload/job views are admin-only in v1 or deferred.
-

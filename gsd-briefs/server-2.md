@@ -12,6 +12,23 @@ Solid Stats is a public SolidGames statistics platform. It needs fast replay ing
 
 `server-2` is the source of truth and integration layer. It owns API, PostgreSQL schema, Steam OAuth, roles, request moderation, parsing job orchestration, aggregate calculations, and operational visibility.
 
+## Product-Wide GSD Workflow
+
+Development across `replays-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
+
+The following standards apply product-wide:
+
+- Keep README and planning docs current when scope, commands, architecture, validation data, or workflow changes.
+- End completed work with a clean git tree by committing intended results; do not delete completed work just to make status clean.
+- Push back on requests that conflict with architecture, current logic, quality, maintainability, or proportional scope; explain the risk and propose safer alternatives.
+- Check cross-application compatibility before execution.
+
+Compatibility checks are risk-based:
+
+- Local-only changes can rely on local planning docs, AGENTS rules, and these `gsd-briefs`.
+- Parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require checking adjacent app docs/repos when available.
+- If evidence is missing or contradictory, ask the user before proceeding.
+
 ## Core Value
 
 Provide a reliable backend source of truth that turns parsed replay data into public statistics, supports corrections through audited moderation, and keeps parsing/storage/jobs observable and recoverable.
@@ -331,4 +348,3 @@ The API should be stable enough that `web` can develop independently against gen
 - Exact hardcoded bounty formula.
 - Exact API schema tooling.
 - Exact backup/restore commands.
-

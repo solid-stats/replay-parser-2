@@ -34,6 +34,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Leave the git working tree clean after every completed work session by committing intended results; never delete completed work just to make the tree clean, and ask the user when ownership or commit intent is unclear.
 - [ ] Require AI agents to challenge instructions that conflict with architecture, current logic, accepted decisions, test/quality standards, maintainability, or proportional scope; agents must explain the risk, propose safer alternatives, and ask for explicit confirmation before any risky override.
 - [ ] Treat Solid Stats as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`; before executing tasks, verify the change does not contradict those applications and remains compatible with their contracts and ownership boundaries.
+- [ ] Apply GSD workflow rules as a product-wide standard across `sg-replay-parser-2`, `server-2`, and `web`, using risk-based compatibility checks that scale from local docs/briefs to adjacent app inspection or user confirmation for cross-application changes.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -58,6 +59,12 @@ The product is split across three applications:
 - `web` owns the browser UI, public stats experience, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
 
 Every project-changing task must be checked against these application boundaries before execution. Parser changes must stay compatible with `server-2` message/API/storage expectations and `web` user-facing data needs, or explicitly call out the cross-project change required.
+
+GSD workflow rules are product-wide standards for all three applications. Compatibility checks are risk-based:
+
+- For local-only parser documentation or implementation changes, checking this repo's planning docs, README, AGENTS rules, and `gsd-briefs` is enough.
+- For parser contract, RabbitMQ/S3 job message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes, agents must inspect the adjacent application docs/repos when available or ask the user before proceeding.
+- If compatibility evidence is missing or contradictory, agents must pause, explain the uncertainty, and propose a smaller GSD path or a cross-project plan.
 
 The current historical reference data lives at `~/sg_stats`:
 
@@ -139,6 +146,7 @@ Open implementation details for later phases:
 - **Git hygiene**: Completed work must end with a clean git working tree by committing intended results, not by deleting or reverting them; ambiguous changes require asking the user.
 - **AI pushback**: Agents must not blindly execute requests that violate current architecture, logic, quality, maintainability, or proportional scope; they must explain the issue, propose better options, and ask for explicit confirmation before a risky override.
 - **Cross-application compatibility**: Changes must be checked against `server-2` and `web` ownership and contracts before execution; incompatible changes need an explicit cross-project plan or user confirmation.
+- **Risk-based compatibility depth**: Local-only changes can rely on local planning docs and `gsd-briefs`; contract, API/data, queue/storage, identity/auth, moderation, or UI-visible changes require adjacent app evidence or a user question.
 
 ## Key Decisions
 
@@ -159,6 +167,7 @@ Open implementation details for later phases:
 | Require clean git tree after completed work | Clean status makes handoff and review reliable; intended results should be committed, while ambiguous or user-owned changes require explicit user direction. | - Pending |
 | Require AI pushback on bad instructions | Blind compliance can damage architecture and project velocity; agents should explain why a request is risky and offer safer GSD-compatible alternatives. | - Pending |
 | Treat Solid Stats as a multi-project product | Parser work must remain compatible with `server-2` and `web`; checking adjacent application contracts prevents local parser changes from breaking product flows. | - Pending |
+| Apply GSD rules product-wide with risk-based checks | The same AI/GSD standards should apply across parser, backend, and web; compatibility checks should be deep only when the requested change can affect another app. | - Pending |
 
 ## Evolution
 
@@ -178,4 +187,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after adding multi-project product compatibility requirements*
+*Last updated: 2026-04-25 after clarifying product-wide GSD rules and risk-based compatibility checks*
