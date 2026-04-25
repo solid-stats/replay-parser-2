@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Roadmap and initial state created.
+last_updated: "2026-04-25T07:22:29.389Z"
+last_activity: "2026-04-25 - Completed quick task 260425-g0r: rewrote README as a human-facing project entry point."
+progress:
+  total_phases: 7
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 0
+  percent: 0
+---
+
 # Project State
 
 ## Project Reference
@@ -19,6 +35,7 @@ Progress: [----------] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: N/A
 - Total execution time: 0.0 hours
@@ -30,6 +47,7 @@ Progress: [----------] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: N/A
 - Trend: N/A
 
@@ -88,3 +106,5 @@ Items acknowledged and carried forward from previous milestone close:
 Last session: 2026-04-24 22:51 +07
 Stopped at: Roadmap and initial state created.
 Resume file: None
+
+**Planned Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25T07:22:29.387Z

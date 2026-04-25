@@ -462,22 +462,19 @@ This skeleton depends on first unblocking the canonical source command. [VERIFIE
 |---|-------|---------|---------------|
 | - | No `[ASSUMED]` claims are used in this research. | All | All listed factual claims are tied to local files, local command output, npm registry output, or cited official docs. [VERIFIED: source review] |
 
-## Open Questions
+## Open Questions - RESOLVED
 
-1. **How should Phase 1 unblock the canonical source command?** [VERIFIED: command preflight]
+1. **RESOLVED: How should Phase 1 unblock the canonical source command?** [VERIFIED: command preflight]
    - What we know: `pnpm run parse -- --help` fails under Node 18.14.0 and Node 22.16.0 with a Lodash named export error. [VERIFIED: command preflight]
-   - What's unclear: whether the planner should repair old parser source execution, pin/alter `tsx`, or ask the user to approve `parse:dist` as temporary primary baseline. [VERIFIED: `01-CONTEXT.md` D-01/D-12]
-   - Recommendation: plan a Wave 0 preflight/unblock task and do not close LEG-01/LEG-02 until source command is either working or an explicit user override is recorded. [VERIFIED: `01-CONTEXT.md` D-17]
+   - Resolution: [01-00-PLAN.md](./01-00-PLAN.md) creates the Plan 00 source-command gate, records the canonical `pnpm run parse` preflight, and blocks downstream baseline execution unless the source command is working or an explicit fallback override is recorded. [VERIFIED: `01-CONTEXT.md` D-01/D-12/D-17]
 
-2. **What exact full-corpus profiler implementation should Phase 1 commit?** [VERIFIED: local 24G corpus size]
+2. **RESOLVED: What exact full-corpus profiler implementation should Phase 1 commit?** [VERIFIED: local 24G corpus size]
    - What we know: corpus is 24G and a naive full JSON parse can be slow enough that research did not rely on it for full event/entity distribution. [VERIFIED: local `du` + research command behavior]
-   - What's unclear: whether the profiler should be a checked-in Node script, Rust prototype, or shell+jq commands in the dossier. [VERIFIED: no existing workspace/test tooling in repo]
-   - Recommendation: plan a small deterministic Node script or shell command set that emits compact JSON summaries to generated artifacts, because Node is already required for the old parser baseline. [VERIFIED: old parser Node/pnpm dependency + `01-CONTEXT.md` D-09]
+   - Resolution: [01-02-PLAN.md](./01-02-PLAN.md) requires a generated `.planning/generated/phase-01/corpus-profiles/<UTC-profile-id>/corpus-profile.json` plus compact committed `corpus-manifest.md` and `fixture-index.json` summaries, keeping bulky profiler evidence ignored per D-09. [VERIFIED: old parser Node/pnpm dependency + `01-CONTEXT.md` D-06/D-07/D-09]
 
-3. **Should `.planning/generated/phase-01/` be added to `.gitignore`?** [VERIFIED: no `.gitignore` content found]
+3. **RESOLVED: Should `.planning/generated/phase-01/` be added to `.gitignore`?** [VERIFIED: no `.gitignore` content found]
    - What we know: Phase 1 requires local heavy artifacts and current repo has no `.gitignore` entries. [VERIFIED: `.gitignore` read + `01-CONTEXT.md` D-09]
-   - What's unclear: whether GSD generated artifacts convention should use `.planning/generated/` or another existing ignored path. [VERIFIED: no existing generated path found]
-   - Recommendation: plan a `.gitignore` addition for `.planning/generated/` before generating full hashes/results/logs. [VERIFIED: `01-CONTEXT.md` D-09 + WF clean-tree requirements]
+   - Resolution: [01-00-PLAN.md](./01-00-PLAN.md) adds `.planning/generated/` to `.gitignore` before generating full hashes, regenerated results, logs, backups, or profiles. [VERIFIED: `01-CONTEXT.md` D-09 + WF clean-tree requirements]
 
 ## Environment Availability
 
