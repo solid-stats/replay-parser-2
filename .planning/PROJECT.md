@@ -10,11 +10,18 @@ Solid Stats is a multi-project product made of `sg-replay-parser-2`, `server-2`,
 
 Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
 
+## Current State
+
+Phase 1 complete: the legacy parser baseline, full-history corpus manifest, legacy rule/output inventory, and mismatch taxonomy/interface notes are documented and verified. The project is ready to plan Phase 2, `Versioned Output Contract`.
+
 ## Requirements
 
 ### Validated
 
-(None yet - ship to validate)
+- [x] Phase 1 validated current README/project documentation requirements, including the AI agents using GSD workflow rule.
+- [x] Phase 1 validated clean git handoff, AI pushback, and risk-based cross-application compatibility workflow requirements.
+- [x] Phase 1 validated Solid Stats ownership boundaries across `sg-replay-parser-2`, `server-2`, and `web`.
+- [x] Phase 1 validated the legacy baseline command/runtime dossier, corpus manifest, legacy rule/output inventory, and old-vs-new mismatch taxonomy.
 
 ### Active
 
@@ -30,11 +37,6 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Produce structured parse failures tied to replay file and job identifiers.
 - [ ] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Keep root `README.md` current with project scope, current GSD phase, architecture direction, validation data, user-facing commands, and the required AI + GSD-only development workflow.
-- [ ] Leave the git working tree clean after every completed work session by committing intended results; never delete completed work just to make the tree clean, and ask the user when ownership or commit intent is unclear.
-- [ ] Require AI agents to challenge instructions that conflict with architecture, current logic, accepted decisions, test/quality standards, maintainability, or proportional scope; agents must explain the risk, propose safer alternatives, and ask for explicit confirmation before any risky override.
-- [ ] Treat Solid Stats as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`; before executing tasks, verify the change does not contradict those applications and remains compatible with their contracts and ownership boundaries.
-- [ ] Apply GSD workflow rules as a product-wide standard across `sg-replay-parser-2`, `server-2`, and `web`, using risk-based compatibility checks that scale from local docs/briefs to adjacent app inspection or user confirmation for cross-application changes.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -192,4 +194,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after deferring annual nomination statistics to v2*
+*Last updated: 2026-04-25 after completing Phase 1 legacy baseline and corpus*
