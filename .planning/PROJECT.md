@@ -29,6 +29,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Represent missing winner, SteamID, and other absent identity fields explicitly as unknown/null states.
 - [ ] Produce structured parse failures tied to replay file and job identifiers.
 - [ ] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
+- [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -120,6 +121,7 @@ Open implementation details for later phases:
 - **Identity**: Parser preserves observed identifiers only - canonical player matching belongs to `server-2`.
 - **History reprocessing**: Server may overwrite derived results in v1 - parser must make output repeatable and versioned.
 - **Brownfield reference**: `/home/afgan0r/Projects/SolidGames/replays-parser` - new behavior must be grounded in old parser semantics and comparison tests.
+- **Test coverage**: 100% reachable-code statement, branch, function, and line coverage is a release gate; exclusions must be explicit, justified, and allowlisted.
 
 ## Key Decisions
 
@@ -135,6 +137,7 @@ Open implementation details for later phases:
 | Version the parser output contract | `server-2` must be able to audit, compare, and recalculate safely. | - Pending |
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
 | Include vehicle score from issue #13 | Explicit user-requested statistic that depends on correct vehicle kill context and teamkill penalty semantics. | - Pending |
+| Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
 
 ## Evolution
 
@@ -154,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-24 after initialization*
+*Last updated: 2026-04-25 after adding mandatory 100% test coverage requirements*

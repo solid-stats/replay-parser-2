@@ -2,7 +2,7 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-24)
+See: .planning/PROJECT.md (updated 2026-04-25)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
 **Current focus:** Phase 1: Legacy Baseline and Corpus
@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-04-24)
 Phase: 1 of 7 (Legacy Baseline and Corpus)
 Plan: TBD in current phase
 Status: Ready to plan
-Last activity: 2026-04-24 - Roadmap created with 54/54 v1 requirements mapped.
+Last activity: 2026-04-25 - Completed quick task 260425-fd2: added mandatory 100% test coverage requirements.
 
 Progress: [----------] 0%
 
@@ -54,6 +54,12 @@ None yet.
 ### Blockers/Concerns
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260425-fd2 | Added mandatory 100% test coverage requirements using `unit-tests-philosophy` | 2026-04-25 | docs-only | [260425-fd2-sg-replay-parser-2-100-unit-tests-philos](./quick/260425-fd2-sg-replay-parser-2-100-unit-tests-philos/) |
 
 ## Deferred Items
 

@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract.
 - [ ] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts.
 - [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates.
-- [ ] **Phase 5: CLI, Golden Parity, and Benchmarks** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, and speed reports executable.
+- [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -68,16 +68,19 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Every vehicle score contribution exposes source references that let `server-2` audit or recalculate the score.
 **Plans**: TBD
 
-### Phase 5: CLI, Golden Parity, and Benchmarks
-**Goal**: Developers can reproduce parser results locally, compare against the old parser, and measure the 10x target on equivalent workloads.
+### Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates
+**Goal**: Developers can reproduce parser results locally, compare against the old parser, enforce 100% reachable-code coverage, and measure the 10x target on equivalent workloads.
 **Depends on**: Phase 4
-**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06
+**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06, TEST-07, TEST-08, TEST-09, TEST-10, TEST-11, TEST-12
 **Success Criteria** (what must be TRUE):
   1. User can parse a local OCAP JSON file to a requested output path and request the current contract schema from the CLI.
   2. User receives structured error JSON and a non-zero exit status for bad, unreadable, or unsupported replay files.
   3. Developer can run old-vs-new comparison on selected replay files or saved old output artifacts and receive per-field mismatch categories.
   4. Golden fixtures cover representative normal, bad, partial, old-shape, winner-present, winner-missing, vehicle-kill, teamkill, and commander-side cases where available.
-  5. Benchmark reports include parse-only, aggregate-only, and end-to-end throughput plus memory/RSS where practical, parity status for the measured sample, and whether the roughly 10x target is met.
+  5. CI blocks release unless all reachable production Rust code reports 100% statement, branch, function, and line coverage, with every exclusion explicitly justified and allowlisted.
+  6. Unit and regression tests follow the `unit-tests-philosophy` RITE/AAA standard, cover behavior-level success, edge, error, malformed, compatibility, determinism, and source-reference scenarios, and use strong observable oracles.
+  7. Mutation-testing or equivalent fault-injection reporting covers parser-core and aggregate logic, and high-risk survivors are either fixed by stronger tests or documented as non-applicable.
+  8. Benchmark reports include parse-only, aggregate-only, and end-to-end throughput plus memory/RSS where practical, parity status for the measured sample, and whether the roughly 10x target is met.
 **Plans**: TBD
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
@@ -113,6 +116,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Versioned Output Contract | 0/TBD | Not started | - |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
-| 5. CLI, Golden Parity, and Benchmarks | 0/TBD | Not started | - |
+| 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
