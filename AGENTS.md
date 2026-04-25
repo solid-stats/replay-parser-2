@@ -10,6 +10,12 @@ When in doubt, prefer enabling the skill briefly and filtering it out over skipp
 
 `replays-parser-2` is a Rust replacement for the legacy SolidGames replay parser. It parses OCAP JSON replay files into deterministic normalized events and aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public Solid Stats.
 
+Solid Stats is a multi-project product composed of:
+
+- `sg-replay-parser-2` - parser, parse artifact contract, CLI/worker, parity harness.
+- `server-2` - backend source of truth, PostgreSQL, APIs, canonical identity, auth, moderation, parse jobs, aggregate/bounty calculation.
+- `web` - browser UI, public stats, authenticated request UX, moderator/admin screens, API consumption.
+
 Read these planning files before planning or implementing:
 
 - `.planning/PROJECT.md`
@@ -25,12 +31,13 @@ Read these planning files before planning or implementing:
 - The new parser must preserve observed replay identity fields only. Canonical player matching belongs to `server-2`.
 - PostgreSQL persistence, public UI, Steam OAuth, correction workflow, and final bounty/reward rules are outside this parser.
 - GitHub issue #13 vehicle score is an explicit v1 requirement and is covered in Phase 4.
+- Before executing any task, verify the requested change does not contradict `server-2` or `web` responsibilities and remains compatible with their contracts, data ownership, and user-facing expectations.
 
 ## Current GSD State
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
-- Roadmap has 7 phases and maps all 67 v1 requirements.
+- Roadmap has 7 phases and maps all 69 v1 requirements.
 
 ## Stack Direction
 
@@ -60,3 +67,4 @@ Keep Node/pnpm only as a development dependency for running the legacy parser ba
 - Do not delete, revert, or discard completed work just to make the git tree clean; if ownership or commit intent is unclear, ask the user before acting.
 - Do not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, test/quality standards, maintainability, or proportional scope.
 - When a request is risky or harmful, explain the concrete reason, propose 1-3 safer alternatives, and ask for explicit confirmation before any risky override.
+- Check cross-application compatibility before implementation: parser contract changes must account for `server-2`, and parser output/data-shape changes must account for `web` needs through `server-2` APIs.

@@ -20,6 +20,11 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [ ] **WF-04**: When challenging an instruction, agents must not stop at refusal; they must explain the concrete project risk, cite the relevant architecture/planning concern where possible, and propose 1-3 safer alternatives or a smaller GSD path.
 - [ ] **WF-05**: If the user still wants the risky direction after the explanation, agents must ask for explicit confirmation before proceeding and record the warning, user decision, and chosen alternative or override in the relevant GSD artifact or summary.
 
+### Product Integration
+
+- [ ] **INT-01**: Solid Stats is treated as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
+- [ ] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
+
 ### Legacy Baseline
 
 - [ ] **LEG-01**: Developer can run and document the old parser baseline from `/home/afgan0r/Projects/SolidGames/replays-parser`.
@@ -139,6 +144,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WF-03 | Phase 1 | Pending |
 | WF-04 | Phase 1 | Pending |
 | WF-05 | Phase 1 | Pending |
+| INT-01 | Phase 1 | Pending |
+| INT-02 | Phase 1 | Pending |
 | LEG-01 | Phase 1 | Pending |
 | LEG-02 | Phase 1 | Pending |
 | LEG-03 | Phase 1 | Pending |
@@ -201,10 +208,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 67 total
-- Mapped to phases: 67
+- v1 requirements: 69 total
+- Mapped to phases: 69
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after adding AI pushback and safer-alternative workflow requirements*
+*Last updated: 2026-04-25 after adding multi-project product compatibility requirements*

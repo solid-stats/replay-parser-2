@@ -4,6 +4,16 @@ Rust replacement for the legacy SolidGames OCAP replay parser.
 
 `sg-replay-parser-2` parses OCAP JSON replay files into deterministic normalized events and aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public Solid Stats.
 
+## Product Context
+
+Solid Stats is a multi-project product made of:
+
+- `sg-replay-parser-2`: Rust parser, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
+- `server-2`: backend source of truth, PostgreSQL persistence, APIs, canonical identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate/bounty calculation, and operations visibility.
+- `web`: browser UI, public stats pages, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
+
+Before executing project-changing work, agents must verify that the change does not contradict the other applications and remains compatible with their contracts, data ownership, and user-facing expectations.
+
 ## Development Mode
 
 This project is developed only by AI agents using the GSD workflow.
@@ -18,7 +28,7 @@ AI agents must not blindly execute instructions that conflict with current logic
 
 - Current focus: Phase 1, `Legacy Baseline and Corpus`.
 - Roadmap: 7 phases.
-- v1 requirements: 67 mapped requirements.
+- v1 requirements: 69 mapped requirements.
 - Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
 
 ## Scope

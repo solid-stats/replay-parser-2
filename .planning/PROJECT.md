@@ -4,7 +4,7 @@
 
 `replays-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into deterministic normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public SolidGames statistics.
 
-This project owns the parsing engine and parsing result contract only. Public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to `server-2` and `web`.
+Solid Stats is a multi-project product made of `sg-replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to `server-2` and `web`.
 
 ## Core Value
 
@@ -33,6 +33,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - [ ] Keep root `README.md` current with project scope, current GSD phase, architecture direction, validation data, user-facing commands, and the required AI + GSD-only development workflow.
 - [ ] Leave the git working tree clean after every completed work session by committing intended results; never delete completed work just to make the tree clean, and ask the user when ownership or commit intent is unclear.
 - [ ] Require AI agents to challenge instructions that conflict with architecture, current logic, accepted decisions, test/quality standards, maintainability, or proportional scope; agents must explain the risk, propose safer alternatives, and ask for explicit confirmation before any risky override.
+- [ ] Treat Solid Stats as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`; before executing tasks, verify the change does not contradict those applications and remains compatible with their contracts and ownership boundaries.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
@@ -49,6 +50,14 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 ## Context
 
 Solid Stats is a public SolidGames statistics platform that replaces the current replay-parser/statistics workflow. It needs fast, trustworthy replay parsing, public player/squad/rotation/commander-side statistics, player-submitted correction requests, and bounty points based on player and squad effectiveness.
+
+The product is split across three applications:
+
+- `sg-replay-parser-2` owns OCAP replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
+- `server-2` owns PostgreSQL persistence, APIs, canonical identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate/bounty calculation, and operational visibility.
+- `web` owns the browser UI, public stats experience, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
+
+Every project-changing task must be checked against these application boundaries before execution. Parser changes must stay compatible with `server-2` message/API/storage expectations and `web` user-facing data needs, or explicitly call out the cross-project change required.
 
 The current historical reference data lives at `~/sg_stats`:
 
@@ -129,6 +138,7 @@ Open implementation details for later phases:
 - **Development workflow**: Project development is performed only by AI agents using GSD; README and planning artifacts must make that workflow visible and current.
 - **Git hygiene**: Completed work must end with a clean git working tree by committing intended results, not by deleting or reverting them; ambiguous changes require asking the user.
 - **AI pushback**: Agents must not blindly execute requests that violate current architecture, logic, quality, maintainability, or proportional scope; they must explain the issue, propose better options, and ask for explicit confirmation before a risky override.
+- **Cross-application compatibility**: Changes must be checked against `server-2` and `web` ownership and contracts before execution; incompatible changes need an explicit cross-project plan or user confirmation.
 
 ## Key Decisions
 
@@ -148,6 +158,7 @@ Open implementation details for later phases:
 | Maintain README as current public project context | README is the first repository-facing contract for scope, status, commands, and workflow; it must clearly state that development happens only through AI + GSD. | - Pending |
 | Require clean git tree after completed work | Clean status makes handoff and review reliable; intended results should be committed, while ambiguous or user-owned changes require explicit user direction. | - Pending |
 | Require AI pushback on bad instructions | Blind compliance can damage architecture and project velocity; agents should explain why a request is risky and offer safer GSD-compatible alternatives. | - Pending |
+| Treat Solid Stats as a multi-project product | Parser work must remain compatible with `server-2` and `web`; checking adjacent application contracts prevents local parser changes from breaking product flows. | - Pending |
 
 ## Evolution
 
@@ -167,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after adding AI pushback and safer-alternative workflow requirements*
+*Last updated: 2026-04-25 after adding multi-project product compatibility requirements*
