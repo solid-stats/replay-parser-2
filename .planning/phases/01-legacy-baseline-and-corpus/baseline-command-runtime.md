@@ -1,101 +1,188 @@
 ---
 phase: 01
 artifact: baseline-command-runtime
-status: wave-0-gate
+status: ready
 ---
 
 # Baseline Command and Runtime
 
-## Plan 00 Source Command Gate
+## Summary
 
-This gate records the canonical old-parser source-command preflight required by D-01 and D-02 before any full old-parser baseline run.
+Phase 1 uses the legacy parser source command as the canonical baseline: `pnpm run parse`, mapped by `package.json` to `tsx src/start.ts`.
+
+Plan 00 initially reproduced a source-command failure under Node `v18.14.0`:
+
+```text
+SyntaxError: The requested module 'lodash' does not provide an export named 'isEmpty'
+```
+
+Gate decision: source command unblocked; workflow auto-advance selected `repair-source-command` and applied a separate source-runtime compatibility repair before any full baseline run.
+
+The repair was committed in the legacy parser repo at `5e639fc0af222d198a4d20c402f2c8edb0bdc90d`. It changed Lodash imports from named ESM imports to default imports plus destructuring, with no intended parser logic change. After that repair, `pnpm run parse -- --help` passed under Node `v18.14.0`.
+
+Two isolated full baseline profiles completed successfully:
+
+| Profile | Worker setting | Exit | Result files | Result bytes | Relative aggregate digest |
+|---------|----------------|------|--------------|--------------|---------------------------|
+| deterministic | `WORKER_COUNT=1` | 0 | 86,895 | 253,209,915 | `b6b9207e57a3887b132d206b05d3afe296805f3a924c7a73eba3ece73257bd54` |
+| default worker | `WORKER_COUNT` unset, legacy default 15 workers on this host | 0 | 86,895 | 253,162,569 | `4d4accdd26ba634a8bed820b1a0814de383e04b3b756d70ae1ede9f18edcef00` |
+
+Both runs used fake HOME isolation. The real `~/sg_stats/results` and `~/sg_stats/year_results` aggregate digests were unchanged before and after the runs.
+
+## Canonical Command
 
 | Field | Value |
 |-------|-------|
 | Legacy repo path | `/home/afgan0r/Projects/SolidGames/replays-parser` |
-| Legacy commit | `3392ca2f367a87f6eb59041a239e7ca2519e1ec5` |
+| Original legacy reference commit | `3392ca2f367a87f6eb59041a239e7ca2519e1ec5` |
+| Baseline source-command repair commit | `5e639fc0af222d198a4d20c402f2c8edb0bdc90d` |
 | Canonical command | `pnpm run parse` |
 | Script mapping | `parse` -> `tsx src/start.ts` |
-| Runtime target | `.nvmrc` `v18.14.0` |
-| Local pnpm version | `10.26.1` |
-| Lockfile hash | `df6c812b390fbb3a604deca8c3cf0c278501f3075a0da90d98248264828f132c` |
-| Preflight log path | `.planning/generated/phase-01/baseline-runs/20260425T073300Z-source-preflight/source-preflight.log` |
+| Secondary diagnostic command | `pnpm run parse:dist` |
 
-Preflight command:
+`parse:dist` is not the canonical Phase 1 baseline unless the user explicitly approves a fallback override.
 
-```bash
-cd /home/afgan0r/Projects/SolidGames/replays-parser
-source "$HOME/.nvm/nvm.sh"
-nvm use --silent v18.14.0
-pnpm run parse -- --help > "/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/generated/phase-01/baseline-runs/20260425T073300Z-source-preflight/source-preflight.log" 2>&1
-```
-
-Initial source command status: FAIL
-
-First actionable error lines:
-
-```text
-/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - utils/namesHelper/prepareNamesList.ts:4
-import { isEmpty } from 'lodash';
-         ^
-
-SyntaxError: The requested module 'lodash' does not provide an export named 'isEmpty'
-Node.js v18.14.0
-```
-
-No full old-parser baseline was run by Plan 00.
-
-## Plan 00 Gate Decision
-
-Gate decision: source command unblocked; workflow auto-advance selected `repair-source-command` and applied a separate source-runtime compatibility repair before any full baseline run.
-
-Compatibility repair:
+## Runtime Versions
 
 | Field | Value |
 |-------|-------|
-| Legacy repair commit | `5e639fc0af222d198a4d20c402f2c8edb0bdc90d` |
-| Repair scope | Replaced Lodash named ESM imports with default Lodash imports plus destructuring. |
-| Parser logic change | None intended; this is an import/runtime compatibility repair for the canonical source command. |
-| Post-repair preflight log path | `.planning/generated/phase-01/baseline-runs/20260425T073702Z-source-preflight-after-repair/source-preflight-after-repair.log` |
+| Runtime target from `.nvmrc` | `v18.14.0` |
+| `node --version` used for full runs | `v18.14.0` |
+| `pnpm --version` used for full runs | `10.33.0` |
+| Package manager value | `pnpm@10.33.0` |
+| `pnpm-lock.yaml` SHA-256 | `df6c812b390fbb3a604deca8c3cf0c278501f3075a0da90d98248264828f132c` |
+| `tsx` resolved version | `4.21.0` |
 
-Post-repair preflight command:
+Validation note: `pnpm run tsc` was attempted after the source-runtime repair and still fails on pre-existing NodeNext/package typing issues, including missing explicit relative import extensions and `@types/node`/DOM `AbortSignal` conflicts. That failure is not used as the Plan 00 gate because the canonical acceptance check is the source-command `--help` preflight.
+
+## Environment Inputs
+
+| Input | Value |
+|-------|-------|
+| Raw replays | real `~/sg_stats/raw_replays` symlinked into fake HOME |
+| Replay list | real `~/sg_stats/lists` symlinked into fake HOME |
+| Config input | real `~/sg_stats/config` copied into fake HOME when present |
+| Name changes | `~/sg_stats/config/nameChanges.csv` copied through the config directory |
+| Real results | real `~/sg_stats/results` not symlinked or copied |
+| Real yearly results | real `~/sg_stats/year_results` not symlinked or copied |
+
+The old parser resolves paths through `os.homedir()/sg_stats`, so every full profile set `HOME` to an ignored generated run directory.
+
+## Worker Count Profiles
+
+| Profile | Environment | Legacy behavior | Generated run path |
+|---------|-------------|-----------------|--------------------|
+| deterministic | `HOME=<fake-home> WORKER_COUNT=1 pnpm run parse` | Forces one worker for deterministic baseline evidence. | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-wc1/` |
+| default worker | `env -u WORKER_COUNT HOME=<fake-home> pnpm run parse` | Uses `os.cpus().length - 1`, clamped by `runtimeConfig.ts`; this host has 16 CPUs, so default worker count is 15. | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-default/` |
+
+Both profiles selected and processed 22,996 replays after legacy filtering. Both logs recorded the same malformed replay warnings for:
+
+- `2025_03_04__23_06_34__1_ocap` - unexpected end of JSON input
+- `2024_07_16__19_13_00__1_ocap` - unexpected token `<`
+- `2020_12_25__20_08_44_ocap` - unexpected token `с`
+
+## Non-Destructive Isolation
+
+Each full baseline profile used this fake HOME structure:
+
+```text
+.planning/generated/phase-01/baseline-runs/<run-id>/home/sg_stats/
+├── raw_replays -> ~/sg_stats/raw_replays
+├── lists -> ~/sg_stats/lists
+├── config/ copied from ~/sg_stats/config
+├── results/ generated by the old parser
+├── temp_results/ generated and moved by the old parser
+├── year_results/ generated empty by basic folder setup
+└── logs/ generated by the old parser
+```
+
+The profile setup explicitly did not symlink or copy real `~/sg_stats/results` or real `~/sg_stats/year_results` into fake HOME.
+
+Safety digests:
+
+| Target | Before | After | Result |
+|--------|--------|-------|--------|
+| real `~/sg_stats/results` | `f108264bb808a415df3bae14aa2435d8115351ba8f20a1391f716c535aeb95a5` | `f108264bb808a415df3bae14aa2435d8115351ba8f20a1391f716c535aeb95a5` | real ~/sg_stats/results unchanged |
+| real `~/sg_stats/year_results` | `dd2aa289fa2b487e6d5f0235829fcd97776bd23babd1185078a48cc7e5040453` | `dd2aa289fa2b487e6d5f0235829fcd97776bd23babd1185078a48cc7e5040453` | real ~/sg_stats/year_results unchanged |
+
+## Logs And Generated Artifacts
+
+Full logs, full hash lists, regenerated outputs, and comparison reports are ignored under `.planning/generated/phase-01/baseline-runs/`.
+
+| Artifact | Path |
+|----------|------|
+| Initial failing source preflight log | `.planning/generated/phase-01/baseline-runs/20260425T073300Z-source-preflight/source-preflight.log` |
+| Secondary `parse:dist` diagnostic log | `.planning/generated/phase-01/baseline-runs/20260425T073300Z-source-preflight/parse-dist-diagnostic.log` |
+| Passing post-repair source preflight log | `.planning/generated/phase-01/baseline-runs/20260425T073702Z-source-preflight-after-repair/source-preflight-after-repair.log` |
+| `WORKER_COUNT=1` baseline log | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-wc1/baseline.log` |
+| default worker baseline log | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-default/baseline.log` |
+| D-08 comparison report | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-current-vs-regenerated-results/current-vs-regenerated-results.json` |
+
+## Output Hash Summary
+
+| Output | File count | Size bytes | Hash list path | Aggregate SHA-256 |
+|--------|------------|------------|----------------|-------------------|
+| current `~/sg_stats/results` | 88,485 | 255,556,382 | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-current-vs-regenerated-results/current-results.relative.sha256` | `3b75db1e9caa11c885562a20582c3785e9ea3ccbaa7c364a55e66f588d8a7c5d` |
+| regenerated `WORKER_COUNT=1` results | 86,895 | 253,209,915 | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-wc1/results.relative.sha256` | `b6b9207e57a3887b132d206b05d3afe296805f3a924c7a73eba3ece73257bd54` |
+| regenerated default worker results | 86,895 | 253,162,569 | `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-default/results.relative.sha256` | `4d4accdd26ba634a8bed820b1a0814de383e04b3b756d70ae1ede9f18edcef00` |
+
+Each regenerated run also has `results.sha256`, `results-file-count.txt`, `results-size.txt`, and `results-relative-list.sha256` in its generated run path.
+
+## Current Results Comparison
+
+D-08 requires treating current `~/sg_stats/results` and regenerated old-parser outputs as dual evidence. Full comparison evidence is stored at `.planning/generated/phase-01/baseline-runs/20260425T074853Z-isolated-baseline-current-vs-regenerated-results/current-vs-regenerated-results.json`.
+
+| Comparison | Match | Category | Parser artifact impact | server-2 recalculation impact | UI-visible public stats impact | Notes |
+|------------|-------|----------|------------------------|-------------------------------|-------------------------------|-------|
+| current `~/sg_stats/results` vs regenerated `WORKER_COUNT=1` output | false | `human review` | yes | yes | yes | Current result file count/digest differs from regenerated old-parser output; no approved preserve/fix decision exists yet. |
+| current `~/sg_stats/results` vs regenerated default-worker output | false | `human review` | yes | yes | yes | Current result file count/digest differs from regenerated old-parser output; no approved preserve/fix decision exists yet. |
+
+Regenerated old-parser output also differs between worker profiles by aggregate digest and size even though both produced 86,895 files. This is baseline evidence for Phase 5 parity and determinism investigation; Phase 1 records it without deciding whether the difference is an old bug to preserve or fix.
+
+Allowed D-08 categories for future comparison reports are `compatible`, `intentional change`, `old bug preserved`, `old bug fixed`, `new bug`, `insufficient data`, and `human review`.
+
+## Reproduction Commands
+
+Source-command preflight:
 
 ```bash
 cd /home/afgan0r/Projects/SolidGames/replays-parser
 source "$HOME/.nvm/nvm.sh"
 nvm use --silent v18.14.0
-pnpm run parse -- --help > "/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/generated/phase-01/baseline-runs/20260425T073702Z-source-preflight-after-repair/source-preflight-after-repair.log" 2>&1
+pnpm run parse -- --help
 ```
 
-Source command status: PASS
-
-Post-repair preflight output:
-
-```text
-parse: Run the main replay parsing and statistics pipeline.
-Usage: pnpm run parse
-```
-
-Validation note: `pnpm run tsc` was attempted after the repair and still fails on pre-existing NodeNext/package typing issues, including missing explicit relative import extensions and `@types/node`/DOM `AbortSignal` conflicts. That failure is not used as the Plan 00 gate because the canonical acceptance check is the source-command `--help` preflight.
-
-## Secondary diagnostic only
-
-Diagnostic command:
+Deterministic profile pattern:
 
 ```bash
+RUN_ROOT="/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/generated/phase-01/baseline-runs/<run-id>-wc1"
+RUN_HOME="$RUN_ROOT/home"
+mkdir -p "$RUN_HOME/sg_stats"
+ln -s "$HOME/sg_stats/raw_replays" "$RUN_HOME/sg_stats/raw_replays"
+ln -s "$HOME/sg_stats/lists" "$RUN_HOME/sg_stats/lists"
+cp -a "$HOME/sg_stats/config" "$RUN_HOME/sg_stats/config"
 cd /home/afgan0r/Projects/SolidGames/replays-parser
 source "$HOME/.nvm/nvm.sh"
 nvm use --silent v18.14.0
-pnpm run parse:dist -- --help > "/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/generated/phase-01/baseline-runs/20260425T073300Z-source-preflight/parse-dist-diagnostic.log" 2>&1
+HOME="$RUN_HOME" WORKER_COUNT=1 pnpm run parse > "$RUN_ROOT/baseline.log" 2>&1
 ```
 
-Diagnostic status: PASS
+Default-worker profile pattern:
 
-Diagnostic output:
-
-```text
-parse: Run the main replay parsing and statistics pipeline.
-Usage: pnpm run parse
+```bash
+env -u WORKER_COUNT HOME="$RUN_HOME" pnpm run parse > "$RUN_ROOT/baseline.log" 2>&1
 ```
 
-parse:dist is not the canonical Phase 1 baseline unless the user explicitly approves a fallback override.
+Relative result digest pattern:
+
+```bash
+(cd "$RUN_HOME/sg_stats/results" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$RUN_ROOT/results.relative.sha256"
+sha256sum "$RUN_ROOT/results.relative.sha256"
+```
+
+## Open Baseline Issues
+
+- Current historical `~/sg_stats/results` differs from both regenerated old-parser outputs and is classified as `human review` until a future diff report identifies why.
+- The deterministic and default-worker regenerated outputs differ by relative aggregate digest and size even though both produced 86,895 files.
+- Three malformed replay files are observed in both full-run logs and should be represented in corpus profile/mismatch work.
+- `pnpm run tsc` in the legacy repo remains blocked by pre-existing NodeNext/package typing issues; this does not block the source-command baseline but should not be misread as a clean legacy typecheck.
