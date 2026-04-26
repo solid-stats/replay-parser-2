@@ -54,7 +54,14 @@ Plans:
   2. Server integrator can consume normalized replay metadata, observed identity fields, and explicit unknown/null states without canonical player matching.
   3. Developer can trace normalized events and aggregate contributions back to replay, frame, event index, entity ID, and rule ID where available.
   4. Developer can validate structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
-**Plans**: TBD
+**Plans**: 5 plans
+**Execution waves**: Wave 1 runs `02-00-PLAN.md`; Wave 2 runs `02-01-PLAN.md`; Wave 3 runs `02-02-PLAN.md`; Wave 4 runs `02-03-PLAN.md`; Wave 5 runs `02-04-PLAN.md`.
+Plans:
+- [ ] 02-00-PLAN.md — Rust workspace and contract crate foundation.
+- [ ] 02-01-PLAN.md — ParseArtifact envelope, status metadata, source identity, diagnostics, and success example.
+- [ ] 02-02-PLAN.md — Replay metadata, observed identity, and explicit presence semantics.
+- [ ] 02-03-PLAN.md — Source references, normalized event skeleton, aggregate contribution references, and rule IDs.
+- [ ] 02-04-PLAN.md — Structured failures, generated schema, validated examples, README handoff, and final checks.
 
 ### Phase 3: Deterministic Parser Core
 **Goal**: The Rust parser core can read historical OCAP JSON and return deterministic normalized metadata and observed entity facts without transport concerns.
@@ -125,7 +132,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
-| 2. Versioned Output Contract | 0/TBD | Not started | - |
+| 2. Versioned Output Contract | 0/5 | Ready to execute | - |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
