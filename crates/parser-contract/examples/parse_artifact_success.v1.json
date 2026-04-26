@@ -1,0 +1,29 @@
+{
+  "contract_version": "1.0.0",
+  "parser": {
+    "name": "replay-parser-2",
+    "version": "0.1.0",
+    "build": {
+      "git_commit": "unknown",
+      "target": "unknown",
+      "profile": "debug"
+    }
+  },
+  "source": {
+    "replay_id": "replay-0001",
+    "source_file": "2025_04_05__23_27_21__1_ocap.json",
+    "checksum": {
+      "algorithm": "sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "status": "success",
+  "produced_at": null,
+  "diagnostics": [],
+  "replay": null,
+  "entities": [],
+  "events": [],
+  "aggregates": {},
+  "failure": null,
+  "extensions": {}
+}

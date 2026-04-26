@@ -10,6 +10,8 @@ use parser_contract::{
 use semver::Version;
 use serde_json::{Value, json};
 
+const SUCCESS_EXAMPLE: &str = include_str!("../examples/parse_artifact_success.v1.json");
+
 fn parser_info() -> ParserInfo {
     ParserInfo {
         name: "replay-parser-2".to_string(),
@@ -152,5 +154,30 @@ fn diagnostics_are_path_based_rule_id_should_reject_empty_values() {
             .expect("non-empty rule ID should be accepted")
             .as_str(),
         "source.event_shape"
+    );
+}
+
+#[test]
+fn parse_artifact_success_example_should_round_trip_stable_envelope_fields() {
+    let input_value: Value =
+        serde_json::from_str(SUCCESS_EXAMPLE).expect("success example should be valid JSON");
+    let artifact: ParseArtifact =
+        serde_json::from_value(input_value.clone()).expect("example should deserialize");
+
+    let output_value = serde_json::to_value(&artifact).expect("example should reserialize");
+
+    assert_eq!(input_value["contract_version"], "1.0.0");
+    assert_eq!(
+        output_value["contract_version"],
+        input_value["contract_version"]
+    );
+    assert_eq!(output_value["status"], input_value["status"]);
+    assert_eq!(
+        output_value["source"]["source_file"],
+        input_value["source"]["source_file"]
+    );
+    assert_eq!(
+        output_value["parser"]["name"],
+        input_value["parser"]["name"]
     );
 }
