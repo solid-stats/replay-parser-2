@@ -6,15 +6,31 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-This repository is currently in planning phase. It does not yet contain a runnable Rust workspace, CLI, worker, or test suite.
+Phase 2 contract work is implemented. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, and contract tests. It does not yet contain the parser core, CLI binary, RabbitMQ/S3 worker, golden parity harness, or benchmark suite.
 
-- Current phase: Phase 1, `Legacy Baseline and Corpus`.
+- Current phase: Phase 2, `Versioned Output Contract`.
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
-- Phase execution command: `$gsd-execute-phase 1`.
-- Phase 1 review target: the committed baseline, corpus, legacy-rules, and mismatch-taxonomy dossiers under `.planning/phases/01-legacy-baseline-and-corpus/`.
+- Contract crate: `crates/parser-contract`.
+- Contract schema: `schemas/parse-artifact-v1.schema.json`.
+- Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
 
-Until implementation starts, there are no build, parse, benchmark, or test commands to run from this repository.
+The implemented developer validation commands are:
+
+```bash
+cargo test -p parser-contract
+cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v1.schema.json
+```
+
+The broader workspace gate is:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+Parse, worker, comparison, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -88,6 +104,7 @@ Phase 1 dossiers:
 The expected implementation shape is:
 
 - Rust 2024 Cargo workspace.
+- Current contract crate at `crates/parser-contract`.
 - Pure parser core shared by CLI, worker, tests, benchmarks, and comparison tools.
 - Thin runtime adapters for CLI and RabbitMQ/S3 worker mode.
 - `serde` / `serde_json` for correctness-first OCAP JSON parsing.
@@ -96,6 +113,8 @@ The expected implementation shape is:
 - `tracing` and structured `ParseFailure` output for diagnostics.
 
 Parser output must preserve observed replay identity fields only, such as nickname, side, squad/group fields, entity IDs, and SteamID when available. Canonical player matching belongs to `server-2`.
+
+`replay-parser-2` owns the parser artifact contract and schema. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
 
 ## Planned User Commands
 
