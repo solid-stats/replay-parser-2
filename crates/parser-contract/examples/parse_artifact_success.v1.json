@@ -20,12 +20,202 @@
   "status": "success",
   "produced_at": null,
   "diagnostics": [],
-  "replay": null,
-  "entities": [],
-  "events": [],
+  "replay": {
+    "mission_name": {
+      "state": "present",
+      "value": "Operation Solid",
+      "source": null
+    },
+    "world_name": {
+      "state": "present",
+      "value": "Altis",
+      "source": null
+    },
+    "mission_author": {
+      "state": "present",
+      "value": "SolidGames",
+      "source": null
+    },
+    "players_count": {
+      "state": "present",
+      "value": [
+        42,
+        39
+      ],
+      "source": null
+    },
+    "capture_delay": {
+      "state": "present",
+      "value": 2.5,
+      "source": null
+    },
+    "end_frame": {
+      "state": "present",
+      "value": 98765,
+      "source": null
+    },
+    "time_bounds": {
+      "state": "present",
+      "value": {
+        "start_seconds": 0.0,
+        "end_seconds": 987.65
+      },
+      "source": null
+    },
+    "frame_bounds": {
+      "state": "present",
+      "value": {
+        "start_frame": 0,
+        "end_frame": 98765
+      },
+      "source": null
+    }
+  },
+  "entities": [
+    {
+      "source_entity_id": 101,
+      "kind": "unit",
+      "identity": {
+        "nickname": {
+          "state": "present",
+          "value": "Afganor",
+          "source": null
+        },
+        "steam_id": {
+          "state": "unknown",
+          "reason": "missing_steam_id",
+          "source": null
+        },
+        "side": {
+          "state": "present",
+          "value": "west",
+          "source": null
+        },
+        "faction": {
+          "state": "unknown",
+          "reason": "source_field_absent",
+          "source": null
+        },
+        "group": {
+          "state": "present",
+          "value": "Alpha 1-1",
+          "source": null
+        },
+        "squad": {
+          "state": "unknown",
+          "reason": "source_field_absent",
+          "source": null
+        },
+        "role": {
+          "state": "present",
+          "value": "Rifleman",
+          "source": null
+        },
+        "description": {
+          "state": "present",
+          "value": "Squad member",
+          "source": null
+        }
+      },
+      "source_refs": [
+        {
+          "replay_id": "replay-0001",
+          "source_file": "2025_04_05__23_27_21__1_ocap.json",
+          "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "frame": 0,
+          "event_index": null,
+          "entity_id": 101,
+          "json_path": "$.entities[101]",
+          "rule_id": "identity.observed_entity"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "event_id": "event-0007",
+      "kind": "vehicle_killed",
+      "frame": {
+        "state": "present",
+        "value": 12345,
+        "source": null
+      },
+      "event_index": {
+        "state": "present",
+        "value": 7,
+        "source": null
+      },
+      "actors": [
+        {
+          "source_entity_id": {
+            "state": "present",
+            "value": 101,
+            "source": null
+          },
+          "observed_name": {
+            "state": "present",
+            "value": "Afganor",
+            "source": null
+          },
+          "side": {
+            "state": "present",
+            "value": "west",
+            "source": null
+          }
+        }
+      ],
+      "source_refs": [
+        {
+          "replay_id": "replay-0001",
+          "source_file": "2025_04_05__23_27_21__1_ocap.json",
+          "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "frame": 12345,
+          "event_index": 7,
+          "entity_id": 99,
+          "json_path": "$.events[7]",
+          "rule_id": "event.vehicle_killed.source"
+        }
+      ],
+      "rule_id": "event.vehicle_killed",
+      "attributes": {
+        "vehicle_class": "rhs_btr80"
+      }
+    }
+  ],
   "aggregates": {
-    "contributions": [],
-    "projections": {}
+    "contributions": [
+      {
+        "contribution_id": "contribution-vehicle-score-0007",
+        "kind": "vehicle_score_input",
+        "event_id": "event-0007",
+        "source_refs": [
+          {
+            "replay_id": "replay-0001",
+            "source_file": "2025_04_05__23_27_21__1_ocap.json",
+            "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "frame": 12345,
+            "event_index": 7,
+            "entity_id": 99,
+            "json_path": "$.events[7]",
+            "rule_id": "aggregate.vehicle_score.source"
+          }
+        ],
+        "rule_id": "aggregate.vehicle_score.contribution",
+        "value": {
+          "weight": 1.5,
+          "attacker_vehicle": "apc",
+          "killed_entity": "player"
+        }
+      }
+    ],
+    "projections": {
+      "vehicle_score_inputs": [
+        {
+          "observed_name": "Afganor",
+          "contribution_id": "contribution-vehicle-score-0007"
+        }
+      ]
+    }
   },
   "failure": null,
   "extensions": {}

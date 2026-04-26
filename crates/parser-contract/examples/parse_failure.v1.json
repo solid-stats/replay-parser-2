@@ -1,0 +1,57 @@
+{
+  "contract_version": "1.0.0",
+  "parser": {
+    "name": "replay-parser-2",
+    "version": "0.1.0",
+    "build": {
+      "git_commit": "unknown",
+      "target": "unknown",
+      "profile": "debug"
+    }
+  },
+  "source": {
+    "replay_id": "replay-0001",
+    "source_file": "2025_04_05__23_27_21__1_ocap.json",
+    "checksum": {
+      "algorithm": "sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "status": "failed",
+  "produced_at": null,
+  "diagnostics": [],
+  "replay": null,
+  "entities": [],
+  "events": [],
+  "aggregates": {
+    "contributions": [],
+    "projections": {}
+  },
+  "failure": {
+    "job_id": "job-0001",
+    "replay_id": "replay-0001",
+    "source_file": "2025_04_05__23_27_21__1_ocap.json",
+    "checksum": {
+      "algorithm": "sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "stage": "json_decode",
+    "error_code": "json.decode",
+    "message": "Replay JSON could not be decoded",
+    "retryability": "not_retryable",
+    "source_cause": "expected value at line 1 column 1",
+    "source_refs": [
+      {
+        "replay_id": "replay-0001",
+        "source_file": "2025_04_05__23_27_21__1_ocap.json",
+        "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "frame": null,
+        "event_index": null,
+        "entity_id": null,
+        "json_path": "$",
+        "rule_id": "failure.json.decode"
+      }
+    ]
+  },
+  "extensions": {}
+}

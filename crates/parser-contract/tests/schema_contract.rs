@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf};
 
-use parser_contract::schema::parse_artifact_schema;
+use parser_contract::{artifact::ParseArtifact, schema::parse_artifact_schema};
+use serde_json::Value;
 
 fn workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -13,6 +14,19 @@ fn workspace_root() -> PathBuf {
 
 fn committed_schema_path() -> PathBuf {
     workspace_root().join("schemas/parse-artifact-v1.schema.json")
+}
+
+fn success_example_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_artifact_success.v1.json")
+}
+
+fn failure_example_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_failure.v1.json")
+}
+
+fn read_json(path: PathBuf) -> Value {
+    let text = fs::read_to_string(path).expect("JSON fixture should be readable");
+    serde_json::from_str(&text).expect("JSON fixture should parse")
 }
 
 fn freshly_generated_schema_text() -> String {
@@ -62,4 +76,55 @@ fn schema_contract_committed_schema_should_match_fresh_generation() {
     let fresh_schema_text = freshly_generated_schema_text();
 
     assert_eq!(committed_schema_text, fresh_schema_text);
+}
+
+#[test]
+fn schema_contract_success_and_failure_examples_should_deserialize_into_parse_artifact() {
+    for example_path in [success_example_path(), failure_example_path()] {
+        let example = read_json(example_path);
+        let _: ParseArtifact =
+            serde_json::from_value(example).expect("example should deserialize into ParseArtifact");
+    }
+}
+
+#[test]
+fn schema_contract_success_and_failure_examples_should_validate_against_committed_schema() {
+    let schema = read_json(committed_schema_path());
+    let validator = jsonschema::draft202012::new(&schema).expect("committed schema should compile");
+
+    for example_path in [success_example_path(), failure_example_path()] {
+        let example = read_json(example_path);
+        let validation = validator.validate(&example);
+        assert!(
+            validation.is_ok(),
+            "example should validate against committed schema: {:?}",
+            validation.err()
+        );
+    }
+}
+
+#[test]
+fn schema_contract_failure_example_should_include_required_structured_failure_fields() {
+    let failure_example = read_json(failure_example_path());
+    let failure = &failure_example["failure"];
+
+    for expected_field in [
+        "job_id",
+        "replay_id",
+        "source_file",
+        "stage",
+        "error_code",
+        "message",
+        "retryability",
+        "source_cause",
+    ] {
+        assert!(
+            failure.get(expected_field).is_some(),
+            "failure example should include {expected_field}"
+        );
+    }
+    assert_eq!(failure_example["status"], "failed");
+    assert_eq!(failure["stage"], "json_decode");
+    assert_eq!(failure["error_code"], "json.decode");
+    assert_eq!(failure["retryability"], "not_retryable");
 }
