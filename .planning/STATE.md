@@ -75,10 +75,12 @@ Recent decisions affecting current work:
 - README.md must stay current and explicitly state that project development uses only AI agents plus GSD workflow.
 - Completed work must leave the git tree clean by committing intended results; never delete completed work just to make status clean, and ask when unclear.
 - AI agents must challenge requests that conflict with project logic, architecture, quality, maintainability, or proportional scope; they should explain the risk, offer safer alternatives, and ask for explicit confirmation before a risky override.
-- Solid Stats consists of `replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
-- GSD workflow rules apply product-wide across all three apps; compatibility checks are risk-based, escalating from local docs/briefs to adjacent app docs/repos or a user question when cross-app risk exists.
+- Solid Stats consists of `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
+- GSD workflow rules apply product-wide across all four apps; compatibility checks are risk-based, escalating from local docs/briefs to adjacent app docs/repos or a user question when cross-app risk exists.
 - Frontend API typing should use `openapi-typescript` generated from the `server-2` OpenAPI schema; parser contract changes that surface in APIs must account for this type-generation flow.
 - README.md should primarily serve humans and developers as the repository entry point; AI/GSD workflow rules belong in a dedicated development section, not as the whole document.
+- `replays-fetcher` owns production replay discovery/fetching, S3 `raw/` object writes, and ingestion staging/outbox records; `server-2` promotes staged records into `replays` and `parse_jobs`.
+- Successful parser-worker results are stored as S3 `artifacts/` objects and reported to `server-2` by artifact reference over RabbitMQ.
 
 ### Pending Todos
 
@@ -102,6 +104,7 @@ None yet.
 | 260425-g0r | Rewrote README as a human-facing project entry point | 2026-04-25 | docs-only |  | [260425-g0r-rewrite-readme-for-humans-and-developers](./quick/260425-g0r-rewrite-readme-for-humans-and-developers/) |
 | 260426-eja | Renamed project identity to `replay-parser-2` | 2026-04-26 | docs-only |  | [260426-eja-rename-project-to-replay-parser-2](./quick/260426-eja-rename-project-to-replay-parser-2/) |
 | 260426-joq | Added strict stable Rust lint, format, docs, and type-safety gates | 2026-04-26 | 7ad4af4 | Verified | [260426-joq-strict-quality-rules](./quick/260426-joq-strict-quality-rules/) |
+| 260426-rfs | Added `replays-fetcher` product boundary and S3 artifact-reference result policy | 2026-04-26 | docs-only | Verified | [260426-rfs-replays-fetcher-boundary](./quick/260426-rfs-replays-fetcher-boundary/) |
 
 ## Deferred Items
 

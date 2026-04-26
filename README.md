@@ -48,11 +48,12 @@ Parser-core, parse, worker, comparison, and benchmark commands are still planned
 
 Solid Stats is a multi-project SolidGames statistics product:
 
+- `replays-fetcher` owns replay discovery from the external source, raw S3 object writes, source metadata, and ingestion staging/outbox records.
 - `replay-parser-2` owns replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and parity with the old parser.
 - `server-2` owns PostgreSQL persistence, public and private APIs, canonical player identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate and bounty calculation, and operations visibility.
 - `web` owns the browser UI, public stats pages, authenticated request flows, moderator/admin screens, and typed API consumption from `server-2`.
 
-This project only owns parser behavior and parser output contracts. Website behavior, authentication, canonical identity matching, moderation workflows, and PostgreSQL business-table writes belong to the adjacent applications.
+This project only owns parser behavior and parser output contracts. Replay discovery/fetching, website behavior, authentication, canonical identity matching, moderation workflows, and PostgreSQL business-table writes belong to the adjacent applications.
 
 ## What v1 Should Deliver
 
@@ -61,6 +62,7 @@ The first release should provide:
 - A Rust parser for historical OCAP JSON replay files.
 - A local CLI for parsing a replay file and writing normalized JSON output.
 - A RabbitMQ/S3 worker mode for `server-2` integration.
+- S3 artifact-reference result delivery for successful worker parses.
 - Deterministic normalized event output with source references.
 - Explicit unknown/null states for missing winner, SteamID, killer, commander, or source fields.
 - Legacy-compatible aggregate projections for current SolidGames statistics.
@@ -74,6 +76,7 @@ The first release should provide:
 The parser will not own:
 
 - Public website or UI.
+- Replay discovery or production fetching from the external replay source.
 - Steam OAuth.
 - Canonical player identity matching.
 - PostgreSQL business-table persistence.
@@ -126,7 +129,9 @@ The expected implementation shape is:
 
 Parser output must preserve observed replay identity fields only, such as nickname, side, squad/group fields, entity IDs, and SteamID when available. Canonical player matching belongs to `server-2`.
 
-`replay-parser-2` owns the parser artifact contract and schema. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
+Production raw replay discovery is owned by `replays-fetcher`: it writes raw replay objects under S3 `raw/` and ingestion staging records. `server-2` promotes staged records into canonical `replays` and `parse_jobs`, then passes `object_key` and `checksum` to this parser through RabbitMQ.
+
+`replay-parser-2` owns the parser artifact contract and schema. Successful worker parses write deterministic parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
 
 ## Planned User Commands
 
@@ -172,11 +177,11 @@ For project-changing work:
 - `.planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md`: Phase 1 full-history corpus profile summary.
 - `.planning/phases/01-legacy-baseline-and-corpus/legacy-rules-output-surfaces.md`: Phase 1 legacy filters, identity, and output-surface inventory.
 - `.planning/phases/01-legacy-baseline-and-corpus/mismatch-taxonomy-interface-notes.md`: Phase 1 mismatch taxonomy and cross-app interface notes.
-- `gsd-briefs/`: project briefs for `replay-parser-2`, `server-2`, and `web`.
+- `gsd-briefs/`: project briefs for `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`.
 - `AGENTS.md`: repository-specific instructions for AI agents.
 
 ## README Maintenance
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-26.
+Last updated: 2026-04-26 after adding the `replays-fetcher` product boundary.

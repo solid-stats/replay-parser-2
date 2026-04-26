@@ -12,6 +12,7 @@ When in doubt, prefer enabling the skill briefly and filtering it out over skipp
 
 Solid Stats is a multi-project product composed of:
 
+- `replays-fetcher` - replay discovery, raw S3 object storage, source metadata, ingestion staging/outbox records.
 - `replay-parser-2` - parser, parse artifact contract, CLI/worker, parity harness.
 - `server-2` - backend source of truth, PostgreSQL, APIs, canonical identity, auth, moderation, parse jobs, aggregate/bounty calculation.
 - `web` - browser UI, public stats, authenticated request UX, moderator/admin screens, API consumption.
@@ -29,14 +30,15 @@ Read these planning files before planning or implementing:
 - The old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is the required v1 behavioral reference.
 - Historical data at `~/sg_stats` is the golden/test and benchmark baseline.
 - The new parser must preserve observed replay identity fields only. Canonical player matching belongs to `server-2`.
+- External replay discovery, production raw replay fetching, and ingestion staging belong to `replays-fetcher`; parser worker consumes `server-2` parse jobs and S3 object keys only.
 - PostgreSQL persistence, public UI, Steam OAuth, correction workflow, and final bounty/reward rules are outside this parser.
 - GitHub issue #13 vehicle score is an explicit v1 requirement and is covered in Phase 4.
-- Before executing any task, verify the requested change does not contradict `server-2` or `web` responsibilities and remains compatible with their contracts, data ownership, and user-facing expectations.
+- Before executing any task, verify the requested change does not contradict `replays-fetcher`, `server-2`, or `web` responsibilities and remains compatible with their contracts, data ownership, and user-facing expectations.
 
 ## Current GSD State
 
-- Current focus: Phase 1, `Legacy Baseline and Corpus`.
-- Next command: `$gsd-discuss-phase 1 --auto` or `$gsd-plan-phase 1`.
+- Current focus: Phase 3, `Deterministic Parser Core`.
+- Next command: `$gsd-execute-phase 3`.
 - Roadmap has 7 phases and maps all 71 v1 requirements.
 
 ## Stack Direction
@@ -68,5 +70,5 @@ Keep Node/pnpm only as a development dependency for running the legacy parser ba
 - Do not blindly execute instructions that conflict with current logic, architecture, accepted planning decisions, test/quality standards, maintainability, or proportional scope.
 - When a request is risky or harmful, explain the concrete reason, propose 1-3 safer alternatives, and ask for explicit confirmation before any risky override.
 - Check cross-application compatibility before implementation: parser contract changes must account for `server-2`, and parser output/data-shape changes must account for `web` needs through `server-2` APIs.
-- Apply these AI/GSD workflow rules as product-wide standards across `replay-parser-2`, `server-2`, and `web`.
-- Use risk-based compatibility depth: local-only parser changes can rely on this repo's planning docs and `gsd-briefs`; parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require adjacent app docs/repos or a user question.
+- Apply these AI/GSD workflow rules as product-wide standards across `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`.
+- Use risk-based compatibility depth: local-only parser changes can rely on this repo's planning docs and `gsd-briefs`; parser contract, RabbitMQ/S3 message, artifact shape, raw replay object key assumptions, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require adjacent app docs/repos or a user question.

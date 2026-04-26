@@ -30,8 +30,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Repository has a current `README.md` that documents project purpose, scope, current GSD phase, architecture direction, validation data, and the AI + GSD-only development workflow.
   2. Completed GSD/agent work leaves a clean git working tree by committing intended results, never by deleting or discarding completed work; unclear cases are escalated to the user.
   3. Agents challenge instructions that conflict with architecture, current logic, quality standards, maintainability, or proportional scope; they explain the risk and propose safer alternatives instead of blindly complying.
-  4. Agents can identify Solid Stats as a multi-project product made of `replay-parser-2`, `server-2`, and `web`, and apply product-wide GSD workflow rules across those projects.
-  5. Agents use risk-based cross-application compatibility checks: local docs/briefs for local-only changes, adjacent app docs/repos or user confirmation for contract, queue/storage, API/data, identity/auth, moderation, or UI-visible changes.
+  4. Agents can identify Solid Stats as a multi-project product made of `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`, and apply product-wide GSD workflow rules across those projects.
+  5. Agents use risk-based cross-application compatibility checks: local docs/briefs for local-only changes, adjacent app docs/repos or user confirmation for contract, ingest staging/source identity assumptions, queue/storage, API/data, identity/auth, moderation, or UI-visible changes.
   6. Developer can run the pinned old parser baseline and see the command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
   7. Developer can inspect a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.
   8. Developer can inspect documented old parser game-type filters, skip rules, exclusions, and config inputs.
@@ -112,13 +112,13 @@ Plans:
 **Plans**: TBD
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
-**Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, and publishes durable success or failure results.
+**Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
 **Depends on**: Phase 5
 **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05, WORK-06, WORK-07
 **Success Criteria** (what must be TRUE):
   1. Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
   2. Worker downloads replay files from S3-compatible storage with configurable endpoint, bucket, credentials, and path-style settings, then fails structurally on checksum mismatch.
-  3. Successful jobs write or publish deterministic parse artifacts and emit `parse.completed` messages with job/replay identifiers, contract version, checksum, and artifact reference or payload.
+  3. Successful jobs write deterministic parse artifacts to S3 and emit `parse.completed` messages with job/replay identifiers, contract version, checksum, and artifact reference.
   4. Failed jobs emit `parse.failed` messages with structured error data and retryability.
   5. RabbitMQ jobs are acknowledged only after result or artifact publication succeeds, with manual ack/nack behavior for failure paths.
 **Plans**: TBD

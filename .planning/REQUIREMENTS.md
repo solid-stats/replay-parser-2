@@ -22,10 +22,10 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Product Integration
 
-- [x] **INT-01**: Solid Stats is treated as a multi-project product composed of `replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
-- [x] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
-- [x] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `replay-parser-2`, `server-2`, and `web`.
-- [x] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
+- [x] **INT-01**: Solid Stats is treated as a multi-project product composed of `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
+- [x] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, replay ingest/staging assumptions, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
+- [x] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`.
+- [x] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, ingest staging/source identity assumptions, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
 
 ### Legacy Baseline
 
@@ -98,8 +98,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [ ] **WORK-01**: Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
 - [ ] **WORK-02**: Worker downloads replay files from S3-compatible object storage using configurable endpoint, bucket, credentials, and path-style settings.
 - [ ] **WORK-03**: Worker verifies downloaded object checksum before parsing and emits structured failure on mismatch.
-- [ ] **WORK-04**: Worker writes or publishes successful parse artifacts using a deterministic artifact key or payload format agreed with `server-2`.
-- [ ] **WORK-05**: Worker publishes `parse.completed` result messages with job/replay identifiers, parser contract version, checksum, and artifact reference or payload.
+- [ ] **WORK-04**: Worker writes successful parse artifacts to S3-compatible storage using a deterministic artifact key agreed with `server-2`.
+- [ ] **WORK-05**: Worker publishes `parse.completed` result messages with job/replay identifiers, parser contract version, checksum, and artifact reference.
 - [ ] **WORK-06**: Worker publishes `parse.failed` result messages with structured error data and retryability.
 - [ ] **WORK-07**: Worker uses manual ack/nack behavior and acknowledges RabbitMQ jobs only after result/artifact publication succeeds.
 - [ ] **WORK-08**: Worker can run multiple instances in parallel without duplicate artifact corruption or nondeterministic parser output.
@@ -125,6 +125,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Feature | Reason |
 |---------|--------|
 | Public website and UI | Owned by `web`, not parser. |
+| Replay discovery and production fetching from the external replay source | Owned by `replays-fetcher`; parser consumes local files or `server-2` parse jobs only. |
 | Steam OAuth | Owned by `server-2`/`web`; parser only preserves observed identifiers. |
 | Canonical player matching | `server-2` owns real player identity across nicknames and SteamIDs. |
 | User roles, moderation, and correction workflow | Product workflow belongs to `server-2` and `web`. |

@@ -7,11 +7,11 @@
 
 ## Executive Summary
 
-`replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
+`replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. Production replay discovery/fetching is now owned by the separate `replays-fetcher` service; this parser consumes local files or `server-2` parse jobs pointing at S3 raw objects. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
 
 The recommended approach is to start with corpus and legacy behavior discovery, then lock the output contract, then implement the Rust core and aggregate projection against executable parity tests. The parser should emit normalized observed facts with source references first, then derive legacy-compatible aggregate summaries from those normalized events. CLI and worker modes must call the same core; worker-specific RabbitMQ, S3, checksum, retry, and artifact concerns belong outside the parser core.
 
-The main risks are semantic drift from the old parser, aggregate-only output that cannot be audited, accidental canonical identity matching inside the parser, nondeterministic JSON output, false 10x performance claims, and unsafe worker acknowledgement/checksum behavior. Mitigation is mostly roadmap order: prove old behavior and corpus shapes before contract design, make normalized events primary, keep canonical identity and PostgreSQL in `server-2`, require old-vs-new diff reports, benchmark identical file sets, and acknowledge RabbitMQ jobs only after durable artifact/result publication.
+The main risks are semantic drift from the old parser, aggregate-only output that cannot be audited, accidental canonical identity matching inside the parser, nondeterministic JSON output, false 10x performance claims, unsafe worker acknowledgement/checksum behavior, and accidental ownership drift into `replays-fetcher` ingestion concerns. Mitigation is mostly roadmap order: prove old behavior and corpus shapes before contract design, make normalized events primary, keep canonical identity and PostgreSQL in `server-2`, keep replay discovery/staging in `replays-fetcher`, require old-vs-new diff reports, benchmark identical file sets, and acknowledge RabbitMQ jobs only after durable artifact/result publication.
 
 ## Key Findings
 
@@ -45,7 +45,7 @@ The product should not become a broader stats platform. Parser-owned output is o
 
 **Must have (table stakes):**
 - Legacy parser parity contract - old `replays-parser` is the required behavioral reference.
-- OCAP JSON ingestion - support the historical `~/sg_stats/raw_replays` corpus and observed top-level keys.
+- OCAP JSON parsing from local files or `server-2` S3 object jobs - support the historical `~/sg_stats/raw_replays` corpus and observed top-level keys.
 - Entity normalization - units, vehicles, sides, groups, observed names, and source entity IDs.
 - Connected-player backfill and duplicate-slot merge compatibility - required for old aggregate parity.
 - Kill/death/teamkill extraction - core event semantics for stats and bounty inputs.
@@ -57,7 +57,7 @@ The product should not become a broader stats platform. Parser-owned output is o
 - CLI parse mode - local deterministic reproduction without RabbitMQ/S3.
 - Golden corpus and old-vs-new diff harness - parity must be executable, not asserted.
 - Benchmark harness - measure 10x goal against the pinned old parser command on identical inputs.
-- Worker mode - RabbitMQ parse requests, S3-compatible downloads, checksum verification, structured completed/failed results.
+- Worker mode - RabbitMQ parse requests, S3-compatible raw replay downloads, checksum verification, S3 artifact-reference result delivery, and structured completed/failed results.
 - Structured failures/skips and observability - machine-readable operator and retry decisions.
 
 **Should have (competitive):**
@@ -90,7 +90,7 @@ The architecture should be "pure core, imperative shell" plus a dedicated legacy
 6. Normalization modules - metadata, entities, connected players, events, vehicle context, commander, outcome, and observed identity.
 7. Source-reference builder - stable event/entity/frame pointers for audit and aggregate traceability.
 8. CLI adapter - deterministic local parse/schema/compare commands and structured failure exit behavior.
-9. Worker adapter - bounded RabbitMQ/S3 lifecycle, checksum validation, durable artifact write, completed/failed publish, safe ack/nack.
+9. Worker adapter - bounded RabbitMQ/S3 lifecycle, checksum validation, durable S3 artifact write, artifact-reference completed publish, failed publish, safe ack/nack.
 10. Golden and benchmark harness - corpus manifests, fixtures, parity reports, repeatability checks, and throughput/RSS reports.
 
 ### Critical Pitfalls
@@ -167,7 +167,7 @@ Based on research, suggested phase structure:
 
 **Rationale:** Worker mode should come after core parity is credible. Queue/storage bugs should not hide parser semantic bugs.
 
-**Delivers:** worker config, RabbitMQ consumer with manual ack and bounded prefetch, parse request validation, S3-compatible download, checksum/size verification, artifact write under deterministic key, `parse.completed`/`parse.failed` publish with confirms, nack/retry/DLQ behavior, structured worker logs.
+**Delivers:** worker config, RabbitMQ consumer with manual ack and bounded prefetch, parse request validation, S3-compatible raw object download, checksum/size verification, artifact write under deterministic S3 key, `parse.completed` with artifact reference, `parse.failed` publish with confirms, nack/retry/DLQ behavior, structured worker logs.
 
 **Uses:** `tokio`, `lapin`, `aws-sdk-s3`, `tempfile`, `tracing`, `tokio-util`, `testcontainers`.
 
@@ -202,7 +202,7 @@ Based on research, suggested phase structure:
 Phases likely needing deeper research during planning:
 - **Phase 1:** local old-parser behavior and corpus profiling are project-specific; run `/gsd-research-phase` or an equivalent spike if old command execution, output paths, skip rules, or corpus shape inventory are unclear.
 - **Phase 4:** commander-side/winner extraction, temporal vehicle context, vehicle score issue #13 semantics, and exact legacy formulas need deeper corpus-backed research before locking acceptance criteria.
-- **Phase 6:** exact `server-2` RabbitMQ exchange/routing keys, retry/DLX policy, checksum algorithm, object key conventions, and artifact payload/reference choice need integration research with `server-2`.
+- **Phase 6:** exact `server-2` RabbitMQ exchange/routing keys, retry/DLX policy, checksum algorithm, `replays-fetcher` raw object key conventions as exposed through `server-2`, and deterministic artifact key conventions need integration research with adjacent apps.
 - **Phase 7:** resource limits, container health semantics, and S3-compatible behavior should be validated against the actual deployment target, not only AWS docs.
 
 Phases with standard patterns where generic research can usually be skipped:
@@ -219,6 +219,10 @@ Phases with standard patterns where generic research can usually be skipped:
 | Architecture | HIGH | Service boundaries, pure core/adapters, contract-first output, old-parser harness, and `server-2` ownership boundaries are consistent across research files. Exact crate split can remain pragmatic during implementation. |
 | Pitfalls | HIGH | Risks are concrete and project-specific, especially old-parser compatibility, source refs, observed identity, deterministic output, worker ack/checksum, and benchmark validity. Exact OCAP edge cases need corpus profiling. |
 
+### 2026-04-26 Architecture Update
+
+`replays-fetcher` was added as a separate Solid Stats repository for production replay discovery and raw ingest. Its accepted boundary is S3 `raw/` object writes plus ingestion staging/outbox records only. `server-2` promotes those records into canonical replay and parse-job state. `replay-parser-2` must not crawl the external replay source; its worker consumes RabbitMQ parse jobs and S3 object keys produced by `server-2`, writes successful parser artifacts under S3 `artifacts/`, and reports `parse.completed` by artifact reference.
+
 **Overall confidence:** MEDIUM-HIGH
 
 ### Gaps to Address
@@ -226,7 +230,7 @@ Phases with standard patterns where generic research can usually be skipped:
 - Old parser executable baseline: pin exact repo commit, Node version, pnpm version, command (`pnpm run parse` vs `pnpm run parse:dist`), environment, worker count, inputs, logs, and output hashes.
 - Old/new comparison tolerances: define per legacy field which differences are exact failures, tolerated formatting drift, intentional new-contract changes, or old bugs preserved for compatibility.
 - Final contract names and field types: choose schema names for observed identity, source refs, unknown states, events, aggregates, failures, and result messages.
-- Payload vs artifact result path: research recommends S3 artifact reference as default, but `server-2` must confirm message body limits and artifact ownership.
+- Parser artifact result path: use S3 artifact references for successful worker parses; Phase 6 still needs exact deterministic artifact key format and result message fields.
 - RabbitMQ policy: exchange names, routing keys, queue names, prefetch, retry attempts, backoff, DLQ, and publisher-confirm requirements are not finalized.
 - S3-compatible storage behavior: endpoint, bucket, path-style mode, checksum algorithm, size limits, and corrupt-object handling must be validated against the chosen service.
 - Commander-side and winner examples: need representative replays with present, absent, free-text, and ambiguous outcome/KS data.

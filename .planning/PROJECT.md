@@ -4,7 +4,7 @@
 
 `replay-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into deterministic normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public SolidGames statistics.
 
-Solid Stats is a multi-project product made of `replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to `server-2` and `web`.
+Solid Stats is a multi-project product made of `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Replay discovery/fetching, public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to adjacent applications.
 
 ## Core Value
 
@@ -42,6 +42,7 @@ Phase 2 complete: the versioned parser contract crate, generated JSON Schema, su
 
 ### Out of Scope
 
+- Replay discovery and production fetching from the external replay source - owned by `replays-fetcher`.
 - Public website and UI - owned by `web`.
 - Steam OAuth - owned by `server-2`/`web`.
 - User roles, moderation, and correction request workflow - owned by `server-2` and `web`.
@@ -56,18 +57,19 @@ Phase 2 complete: the versioned parser contract crate, generated JSON Schema, su
 
 Solid Stats is a public SolidGames statistics platform that replaces the current replay-parser/statistics workflow. It needs fast, trustworthy replay parsing, public player/squad/rotation/commander-side statistics, player-submitted correction requests, and bounty points based on player and squad effectiveness.
 
-The product is split across three applications:
+The product is split across four applications:
 
+- `replays-fetcher` owns replay discovery from the external source, raw S3 object writes, source metadata, and ingestion staging/outbox records.
 - `replay-parser-2` owns OCAP replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
 - `server-2` owns PostgreSQL persistence, APIs, canonical identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate/bounty calculation, and operational visibility.
 - `web` owns the browser UI, public stats experience, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
 
-Every project-changing task must be checked against these application boundaries before execution. Parser changes must stay compatible with `server-2` message/API/storage expectations and `web` user-facing data needs, or explicitly call out the cross-project change required.
+Every project-changing task must be checked against these application boundaries before execution. Parser changes must stay compatible with `replays-fetcher` raw object/checksum assumptions, `server-2` message/API/storage expectations, and `web` user-facing data needs, or explicitly call out the cross-project change required.
 
-GSD workflow rules are product-wide standards for all three applications. Compatibility checks are risk-based:
+GSD workflow rules are product-wide standards for all four applications. Compatibility checks are risk-based:
 
 - For local-only parser documentation or implementation changes, checking this repo's planning docs, README, AGENTS rules, and `gsd-briefs` is enough.
-- For parser contract, RabbitMQ/S3 job message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes, agents must inspect the adjacent application docs/repos when available or ask the user before proceeding.
+- For parser contract, RabbitMQ/S3 job message, raw replay object key/checksum assumptions, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes, agents must inspect the adjacent application docs/repos when available or ask the user before proceeding.
 - If compatibility evidence is missing or contradictory, agents must pause, explain the uncertainty, and propose a smaller GSD path or a cross-project plan.
 
 The current historical reference data lives at `~/sg_stats`:
@@ -98,10 +100,10 @@ Observed OCAP top-level keys include `EditorMarkers`, `Markers`, `captureDelay`,
 
 The intended integration flow is:
 
-1. `server-2` stores a replay file in S3-compatible storage.
-2. `server-2` publishes a RabbitMQ parse request containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
-3. `replay-parser-2` downloads the replay file from storage.
-4. `replay-parser-2` emits either `parse.completed` with a normalized parse artifact reference or payload, or `parse.failed` with structured error data.
+1. `replays-fetcher` discovers a replay from the external source, stores the raw replay object under S3 `raw/`, computes checksum/source metadata, and writes an ingestion staging/outbox record.
+2. `server-2` polls/promotes staging rows, handles duplicate conflicts, creates canonical `replays` and `parse_jobs`, and publishes a RabbitMQ parse request containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
+3. `replay-parser-2` downloads the replay file from storage and verifies the checksum before parsing.
+4. `replay-parser-2` writes a deterministic normalized parse artifact under S3 `artifacts/` and emits `parse.completed` with an artifact reference, or emits `parse.failed` with structured error data.
 5. `server-2` persists results into PostgreSQL and publishes aggregate statistics.
 
 In this domain, "KS" means commander of a side. The parser should detect commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, winner/outcome if present, and source/confidence metadata if available.
@@ -131,8 +133,9 @@ Open implementation details for later phases:
 - Exact old/new comparison tolerances.
 - Final normalized JSON schema names and field types.
 - Final contract field name for vehicle score and whether `server-2` stores the derived score or recalculates it from parser-provided vehicle score inputs.
-- Whether parse result payload is sent directly over RabbitMQ or stored as an artifact in S3.
+- Exact deterministic artifact key format under S3 `artifacts/`.
 - Exact RabbitMQ exchange and routing key naming.
+- Exact `replays-fetcher`/`server-2` staging schema and raw S3 object key format are adjacent-app contracts; parser worker only relies on the `object_key` and `checksum` in parse jobs.
 - How v2 should model annual/yearly nomination statistics across parser evidence, `server-2` calculation, and `web` presentation.
 
 ## Constraints
@@ -144,6 +147,8 @@ Open implementation details for later phases:
 - **Runtime modes**: CLI plus worker/container mode - local reproducibility and server integration are both required.
 - **Queue integration**: RabbitMQ - worker mode consumes parse requests and publishes parse results/failures.
 - **File input**: S3-compatible object storage - parser worker reads replay content by object key/checksum.
+- **Replay discovery ownership**: `replays-fetcher` discovers/fetches production replay files and stages raw S3 objects; parser never crawls the external replay source.
+- **Result artifact delivery**: Successful worker parses write artifacts to S3 and publish artifact references, not full artifacts, over RabbitMQ.
 - **Database ownership**: `server-2` owns PostgreSQL persistence - parser does not mutate business tables in v1.
 - **Identity**: Parser preserves observed identifiers only - canonical player matching belongs to `server-2`.
 - **History reprocessing**: Server may overwrite derived results in v1 - parser must make output repeatable and versioned.
@@ -176,6 +181,8 @@ Open implementation details for later phases:
 | Treat Solid Stats as a multi-project product | Parser work must remain compatible with `server-2` and `web`; checking adjacent application contracts prevents local parser changes from breaking product flows. | - Pending |
 | Apply GSD rules product-wide with risk-based checks | The same AI/GSD standards should apply across parser, backend, and web; compatibility checks should be deep only when the requested change can affect another app. | - Pending |
 | Defer annual nomination statistics to v2 | Legacy yearly statistics are a separate nomination surface, not ordinary player/squad/rotation stats; v1 should preserve the old pipeline and outputs as references without implementing product support. | - Pending |
+| Split replay discovery into `replays-fetcher` | Production source crawling and raw replay staging are ingestion concerns, not parser or backend parser-worker concerns. | - Pending |
+| Return worker parse results by S3 artifact reference | Keeps RabbitMQ messages small and makes parser artifacts durable/auditable for `server-2`. | - Pending |
 
 ## Evolution
 
@@ -195,4 +202,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 after completing Phase 2 versioned output contract*
+*Last updated: 2026-04-26 after adding the `replays-fetcher` product boundary*
