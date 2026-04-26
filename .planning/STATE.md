@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-04-PLAN.md; ready for Phase 02 verification
-last_updated: "2026-04-26T05:44:38.995Z"
+stopped_at: Phase 02 verification found gaps; run gap planning before completion
+last_updated: "2026-04-26T06:01:00.058Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
@@ -109,9 +109,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T05:44:38.992Z
-Stopped at: Completed 02-04-PLAN.md; ready for Phase 02 verification
-Resume file: None
+Last session: 2026-04-26T06:01:00.054Z
+Stopped at: Phase 02 verification found gaps; run gap planning before completion
+Resume file: .planning/phases/02-versioned-output-contract/02-VERIFICATION.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Next Phase:** 2 (Versioned Output Contract) — not planned yet
