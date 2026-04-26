@@ -33,7 +33,7 @@ pub struct RuleId(pub String);
 impl RuleId {
     pub fn new(value: impl Into<String>) -> Result<Self, RuleIdError> {
         let value = value.into();
-        if value.trim().is_empty() {
+        if !is_valid_rule_id(&value) {
             return Err(RuleIdError);
         }
 
@@ -43,6 +43,15 @@ impl RuleId {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+}
+
+fn is_valid_rule_id(value: &str) -> bool {
+    !value.is_empty()
+        && value.contains('.')
+        && value.split('.').all(|segment| !segment.is_empty())
+        && value.bytes().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-' | b'_')
+        })
 }
 
 impl<'de> Deserialize<'de> for RuleId {
@@ -56,5 +65,7 @@ impl<'de> Deserialize<'de> for RuleId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-#[error("rule ID cannot be empty")]
+#[error(
+    "rule ID must be a non-empty lowercase namespaced ID containing only ASCII letters, digits, dots, hyphens, and underscores"
+)]
 pub struct RuleIdError;
