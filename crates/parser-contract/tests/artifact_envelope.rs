@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use parser_contract::{
     aggregates::AggregateSection,
     artifact::{ParseArtifact, ParseStatus},
-    source_ref::{ReplaySource, SourceChecksum},
+    diagnostic::{Diagnostic, DiagnosticSeverity},
+    source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef},
     version::{ContractVersion, ParserInfo},
 };
 use semver::Version;
@@ -46,7 +47,7 @@ fn success_artifact() -> ParseArtifact {
 }
 
 #[test]
-fn artifact_envelope_parse_status_should_serialize_exact_status_values_for_every_parser_outcome() {
+fn artifact_envelope_serializes_exact_status_values() {
     let statuses = json!([
         ParseStatus::Success,
         ParseStatus::Partial,
@@ -58,8 +59,7 @@ fn artifact_envelope_parse_status_should_serialize_exact_status_values_for_every
 }
 
 #[test]
-fn artifact_envelope_parse_artifact_should_serialize_unified_envelope_fields_with_deterministic_extensions()
- {
+fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     let mut artifact = success_artifact();
     artifact
         .extensions
@@ -95,5 +95,62 @@ fn artifact_envelope_parse_artifact_should_serialize_unified_envelope_fields_wit
     assert_eq!(
         extension_keys,
         vec!["alpha".to_string(), "zeta".to_string()]
+    );
+}
+
+#[test]
+fn diagnostics_are_path_based_and_do_not_serialize_raw_replay_snippets() {
+    let diagnostic = Diagnostic {
+        code: "schema.event_shape".to_string(),
+        severity: DiagnosticSeverity::Warning,
+        message: "Malformed event at events[12] was skipped".to_string(),
+        json_path: Some("$.events[12]".to_string()),
+        expected_shape: Some("array(frame, kind, entity_id, payload, distance)".to_string()),
+        observed_shape: Some("array(frame, kind, string, number)".to_string()),
+        parser_action: "skipped_event".to_string(),
+        source_refs: vec![SourceRef {
+            replay_id: Some("replay-0001".to_string()),
+            source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
+            checksum: Some(
+                "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+                    .to_string(),
+            ),
+            frame: Some(42),
+            event_index: Some(12),
+            entity_id: Some(7),
+            json_path: Some("$.events[12]".to_string()),
+            rule_id: Some(
+                RuleId::new("diagnostic.schema_drift").expect("test rule ID should be non-empty"),
+            ),
+        }],
+    };
+
+    let serialized = serde_json::to_value(&diagnostic).expect("diagnostic should serialize");
+    let serialized_object = serialized
+        .as_object()
+        .expect("diagnostic should serialize as an object");
+
+    assert!(serialized_object.contains_key("json_path"));
+    assert!(serialized_object.contains_key("expected_shape"));
+    assert!(serialized_object.contains_key("observed_shape"));
+    assert!(serialized_object.contains_key("parser_action"));
+    assert_eq!(
+        serialized["source_refs"][0]["rule_id"],
+        "diagnostic.schema_drift"
+    );
+    assert!(!serialized_object.contains_key("raw"));
+    assert!(!serialized_object.contains_key("snippet"));
+    assert!(!serialized_object.contains_key("raw_value"));
+}
+
+#[test]
+fn diagnostics_are_path_based_rule_id_should_reject_empty_values() {
+    assert!(RuleId::new("").is_err());
+    assert!(RuleId::new("   ").is_err());
+    assert_eq!(
+        RuleId::new("source.event_shape")
+            .expect("non-empty rule ID should be accepted")
+            .as_str(),
+        "source.event_shape"
     );
 }
