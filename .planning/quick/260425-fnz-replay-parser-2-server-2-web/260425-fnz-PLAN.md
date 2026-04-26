@@ -8,7 +8,7 @@ created: 2026-04-25
 
 ## Goal
 
-Document that Solid Stats is a multi-project product made of `sg-replay-parser-2`, `server-2`, and `web`, and require agents to check compatibility with the other applications before executing project-changing work.
+Document that Solid Stats is a multi-project product made of `replay-parser-2`, `server-2`, and `web`, and require agents to check compatibility with the other applications before executing project-changing work.
 
 ## Tasks
 
@@ -21,7 +21,7 @@ Document that Solid Stats is a multi-project product made of `sg-replay-parser-2
 2. Align roadmap and project context.
    - Files: `.planning/ROADMAP.md`, `.planning/PROJECT.md`
    - Action: Make Phase 1 cover multi-project compatibility and document app boundaries.
-   - Verify: Phase 1 success criteria mention `sg-replay-parser-2`, `server-2`, `web`, and cross-application compatibility checks.
+   - Verify: Phase 1 success criteria mention `replay-parser-2`, `server-2`, `web`, and cross-application compatibility checks.
    - Done: Roadmap and project context updated.
 
 3. Update repository-facing docs and agent rules.
@@ -31,7 +31,7 @@ Document that Solid Stats is a multi-project product made of `sg-replay-parser-2
    - Done: README and AGENTS updated.
 
 4. Record quick-task completion.
-   - Files: `.planning/STATE.md`, `.planning/quick/260425-fnz-sg-replay-parser-2-server-2-web/260425-fnz-SUMMARY.md`
+   - Files: `.planning/STATE.md`, `.planning/quick/260425-fnz-replay-parser-2-server-2-web/260425-fnz-SUMMARY.md`
    - Action: Track the quick task and summarize the documentation changes.
    - Verify: State links to the quick-task directory.
    - Done: Quick-task artifacts are present.

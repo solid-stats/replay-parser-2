@@ -11,7 +11,7 @@ Clarify unclear GSD description points by documenting product-wide workflow scop
 
 ## Decisions Captured
 
-- GSD workflow rules apply across all three Solid Stats applications: `sg-replay-parser-2`, `server-2`, and `web`.
+- GSD workflow rules apply across all three Solid Stats applications: `replay-parser-2`, `server-2`, and `web`.
 - Compatibility checks are risk-based:
   - local-only changes can rely on current repo planning docs and `gsd-briefs`;
   - parser contract, RabbitMQ/S3 message, artifact shape, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require adjacent app docs/repos when available;

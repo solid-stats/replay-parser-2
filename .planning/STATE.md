@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
 stopped_at: Roadmap and initial state created.
-last_updated: "2026-04-25T08:32:19Z"
-last_activity: 2026-04-25 -- Phase 1 completed; ready to plan Phase 2
+last_updated: "2026-04-26T03:27:56Z"
+last_activity: 2026-04-26 -- Completed quick task 260426-eja: renamed project identity to replay-parser-2
 progress:
   total_phases: 7
   completed_phases: 1
@@ -18,7 +18,7 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-25)
+See: .planning/PROJECT.md (updated 2026-04-26)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
 **Current focus:** Phase 2 — versioned-output-contract
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 Phase: 2
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-04-25 -- Phase 1 completed; ready to plan Phase 2
+Last activity: 2026-04-26 -- Completed quick task 260426-eja: renamed project identity to replay-parser-2
 
 Progress: [#---------] 14%
 
@@ -67,7 +67,7 @@ Recent decisions affecting current work:
 - README.md must stay current and explicitly state that project development uses only AI agents plus GSD workflow.
 - Completed work must leave the git tree clean by committing intended results; never delete completed work just to make status clean, and ask when unclear.
 - AI agents must challenge requests that conflict with project logic, architecture, quality, maintainability, or proportional scope; they should explain the risk, offer safer alternatives, and ask for explicit confirmation before a risky override.
-- Solid Stats consists of `sg-replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
+- Solid Stats consists of `replay-parser-2`, `server-2`, and `web`; tasks must be checked for compatibility with adjacent application contracts and ownership before execution.
 - GSD workflow rules apply product-wide across all three apps; compatibility checks are risk-based, escalating from local docs/briefs to adjacent app docs/repos or a user question when cross-app risk exists.
 - Frontend API typing should use `openapi-typescript` generated from the `server-2` OpenAPI schema; parser contract changes that surface in APIs must account for this type-generation flow.
 - README.md should primarily serve humans and developers as the repository entry point; AI/GSD workflow rules belong in a dedicated development section, not as the whole document.
@@ -84,14 +84,15 @@ None yet.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260425-fd2 | Added mandatory 100% test coverage requirements using `unit-tests-philosophy` | 2026-04-25 | docs-only | [260425-fd2-sg-replay-parser-2-100-unit-tests-philos](./quick/260425-fd2-sg-replay-parser-2-100-unit-tests-philos/) |
+| 260425-fd2 | Added mandatory 100% test coverage requirements using `unit-tests-philosophy` | 2026-04-25 | docs-only | [260425-fd2-replay-parser-2-100-unit-tests-philos](./quick/260425-fd2-replay-parser-2-100-unit-tests-philos/) |
 | 260425-fgb | Added README maintenance and AI+GSD development workflow requirements | 2026-04-25 | docs-only | [260425-fgb-readme-md-gsd](./quick/260425-fgb-readme-md-gsd/) |
 | 260425-fj0 | Added clean git tree completion requirements | 2026-04-25 | docs-only | [260425-fj0-git](./quick/260425-fj0-git/) |
 | 260425-fln | Added AI pushback and safer-alternative workflow requirements | 2026-04-25 | docs-only | [260425-fln-ai-pushback-policy](./quick/260425-fln-ai-pushback-policy/) |
-| 260425-fnz | Added multi-project product compatibility requirements | 2026-04-25 | docs-only | [260425-fnz-sg-replay-parser-2-server-2-web](./quick/260425-fnz-sg-replay-parser-2-server-2-web/) |
+| 260425-fnz | Added multi-project product compatibility requirements | 2026-04-25 | docs-only | [260425-fnz-replay-parser-2-server-2-web](./quick/260425-fnz-replay-parser-2-server-2-web/) |
 | 260425-fro | Clarified product-wide GSD rules and risk-based compatibility checks | 2026-04-25 | docs-only | [260425-fro-clarify-product-wide-gsd-rules-and-risk-](./quick/260425-fro-clarify-product-wide-gsd-rules-and-risk-/) |
 | 260425-fxa | Added `openapi-typescript` API typing guidance to all project briefs | 2026-04-25 | docs-only | [260425-fxa-add-openapi-typescript-to-web-typing-bri](./quick/260425-fxa-add-openapi-typescript-to-web-typing-bri/) |
 | 260425-g0r | Rewrote README as a human-facing project entry point | 2026-04-25 | docs-only | [260425-g0r-rewrite-readme-for-humans-and-developers](./quick/260425-g0r-rewrite-readme-for-humans-and-developers/) |
+| 260426-eja | Renamed project identity to `replay-parser-2` | 2026-04-26 | docs-only | [260426-eja-rename-project-to-replay-parser-2](./quick/260426-eja-rename-project-to-replay-parser-2/) |
 
 ## Deferred Items
 

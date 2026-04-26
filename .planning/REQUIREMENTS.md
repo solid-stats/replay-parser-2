@@ -1,4 +1,4 @@
-# Requirements: replays-parser-2
+# Requirements: replay-parser-2
 
 **Defined:** 2026-04-24
 **Core Value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
@@ -22,9 +22,9 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Product Integration
 
-- [x] **INT-01**: Solid Stats is treated as a multi-project product composed of `sg-replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
+- [x] **INT-01**: Solid Stats is treated as a multi-project product composed of `replay-parser-2`, `server-2`, and `web`, with each application owning distinct responsibilities and integration contracts.
 - [x] **INT-02**: Before executing any task, agents must check whether the requested change conflicts with or requires compatibility updates for the other Solid Stats applications, especially parser contract fields, RabbitMQ/S3 job flow, PostgreSQL/API ownership, public UI expectations, authentication, moderation workflow, and canonical identity boundaries.
-- [x] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `sg-replay-parser-2`, `server-2`, and `web`.
+- [x] **INT-03**: GSD workflow rules for AI-only development, clean git handoff, AI pushback, README maintenance, and cross-application compatibility are product-wide standards that should be applied consistently in `replay-parser-2`, `server-2`, and `web`.
 - [x] **INT-04**: Cross-application compatibility checks are risk-based: local-only changes may rely on current repo planning docs and `gsd-briefs`, while parser contracts, queue/storage messages, API/data shape, identity/auth, moderation, and UI-visible behavior changes require inspecting adjacent app docs/repos or asking the user when evidence is unavailable.
 
 ### Legacy Baseline

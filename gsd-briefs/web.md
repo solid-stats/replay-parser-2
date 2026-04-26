@@ -4,7 +4,7 @@
 **Intended command:** `$gsd-new-project --auto @gsd-briefs/web.md`  
 **Application:** `web`
 
-This document initializes the Solid Stats frontend application only. It is one part of the product alongside `server-2` and `replays-parser-2`.
+This document initializes the Solid Stats frontend application only. It is one part of the product alongside `server-2` and `replay-parser-2`.
 
 ## Product Context
 
@@ -14,7 +14,7 @@ Solid Stats is a public SolidGames statistics website and moderation interface. 
 
 ## Product-Wide GSD Workflow
 
-Development across `replays-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
+Development across `replay-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
 
 The following standards apply product-wide:
 
@@ -311,7 +311,7 @@ Type safety rules:
 | Public stats | Visible without login |
 | Languages | Russian and English |
 | Design direction | Mobile-first esports ops |
-| Parser ownership | `replays-parser-2` |
+| Parser ownership | `replay-parser-2` |
 | Backend ownership | `server-2` |
 
 ## Follow-Up Details for Implementation Phases

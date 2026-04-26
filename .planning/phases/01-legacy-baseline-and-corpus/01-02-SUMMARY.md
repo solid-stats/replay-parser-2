@@ -21,7 +21,7 @@ key-files:
     - .planning/phases/01-legacy-baseline-and-corpus/01-02-SUMMARY.md
   modified:
     - .planning/PROJECT.md
-    - gsd-briefs/replays-parser-2.md
+    - gsd-briefs/replay-parser-2.md
 key-decisions:
   - "Use current full-history counts instead of stale around-3,938 assumptions."
   - "Keep the full corpus profile ignored and commit only summary facts plus fixture seeds."
@@ -50,7 +50,7 @@ completed: 2026-04-25
 - Generated `.planning/generated/phase-01/corpus-profiles/20260425T081026Z-corpus-profile/corpus-profile.json`.
 - Wrote `corpus-manifest.md` with raw/list/result/year counts, schema/shape summaries, malformed files, largest files, and game-type distribution.
 - Created `fixture-index.json` with fixture candidates for large file, `sg`, `mace`, `sm`, `sgs`, `other`, raw-not-listed, and malformed coverage.
-- Updated `.planning/PROJECT.md` and `gsd-briefs/replays-parser-2.md` from stale `3,938` wording to current full-history facts.
+- Updated `.planning/PROJECT.md` and `gsd-briefs/replay-parser-2.md` from stale `3,938` wording to current full-history facts.
 
 ## Task Commits
 
@@ -61,7 +61,7 @@ completed: 2026-04-25
 - `.planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md` - Current full-history corpus evidence summary.
 - `.planning/phases/01-legacy-baseline-and-corpus/fixture-index.json` - Compact fixture seed index with skip expectations and cross-app relevance.
 - `.planning/PROJECT.md` - Current corpus facts.
-- `gsd-briefs/replays-parser-2.md` - Current parser brief corpus facts.
+- `gsd-briefs/replay-parser-2.md` - Current parser brief corpus facts.
 
 ## Decisions Made
 
@@ -87,7 +87,7 @@ Phase 5 fixture selection can start from profile-derived candidates instead of s
 
 - Generated profile jq check passed for `23473`, `2026-04-25T04:42:54.889Z`, `88485`, `14`, `17`, and `0`.
 - `fixture-index.json` is valid JSON and every entry has the five required keys.
-- `.planning/PROJECT.md` and `gsd-briefs/replays-parser-2.md` contain `23,473`, `23,456`, and `2026-04-25T04:42:54.889Z`.
+- `.planning/PROJECT.md` and `gsd-briefs/replay-parser-2.md` contain `23,473`, `23,456`, and `2026-04-25T04:42:54.889Z`.
 - `git diff --check` passed.
 
 ---

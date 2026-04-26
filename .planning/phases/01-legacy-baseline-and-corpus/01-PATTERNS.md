@@ -173,9 +173,9 @@ D-14: Old-vs-new mismatch taxonomy must include whether a diff affects only pars
 D-15: Phase 1 should create interface notes for `server-2` and `web` impact, without changing adjacent apps during this phase.
 ```
 
-**Cross-app boundary pattern** (`gsd-briefs/replays-parser-2.md` lines 13, 146, 150):
+**Cross-app boundary pattern** (`gsd-briefs/replay-parser-2.md` lines 13, 146, 150):
 ```markdown
-`replays-parser-2` owns the parsing engine and parsing result contract.
+`replay-parser-2` owns the parsing engine and parsing result contract.
 `server-2` owns persistence into PostgreSQL and aggregate publication.
 Parser output contract changes that affect API payloads must be coordinated with `server-2` schema changes before `web` consumes new fields.
 ```

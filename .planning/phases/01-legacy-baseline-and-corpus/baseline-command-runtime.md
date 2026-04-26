@@ -155,7 +155,7 @@ pnpm run parse -- --help
 Deterministic profile pattern:
 
 ```bash
-RUN_ROOT="/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/generated/phase-01/baseline-runs/<run-id>-wc1"
+RUN_ROOT="/home/afgan0r/Projects/SolidGames/replay-parser-2/.planning/generated/phase-01/baseline-runs/<run-id>-wc1"
 RUN_HOME="$RUN_ROOT/home"
 mkdir -p "$RUN_HOME/sg_stats"
 ln -s "$HOME/sg_stats/raw_replays" "$RUN_HOME/sg_stats/raw_replays"

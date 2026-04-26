@@ -217,8 +217,8 @@ Features to defer until v1 is trusted.
 
 ## Sources
 
-- Project context: `/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/.planning/PROJECT.md` (HIGH)
-- New project brief: `/home/afgan0r/Projects/SolidGames/sg-replay-parser-2/gsd-briefs/replays-parser-2.md` (HIGH)
+- Project context: `/home/afgan0r/Projects/SolidGames/replay-parser-2/.planning/PROJECT.md` (HIGH)
+- New project brief: `/home/afgan0r/Projects/SolidGames/replay-parser-2/gsd-briefs/replay-parser-2.md` (HIGH)
 - Legacy parser project context: `/home/afgan0r/Projects/SolidGames/replays-parser/.planning/PROJECT.md` (HIGH)
 - Legacy architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md` (HIGH)
 - Legacy parser type contracts: `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - types/*.d.ts` (HIGH)

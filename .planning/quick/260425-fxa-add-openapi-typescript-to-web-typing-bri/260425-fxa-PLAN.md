@@ -15,7 +15,7 @@ Make the frontend typing contract explicit across the Solid Stats project briefs
 
 - Update `gsd-briefs/web.md` with explicit `openapi-typescript` requirements.
 - Update `gsd-briefs/server-2.md` with OpenAPI schema ownership and compatibility requirements.
-- Update `gsd-briefs/replays-parser-2.md` with downstream API typing compatibility notes.
+- Update `gsd-briefs/replay-parser-2.md` with downstream API typing compatibility notes.
 - Sync the updated briefs to the sibling `server-2` and `web` repositories.
 - Record completion in `.planning/STATE.md`.
 

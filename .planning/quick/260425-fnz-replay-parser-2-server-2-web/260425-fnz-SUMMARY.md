@@ -7,7 +7,7 @@ completed: 2026-04-25
 
 ## Goal
 
-Document that Solid Stats consists of multiple applications, and require pre-task compatibility checks across `sg-replay-parser-2`, `server-2`, and `web`.
+Document that Solid Stats consists of multiple applications, and require pre-task compatibility checks across `replay-parser-2`, `server-2`, and `web`.
 
 ## Changes
 

@@ -7,7 +7,7 @@ completed: 2026-04-25
 
 ## Goal
 
-Add mandatory deep 100% test coverage requirements for `sg-replay-parser-2` using the `unit-tests-philosophy` testing standards.
+Add mandatory deep 100% test coverage requirements for `replay-parser-2` using the `unit-tests-philosophy` testing standards.
 
 ## Changes
 

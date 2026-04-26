@@ -71,7 +71,7 @@ No discretionary implementation choices were delegated. Planner may choose exact
 - `.planning/research/PITFALLS.md` - Critical migration pitfalls and old-parser compatibility risks.
 
 ### Cross-application boundaries
-- `gsd-briefs/replays-parser-2.md` - Parser-specific product brief and v1/v2 boundaries.
+- `gsd-briefs/replay-parser-2.md` - Parser-specific product brief and v1/v2 boundaries.
 - `gsd-briefs/server-2.md` - Backend ownership of persistence, canonical identity, aggregate calculation, and public APIs.
 - `gsd-briefs/web.md` - Frontend ownership and API-consumption boundaries.
 

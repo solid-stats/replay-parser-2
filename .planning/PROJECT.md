@@ -1,10 +1,10 @@
-# replays-parser-2
+# replay-parser-2
 
 ## What This Is
 
-`replays-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into deterministic normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public SolidGames statistics.
+`replay-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into deterministic normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public SolidGames statistics.
 
-Solid Stats is a multi-project product made of `sg-replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to `server-2` and `web`.
+Solid Stats is a multi-project product made of `replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to `server-2` and `web`.
 
 ## Core Value
 
@@ -20,7 +20,7 @@ Phase 1 complete: the legacy parser baseline, full-history corpus manifest, lega
 
 - [x] Phase 1 validated current README/project documentation requirements, including the AI agents using GSD workflow rule.
 - [x] Phase 1 validated clean git handoff, AI pushback, and risk-based cross-application compatibility workflow requirements.
-- [x] Phase 1 validated Solid Stats ownership boundaries across `sg-replay-parser-2`, `server-2`, and `web`.
+- [x] Phase 1 validated Solid Stats ownership boundaries across `replay-parser-2`, `server-2`, and `web`.
 - [x] Phase 1 validated the legacy baseline command/runtime dossier, corpus manifest, legacy rule/output inventory, and old-vs-new mismatch taxonomy.
 
 ### Active
@@ -57,7 +57,7 @@ Solid Stats is a public SolidGames statistics platform that replaces the current
 
 The product is split across three applications:
 
-- `sg-replay-parser-2` owns OCAP replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
+- `replay-parser-2` owns OCAP replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and old-parser parity.
 - `server-2` owns PostgreSQL persistence, APIs, canonical identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate/bounty calculation, and operational visibility.
 - `web` owns the browser UI, public stats experience, authenticated request UX, moderator/admin screens, and API consumption from `server-2`.
 
@@ -99,8 +99,8 @@ The intended integration flow is:
 
 1. `server-2` stores a replay file in S3-compatible storage.
 2. `server-2` publishes a RabbitMQ parse request containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
-3. `replays-parser-2` downloads the replay file from storage.
-4. `replays-parser-2` emits either `parse.completed` with a normalized parse artifact reference or payload, or `parse.failed` with structured error data.
+3. `replay-parser-2` downloads the replay file from storage.
+4. `replay-parser-2` emits either `parse.completed` with a normalized parse artifact reference or payload, or `parse.failed` with structured error data.
 5. `server-2` persists results into PostgreSQL and publishes aggregate statistics.
 
 In this domain, "KS" means commander of a side. The parser should detect commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, winner/outcome if present, and source/confidence metadata if available.
@@ -194,4 +194,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after completing Phase 1 legacy baseline and corpus*
+*Last updated: 2026-04-26 after renaming the project identity to replay-parser-2*

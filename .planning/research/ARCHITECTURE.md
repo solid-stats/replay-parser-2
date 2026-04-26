@@ -8,7 +8,7 @@
 
 ### System Overview
 
-Build `replays-parser-2` as a Rust migration of the existing parser at `/home/afgan0r/Projects/SolidGames/replays-parser`, not as an independent parser invented from the raw OCAP corpus alone. The old TypeScript/Node parser is the required behavioral reference for replay interpretation, legacy aggregate fields, `~/sg_stats` runtime assumptions, and benchmark baselines.
+Build `replay-parser-2` as a Rust migration of the existing parser at `/home/afgan0r/Projects/SolidGames/replays-parser`, not as an independent parser invented from the raw OCAP corpus alone. The old TypeScript/Node parser is the required behavioral reference for replay interpretation, legacy aggregate fields, `~/sg_stats` runtime assumptions, and benchmark baselines.
 
 The target architecture is still a deterministic parsing engine with thin runtime adapters. The parser core should know nothing about RabbitMQ, S3, filesystems, clocks, environment variables, PostgreSQL, or canonical player identity. CLI, worker, tests, and benchmarks should all call the same pure core API. The old parser informs what that core must do; it should not force the new service to keep old production responsibilities that now belong to `server-2`.
 
@@ -511,7 +511,7 @@ Recommended roadmap order:
 1. **Legacy behavior inventory and migration map**
    - Read old parser architecture and stage code; document old stage responsibilities, input/output files, runtime directories, worker behavior, and which responsibilities move to `server-2`.
    - Dependency: none.
-   - Why first: `replays-parser-2` must be based on the old parser. Without this map, roadmap phases risk building a clean Rust parser that does not match current SolidGames behavior.
+   - Why first: `replay-parser-2` must be based on the old parser. Without this map, roadmap phases risk building a clean Rust parser that does not match current SolidGames behavior.
 
 2. **Legacy baseline and parity harness skeleton**
    - Add harness support for old parser commands (`pnpm run parse`, `pnpm run parse:dist`), captured old outputs, benchmark timing, and old-vs-new report format.
@@ -565,7 +565,7 @@ Recommended roadmap order:
 
 ## Sources
 
-- Local project context: `.planning/PROJECT.md` and `gsd-briefs/replays-parser-2.md` (HIGH).
+- Local project context: `.planning/PROJECT.md` and `gsd-briefs/replay-parser-2.md` (HIGH).
 - Server boundary context: `gsd-briefs/server-2.md` (HIGH).
 - Old parser repo: `/home/afgan0r/Projects/SolidGames/replays-parser` (HIGH).
 - Old parser architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md` (HIGH).

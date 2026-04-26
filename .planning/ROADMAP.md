@@ -1,4 +1,4 @@
-# Roadmap: replays-parser-2
+# Roadmap: replay-parser-2
 
 ## Overview
 
@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Repository has a current `README.md` that documents project purpose, scope, current GSD phase, architecture direction, validation data, and the AI + GSD-only development workflow.
   2. Completed GSD/agent work leaves a clean git working tree by committing intended results, never by deleting or discarding completed work; unclear cases are escalated to the user.
   3. Agents challenge instructions that conflict with architecture, current logic, quality standards, maintainability, or proportional scope; they explain the risk and propose safer alternatives instead of blindly complying.
-  4. Agents can identify Solid Stats as a multi-project product made of `sg-replay-parser-2`, `server-2`, and `web`, and apply product-wide GSD workflow rules across those projects.
+  4. Agents can identify Solid Stats as a multi-project product made of `replay-parser-2`, `server-2`, and `web`, and apply product-wide GSD workflow rules across those projects.
   5. Agents use risk-based cross-application compatibility checks: local docs/briefs for local-only changes, adjacent app docs/repos or user confirmation for contract, queue/storage, API/data, identity/auth, moderation, or UI-visible changes.
   6. Developer can run the pinned old parser baseline and see the command, commit, runtime versions, environment inputs, worker count, logs, and output locations used for parity.
   7. Developer can inspect a corpus manifest for `~/sg_stats/raw_replays`, `~/sg_stats/results`, and `~/sg_stats/lists/replaysList.json`.

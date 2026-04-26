@@ -4,7 +4,7 @@
 **Intended command:** `$gsd-new-project --auto @gsd-briefs/server-2.md`  
 **Application:** `server-2`
 
-This document initializes the TypeScript backend application for Solid Stats. It is one part of the product alongside `replays-parser-2` and `web`.
+This document initializes the TypeScript backend application for Solid Stats. It is one part of the product alongside `replay-parser-2` and `web`.
 
 ## Product Context
 
@@ -14,7 +14,7 @@ Solid Stats is a public SolidGames statistics platform. It needs fast replay ing
 
 ## Product-Wide GSD Workflow
 
-Development across `replays-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
+Development across `replay-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
 
 The following standards apply product-wide:
 
@@ -46,7 +46,7 @@ Provide a reliable backend source of truth that turns parsed replay data into pu
 - Public stats APIs with no login required.
 - Authenticated request submission APIs.
 - Moderator/admin APIs for request review, roles, rotations, jobs, and manual legacy data fixes.
-- Parser integration with `replays-parser-2`.
+- Parser integration with `replay-parser-2`.
 - Raw parsed data plus aggregate stats persistence.
 - Canonical player identity model.
 - Nickname history and squad history.
@@ -57,7 +57,7 @@ Provide a reliable backend source of truth that turns parsed replay data into pu
 ### Out of Scope
 
 - Web UI implementation. That belongs to `web`.
-- Rust parsing logic. That belongs to `replays-parser-2`.
+- Rust parsing logic. That belongs to `replay-parser-2`.
 - Production Kubernetes deployment in v1.
 - Supporting replay formats other than OCAP JSON.
 - Financial bounty rewards.
@@ -77,7 +77,7 @@ Provide a reliable backend source of truth that turns parsed replay data into pu
 - Object storage: S3-compatible.
 - Auth: Steam OAuth.
 - Frontend client: `web`.
-- Parser client/worker: `replays-parser-2`.
+- Parser client/worker: `replay-parser-2`.
 
 ### Main Responsibilities
 
@@ -146,7 +146,7 @@ Recommended flow:
    - `object_key`
    - `checksum`
    - `parser_contract_version`
-5. `replays-parser-2` worker parses the replay.
+5. `replay-parser-2` worker parses the replay.
 6. `server-2` receives completion/failure result.
 7. `server-2` persists current raw/normalized parsed data and recalculates aggregates.
 
@@ -349,7 +349,7 @@ API typing rules:
 | Auth | Steam OAuth |
 | Deployment v1 | Single VPS with Docker Compose |
 | Future scaling | Kubernetes-ready |
-| Parser ownership | `replays-parser-2` |
+| Parser ownership | `replay-parser-2` |
 | UI ownership | `web` |
 | API typing contract | OpenAPI 3.x schema consumed by `openapi-typescript` in `web` |
 | Public stats | No login required |

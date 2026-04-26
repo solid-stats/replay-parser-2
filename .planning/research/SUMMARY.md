@@ -1,13 +1,13 @@
 # Project Research Summary
 
-**Project:** replays-parser-2
+**Project:** replay-parser-2
 **Domain:** Rust OCAP JSON replay parser, compatibility harness, CLI, and RabbitMQ/S3 worker service
 **Researched:** 2026-04-24
 **Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-`replays-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
+`replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
 
 The recommended approach is to start with corpus and legacy behavior discovery, then lock the output contract, then implement the Rust core and aggregate projection against executable parity tests. The parser should emit normalized observed facts with source references first, then derive legacy-compatible aggregate summaries from those normalized events. CLI and worker modes must call the same core; worker-specific RabbitMQ, S3, checksum, retry, and artifact concerns belong outside the parser core.
 

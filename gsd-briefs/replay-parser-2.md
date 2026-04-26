@@ -1,8 +1,8 @@
-# replays-parser-2 - GSD New Project Brief
+# replay-parser-2 - GSD New Project Brief
 
 **Created:** 2026-04-24  
-**Intended command:** `$gsd-new-project --auto @gsd-briefs/replays-parser-2.md`  
-**Application:** `replays-parser-2`
+**Intended command:** `$gsd-new-project --auto @gsd-briefs/replay-parser-2.md`
+**Application:** `replay-parser-2`
 
 This document initializes the Rust replay parsing application only. It is one part of the Solid Stats product alongside `server-2` and `web`.
 
@@ -10,11 +10,11 @@ This document initializes the Rust replay parsing application only. It is one pa
 
 Solid Stats is a public SolidGames statistics platform that replaces the current replay-parser/statistics workflow. The product needs fast, trustworthy replay parsing, public player/squad/rotation/commander-side statistics, player-submitted correction requests, and bounty points based on player and squad effectiveness.
 
-`replays-parser-2` owns the parsing engine and parsing result contract. It does not own the public website, Steam OAuth, moderation UI, request workflow, or main PostgreSQL schema. Those belong to `server-2` and `web`.
+`replay-parser-2` owns the parsing engine and parsing result contract. It does not own the public website, Steam OAuth, moderation UI, request workflow, or main PostgreSQL schema. Those belong to `server-2` and `web`.
 
 ## Product-Wide GSD Workflow
 
-Development across `replays-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
+Development across `replay-parser-2`, `server-2`, and `web` uses AI agents plus GSD workflow only.
 
 The following standards apply product-wide:
 
@@ -73,7 +73,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Parsing Responsibilities
 
-`replays-parser-2` should extract enough data for:
+`replay-parser-2` should extract enough data for:
 
 - Player stats.
 - Squad stats.
@@ -139,7 +139,7 @@ Recommended message flow:
    - `object_key`
    - `checksum`
    - `parser_contract_version`
-3. `replays-parser-2` worker downloads the file from S3-compatible storage.
+3. `replay-parser-2` worker downloads the file from S3-compatible storage.
 4. Parser emits either:
    - `parse.completed` with normalized parse artifact reference or payload.
    - `parse.failed` with structured error data.

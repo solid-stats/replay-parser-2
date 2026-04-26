@@ -1,6 +1,6 @@
-# sg-replay-parser-2
+# replay-parser-2
 
-`sg-replay-parser-2` is the planned Rust replacement for the legacy SolidGames OCAP replay parser.
+`replay-parser-2` is the planned Rust replacement for the legacy SolidGames OCAP replay parser.
 
 The parser will turn OCAP JSON replay files into deterministic, versioned artifacts: normalized replay events, source references, structured parse failures, and aggregate outputs that the Solid Stats backend can persist, audit, compare against golden data, and use for public statistics.
 
@@ -20,7 +20,7 @@ Until implementation starts, there are no build, parse, benchmark, or test comma
 
 Solid Stats is a multi-project SolidGames statistics product:
 
-- `sg-replay-parser-2` owns replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and parity with the old parser.
+- `replay-parser-2` owns replay parsing, deterministic parse artifacts, parser contract schema, CLI/worker modes, and parity with the old parser.
 - `server-2` owns PostgreSQL persistence, public and private APIs, canonical player identity, Steam OAuth, roles, moderation, parse job orchestration, aggregate and bounty calculation, and operations visibility.
 - `web` owns the browser UI, public stats pages, authenticated request flows, moderator/admin screens, and typed API consumption from `server-2`.
 
@@ -141,11 +141,11 @@ For project-changing work:
 - `.planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md`: Phase 1 full-history corpus profile summary.
 - `.planning/phases/01-legacy-baseline-and-corpus/legacy-rules-output-surfaces.md`: Phase 1 legacy filters, identity, and output-surface inventory.
 - `.planning/phases/01-legacy-baseline-and-corpus/mismatch-taxonomy-interface-notes.md`: Phase 1 mismatch taxonomy and cross-app interface notes.
-- `gsd-briefs/`: project briefs for `sg-replay-parser-2`, `server-2`, and `web`.
+- `gsd-briefs/`: project briefs for `replay-parser-2`, `server-2`, and `web`.
 - `AGENTS.md`: repository-specific instructions for AI agents.
 
 ## README Maintenance
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-25.
+Last updated: 2026-04-26.
