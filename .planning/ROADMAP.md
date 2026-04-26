@@ -13,7 +13,7 @@ This roadmap replaces the legacy TypeScript replay parser with a deterministic R
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity. (completed 2026-04-25)
-- [ ] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract.
+- [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
 - [ ] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts.
 - [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates.
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
-| 2. Versioned Output Contract | 5/6 | Gap closure planned | - |
+| 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |

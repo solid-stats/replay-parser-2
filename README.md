@@ -6,9 +6,9 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 2 contract work is implemented. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, and contract tests. It does not yet contain the parser core, CLI binary, RabbitMQ/S3 worker, golden parity harness, or benchmark suite.
+Phase 2 contract work is complete and verified. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, and contract tests. It does not yet contain the parser core, CLI binary, RabbitMQ/S3 worker, golden parity harness, or benchmark suite.
 
-- Current phase: Phase 2, `Versioned Output Contract`.
+- Current phase: Phase 3, `Deterministic Parser Core` (ready to plan).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -30,7 +30,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-Parse, worker, comparison, and benchmark commands are still planned for later phases.
+Parser-core, parse, worker, comparison, and benchmark commands are still planned for later phases.
 
 ## Product Context
 

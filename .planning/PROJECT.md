@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 1 complete: the legacy parser baseline, full-history corpus manifest, legacy rule/output inventory, and mismatch taxonomy/interface notes are documented and verified. The project is ready to plan Phase 2, `Versioned Output Contract`.
+Phase 2 complete: the versioned parser contract crate, generated JSON Schema, success/failure examples, explicit unknown/null states, validated source references, structured failures, checksum invariants, and inferred-confidence bounds are implemented and verified. The project is ready to plan Phase 3, `Deterministic Parser Core`.
 
 ## Requirements
 
@@ -22,6 +22,7 @@ Phase 1 complete: the legacy parser baseline, full-history corpus manifest, lega
 - [x] Phase 1 validated clean git handoff, AI pushback, and risk-based cross-application compatibility workflow requirements.
 - [x] Phase 1 validated Solid Stats ownership boundaries across `replay-parser-2`, `server-2`, and `web`.
 - [x] Phase 1 validated the legacy baseline command/runtime dossier, corpus manifest, legacy rule/output inventory, and old-vs-new mismatch taxonomy.
+- [x] Phase 2 validated the versioned `ParseArtifact` and `ParseFailure` contract shape, generated JSON Schema, explicit presence states, observed identity boundary, checksum/source-reference invariants, and schema-backed example validation.
 
 ### Active
 
@@ -194,4 +195,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 after renaming the project identity to replay-parser-2*
+*Last updated: 2026-04-26 after completing Phase 2 versioned output contract*
