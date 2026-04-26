@@ -62,7 +62,7 @@ Plans:
 - [x] 02-02-PLAN.md — Replay metadata, observed identity, and explicit presence semantics.
 - [x] 02-03-PLAN.md — Source references, normalized event skeleton, aggregate contribution references, and rule IDs.
 - [x] 02-04-PLAN.md — Structured failures, generated schema, validated examples, README handoff, and final checks.
-- [ ] 02-05-PLAN.md — Gap closure for checksum, failure, source-reference, error-code, and confidence invariants.
+- [x] 02-05-PLAN.md — Gap closure for checksum, failure, source-reference, error-code, and confidence invariants.
 
 ### Phase 3: Deterministic Parser Core
 **Goal**: The Rust parser core can read historical OCAP JSON and return deterministic normalized metadata and observed entity facts without transport concerns.

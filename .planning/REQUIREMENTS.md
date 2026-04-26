@@ -37,13 +37,13 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Output Contract
 
-- [ ] **OUT-01**: Parser writes a stable JSON `ParseArtifact` containing parser version, contract version, replay ID or source file, source checksum, and parse status metadata.
-- [ ] **OUT-02**: Parser contract includes normalized replay metadata: mission name, world name, mission author, player count, capture delay, end frame, and time/frame boundaries where available.
-- [ ] **OUT-03**: Parser contract includes observed identity fields without canonical matching: nickname, side/faction, group/squad fields, role/description, source entity ID, and SteamID when present.
-- [ ] **OUT-04**: Parser contract represents missing winner, missing SteamID, null killer, absent commander, and unknown source fields as explicit unknown/null states.
-- [ ] **OUT-05**: Parser contract includes source references that link normalized events and aggregate contributions back to replay, frame, event index, entity ID, and rule ID where available.
-- [ ] **OUT-06**: Parser contract includes JSON Schema generation or equivalent machine-readable schema validation for `server-2` integration.
-- [ ] **OUT-07**: Parser contract includes structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
+- [x] **OUT-01**: Parser writes a stable JSON `ParseArtifact` containing parser version, contract version, replay ID or source file, source checksum, and parse status metadata.
+- [x] **OUT-02**: Parser contract includes normalized replay metadata: mission name, world name, mission author, player count, capture delay, end frame, and time/frame boundaries where available.
+- [x] **OUT-03**: Parser contract includes observed identity fields without canonical matching: nickname, side/faction, group/squad fields, role/description, source entity ID, and SteamID when present.
+- [x] **OUT-04**: Parser contract represents missing winner, missing SteamID, null killer, absent commander, and unknown source fields as explicit unknown/null states.
+- [x] **OUT-05**: Parser contract includes source references that link normalized events and aggregate contributions back to replay, frame, event index, entity ID, and rule ID where available.
+- [x] **OUT-06**: Parser contract includes JSON Schema generation or equivalent machine-readable schema validation for `server-2` integration.
+- [x] **OUT-07**: Parser contract includes structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
 - [ ] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
 
 ### Parser Core
@@ -157,13 +157,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LEG-03 | Phase 1 | Complete |
 | LEG-04 | Phase 1 | Complete |
 | LEG-05 | Phase 1 | Complete |
-| OUT-01 | Phase 2 | Pending |
-| OUT-02 | Phase 2 | Pending |
-| OUT-03 | Phase 2 | Pending |
-| OUT-04 | Phase 2 | Pending |
-| OUT-05 | Phase 2 | Pending |
-| OUT-06 | Phase 2 | Pending |
-| OUT-07 | Phase 2 | Pending |
+| OUT-01 | Phase 2 | Complete |
+| OUT-02 | Phase 2 | Complete |
+| OUT-03 | Phase 2 | Complete |
+| OUT-04 | Phase 2 | Complete |
+| OUT-05 | Phase 2 | Complete |
+| OUT-06 | Phase 2 | Complete |
+| OUT-07 | Phase 2 | Complete |
 | OUT-08 | Phase 3 | Pending |
 | PARS-01 | Phase 3 | Pending |
 | PARS-02 | Phase 3 | Pending |
