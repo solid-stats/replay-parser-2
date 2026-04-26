@@ -74,7 +74,15 @@ Plans:
   3. Known OCAP schema drift results in structured warnings, explicit unknown states, or structured failures instead of parser panics.
   4. Repeated parser-core runs on the same input and contract version produce stable JSON ordering.
   5. Connected-player backfill and duplicate-slot same-name compatibility behavior are preserved for later aggregate projection while raw observed identifiers remain available.
-**Plans**: TBD
+**Plans**: 6 plans
+**Execution waves**: Wave 1 runs `03-00-PLAN.md`; Wave 2 runs `03-01-PLAN.md`; Wave 3 runs `03-02-PLAN.md`; Wave 4 runs `03-03-PLAN.md`; Wave 5 runs `03-04-PLAN.md`; Wave 6 runs `03-05-PLAN.md`.
+Plans:
+- [ ] 03-00-PLAN.md — Contract extension for typed observed entity facts and compatibility hints.
+- [ ] 03-01-PLAN.md — Parser-core crate foundation, pure API, and structured failure shell.
+- [ ] 03-02-PLAN.md — Tolerant OCAP root decode and replay metadata normalization.
+- [ ] 03-03-PLAN.md — Observed unit/player, vehicle, and static weapon entity normalization.
+- [ ] 03-04-PLAN.md — Schema-drift diagnostics, partial status policy, and deterministic output tests.
+- [ ] 03-05-PLAN.md — Connected-player backfill, duplicate-slot hints, README handoff, and final quality gates.
 
 ### Phase 4: Event Semantics and Aggregates
 **Goal**: Users of the parse artifact can audit normalized combat/outcome events and derived aggregate summaries, including vehicle score from GitHub issue #13.
@@ -134,7 +142,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
-| 3. Deterministic Parser Core | 0/TBD | Not started | - |
+| 3. Deterministic Parser Core | 0/6 | Ready to execute | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
