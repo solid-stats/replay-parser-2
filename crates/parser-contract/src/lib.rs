@@ -1,5 +1,5 @@
-pub mod artifact;
 pub mod aggregates;
+pub mod artifact;
 pub mod diagnostic;
 pub mod events;
 pub mod failure;
