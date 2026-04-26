@@ -39,3 +39,22 @@ pub struct ParseArtifact {
     pub failure: Option<ParseFailure>,
     pub extensions: BTreeMap<String, Value>,
 }
+
+impl ParseArtifact {
+    pub fn validate_status_payload(&self) -> Result<(), ParseArtifactError> {
+        match (self.status, self.failure.as_ref()) {
+            (ParseStatus::Failed, Some(_)) => Ok(()),
+            (ParseStatus::Failed, None) => Err(ParseArtifactError::MissingFailure),
+            (_, Some(_)) => Err(ParseArtifactError::UnexpectedFailure),
+            _ => Ok(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ParseArtifactError {
+    #[error("failed parse artifacts must include structured failure details")]
+    MissingFailure,
+    #[error("non-failed parse artifacts must not include structured failure details")]
+    UnexpectedFailure,
+}

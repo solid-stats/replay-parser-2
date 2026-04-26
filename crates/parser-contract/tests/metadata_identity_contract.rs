@@ -1,7 +1,7 @@
 use parser_contract::{
     identity::{EntityKind, EntitySide, ObservedEntity, ObservedIdentity},
     metadata::{FrameBounds, ReplayMetadata, ReplayTimeBounds},
-    presence::{FieldPresence, NullReason, UnknownReason},
+    presence::{Confidence, FieldPresence, NullReason, UnknownReason},
     source_ref::RuleId,
 };
 use serde_json::json;
@@ -177,7 +177,7 @@ fn field_presence_inferred_value_should_serialize_confidence_and_rule_id() {
     let side = FieldPresence::Inferred {
         value: "west".to_string(),
         reason: "connected event side backfill".to_string(),
-        confidence: Some(0.75),
+        confidence: Some(Confidence::new(0.75).expect("test confidence should be valid")),
         source: None,
         rule_id: RuleId::new("identity.side.inferred").expect("test rule ID should be non-empty"),
     };
@@ -195,4 +195,23 @@ fn field_presence_inferred_value_should_serialize_confidence_and_rule_id() {
             "rule_id": "identity.side.inferred"
         })
     );
+}
+
+#[test]
+fn field_presence_inferred_confidence_should_accept_values_between_zero_and_one() {
+    for value in [0.0, 0.75, 1.0] {
+        let confidence = Confidence::new(value).expect("confidence should be valid");
+
+        assert_eq!(confidence.get(), value);
+    }
+}
+
+#[test]
+fn field_presence_inferred_confidence_should_reject_values_outside_zero_to_one() {
+    for value in [-0.1, 1.1, f32::NAN] {
+        assert!(
+            Confidence::new(value).is_err(),
+            "{value:?} should be rejected"
+        );
+    }
 }

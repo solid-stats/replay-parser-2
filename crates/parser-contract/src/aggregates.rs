@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::source_ref::{RuleId, SourceRef};
+use crate::source_ref::{RuleId, SourceRefs};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -21,7 +21,7 @@ pub struct AggregateContributionRef {
     pub contribution_id: String,
     pub kind: AggregateContributionKind,
     pub event_id: Option<String>,
-    pub source_refs: Vec<SourceRef>,
+    pub source_refs: SourceRefs,
     pub rule_id: RuleId,
     pub value: Value,
 }

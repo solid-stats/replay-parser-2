@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use parser_contract::{artifact::ParseArtifact, schema::parse_artifact_schema};
-use serde_json::Value;
+use serde_json::{Value, json};
 
 fn workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -27,6 +27,16 @@ fn failure_example_path() -> PathBuf {
 fn read_json(path: PathBuf) -> Value {
     let text = fs::read_to_string(path).expect("JSON fixture should be readable");
     serde_json::from_str(&text).expect("JSON fixture should parse")
+}
+
+fn assert_committed_schema_rejects(candidate: &Value) {
+    let schema = read_json(committed_schema_path());
+    let validator = jsonschema::draft202012::new(&schema).expect("committed schema should compile");
+
+    assert!(
+        validator.validate(candidate).is_err(),
+        "candidate should be rejected by committed schema"
+    );
 }
 
 fn freshly_generated_schema_text() -> String {
@@ -127,4 +137,62 @@ fn schema_contract_failure_example_should_include_required_structured_failure_fi
     assert_eq!(failure["stage"], "json_decode");
     assert_eq!(failure["error_code"], "json.decode");
     assert_eq!(failure["retryability"], "not_retryable");
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_invalid_checksum_algorithm_and_value() {
+    let mut success_example = read_json(success_example_path());
+    success_example["source"]["checksum"]["value"] = json!({
+        "algorithm": "md5",
+        "value": "not-a-hash"
+    });
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_failed_artifact_without_failure() {
+    let mut failure_example = read_json(failure_example_path());
+    failure_example["failure"] = Value::Null;
+
+    assert_committed_schema_rejects(&failure_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_non_failed_artifact_with_failure() {
+    let mut failure_example = read_json(failure_example_path());
+    failure_example["status"] = json!("success");
+
+    assert_committed_schema_rejects(&failure_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_empty_event_source_refs() {
+    let mut success_example = read_json(success_example_path());
+    success_example["events"][0]["source_refs"] = json!([]);
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_hollow_source_ref_objects() {
+    let mut success_example = read_json(success_example_path());
+    success_example["events"][0]["source_refs"][0] = json!({});
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_out_of_range_inferred_confidence() {
+    let mut success_example = read_json(success_example_path());
+    success_example["replay"]["mission_name"] = json!({
+        "state": "inferred",
+        "value": "Operation Solid",
+        "reason": "test fixture",
+        "confidence": 1.1,
+        "source": null,
+        "rule_id": "metadata.mission_name.inferred"
+    });
+
+    assert_committed_schema_rejects(&success_example);
 }

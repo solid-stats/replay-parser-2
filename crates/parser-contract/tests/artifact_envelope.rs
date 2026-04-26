@@ -4,7 +4,8 @@ use parser_contract::{
     aggregates::AggregateSection,
     artifact::{ParseArtifact, ParseStatus},
     diagnostic::{Diagnostic, DiagnosticSeverity},
-    source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef},
+    presence::FieldPresence,
+    source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef, SourceRefs},
     version::{ContractVersion, ParserInfo},
 };
 use semver::Version;
@@ -24,11 +25,19 @@ fn replay_source() -> ReplaySource {
     ReplaySource {
         replay_id: Some("replay-0001".to_string()),
         source_file: "2025_04_05__23_27_21__1_ocap.json".to_string(),
-        checksum: SourceChecksum {
-            algorithm: "sha256".to_string(),
-            value: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+        checksum: FieldPresence::Present {
+            value: SourceChecksum::sha256(
+                "0000000000000000000000000000000000000000000000000000000000000000",
+            )
+            .expect("test checksum should be valid"),
+            source: None,
         },
     }
+}
+
+fn checksum() -> SourceChecksum {
+    SourceChecksum::sha256("0000000000000000000000000000000000000000000000000000000000000000")
+        .expect("test checksum should be valid")
 }
 
 fn success_artifact() -> ParseArtifact {
@@ -78,7 +87,10 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
         serialized["source"]["source_file"],
         "2025_04_05__23_27_21__1_ocap.json"
     );
-    assert_eq!(serialized["source"]["checksum"]["algorithm"], "sha256");
+    assert_eq!(
+        serialized["source"]["checksum"]["value"]["algorithm"],
+        "sha256"
+    );
     assert_eq!(serialized["status"], "success");
     assert!(serialized.get("produced_at").is_some());
     assert!(serialized.get("diagnostics").is_some());
@@ -110,13 +122,10 @@ fn diagnostics_are_path_based_and_do_not_serialize_raw_replay_snippets() {
         expected_shape: Some("array(frame, kind, entity_id, payload, distance)".to_string()),
         observed_shape: Some("array(frame, kind, string, number)".to_string()),
         parser_action: "skipped_event".to_string(),
-        source_refs: vec![SourceRef {
+        source_refs: SourceRefs::new(vec![SourceRef {
             replay_id: Some("replay-0001".to_string()),
             source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
-            checksum: Some(
-                "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-                    .to_string(),
-            ),
+            checksum: Some(checksum()),
             frame: Some(42),
             event_index: Some(12),
             entity_id: Some(7),
@@ -124,7 +133,8 @@ fn diagnostics_are_path_based_and_do_not_serialize_raw_replay_snippets() {
             rule_id: Some(
                 RuleId::new("diagnostic.schema_drift").expect("test rule ID should be non-empty"),
             ),
-        }],
+        }])
+        .expect("source refs should be non-empty"),
     };
 
     let serialized = serde_json::to_value(&diagnostic).expect("diagnostic should serialize");

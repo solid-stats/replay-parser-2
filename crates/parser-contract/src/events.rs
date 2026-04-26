@@ -7,7 +7,7 @@ use serde_json::Value;
 use crate::{
     identity::EntitySide,
     presence::FieldPresence,
-    source_ref::{RuleId, SourceRef},
+    source_ref::{RuleId, SourceRefs},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -38,7 +38,7 @@ pub struct NormalizedEvent {
     pub frame: FieldPresence<u64>,
     pub event_index: FieldPresence<u64>,
     pub actors: Vec<EventActorRef>,
-    pub source_refs: Vec<SourceRef>,
+    pub source_refs: SourceRefs,
     pub rule_id: RuleId,
     pub attributes: BTreeMap<String, Value>,
 }

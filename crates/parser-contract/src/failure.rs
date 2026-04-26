@@ -1,7 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 
-use crate::source_ref::{SourceChecksum, SourceRef};
+use crate::{
+    presence::FieldPresence,
+    source_ref::{SourceChecksum, SourceRefs},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -26,7 +29,12 @@ pub enum Retryability {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
-pub struct ErrorCode(String);
+pub struct ErrorCode(
+    #[schemars(pattern(
+        r"^(io|json|schema|unsupported|internal|checksum|output)\.[a-z0-9_-]+(\.[a-z0-9_-]+)*$"
+    ))]
+    String,
+);
 
 impl ErrorCode {
     pub fn new(value: impl Into<String>) -> Result<Self, ErrorCodeError> {
@@ -44,17 +52,26 @@ impl ErrorCode {
 }
 
 fn is_valid_error_code(value: &str) -> bool {
-    const FAMILIES: [&str; 5] = ["io.", "json.", "schema.", "unsupported.", "internal."];
+    const FAMILIES: [&str; 7] = [
+        "io",
+        "json",
+        "schema",
+        "unsupported",
+        "internal",
+        "checksum",
+        "output",
+    ];
 
-    let Some(prefix) = FAMILIES.iter().find(|prefix| value.starts_with(*prefix)) else {
+    let segments = value.split('.').collect::<Vec<_>>();
+    if segments.len() < 2 || segments.iter().any(|segment| segment.is_empty()) {
         return false;
-    };
-    let suffix = &value[prefix.len()..];
+    }
 
-    !suffix.is_empty()
-        && !value.ends_with('.')
-        && suffix.bytes().all(|byte| {
-            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-' | b'_')
+    FAMILIES.contains(&segments[0])
+        && segments.iter().all(|segment| {
+            segment.bytes().all(|byte| {
+                byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'-' | b'_')
+            })
         })
 }
 
@@ -70,20 +87,20 @@ impl<'de> Deserialize<'de> for ErrorCode {
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 #[error(
-    "error code must start with io., json., schema., unsupported., or internal. and contain only lowercase ASCII letters, digits, dots, hyphens, and underscores after the family prefix"
+    "error code must have a known family and contain at least two non-empty lowercase ASCII segments separated by dots"
 )]
 pub struct ErrorCodeError;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ParseFailure {
-    pub job_id: Option<String>,
-    pub replay_id: Option<String>,
-    pub source_file: Option<String>,
-    pub checksum: Option<SourceChecksum>,
+    pub job_id: FieldPresence<String>,
+    pub replay_id: FieldPresence<String>,
+    pub source_file: FieldPresence<String>,
+    pub checksum: FieldPresence<SourceChecksum>,
     pub stage: ParseStage,
     pub error_code: ErrorCode,
     pub message: String,
     pub retryability: Retryability,
-    pub source_cause: Option<String>,
-    pub source_refs: Vec<SourceRef>,
+    pub source_cause: FieldPresence<String>,
+    pub source_refs: SourceRefs,
 }

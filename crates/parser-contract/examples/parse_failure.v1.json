@@ -13,8 +13,12 @@
     "replay_id": "replay-0001",
     "source_file": "2025_04_05__23_27_21__1_ocap.json",
     "checksum": {
-      "algorithm": "sha256",
-      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      "state": "present",
+      "value": {
+        "algorithm": "sha256",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "source": null
     }
   },
   "status": "failed",
@@ -28,23 +32,46 @@
     "projections": {}
   },
   "failure": {
-    "job_id": "job-0001",
-    "replay_id": "replay-0001",
-    "source_file": "2025_04_05__23_27_21__1_ocap.json",
+    "job_id": {
+      "state": "present",
+      "value": "job-0001",
+      "source": null
+    },
+    "replay_id": {
+      "state": "present",
+      "value": "replay-0001",
+      "source": null
+    },
+    "source_file": {
+      "state": "present",
+      "value": "2025_04_05__23_27_21__1_ocap.json",
+      "source": null
+    },
     "checksum": {
-      "algorithm": "sha256",
-      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      "state": "present",
+      "value": {
+        "algorithm": "sha256",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "source": null
     },
     "stage": "json_decode",
     "error_code": "json.decode",
     "message": "Replay JSON could not be decoded",
     "retryability": "not_retryable",
-    "source_cause": "expected value at line 1 column 1",
+    "source_cause": {
+      "state": "present",
+      "value": "expected value at line 1 column 1",
+      "source": null
+    },
     "source_refs": [
       {
         "replay_id": "replay-0001",
         "source_file": "2025_04_05__23_27_21__1_ocap.json",
-        "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "checksum": {
+          "algorithm": "sha256",
+          "value": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
         "frame": null,
         "event_index": null,
         "entity_id": null,

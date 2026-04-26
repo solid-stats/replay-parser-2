@@ -67,6 +67,53 @@
       "$ref": "#/$defs/ParseStatus"
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "failure": {
+            "$ref": "#/$defs/ParseFailure"
+          }
+        },
+        "required": [
+          "failure"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "success",
+              "partial",
+              "skipped"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "failure": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
   "required": [
     "contract_version",
     "parser",
@@ -108,10 +155,7 @@
           "type": "string"
         },
         "source_refs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SourceRef"
-          }
+          "$ref": "#/$defs/SourceRefs"
         },
         "value": true
       },
@@ -141,6 +185,22 @@
         "contributions",
         "projections"
       ]
+    },
+    "ChecksumAlgorithm": {
+      "type": "string",
+      "enum": [
+        "sha256"
+      ]
+    },
+    "ChecksumValue": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Confidence": {
+      "type": "number",
+      "format": "float",
+      "maximum": 1.0,
+      "minimum": 0.0
     },
     "Diagnostic": {
       "type": "object",
@@ -176,10 +236,7 @@
           "$ref": "#/$defs/DiagnosticSeverity"
         },
         "source_refs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SourceRef"
-          }
+          "$ref": "#/$defs/SourceRefs"
         }
       },
       "required": [
@@ -217,17 +274,21 @@
         "unknown"
       ]
     },
+    "ErrorCode": {
+      "type": "string",
+      "pattern": "^(io|json|schema|unsupported|internal|checksum|output)\\.[a-z0-9_-]+(\\.[a-z0-9_-]+)*$"
+    },
     "EventActorRef": {
       "type": "object",
       "properties": {
         "observed_name": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "side": {
-          "$ref": "#/$defs/FieldPresence7"
+          "$ref": "#/$defs/FieldPresence8"
         },
         "source_entity_id": {
-          "$ref": "#/$defs/FieldPresence8"
+          "$ref": "#/$defs/FieldPresence9"
         }
       },
       "required": [
@@ -256,7 +317,7 @@
               "const": "present"
             },
             "value": {
-              "type": "string"
+              "$ref": "#/$defs/SourceChecksum"
             }
           },
           "required": [
@@ -320,11 +381,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -347,7 +411,7 @@
               "const": "inferred"
             },
             "value": {
-              "type": "string"
+              "$ref": "#/$defs/SourceChecksum"
             }
           },
           "required": [
@@ -395,12 +459,7 @@
               "const": "present"
             },
             "value": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint32",
-                "minimum": 0
-              }
+              "type": "string"
             }
           },
           "required": [
@@ -464,11 +523,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -491,12 +553,7 @@
               "const": "inferred"
             },
             "value": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint32",
-                "minimum": 0
-              }
+              "type": "string"
             }
           },
           "required": [
@@ -544,8 +601,12 @@
               "const": "present"
             },
             "value": {
-              "type": "number",
-              "format": "double"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0
+              }
             }
           },
           "required": [
@@ -609,11 +670,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -636,8 +700,12 @@
               "const": "inferred"
             },
             "value": {
-              "type": "number",
-              "format": "double"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0
+              }
             }
           },
           "required": [
@@ -685,9 +753,8 @@
               "const": "present"
             },
             "value": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0
+              "type": "number",
+              "format": "double"
             }
           },
           "required": [
@@ -751,11 +818,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -778,9 +848,8 @@
               "const": "inferred"
             },
             "value": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0
+              "type": "number",
+              "format": "double"
             }
           },
           "required": [
@@ -828,7 +897,9 @@
               "const": "present"
             },
             "value": {
-              "$ref": "#/$defs/ReplayTimeBounds"
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
             }
           },
           "required": [
@@ -892,11 +963,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -919,7 +993,9 @@
               "const": "inferred"
             },
             "value": {
-              "$ref": "#/$defs/ReplayTimeBounds"
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
             }
           },
           "required": [
@@ -967,6 +1043,148 @@
               "const": "present"
             },
             "value": {
+              "$ref": "#/$defs/ReplayTimeBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "$ref": "#/$defs/ReplayTimeBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence7": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
               "$ref": "#/$defs/FrameBounds"
             }
           },
@@ -1031,11 +1249,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -1086,7 +1307,7 @@
         }
       ]
     },
-    "FieldPresence7": {
+    "FieldPresence8": {
       "oneOf": [
         {
           "type": "object",
@@ -1170,11 +1391,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -1225,7 +1449,7 @@
         }
       ]
     },
-    "FieldPresence8": {
+    "FieldPresence9": {
       "oneOf": [
         {
           "type": "object",
@@ -1310,11 +1534,14 @@
           "type": "object",
           "properties": {
             "confidence": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "format": "float"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "reason": {
               "type": "string"
@@ -1402,10 +1629,10 @@
           "type": "string"
         },
         "event_index": {
-          "$ref": "#/$defs/FieldPresence4"
+          "$ref": "#/$defs/FieldPresence5"
         },
         "frame": {
-          "$ref": "#/$defs/FieldPresence4"
+          "$ref": "#/$defs/FieldPresence5"
         },
         "kind": {
           "$ref": "#/$defs/NormalizedEventKind"
@@ -1414,10 +1641,7 @@
           "type": "string"
         },
         "source_refs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SourceRef"
-          }
+          "$ref": "#/$defs/SourceRefs"
         }
       },
       "required": [
@@ -1484,28 +1708,28 @@
       "type": "object",
       "properties": {
         "description": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "faction": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "group": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "nickname": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "role": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "side": {
-          "$ref": "#/$defs/FieldPresence7"
+          "$ref": "#/$defs/FieldPresence8"
         },
         "squad": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         },
         "steam_id": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         }
       },
       "required": [
@@ -1523,63 +1747,46 @@
       "type": "object",
       "properties": {
         "checksum": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SourceChecksum"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/FieldPresence"
         },
         "error_code": {
-          "type": "string"
+          "$ref": "#/$defs/ErrorCode"
         },
         "job_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "$ref": "#/$defs/FieldPresence2"
         },
         "message": {
           "type": "string"
         },
         "replay_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "$ref": "#/$defs/FieldPresence2"
         },
         "retryability": {
           "$ref": "#/$defs/Retryability"
         },
         "source_cause": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "$ref": "#/$defs/FieldPresence2"
         },
         "source_file": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "$ref": "#/$defs/FieldPresence2"
         },
         "source_refs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SourceRef"
-          }
+          "$ref": "#/$defs/SourceRefs"
         },
         "stage": {
           "$ref": "#/$defs/ParseStage"
         }
       },
       "required": [
+        "job_id",
+        "replay_id",
+        "source_file",
+        "checksum",
         "stage",
         "error_code",
         "message",
         "retryability",
+        "source_cause",
         "source_refs"
       ]
     },
@@ -1657,28 +1864,28 @@
       "type": "object",
       "properties": {
         "capture_delay": {
-          "$ref": "#/$defs/FieldPresence3"
-        },
-        "end_frame": {
           "$ref": "#/$defs/FieldPresence4"
         },
-        "frame_bounds": {
-          "$ref": "#/$defs/FieldPresence6"
-        },
-        "mission_author": {
-          "$ref": "#/$defs/FieldPresence"
-        },
-        "mission_name": {
-          "$ref": "#/$defs/FieldPresence"
-        },
-        "players_count": {
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "time_bounds": {
+        "end_frame": {
           "$ref": "#/$defs/FieldPresence5"
         },
+        "frame_bounds": {
+          "$ref": "#/$defs/FieldPresence7"
+        },
+        "mission_author": {
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "mission_name": {
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "players_count": {
+          "$ref": "#/$defs/FieldPresence3"
+        },
+        "time_bounds": {
+          "$ref": "#/$defs/FieldPresence6"
+        },
         "world_name": {
-          "$ref": "#/$defs/FieldPresence"
+          "$ref": "#/$defs/FieldPresence2"
         }
       },
       "required": [
@@ -1696,7 +1903,7 @@
       "type": "object",
       "properties": {
         "checksum": {
-          "$ref": "#/$defs/SourceChecksum"
+          "$ref": "#/$defs/FieldPresence"
         },
         "replay_id": {
           "type": [
@@ -1748,10 +1955,10 @@
       "type": "object",
       "properties": {
         "algorithm": {
-          "type": "string"
+          "$ref": "#/$defs/ChecksumAlgorithm"
         },
         "value": {
-          "type": "string"
+          "$ref": "#/$defs/ChecksumValue"
         }
       },
       "required": [
@@ -1763,9 +1970,13 @@
       "type": "object",
       "properties": {
         "checksum": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceChecksum"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "entity_id": {
@@ -1815,7 +2026,96 @@
             "null"
           ]
         }
-      }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "replay_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "replay_id"
+          ]
+        },
+        {
+          "properties": {
+            "source_file": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_file"
+          ]
+        },
+        {
+          "properties": {
+            "checksum": {
+              "$ref": "#/$defs/SourceChecksum"
+            }
+          },
+          "required": [
+            "checksum"
+          ]
+        },
+        {
+          "properties": {
+            "frame": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "frame"
+          ]
+        },
+        {
+          "properties": {
+            "event_index": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "event_index"
+          ]
+        },
+        {
+          "properties": {
+            "entity_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "entity_id"
+          ]
+        },
+        {
+          "properties": {
+            "json_path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "json_path"
+          ]
+        },
+        {
+          "properties": {
+            "rule_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "rule_id"
+          ]
+        }
+      ]
+    },
+    "SourceRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "minItems": 1
     },
     "UnknownReason": {
       "type": "string",
@@ -1824,7 +2124,8 @@
         "missing_winner",
         "absent_commander",
         "source_field_absent",
-        "schema_drift"
+        "schema_drift",
+        "checksum_unavailable"
       ]
     }
   }

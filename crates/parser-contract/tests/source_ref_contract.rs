@@ -5,7 +5,7 @@ use parser_contract::{
     events::{EventActorRef, NormalizedEvent, NormalizedEventKind},
     identity::EntitySide,
     presence::FieldPresence,
-    source_ref::{RuleId, SourceRef},
+    source_ref::{ChecksumValue, RuleId, SourceChecksum, SourceRef, SourceRefs},
 };
 use serde_json::{Value, json};
 
@@ -13,6 +13,24 @@ fn present<T>(value: T) -> FieldPresence<T> {
     FieldPresence::Present {
         value,
         source: None,
+    }
+}
+
+fn checksum() -> SourceChecksum {
+    SourceChecksum::sha256("0000000000000000000000000000000000000000000000000000000000000000")
+        .expect("test checksum should be valid")
+}
+
+fn source_ref(rule_id: &str) -> SourceRef {
+    SourceRef {
+        replay_id: Some("replay-0001".to_string()),
+        source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
+        checksum: Some(checksum()),
+        frame: Some(12_345),
+        event_index: Some(7),
+        entity_id: Some(99),
+        json_path: Some("$.events[7]".to_string()),
+        rule_id: Some(RuleId::new(rule_id).expect("test source rule ID should be valid")),
     }
 }
 
@@ -44,12 +62,30 @@ fn source_ref_contract_rule_id_should_reject_empty_or_non_namespaced_ids() {
 }
 
 #[test]
+fn source_ref_contract_checksum_should_accept_only_sha256_lowercase_hex_when_value_is_passed() {
+    let checksum =
+        SourceChecksum::sha256("0000000000000000000000000000000000000000000000000000000000000000")
+            .expect("lowercase sha256 checksum should be valid");
+
+    assert_eq!(
+        checksum.value.as_str(),
+        "0000000000000000000000000000000000000000000000000000000000000000"
+    );
+    assert!(ChecksumValue::new("not-a-hash").is_err());
+    assert!(
+        ChecksumValue::new("ABCDEF0000000000000000000000000000000000000000000000000000000000")
+            .is_err()
+    );
+    assert!(ChecksumValue::new("0000").is_err());
+}
+
+#[test]
 fn source_ref_contract_source_ref_should_serialize_replay_frame_event_entity_path_and_rule_coordinates()
  {
     let source_ref = SourceRef {
         replay_id: Some("replay-0001".to_string()),
         source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
-        checksum: Some("sha256:abc123".to_string()),
+        checksum: Some(checksum()),
         frame: Some(12_345),
         event_index: Some(7),
         entity_id: Some(42),
@@ -64,7 +100,10 @@ fn source_ref_contract_source_ref_should_serialize_replay_frame_event_entity_pat
         json!({
             "replay_id": "replay-0001",
             "source_file": "2025_04_05__23_27_21__1_ocap.json",
-            "checksum": "sha256:abc123",
+            "checksum": {
+                "algorithm": "sha256",
+                "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            },
             "frame": 12345,
             "event_index": 7,
             "entity_id": 42,
@@ -72,6 +111,26 @@ fn source_ref_contract_source_ref_should_serialize_replay_frame_event_entity_pat
             "rule_id": "event.kill.player"
         })
     );
+}
+
+#[test]
+fn source_ref_contract_source_ref_should_reject_hollow_evidence_when_deserialized() {
+    let result = serde_json::from_value::<SourceRef>(json!({}));
+
+    assert!(result.is_err());
+    assert!(
+        result
+            .expect_err("hollow source ref should fail")
+            .to_string()
+            .contains("source reference must include at least one evidence coordinate")
+    );
+}
+
+#[test]
+fn source_ref_contract_source_refs_should_reject_empty_arrays_when_created() {
+    let result = SourceRefs::new(Vec::new());
+
+    assert!(result.is_err());
 }
 
 #[test]
@@ -90,19 +149,8 @@ fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_sourc
             observed_name: present("Afganor".to_string()),
             side: present(EntitySide::West),
         }],
-        source_refs: vec![SourceRef {
-            replay_id: Some("replay-0001".to_string()),
-            source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
-            checksum: Some("sha256:abc123".to_string()),
-            frame: Some(12_345),
-            event_index: Some(7),
-            entity_id: Some(99),
-            json_path: Some("$.events[7]".to_string()),
-            rule_id: Some(
-                RuleId::new("event.vehicle_killed.source")
-                    .expect("test source rule ID should be valid"),
-            ),
-        }],
+        source_refs: SourceRefs::new(vec![source_ref("event.vehicle_killed.source")])
+            .expect("source refs should be non-empty"),
         rule_id: RuleId::new("event.vehicle_killed").expect("test event rule ID should be valid"),
         attributes,
     };
@@ -129,24 +177,20 @@ fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_sourc
 }
 
 #[test]
+fn normalized_event_source_refs_should_require_non_empty_source_refs() {
+    let result = SourceRefs::new(Vec::new());
+
+    assert!(result.is_err());
+}
+
+#[test]
 fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_refs() {
     let contribution = AggregateContributionRef {
         contribution_id: "contribution-vehicle-score-0007".to_string(),
         kind: AggregateContributionKind::VehicleScoreInput,
         event_id: Some("event-0007".to_string()),
-        source_refs: vec![SourceRef {
-            replay_id: Some("replay-0001".to_string()),
-            source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
-            checksum: Some("sha256:abc123".to_string()),
-            frame: Some(12_345),
-            event_index: Some(7),
-            entity_id: Some(99),
-            json_path: Some("$.events[7]".to_string()),
-            rule_id: Some(
-                RuleId::new("aggregate.vehicle_score.source")
-                    .expect("test source rule ID should be valid"),
-            ),
-        }],
+        source_refs: SourceRefs::new(vec![source_ref("aggregate.vehicle_score.source")])
+            .expect("source refs should be non-empty"),
         rule_id: RuleId::new("aggregate.vehicle_score.contribution")
             .expect("test contribution rule ID should be valid"),
         value: json!({
@@ -196,4 +240,11 @@ fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_
             .len(),
         0
     );
+}
+
+#[test]
+fn aggregate_contribution_refs_should_require_non_empty_source_refs() {
+    let result = SourceRefs::new(Vec::new());
+
+    assert!(result.is_err());
 }
