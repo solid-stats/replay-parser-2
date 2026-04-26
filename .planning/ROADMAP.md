@@ -60,7 +60,7 @@ Plans:
 - [x] 02-00-PLAN.md — Rust workspace and contract crate foundation.
 - [x] 02-01-PLAN.md — ParseArtifact envelope, status metadata, source identity, diagnostics, and success example.
 - [x] 02-02-PLAN.md — Replay metadata, observed identity, and explicit presence semantics.
-- [ ] 02-03-PLAN.md — Source references, normalized event skeleton, aggregate contribution references, and rule IDs.
+- [x] 02-03-PLAN.md — Source references, normalized event skeleton, aggregate contribution references, and rule IDs.
 - [ ] 02-04-PLAN.md — Structured failures, generated schema, validated examples, README handoff, and final checks.
 
 ### Phase 3: Deterministic Parser Core
