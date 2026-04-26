@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use parser_contract::{
+    aggregates::{AggregateContributionKind, AggregateContributionRef, AggregateSection},
     events::{EventActorRef, NormalizedEvent, NormalizedEventKind},
     identity::EntitySide,
     presence::FieldPresence,
@@ -125,4 +126,74 @@ fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_sourc
     );
     assert_eq!(serialized["rule_id"], "event.vehicle_killed");
     assert_eq!(serialized["attributes"]["vehicle_class"], "rhs_btr80");
+}
+
+#[test]
+fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_refs() {
+    let contribution = AggregateContributionRef {
+        contribution_id: "contribution-vehicle-score-0007".to_string(),
+        kind: AggregateContributionKind::VehicleScoreInput,
+        event_id: Some("event-0007".to_string()),
+        source_refs: vec![SourceRef {
+            replay_id: Some("replay-0001".to_string()),
+            source_file: Some("2025_04_05__23_27_21__1_ocap.json".to_string()),
+            checksum: Some("sha256:abc123".to_string()),
+            frame: Some(12_345),
+            event_index: Some(7),
+            entity_id: Some(99),
+            json_path: Some("$.events[7]".to_string()),
+            rule_id: Some(
+                RuleId::new("aggregate.vehicle_score.source")
+                    .expect("test source rule ID should be valid"),
+            ),
+        }],
+        rule_id: RuleId::new("aggregate.vehicle_score.contribution")
+            .expect("test contribution rule ID should be valid"),
+        value: json!({
+            "weight": 1.5,
+            "attacker_vehicle": "apc",
+            "killed_entity": "player"
+        }),
+    };
+    let section = AggregateSection {
+        contributions: vec![contribution],
+        projections: BTreeMap::new(),
+    };
+
+    let serialized = serde_json::to_value(&section).expect("aggregate section should serialize");
+
+    assert_eq!(
+        serialized["contributions"][0]["contribution_id"],
+        "contribution-vehicle-score-0007"
+    );
+    assert_eq!(
+        serialized["contributions"][0]["kind"],
+        "vehicle_score_input"
+    );
+    assert_eq!(serialized["contributions"][0]["event_id"], "event-0007");
+    assert!(serialized["contributions"][0]["source_refs"].is_array());
+    assert_eq!(
+        serialized["contributions"][0]["source_refs"][0]["rule_id"],
+        "aggregate.vehicle_score.source"
+    );
+    assert_eq!(
+        serialized["contributions"][0]["rule_id"],
+        "aggregate.vehicle_score.contribution"
+    );
+    assert_eq!(serialized["contributions"][0]["value"]["weight"], 1.5);
+    assert_eq!(
+        serialized["contributions"][0]["value"]["attacker_vehicle"],
+        "apc"
+    );
+    assert_eq!(
+        serialized["contributions"][0]["value"]["killed_entity"],
+        "player"
+    );
+    assert_eq!(
+        serialized["projections"]
+            .as_object()
+            .expect("projections should serialize as an object")
+            .len(),
+        0
+    );
 }

@@ -23,7 +23,10 @@
   "replay": null,
   "entities": [],
   "events": [],
-  "aggregates": {},
+  "aggregates": {
+    "contributions": [],
+    "projections": {}
+  },
   "failure": null,
   "extensions": {}
 }
