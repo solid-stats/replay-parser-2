@@ -1,0 +1,1831 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParseArtifact",
+  "type": "object",
+  "properties": {
+    "aggregates": {
+      "$ref": "#/$defs/AggregateSection"
+    },
+    "contract_version": {
+      "$ref": "#/$defs/SemVer"
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Diagnostic"
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ObservedEntity"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/NormalizedEvent"
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "failure": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ParseFailure"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "parser": {
+      "$ref": "#/$defs/ParserInfo"
+    },
+    "produced_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replay": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplayMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "$ref": "#/$defs/ReplaySource"
+    },
+    "status": {
+      "$ref": "#/$defs/ParseStatus"
+    }
+  },
+  "required": [
+    "contract_version",
+    "parser",
+    "source",
+    "status",
+    "diagnostics",
+    "entities",
+    "events",
+    "aggregates",
+    "extensions"
+  ],
+  "$defs": {
+    "AggregateContributionKind": {
+      "type": "string",
+      "enum": [
+        "legacy_counter",
+        "bounty_input",
+        "vehicle_score_input",
+        "relationship",
+        "unknown"
+      ]
+    },
+    "AggregateContributionRef": {
+      "type": "object",
+      "properties": {
+        "contribution_id": {
+          "type": "string"
+        },
+        "event_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "$ref": "#/$defs/AggregateContributionKind"
+        },
+        "rule_id": {
+          "type": "string"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        },
+        "value": true
+      },
+      "required": [
+        "contribution_id",
+        "kind",
+        "source_refs",
+        "rule_id",
+        "value"
+      ]
+    },
+    "AggregateSection": {
+      "type": "object",
+      "properties": {
+        "contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AggregateContributionRef"
+          }
+        },
+        "projections": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "contributions",
+        "projections"
+      ]
+    },
+    "Diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "expected_shape": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "json_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "observed_shape": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parser_action": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/DiagnosticSeverity"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message",
+        "parser_action",
+        "source_refs"
+      ]
+    },
+    "DiagnosticSeverity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ]
+    },
+    "EntityKind": {
+      "type": "string",
+      "enum": [
+        "unit",
+        "vehicle",
+        "static_weapon",
+        "unknown"
+      ]
+    },
+    "EntitySide": {
+      "type": "string",
+      "enum": [
+        "east",
+        "west",
+        "guer",
+        "civ",
+        "unknown"
+      ]
+    },
+    "EventActorRef": {
+      "type": "object",
+      "properties": {
+        "observed_name": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "side": {
+          "$ref": "#/$defs/FieldPresence7"
+        },
+        "source_entity_id": {
+          "$ref": "#/$defs/FieldPresence8"
+        }
+      },
+      "required": [
+        "source_entity_id",
+        "observed_name",
+        "side"
+      ]
+    },
+    "FieldPresence": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence2": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence3": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence4": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence5": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/ReplayTimeBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "$ref": "#/$defs/ReplayTimeBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence6": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/FrameBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "$ref": "#/$defs/FrameBounds"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence7": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/EntitySide"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "$ref": "#/$defs/EntitySide"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence8": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "float"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FrameBounds": {
+      "type": "object",
+      "properties": {
+        "end_frame": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "start_frame": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "start_frame",
+        "end_frame"
+      ]
+    },
+    "NormalizedEvent": {
+      "type": "object",
+      "properties": {
+        "actors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventActorRef"
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "event_index": {
+          "$ref": "#/$defs/FieldPresence4"
+        },
+        "frame": {
+          "$ref": "#/$defs/FieldPresence4"
+        },
+        "kind": {
+          "$ref": "#/$defs/NormalizedEventKind"
+        },
+        "rule_id": {
+          "type": "string"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        }
+      },
+      "required": [
+        "event_id",
+        "kind",
+        "frame",
+        "event_index",
+        "actors",
+        "source_refs",
+        "rule_id",
+        "attributes"
+      ]
+    },
+    "NormalizedEventKind": {
+      "type": "string",
+      "enum": [
+        "connected",
+        "disconnected",
+        "kill",
+        "death",
+        "teamkill",
+        "suicide",
+        "player_killed",
+        "vehicle_killed",
+        "unknown"
+      ]
+    },
+    "NullReason": {
+      "type": "string",
+      "enum": [
+        "null_killer",
+        "source_null",
+        "empty_value"
+      ]
+    },
+    "ObservedEntity": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/ObservedIdentity"
+        },
+        "kind": {
+          "$ref": "#/$defs/EntityKind"
+        },
+        "source_entity_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        }
+      },
+      "required": [
+        "source_entity_id",
+        "kind",
+        "identity",
+        "source_refs"
+      ]
+    },
+    "ObservedIdentity": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "faction": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "group": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "nickname": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "role": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "side": {
+          "$ref": "#/$defs/FieldPresence7"
+        },
+        "squad": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "steam_id": {
+          "$ref": "#/$defs/FieldPresence"
+        }
+      },
+      "required": [
+        "nickname",
+        "steam_id",
+        "side",
+        "faction",
+        "group",
+        "squad",
+        "role",
+        "description"
+      ]
+    },
+    "ParseFailure": {
+      "type": "object",
+      "properties": {
+        "checksum": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceChecksum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error_code": {
+          "type": "string"
+        },
+        "job_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "replay_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retryability": {
+          "$ref": "#/$defs/Retryability"
+        },
+        "source_cause": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        },
+        "stage": {
+          "$ref": "#/$defs/ParseStage"
+        }
+      },
+      "required": [
+        "stage",
+        "error_code",
+        "message",
+        "retryability",
+        "source_refs"
+      ]
+    },
+    "ParseStage": {
+      "type": "string",
+      "enum": [
+        "input",
+        "checksum",
+        "json_decode",
+        "schema",
+        "normalize",
+        "aggregate",
+        "output",
+        "internal"
+      ]
+    },
+    "ParseStatus": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "skipped",
+        "failed"
+      ]
+    },
+    "ParserBuildInfo": {
+      "type": "object",
+      "properties": {
+        "git_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ParserInfo": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParserBuildInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/$defs/SemVer"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "ReplayMetadata": {
+      "type": "object",
+      "properties": {
+        "capture_delay": {
+          "$ref": "#/$defs/FieldPresence3"
+        },
+        "end_frame": {
+          "$ref": "#/$defs/FieldPresence4"
+        },
+        "frame_bounds": {
+          "$ref": "#/$defs/FieldPresence6"
+        },
+        "mission_author": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "mission_name": {
+          "$ref": "#/$defs/FieldPresence"
+        },
+        "players_count": {
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "time_bounds": {
+          "$ref": "#/$defs/FieldPresence5"
+        },
+        "world_name": {
+          "$ref": "#/$defs/FieldPresence"
+        }
+      },
+      "required": [
+        "mission_name",
+        "world_name",
+        "mission_author",
+        "players_count",
+        "capture_delay",
+        "end_frame",
+        "time_bounds",
+        "frame_bounds"
+      ]
+    },
+    "ReplaySource": {
+      "type": "object",
+      "properties": {
+        "checksum": {
+          "$ref": "#/$defs/SourceChecksum"
+        },
+        "replay_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_file": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_file",
+        "checksum"
+      ]
+    },
+    "ReplayTimeBounds": {
+      "type": "object",
+      "properties": {
+        "end_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "start_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      }
+    },
+    "Retryability": {
+      "type": "string",
+      "enum": [
+        "retryable",
+        "not_retryable",
+        "unknown"
+      ]
+    },
+    "SemVer": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "SourceChecksum": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "algorithm",
+        "value"
+      ]
+    },
+    "SourceRef": {
+      "type": "object",
+      "properties": {
+        "checksum": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entity_id": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "event_index": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "frame": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "json_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replay_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "UnknownReason": {
+      "type": "string",
+      "enum": [
+        "missing_steam_id",
+        "missing_winner",
+        "absent_commander",
+        "source_field_absent",
+        "schema_drift"
+      ]
+    }
+  }
+}
