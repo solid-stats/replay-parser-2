@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
-| 2. Versioned Output Contract | 0/5 | Ready to execute | - |
+| 2. Versioned Output Contract | 5/5 | Verification gaps | - |
 | 3. Deterministic Parser Core | 0/TBD | Not started | - |
 | 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
