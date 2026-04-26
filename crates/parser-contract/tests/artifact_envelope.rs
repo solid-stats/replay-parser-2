@@ -1,3 +1,10 @@
+//! Parse artifact envelope contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use std::collections::BTreeMap;
 
 use parser_contract::{
@@ -72,25 +79,15 @@ fn artifact_envelope_serializes_exact_status_values() {
 #[test]
 fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     let mut artifact = success_artifact();
-    artifact
-        .extensions
-        .insert("zeta".to_string(), Value::String("last".to_string()));
-    artifact
-        .extensions
-        .insert("alpha".to_string(), Value::String("first".to_string()));
+    drop(artifact.extensions.insert("zeta".to_string(), Value::String("last".to_string())));
+    drop(artifact.extensions.insert("alpha".to_string(), Value::String("first".to_string())));
 
     let serialized = serde_json::to_value(&artifact).expect("artifact should serialize");
 
     assert_eq!(serialized["contract_version"], "1.0.0");
     assert_eq!(serialized["parser"]["name"], "replay-parser-2");
-    assert_eq!(
-        serialized["source"]["source_file"],
-        "2025_04_05__23_27_21__1_ocap.json"
-    );
-    assert_eq!(
-        serialized["source"]["checksum"]["value"]["algorithm"],
-        "sha256"
-    );
+    assert_eq!(serialized["source"]["source_file"], "2025_04_05__23_27_21__1_ocap.json");
+    assert_eq!(serialized["source"]["checksum"]["value"]["algorithm"], "sha256");
     assert_eq!(serialized["status"], "success");
     assert!(serialized.get("produced_at").is_some());
     assert!(serialized.get("diagnostics").is_some());
@@ -106,10 +103,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
         .keys()
         .cloned()
         .collect::<Vec<_>>();
-    assert_eq!(
-        extension_keys,
-        vec!["alpha".to_string(), "zeta".to_string()]
-    );
+    assert_eq!(extension_keys, vec!["alpha".to_string(), "zeta".to_string()]);
 }
 
 #[test]
@@ -138,18 +132,14 @@ fn diagnostics_are_path_based_and_do_not_serialize_raw_replay_snippets() {
     };
 
     let serialized = serde_json::to_value(&diagnostic).expect("diagnostic should serialize");
-    let serialized_object = serialized
-        .as_object()
-        .expect("diagnostic should serialize as an object");
+    let serialized_object =
+        serialized.as_object().expect("diagnostic should serialize as an object");
 
     assert!(serialized_object.contains_key("json_path"));
     assert!(serialized_object.contains_key("expected_shape"));
     assert!(serialized_object.contains_key("observed_shape"));
     assert!(serialized_object.contains_key("parser_action"));
-    assert_eq!(
-        serialized["source_refs"][0]["rule_id"],
-        "diagnostic.schema_drift"
-    );
+    assert_eq!(serialized["source_refs"][0]["rule_id"], "diagnostic.schema_drift");
     assert!(!serialized_object.contains_key("raw"));
     assert!(!serialized_object.contains_key("snippet"));
     assert!(!serialized_object.contains_key("raw_value"));
@@ -160,9 +150,7 @@ fn diagnostics_are_path_based_rule_id_should_reject_empty_values() {
     assert!(RuleId::new("").is_err());
     assert!(RuleId::new("   ").is_err());
     assert_eq!(
-        RuleId::new("source.event_shape")
-            .expect("non-empty rule ID should be accepted")
-            .as_str(),
+        RuleId::new("source.event_shape").expect("non-empty rule ID should be accepted").as_str(),
         "source.event_shape"
     );
 }
@@ -177,17 +165,8 @@ fn parse_artifact_success_example_should_round_trip_stable_envelope_fields() {
     let output_value = serde_json::to_value(&artifact).expect("example should reserialize");
 
     assert_eq!(input_value["contract_version"], "1.0.0");
-    assert_eq!(
-        output_value["contract_version"],
-        input_value["contract_version"]
-    );
+    assert_eq!(output_value["contract_version"], input_value["contract_version"]);
     assert_eq!(output_value["status"], input_value["status"]);
-    assert_eq!(
-        output_value["source"]["source_file"],
-        input_value["source"]["source_file"]
-    );
-    assert_eq!(
-        output_value["parser"]["name"],
-        input_value["parser"]["name"]
-    );
+    assert_eq!(output_value["source"]["source_file"], input_value["source"]["source_file"]);
+    assert_eq!(output_value["parser"]["name"], input_value["parser"]["name"]);
 }

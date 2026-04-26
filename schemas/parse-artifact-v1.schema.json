@@ -1,37 +1,45 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ParseArtifact",
+  "description": "Versioned parser output consumed by downstream Solid Stats services.",
   "type": "object",
   "properties": {
     "aggregates": {
+      "description": "Derived aggregate projections and auditable contribution references.",
       "$ref": "#/$defs/AggregateSection"
     },
     "contract_version": {
-      "$ref": "#/$defs/SemVer"
+      "description": "Parser contract version used to shape this artifact.",
+      "$ref": "#/$defs/ContractVersion"
     },
     "diagnostics": {
+      "description": "Structured warnings and errors that did not necessarily fail parsing.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/Diagnostic"
       }
     },
     "entities": {
+      "description": "Observed entity and identity facts from the replay.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ObservedEntity"
       }
     },
     "events": {
+      "description": "Normalized replay events.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/NormalizedEvent"
       }
     },
     "extensions": {
+      "description": "Stable extension object reserved for forward-compatible parser metadata.",
       "type": "object",
       "additionalProperties": true
     },
     "failure": {
+      "description": "Structured failure details required when status is `failed`.",
       "anyOf": [
         {
           "$ref": "#/$defs/ParseFailure"
@@ -42,15 +50,18 @@
       ]
     },
     "parser": {
+      "description": "Parser binary and build metadata.",
       "$ref": "#/$defs/ParserInfo"
     },
     "produced_at": {
+      "description": "Optional production timestamp supplied by non-deterministic adapters.",
       "type": [
         "string",
         "null"
       ]
     },
     "replay": {
+      "description": "Normalized replay metadata when it could be extracted.",
       "anyOf": [
         {
           "$ref": "#/$defs/ReplayMetadata"
@@ -61,9 +72,11 @@
       ]
     },
     "source": {
+      "description": "Replay source identity and checksum metadata.",
       "$ref": "#/$defs/ReplaySource"
     },
     "status": {
+      "description": "Overall parse status.",
       "$ref": "#/$defs/ParseStatus"
     }
   },
@@ -127,37 +140,65 @@
   ],
   "$defs": {
     "AggregateContributionKind": {
-      "type": "string",
-      "enum": [
-        "legacy_counter",
-        "bounty_input",
-        "vehicle_score_input",
-        "relationship",
-        "unknown"
+      "description": "Kind of aggregate contribution represented in the artifact.",
+      "oneOf": [
+        {
+          "description": "Contribution to a legacy-compatible counter projection.",
+          "type": "string",
+          "const": "legacy_counter"
+        },
+        {
+          "description": "Contribution that can be consumed as a bounty calculation input.",
+          "type": "string",
+          "const": "bounty_input"
+        },
+        {
+          "description": "Contribution that can be consumed as a vehicle score input.",
+          "type": "string",
+          "const": "vehicle_score_input"
+        },
+        {
+          "description": "Contribution to killed/killer or teamkilled/teamkiller relationship summaries.",
+          "type": "string",
+          "const": "relationship"
+        },
+        {
+          "description": "Contribution kind could not be classified while preserving source evidence.",
+          "type": "string",
+          "const": "unknown"
+        }
       ]
     },
     "AggregateContributionRef": {
+      "description": "Auditable link between a derived aggregate value and its normalized source evidence.",
       "type": "object",
       "properties": {
         "contribution_id": {
+          "description": "Stable contribution identifier within the artifact.",
           "type": "string"
         },
         "event_id": {
+          "description": "Normalized event identifier when this contribution derives from a single event.",
           "type": [
             "string",
             "null"
           ]
         },
         "kind": {
+          "description": "Contribution category.",
           "$ref": "#/$defs/AggregateContributionKind"
         },
         "rule_id": {
-          "type": "string"
+          "description": "Rule that produced this contribution.",
+          "$ref": "#/$defs/RuleId"
         },
         "source_refs": {
+          "description": "Non-empty set of source references backing the contribution.",
           "$ref": "#/$defs/SourceRefs"
         },
-        "value": true
+        "value": {
+          "description": "Contribution payload, shaped by the rule and projection."
+        }
       },
       "required": [
         "contribution_id",
@@ -168,15 +209,18 @@
       ]
     },
     "AggregateSection": {
+      "description": "Aggregate projection section of a successful or partial parse artifact.",
       "type": "object",
       "properties": {
         "contributions": {
+          "description": "Auditable contribution list used to derive projections.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/AggregateContributionRef"
           }
         },
         "projections": {
+          "description": "Stable key-value projections for legacy and parser-owned aggregate surfaces.",
           "type": "object",
           "additionalProperties": true
         }
@@ -187,55 +231,74 @@
       ]
     },
     "ChecksumAlgorithm": {
-      "type": "string",
-      "enum": [
-        "sha256"
+      "description": "Supported source checksum algorithms.",
+      "oneOf": [
+        {
+          "description": "SHA-256 checksum.",
+          "type": "string",
+          "const": "sha256"
+        }
       ]
     },
     "ChecksumValue": {
+      "description": "Lowercase hexadecimal SHA-256 checksum value.",
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
     "Confidence": {
+      "description": "Confidence score for inferred field values.",
       "type": "number",
       "format": "float",
       "maximum": 1.0,
       "minimum": 0.0
     },
+    "ContractVersion": {
+      "description": "Semantic parser artifact contract version.",
+      "$ref": "#/$defs/SemVer"
+    },
     "Diagnostic": {
+      "description": "Structured warning or error emitted during parsing.",
       "type": "object",
       "properties": {
         "code": {
+          "description": "Stable diagnostic code.",
           "type": "string"
         },
         "expected_shape": {
+          "description": "Expected source shape, when the diagnostic concerns schema drift.",
           "type": [
             "string",
             "null"
           ]
         },
         "json_path": {
+          "description": "JSON path to the replay source field, when available.",
           "type": [
             "string",
             "null"
           ]
         },
         "message": {
+          "description": "Human-readable diagnostic message.",
           "type": "string"
         },
         "observed_shape": {
+          "description": "Observed source shape, when the diagnostic concerns schema drift.",
           "type": [
             "string",
             "null"
           ]
         },
         "parser_action": {
+          "description": "Parser action taken in response to the issue.",
           "type": "string"
         },
         "severity": {
+          "description": "Diagnostic severity.",
           "$ref": "#/$defs/DiagnosticSeverity"
         },
         "source_refs": {
+          "description": "Source evidence backing the diagnostic.",
           "$ref": "#/$defs/SourceRefs"
         }
       },
@@ -248,46 +311,99 @@
       ]
     },
     "DiagnosticSeverity": {
-      "type": "string",
-      "enum": [
-        "info",
-        "warning",
-        "error"
+      "description": "Severity of a structured parser diagnostic.",
+      "oneOf": [
+        {
+          "description": "Informational diagnostic.",
+          "type": "string",
+          "const": "info"
+        },
+        {
+          "description": "Warning diagnostic that did not necessarily fail parsing.",
+          "type": "string",
+          "const": "warning"
+        },
+        {
+          "description": "Error diagnostic for failed or partially failed parsing.",
+          "type": "string",
+          "const": "error"
+        }
       ]
     },
     "EntityKind": {
-      "type": "string",
-      "enum": [
-        "unit",
-        "vehicle",
-        "static_weapon",
-        "unknown"
+      "description": "Observed replay entity category.",
+      "oneOf": [
+        {
+          "description": "Infantry or player-like unit.",
+          "type": "string",
+          "const": "unit"
+        },
+        {
+          "description": "Vehicle entity.",
+          "type": "string",
+          "const": "vehicle"
+        },
+        {
+          "description": "Static weapon entity.",
+          "type": "string",
+          "const": "static_weapon"
+        },
+        {
+          "description": "Entity kind could not be classified.",
+          "type": "string",
+          "const": "unknown"
+        }
       ]
     },
     "EntitySide": {
-      "type": "string",
-      "enum": [
-        "east",
-        "west",
-        "guer",
-        "civ",
-        "unknown"
+      "description": "Observed side or faction alignment.",
+      "oneOf": [
+        {
+          "description": "East side.",
+          "type": "string",
+          "const": "east"
+        },
+        {
+          "description": "West side.",
+          "type": "string",
+          "const": "west"
+        },
+        {
+          "description": "Guerilla or independent side.",
+          "type": "string",
+          "const": "guer"
+        },
+        {
+          "description": "Civilian side.",
+          "type": "string",
+          "const": "civ"
+        },
+        {
+          "description": "Side could not be determined.",
+          "type": "string",
+          "const": "unknown"
+        }
       ]
     },
     "ErrorCode": {
+      "description": "Stable namespaced parse failure code.",
       "type": "string",
       "pattern": "^(io|json|schema|unsupported|internal|checksum|output)\\.[a-z0-9_-]+(\\.[a-z0-9_-]+)*$"
     },
     "EventActorRef": {
+      "description": "Actor identity fragment referenced by a normalized event.",
       "type": "object",
       "properties": {
         "observed_name": {
+          "description": "Observed actor name.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "side": {
+          "description": "Observed actor side.",
           "$ref": "#/$defs/FieldPresence8"
         },
         "source_entity_id": {
+          "description": "Source entity identifier for the actor.",
           "$ref": "#/$defs/FieldPresence9"
         }
       },
@@ -298,11 +414,14 @@
       ]
     },
     "FieldPresence": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -317,6 +436,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "$ref": "#/$defs/SourceChecksum"
             }
           },
@@ -326,12 +446,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -352,12 +475,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -378,9 +504,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -391,12 +519,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -411,6 +542,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "$ref": "#/$defs/SourceChecksum"
             }
           },
@@ -422,9 +554,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -440,11 +574,14 @@
       ]
     },
     "FieldPresence2": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -459,6 +596,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "type": "string"
             }
           },
@@ -468,12 +606,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -494,12 +635,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -520,9 +664,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -533,12 +679,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -553,6 +702,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "type": "string"
             }
           },
@@ -564,9 +714,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -582,11 +734,14 @@
       ]
     },
     "FieldPresence3": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -601,6 +756,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "type": "array",
               "items": {
                 "type": "integer",
@@ -615,12 +771,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -641,12 +800,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -667,9 +829,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -680,12 +844,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -700,6 +867,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "type": "array",
               "items": {
                 "type": "integer",
@@ -716,9 +884,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -734,11 +904,14 @@
       ]
     },
     "FieldPresence4": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -753,6 +926,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "type": "number",
               "format": "double"
             }
@@ -763,12 +937,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -789,12 +966,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -815,9 +995,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -828,12 +1010,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -848,6 +1033,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "type": "number",
               "format": "double"
             }
@@ -860,9 +1046,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -878,11 +1066,14 @@
       ]
     },
     "FieldPresence5": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -897,6 +1088,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "type": "integer",
               "format": "uint64",
               "minimum": 0
@@ -908,12 +1100,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -934,12 +1129,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -960,9 +1158,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -973,12 +1173,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -993,6 +1196,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "type": "integer",
               "format": "uint64",
               "minimum": 0
@@ -1006,9 +1210,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -1024,11 +1230,14 @@
       ]
     },
     "FieldPresence6": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1043,6 +1252,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "$ref": "#/$defs/ReplayTimeBounds"
             }
           },
@@ -1052,12 +1262,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1078,12 +1291,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1104,9 +1320,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -1117,12 +1335,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1137,6 +1358,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "$ref": "#/$defs/ReplayTimeBounds"
             }
           },
@@ -1148,9 +1370,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -1166,11 +1390,14 @@
       ]
     },
     "FieldPresence7": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1185,6 +1412,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "$ref": "#/$defs/FrameBounds"
             }
           },
@@ -1194,12 +1422,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1220,12 +1451,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1246,9 +1480,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -1259,12 +1495,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1279,6 +1518,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "$ref": "#/$defs/FrameBounds"
             }
           },
@@ -1290,9 +1530,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -1308,11 +1550,14 @@
       ]
     },
     "FieldPresence8": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1327,6 +1572,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "$ref": "#/$defs/EntitySide"
             }
           },
@@ -1336,12 +1582,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1362,12 +1611,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1388,9 +1640,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -1401,12 +1655,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1421,6 +1678,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "$ref": "#/$defs/EntitySide"
             }
           },
@@ -1432,9 +1690,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -1450,11 +1710,14 @@
       ]
     },
     "FieldPresence9": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
+          "description": "Field was present in the source or adapter input.",
           "type": "object",
           "properties": {
             "source": {
+              "description": "Source reference for the value, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1469,6 +1732,7 @@
               "const": "present"
             },
             "value": {
+              "description": "Present value.",
               "type": "integer",
               "format": "int64"
             }
@@ -1479,12 +1743,15 @@
           ]
         },
         {
+          "description": "Field was explicitly null in the source or domain event.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is null.",
               "$ref": "#/$defs/NullReason"
             },
             "source": {
+              "description": "Source reference for the null state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1505,12 +1772,15 @@
           ]
         },
         {
+          "description": "Field value is unknown.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is unknown.",
               "$ref": "#/$defs/UnknownReason"
             },
             "source": {
+              "description": "Source reference for the unknown state, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1531,9 +1801,11 @@
           ]
         },
         {
+          "description": "Field value was inferred rather than directly observed.",
           "type": "object",
           "properties": {
             "confidence": {
+              "description": "Optional confidence score for the inference.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/Confidence"
@@ -1544,12 +1816,15 @@
               ]
             },
             "reason": {
+              "description": "Human-readable inference reason.",
               "type": "string"
             },
             "rule_id": {
-              "type": "string"
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
             },
             "source": {
+              "description": "Source reference for the inference, when available.",
               "anyOf": [
                 {
                   "$ref": "#/$defs/SourceRef"
@@ -1564,6 +1839,7 @@
               "const": "inferred"
             },
             "value": {
+              "description": "Inferred value.",
               "type": "integer",
               "format": "int64"
             }
@@ -1576,9 +1852,11 @@
           ]
         },
         {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
           "type": "object",
           "properties": {
             "reason": {
+              "description": "Reason the field is not applicable.",
               "type": "string"
             },
             "state": {
@@ -1594,14 +1872,17 @@
       ]
     },
     "FrameBounds": {
+      "description": "Replay frame boundaries.",
       "type": "object",
       "properties": {
         "end_frame": {
+          "description": "Last known frame.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0
         },
         "start_frame": {
+          "description": "First known frame.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0
@@ -1613,34 +1894,43 @@
       ]
     },
     "NormalizedEvent": {
+      "description": "Normalized event with source references and rule provenance.",
       "type": "object",
       "properties": {
         "actors": {
+          "description": "Actors associated with this event.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/EventActorRef"
           }
         },
         "attributes": {
+          "description": "Rule-specific event attributes.",
           "type": "object",
           "additionalProperties": true
         },
         "event_id": {
+          "description": "Stable event identifier within the artifact.",
           "type": "string"
         },
         "event_index": {
+          "description": "Source event index when available.",
           "$ref": "#/$defs/FieldPresence5"
         },
         "frame": {
+          "description": "Event frame when available.",
           "$ref": "#/$defs/FieldPresence5"
         },
         "kind": {
+          "description": "Normalized event kind.",
           "$ref": "#/$defs/NormalizedEventKind"
         },
         "rule_id": {
-          "type": "string"
+          "description": "Rule that normalized this event.",
+          "$ref": "#/$defs/RuleId"
         },
         "source_refs": {
+          "description": "Non-empty source references backing this event.",
           "$ref": "#/$defs/SourceRefs"
         }
       },
@@ -1656,41 +1946,94 @@
       ]
     },
     "NormalizedEventKind": {
-      "type": "string",
-      "enum": [
-        "connected",
-        "disconnected",
-        "kill",
-        "death",
-        "teamkill",
-        "suicide",
-        "player_killed",
-        "vehicle_killed",
-        "unknown"
+      "description": "Normalized replay event category.",
+      "oneOf": [
+        {
+          "description": "Player or entity connected.",
+          "type": "string",
+          "const": "connected"
+        },
+        {
+          "description": "Player or entity disconnected.",
+          "type": "string",
+          "const": "disconnected"
+        },
+        {
+          "description": "Kill event.",
+          "type": "string",
+          "const": "kill"
+        },
+        {
+          "description": "Death event.",
+          "type": "string",
+          "const": "death"
+        },
+        {
+          "description": "Teamkill event.",
+          "type": "string",
+          "const": "teamkill"
+        },
+        {
+          "description": "Suicide event.",
+          "type": "string",
+          "const": "suicide"
+        },
+        {
+          "description": "Player-killed event.",
+          "type": "string",
+          "const": "player_killed"
+        },
+        {
+          "description": "Vehicle-killed event.",
+          "type": "string",
+          "const": "vehicle_killed"
+        },
+        {
+          "description": "Event shape was preserved but could not be classified.",
+          "type": "string",
+          "const": "unknown"
+        }
       ]
     },
     "NullReason": {
-      "type": "string",
-      "enum": [
-        "null_killer",
-        "source_null",
-        "empty_value"
+      "description": "Reason for an explicit null field state.",
+      "oneOf": [
+        {
+          "description": "Killer is explicitly null.",
+          "type": "string",
+          "const": "null_killer"
+        },
+        {
+          "description": "Source field value was null.",
+          "type": "string",
+          "const": "source_null"
+        },
+        {
+          "description": "Source field was empty and normalized to null.",
+          "type": "string",
+          "const": "empty_value"
+        }
       ]
     },
     "ObservedEntity": {
+      "description": "Observed replay entity with identity facts and source references.",
       "type": "object",
       "properties": {
         "identity": {
+          "description": "Observed identity fields for the entity.",
           "$ref": "#/$defs/ObservedIdentity"
         },
         "kind": {
+          "description": "Entity kind.",
           "$ref": "#/$defs/EntityKind"
         },
         "source_entity_id": {
+          "description": "Source entity identifier from OCAP data.",
           "type": "integer",
           "format": "int64"
         },
         "source_refs": {
+          "description": "Source references backing this entity.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/SourceRef"
@@ -1705,30 +2048,39 @@
       ]
     },
     "ObservedIdentity": {
+      "description": "Observed identity fields preserved without canonical player matching.",
       "type": "object",
       "properties": {
         "description": {
+          "description": "Observed description field.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "faction": {
+          "description": "Observed faction.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "group": {
+          "description": "Observed group.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "nickname": {
+          "description": "Observed nickname.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "role": {
+          "description": "Observed role.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "side": {
+          "description": "Observed side.",
           "$ref": "#/$defs/FieldPresence8"
         },
         "squad": {
+          "description": "Observed squad.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "steam_id": {
+          "description": "Observed `SteamID`, when present.",
           "$ref": "#/$defs/FieldPresence2"
         }
       },
@@ -1744,36 +2096,47 @@
       ]
     },
     "ParseFailure": {
+      "description": "Machine-readable parse failure payload.",
       "type": "object",
       "properties": {
         "checksum": {
+          "description": "Source checksum state.",
           "$ref": "#/$defs/FieldPresence"
         },
         "error_code": {
+          "description": "Stable failure code.",
           "$ref": "#/$defs/ErrorCode"
         },
         "job_id": {
+          "description": "Parse job identifier, when supplied by the adapter.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "message": {
+          "description": "Human-readable failure message.",
           "type": "string"
         },
         "replay_id": {
+          "description": "Replay identifier, when supplied by the caller or source.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "retryability": {
+          "description": "Retryability classification.",
           "$ref": "#/$defs/Retryability"
         },
         "source_cause": {
+          "description": "Original lower-level cause, when safe to expose.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "source_file": {
+          "description": "Source file or object path.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "source_refs": {
+          "description": "Source references associated with the failure.",
           "$ref": "#/$defs/SourceRefs"
         },
         "stage": {
+          "description": "Parser stage where the failure occurred.",
           "$ref": "#/$defs/ParseStage"
         }
       },
@@ -1791,43 +2154,95 @@
       ]
     },
     "ParseStage": {
-      "type": "string",
-      "enum": [
-        "input",
-        "checksum",
-        "json_decode",
-        "schema",
-        "normalize",
-        "aggregate",
-        "output",
-        "internal"
+      "description": "Parser stage where a structured failure occurred.",
+      "oneOf": [
+        {
+          "description": "Input file or object access stage.",
+          "type": "string",
+          "const": "input"
+        },
+        {
+          "description": "Source checksum validation stage.",
+          "type": "string",
+          "const": "checksum"
+        },
+        {
+          "description": "JSON decoding stage.",
+          "type": "string",
+          "const": "json_decode"
+        },
+        {
+          "description": "Contract or source schema validation stage.",
+          "type": "string",
+          "const": "schema"
+        },
+        {
+          "description": "Replay normalization stage.",
+          "type": "string",
+          "const": "normalize"
+        },
+        {
+          "description": "Aggregate derivation stage.",
+          "type": "string",
+          "const": "aggregate"
+        },
+        {
+          "description": "Output writing or publishing stage.",
+          "type": "string",
+          "const": "output"
+        },
+        {
+          "description": "Internal invariant or unexpected parser stage.",
+          "type": "string",
+          "const": "internal"
+        }
       ]
     },
     "ParseStatus": {
-      "type": "string",
-      "enum": [
-        "success",
-        "partial",
-        "skipped",
-        "failed"
+      "description": "High-level parse outcome recorded in a parser artifact.",
+      "oneOf": [
+        {
+          "description": "The parser completed without semantic data loss.",
+          "type": "string",
+          "const": "success"
+        },
+        {
+          "description": "The parser completed with warnings or recoverable gaps.",
+          "type": "string",
+          "const": "partial"
+        },
+        {
+          "description": "The parser intentionally skipped this replay.",
+          "type": "string",
+          "const": "skipped"
+        },
+        {
+          "description": "The parser failed before producing a usable artifact.",
+          "type": "string",
+          "const": "failed"
+        }
       ]
     },
     "ParserBuildInfo": {
+      "description": "Optional parser build metadata.",
       "type": "object",
       "properties": {
         "git_commit": {
+          "description": "Git commit used to build the parser.",
           "type": [
             "string",
             "null"
           ]
         },
         "profile": {
+          "description": "Cargo profile.",
           "type": [
             "string",
             "null"
           ]
         },
         "target": {
+          "description": "Rust compilation target.",
           "type": [
             "string",
             "null"
@@ -1836,9 +2251,11 @@
       }
     },
     "ParserInfo": {
+      "description": "Parser binary metadata embedded in each artifact.",
       "type": "object",
       "properties": {
         "build": {
+          "description": "Optional build metadata for non-deterministic adapter contexts.",
           "anyOf": [
             {
               "$ref": "#/$defs/ParserBuildInfo"
@@ -1849,9 +2266,11 @@
           ]
         },
         "name": {
+          "description": "Parser binary name.",
           "type": "string"
         },
         "version": {
+          "description": "Parser binary version.",
           "$ref": "#/$defs/SemVer"
         }
       },
@@ -1861,30 +2280,39 @@
       ]
     },
     "ReplayMetadata": {
+      "description": "Normalized replay-level metadata from observed OCAP top-level fields.",
       "type": "object",
       "properties": {
         "capture_delay": {
+          "description": "Observed capture delay.",
           "$ref": "#/$defs/FieldPresence4"
         },
         "end_frame": {
+          "description": "Observed final frame.",
           "$ref": "#/$defs/FieldPresence5"
         },
         "frame_bounds": {
+          "description": "Derived or observed frame bounds.",
           "$ref": "#/$defs/FieldPresence7"
         },
         "mission_author": {
+          "description": "Observed mission author.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "mission_name": {
+          "description": "Observed mission name.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "players_count": {
+          "description": "Observed player count timeline or values.",
           "$ref": "#/$defs/FieldPresence3"
         },
         "time_bounds": {
+          "description": "Derived or observed time bounds.",
           "$ref": "#/$defs/FieldPresence6"
         },
         "world_name": {
+          "description": "Observed world name.",
           "$ref": "#/$defs/FieldPresence2"
         }
       },
@@ -1900,18 +2328,22 @@
       ]
     },
     "ReplaySource": {
+      "description": "Replay source identity and checksum metadata.",
       "type": "object",
       "properties": {
         "checksum": {
+          "description": "Source checksum state.",
           "$ref": "#/$defs/FieldPresence"
         },
         "replay_id": {
+          "description": "Replay identifier when the caller or source provides one.",
           "type": [
             "string",
             "null"
           ]
         },
         "source_file": {
+          "description": "Source file path or object key.",
           "type": "string"
         }
       },
@@ -1921,9 +2353,11 @@
       ]
     },
     "ReplayTimeBounds": {
+      "description": "Replay time boundaries in seconds.",
       "type": "object",
       "properties": {
         "end_seconds": {
+          "description": "End time in seconds.",
           "type": [
             "number",
             "null"
@@ -1931,6 +2365,7 @@
           "format": "double"
         },
         "start_seconds": {
+          "description": "Start time in seconds.",
           "type": [
             "number",
             "null"
@@ -1940,24 +2375,43 @@
       }
     },
     "Retryability": {
-      "type": "string",
-      "enum": [
-        "retryable",
-        "not_retryable",
-        "unknown"
+      "description": "Retryability classification for a parse failure.",
+      "oneOf": [
+        {
+          "description": "Retrying the same job may succeed.",
+          "type": "string",
+          "const": "retryable"
+        },
+        {
+          "description": "Retrying the same job is not expected to succeed.",
+          "type": "string",
+          "const": "not_retryable"
+        },
+        {
+          "description": "Retryability could not be determined.",
+          "type": "string",
+          "const": "unknown"
+        }
       ]
+    },
+    "RuleId": {
+      "description": "Stable parser rule identifier.",
+      "type": "string"
     },
     "SemVer": {
       "type": "string",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
     },
     "SourceChecksum": {
+      "description": "Source checksum with algorithm metadata.",
       "type": "object",
       "properties": {
         "algorithm": {
+          "description": "Checksum algorithm.",
           "$ref": "#/$defs/ChecksumAlgorithm"
         },
         "value": {
+          "description": "Checksum value.",
           "$ref": "#/$defs/ChecksumValue"
         }
       },
@@ -1967,9 +2421,11 @@
       ]
     },
     "SourceRef": {
+      "description": "Source coordinate for replay evidence used by normalized events and aggregates.",
       "type": "object",
       "properties": {
         "checksum": {
+          "description": "Source checksum coordinate.",
           "anyOf": [
             {
               "$ref": "#/$defs/SourceChecksum"
@@ -1980,6 +2436,7 @@
           ]
         },
         "entity_id": {
+          "description": "Entity identifier coordinate.",
           "type": [
             "integer",
             "null"
@@ -1987,6 +2444,7 @@
           "format": "int64"
         },
         "event_index": {
+          "description": "Event index coordinate.",
           "type": [
             "integer",
             "null"
@@ -1995,6 +2453,7 @@
           "minimum": 0
         },
         "frame": {
+          "description": "Frame coordinate.",
           "type": [
             "integer",
             "null"
@@ -2003,24 +2462,32 @@
           "minimum": 0
         },
         "json_path": {
+          "description": "JSON path coordinate.",
           "type": [
             "string",
             "null"
           ]
         },
         "replay_id": {
+          "description": "Replay identifier coordinate.",
           "type": [
             "string",
             "null"
           ]
         },
         "rule_id": {
-          "type": [
-            "string",
-            "null"
+          "description": "Rule identifier coordinate.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RuleId"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "source_file": {
+          "description": "Source file coordinate.",
           "type": [
             "string",
             "null"
@@ -2111,6 +2578,7 @@
       ]
     },
     "SourceRefs": {
+      "description": "Non-empty source reference list.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/SourceRef"
@@ -2118,14 +2586,38 @@
       "minItems": 1
     },
     "UnknownReason": {
-      "type": "string",
-      "enum": [
-        "missing_steam_id",
-        "missing_winner",
-        "absent_commander",
-        "source_field_absent",
-        "schema_drift",
-        "checksum_unavailable"
+      "description": "Reason for an unknown field state.",
+      "oneOf": [
+        {
+          "description": "`SteamID` is absent from the source.",
+          "type": "string",
+          "const": "missing_steam_id"
+        },
+        {
+          "description": "Winner is absent from the source.",
+          "type": "string",
+          "const": "missing_winner"
+        },
+        {
+          "description": "Commander data is absent from the source.",
+          "type": "string",
+          "const": "absent_commander"
+        },
+        {
+          "description": "Source field is absent.",
+          "type": "string",
+          "const": "source_field_absent"
+        },
+        {
+          "description": "Source schema drift prevents a reliable value.",
+          "type": "string",
+          "const": "schema_drift"
+        },
+        {
+          "description": "Checksum could not be calculated or supplied.",
+          "type": "string",
+          "const": "checksum_unavailable"
+        }
       ]
     }
   }

@@ -1,0 +1,9 @@
+[alias]
+fmt-check = "fmt --all -- --check"
+lint = "clippy --workspace --all-targets -- -D warnings"
+quality-check = "check --workspace --all-targets"
+quality-doc = "doc --workspace --no-deps"
+quality-test = "test --workspace"
+
+[build]
+rustdocflags = ["-D", "warnings"]

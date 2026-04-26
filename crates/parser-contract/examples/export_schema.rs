@@ -1,8 +1,12 @@
-use parser_contract::schema::parse_artifact_schema;
+//! Exports the current parse artifact JSON Schema to stdout.
 
-fn main() -> Result<(), serde_json::Error> {
+use parser_contract::schema::parse_artifact_schema;
+use std::io::{self, Write};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schema = parse_artifact_schema();
-    let schema_text = serde_json::to_string_pretty(&schema)?;
-    println!("{schema_text}");
+    let mut stdout = io::stdout().lock();
+    serde_json::to_writer_pretty(&mut stdout, &schema)?;
+    stdout.write_all(b"\n")?;
     Ok(())
 }

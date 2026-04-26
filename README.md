@@ -28,6 +28,17 @@ The broader workspace gate is:
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
+cargo doc --workspace --no-deps
+```
+
+Short cargo aliases are also available:
+
+```bash
+cargo fmt-check
+cargo lint
+cargo quality-check
+cargo quality-test
+cargo quality-doc
 ```
 
 Parser-core, parse, worker, comparison, and benchmark commands are still planned for later phases.

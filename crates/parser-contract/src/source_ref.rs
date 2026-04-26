@@ -3,24 +3,37 @@ use serde::{Deserialize, Deserializer, Serialize, de::Error};
 
 use crate::presence::FieldPresence;
 
+/// Replay source identity and checksum metadata.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ReplaySource {
+    /// Replay identifier when the caller or source provides one.
     pub replay_id: Option<String>,
+    /// Source file path or object key.
     pub source_file: String,
+    /// Source checksum state.
     pub checksum: FieldPresence<SourceChecksum>,
 }
 
+/// Supported source checksum algorithms.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ChecksumAlgorithm {
+    /// SHA-256 checksum.
     Sha256,
 }
 
+/// Lowercase hexadecimal SHA-256 checksum value.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct ChecksumValue(#[schemars(pattern(r"^[0-9a-f]{64}$"))] String);
 
 impl ChecksumValue {
+    /// Creates a checksum value after validating lowercase SHA-256 hex format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ChecksumValueError`] when the value is not exactly 64 lowercase hexadecimal
+    /// characters.
     pub fn new(value: impl Into<String>) -> Result<Self, ChecksumValueError> {
         let value = value.into();
         if !is_valid_sha256_hex(&value) {
@@ -30,6 +43,8 @@ impl ChecksumValue {
         Ok(Self(value))
     }
 
+    /// Returns the validated checksum string.
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -37,9 +52,7 @@ impl ChecksumValue {
 
 fn is_valid_sha256_hex(value: &str) -> bool {
     value.len() == 64
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+        && value.bytes().all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
 }
 
 impl<'de> Deserialize<'de> for ChecksumValue {
@@ -52,39 +65,56 @@ impl<'de> Deserialize<'de> for ChecksumValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+/// Error returned when a checksum value is not valid lowercase SHA-256 hex.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("checksum value must be exactly 64 lowercase hexadecimal characters")]
 pub struct ChecksumValueError;
 
+/// Source checksum with algorithm metadata.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SourceChecksum {
+    /// Checksum algorithm.
     pub algorithm: ChecksumAlgorithm,
+    /// Checksum value.
     pub value: ChecksumValue,
 }
 
 impl SourceChecksum {
+    /// Creates a SHA-256 checksum from lowercase hex.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ChecksumValueError`] when the value is not valid SHA-256 lowercase hex.
     pub fn sha256(value: impl Into<String>) -> Result<Self, ChecksumValueError> {
-        Ok(Self {
-            algorithm: ChecksumAlgorithm::Sha256,
-            value: ChecksumValue::new(value)?,
-        })
+        Ok(Self { algorithm: ChecksumAlgorithm::Sha256, value: ChecksumValue::new(value)? })
     }
 }
 
+/// Source coordinate for replay evidence used by normalized events and aggregates.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct SourceRef {
+    /// Replay identifier coordinate.
     pub replay_id: Option<String>,
+    /// Source file coordinate.
     pub source_file: Option<String>,
+    /// Source checksum coordinate.
     pub checksum: Option<SourceChecksum>,
+    /// Frame coordinate.
     pub frame: Option<u64>,
+    /// Event index coordinate.
     pub event_index: Option<u64>,
+    /// Entity identifier coordinate.
     pub entity_id: Option<i64>,
+    /// JSON path coordinate.
     pub json_path: Option<String>,
+    /// Rule identifier coordinate.
     pub rule_id: Option<RuleId>,
 }
 
 impl SourceRef {
-    pub fn has_evidence(&self) -> bool {
+    /// Returns true when at least one source coordinate is present.
+    #[must_use]
+    pub const fn has_evidence(&self) -> bool {
         self.replay_id.is_some()
             || self.source_file.is_some()
             || self.checksum.is_some()
@@ -135,11 +165,17 @@ impl<'de> Deserialize<'de> for SourceRef {
     }
 }
 
+/// Non-empty source reference list.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct SourceRefs(#[schemars(length(min = 1))] Vec<SourceRef>);
 
 impl SourceRefs {
+    /// Creates a non-empty source reference list.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SourceRefsError`] when `refs` is empty.
     pub fn new(refs: Vec<SourceRef>) -> Result<Self, SourceRefsError> {
         if refs.is_empty() {
             return Err(SourceRefsError);
@@ -148,6 +184,8 @@ impl SourceRefs {
         Ok(Self(refs))
     }
 
+    /// Returns the source reference slice.
+    #[must_use]
     pub fn as_slice(&self) -> &[SourceRef] {
         &self.0
     }
@@ -163,15 +201,23 @@ impl<'de> Deserialize<'de> for SourceRefs {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+/// Error returned when a source reference list is empty.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("source references must include at least one source reference")]
 pub struct SourceRefsError;
 
+/// Stable parser rule identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct RuleId(pub String);
 
 impl RuleId {
+    /// Creates a rule ID after validating the namespaced lowercase format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuleIdError`] when the value is empty, lacks a namespace, or contains
+    /// unsupported characters.
     pub fn new(value: impl Into<String>) -> Result<Self, RuleIdError> {
         let value = value.into();
         if !is_valid_rule_id(&value) {
@@ -181,6 +227,8 @@ impl RuleId {
         Ok(Self(value))
     }
 
+    /// Returns the validated rule ID string.
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -205,7 +253,8 @@ impl<'de> Deserialize<'de> for RuleId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+/// Error returned when a rule ID is not a valid lowercase namespaced identifier.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error(
     "rule ID must be a non-empty lowercase namespaced ID containing only ASCII letters, digits, dots, hyphens, and underscores"
 )]

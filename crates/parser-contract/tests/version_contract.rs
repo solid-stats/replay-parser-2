@@ -1,3 +1,10 @@
+//! Parser and contract version contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use parser_contract::version::{
     CURRENT_CONTRACT_VERSION, ContractVersion, ParserBuildInfo, ParserInfo,
 };
@@ -28,10 +35,7 @@ fn version_contract_contract_version_should_serialize_as_semver_string_when_curr
 
     // Assert
     assert_eq!(serialized_contract_version, json!(CURRENT_CONTRACT_VERSION));
-    assert_eq!(
-        serialized_artifact["contract_version"],
-        json!(CURRENT_CONTRACT_VERSION)
-    );
+    assert_eq!(serialized_artifact["contract_version"], json!(CURRENT_CONTRACT_VERSION));
 }
 
 #[test]
@@ -66,14 +70,8 @@ fn version_contract_parser_info_should_keep_parser_version_separate_from_contrac
             }
         })
     );
-    assert_ne!(
-        serialized_artifact["contract_version"],
-        serialized_artifact["parser"]["version"]
-    );
-    assert_eq!(
-        serialized_artifact["parser"]["build"]["git_commit"],
-        json!("abc1234")
-    );
+    assert_ne!(serialized_artifact["contract_version"], serialized_artifact["parser"]["version"]);
+    assert_eq!(serialized_artifact["parser"]["build"]["git_commit"], json!("abc1234"));
 }
 
 fn parser_info(version: &str, build: Option<ParserBuildInfo>) -> ParserInfo {

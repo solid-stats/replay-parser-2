@@ -1,3 +1,10 @@
+//! Parse failure contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use std::collections::BTreeMap;
 
 use parser_contract::{
@@ -15,11 +22,8 @@ fn checksum() -> SourceChecksum {
         .expect("test checksum should be valid")
 }
 
-fn present<T>(value: T) -> FieldPresence<T> {
-    FieldPresence::Present {
-        value,
-        source: None,
-    }
+const fn present<T>(value: T) -> FieldPresence<T> {
+    FieldPresence::Present { value, source: None }
 }
 
 fn parser_info() -> ParserInfo {
@@ -75,18 +79,12 @@ fn failure_contract_parse_failure_should_serialize_structured_retryability_and_s
 
     assert_eq!(serialized["job_id"]["value"], "job-0001");
     assert_eq!(serialized["replay_id"]["value"], "replay-0001");
-    assert_eq!(
-        serialized["source_file"]["value"],
-        "2025_04_05__23_27_21__1_ocap.json"
-    );
+    assert_eq!(serialized["source_file"]["value"], "2025_04_05__23_27_21__1_ocap.json");
     assert_eq!(serialized["checksum"]["value"]["algorithm"], "sha256");
     assert_eq!(serialized["stage"], "json_decode");
     assert_eq!(serialized["error_code"], "json.decode");
     assert_eq!(serialized["retryability"], "not_retryable");
-    assert_eq!(
-        serialized["source_cause"]["value"],
-        "expected value at line 1 column 1"
-    );
+    assert_eq!(serialized["source_cause"]["value"], "expected value at line 1 column 1");
     assert_eq!(serialized["source_refs"][0]["json_path"], "$");
 }
 
@@ -95,9 +93,7 @@ fn failure_contract_error_code_should_accept_checksum_and_output_families_when_s
 {
     for valid_error_code in ["json.decode", "checksum.mismatch", "output.write_failed"] {
         assert_eq!(
-            ErrorCode::new(valid_error_code)
-                .expect("valid error code should be accepted")
-                .as_str(),
+            ErrorCode::new(valid_error_code).expect("valid error code should be accepted").as_str(),
             valid_error_code
         );
     }
@@ -105,15 +101,9 @@ fn failure_contract_error_code_should_accept_checksum_and_output_families_when_s
 
 #[test]
 fn failure_contract_error_code_should_reject_unknown_family_when_value_is_not_namespaced() {
-    for invalid_error_code in [
-        "",
-        "decode",
-        "network.timeout",
-        "json.",
-        "json.Decode",
-        "json.decode!",
-        "io.read.",
-    ] {
+    for invalid_error_code in
+        ["", "decode", "network.timeout", "json.", "json.Decode", "json.decode!", "io.read."]
+    {
         assert!(
             ErrorCode::new(invalid_error_code).is_err(),
             "{invalid_error_code:?} should be rejected"
@@ -197,10 +187,7 @@ fn failure_contract_failed_artifact_should_carry_status_failed_and_failure_objec
     assert_eq!(serialized["failure"]["stage"], "json_decode");
     assert!(deserialized.validate_status_payload().is_ok());
     assert_eq!(
-        deserialized
-            .failure
-            .expect("failed artifact should include failure")
-            .retryability,
+        deserialized.failure.expect("failed artifact should include failure").retryability,
         Retryability::NotRetryable
     );
 }

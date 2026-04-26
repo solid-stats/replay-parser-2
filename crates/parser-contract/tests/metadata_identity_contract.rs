@@ -1,3 +1,10 @@
+//! Replay metadata and observed identity contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use parser_contract::{
     identity::{EntityKind, EntitySide, ObservedEntity, ObservedIdentity},
     metadata::{FrameBounds, ReplayMetadata, ReplayTimeBounds},
@@ -6,18 +13,12 @@ use parser_contract::{
 };
 use serde_json::json;
 
-fn present<T>(value: T) -> FieldPresence<T> {
-    FieldPresence::Present {
-        value,
-        source: None,
-    }
+const fn present<T>(value: T) -> FieldPresence<T> {
+    FieldPresence::Present { value, source: None }
 }
 
-fn unknown<T>(reason: UnknownReason) -> FieldPresence<T> {
-    FieldPresence::Unknown {
-        reason,
-        source: None,
-    }
+const fn unknown<T>(reason: UnknownReason) -> FieldPresence<T> {
+    FieldPresence::Unknown { reason, source: None }
 }
 
 fn observed_identity_fixture() -> ObservedIdentity {
@@ -35,10 +36,8 @@ fn observed_identity_fixture() -> ObservedIdentity {
 
 #[test]
 fn field_presence_missing_steam_id_should_serialize_unknown_reason() {
-    let steam_id: FieldPresence<String> = FieldPresence::Unknown {
-        reason: UnknownReason::MissingSteamId,
-        source: None,
-    };
+    let steam_id: FieldPresence<String> =
+        FieldPresence::Unknown { reason: UnknownReason::MissingSteamId, source: None };
 
     let serialized = serde_json::to_value(&steam_id).expect("presence should serialize");
 
@@ -65,16 +64,11 @@ fn replay_metadata_should_serialize_observed_top_level_keys_as_snake_case() {
             start_seconds: Some(0.0),
             end_seconds: Some(987.65),
         }),
-        frame_bounds: present(FrameBounds {
-            start_frame: 0,
-            end_frame: 98_765,
-        }),
+        frame_bounds: present(FrameBounds { start_frame: 0, end_frame: 98_765 }),
     };
 
     let serialized = serde_json::to_value(&metadata).expect("metadata should serialize");
-    let object = serialized
-        .as_object()
-        .expect("metadata should serialize as an object");
+    let object = serialized.as_object().expect("metadata should serialize as an object");
 
     for key in [
         "mission_name",
@@ -89,18 +83,10 @@ fn replay_metadata_should_serialize_observed_top_level_keys_as_snake_case() {
         assert!(object.contains_key(key), "metadata should contain {key}");
     }
 
-    for key in [
-        "missionName",
-        "worldName",
-        "missionAuthor",
-        "playersCount",
-        "captureDelay",
-        "endFrame",
-    ] {
-        assert!(
-            !object.contains_key(key),
-            "metadata should not contain {key}"
-        );
+    for key in
+        ["missionName", "worldName", "missionAuthor", "playersCount", "captureDelay", "endFrame"]
+    {
+        assert!(!object.contains_key(key), "metadata should not contain {key}");
     }
 
     assert_eq!(serialized["mission_name"]["value"], "Operation Solid");
@@ -155,10 +141,8 @@ fn observed_identity_should_preserve_group_and_role_fields_when_observed() {
 
 #[test]
 fn field_presence_null_killer_should_serialize_explicit_null_reason() {
-    let killer: FieldPresence<i64> = FieldPresence::ExplicitNull {
-        reason: NullReason::NullKiller,
-        source: None,
-    };
+    let killer: FieldPresence<i64> =
+        FieldPresence::ExplicitNull { reason: NullReason::NullKiller, source: None };
 
     let serialized = serde_json::to_value(&killer).expect("presence should serialize");
 
@@ -202,16 +186,13 @@ fn field_presence_inferred_confidence_should_accept_values_between_zero_and_one(
     for value in [0.0, 0.75, 1.0] {
         let confidence = Confidence::new(value).expect("confidence should be valid");
 
-        assert_eq!(confidence.get(), value);
+        assert_eq!(confidence.get().to_bits(), value.to_bits());
     }
 }
 
 #[test]
 fn field_presence_inferred_confidence_should_reject_values_outside_zero_to_one() {
     for value in [-0.1, 1.1, f32::NAN] {
-        assert!(
-            Confidence::new(value).is_err(),
-            "{value:?} should be rejected"
-        );
+        assert!(Confidence::new(value).is_err(), "{value:?} should be rejected");
     }
 }

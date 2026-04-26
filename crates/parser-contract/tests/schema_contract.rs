@@ -1,3 +1,10 @@
+//! JSON Schema contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use std::{fs, path::PathBuf};
 
 use parser_contract::{artifact::ParseArtifact, schema::parse_artifact_schema};
@@ -72,10 +79,7 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_contract_fiel
         "aggregates",
         "failure",
     ] {
-        assert!(
-            schema_text.contains(expected_field),
-            "schema should contain {expected_field}"
-        );
+        assert!(schema_text.contains(expected_field), "schema should contain {expected_field}");
     }
 }
 
@@ -92,7 +96,7 @@ fn schema_contract_committed_schema_should_match_fresh_generation() {
 fn schema_contract_success_and_failure_examples_should_deserialize_into_parse_artifact() {
     for example_path in [success_example_path(), failure_example_path()] {
         let example = read_json(example_path);
-        let _: ParseArtifact =
+        let _artifact: ParseArtifact =
             serde_json::from_value(example).expect("example should deserialize into ParseArtifact");
     }
 }

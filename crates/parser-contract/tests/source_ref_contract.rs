@@ -1,3 +1,10 @@
+//! Source reference and aggregate contribution contract tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
 use std::collections::BTreeMap;
 
 use parser_contract::{
@@ -9,11 +16,8 @@ use parser_contract::{
 };
 use serde_json::{Value, json};
 
-fn present<T>(value: T) -> FieldPresence<T> {
-    FieldPresence::Present {
-        value,
-        source: None,
-    }
+const fn present<T>(value: T) -> FieldPresence<T> {
+    FieldPresence::Present { value, source: None }
 }
 
 fn checksum() -> SourceChecksum {
@@ -54,10 +58,7 @@ fn source_ref_contract_rule_id_should_reject_empty_or_non_namespaced_ids() {
         ".event",
         "event.",
     ] {
-        assert!(
-            RuleId::new(invalid_rule_id).is_err(),
-            "{invalid_rule_id:?} should be rejected"
-        );
+        assert!(RuleId::new(invalid_rule_id).is_err(), "{invalid_rule_id:?} should be rejected");
     }
 }
 
@@ -135,10 +136,8 @@ fn source_ref_contract_source_refs_should_reject_empty_arrays_when_created() {
 
 #[test]
 fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_source_coordinates() {
-    let attributes = BTreeMap::from([(
-        "vehicle_class".to_string(),
-        Value::String("rhs_btr80".to_string()),
-    )]);
+    let attributes =
+        BTreeMap::from([("vehicle_class".to_string(), Value::String("rhs_btr80".to_string()))]);
     let event = NormalizedEvent {
         event_id: "event-0007".to_string(),
         kind: NormalizedEventKind::VehicleKilled,
@@ -168,10 +167,7 @@ fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_sourc
     assert_eq!(serialized["source_refs"][0]["event_index"], 7);
     assert_eq!(serialized["source_refs"][0]["entity_id"], 99);
     assert_eq!(serialized["source_refs"][0]["json_path"], "$.events[7]");
-    assert_eq!(
-        serialized["source_refs"][0]["rule_id"],
-        "event.vehicle_killed.source"
-    );
+    assert_eq!(serialized["source_refs"][0]["rule_id"], "event.vehicle_killed.source");
     assert_eq!(serialized["rule_id"], "event.vehicle_killed");
     assert_eq!(serialized["attributes"]["vehicle_class"], "rhs_btr80");
 }
@@ -199,10 +195,8 @@ fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_
             "killed_entity": "player"
         }),
     };
-    let section = AggregateSection {
-        contributions: vec![contribution],
-        projections: BTreeMap::new(),
-    };
+    let section =
+        AggregateSection { contributions: vec![contribution], projections: BTreeMap::new() };
 
     let serialized = serde_json::to_value(&section).expect("aggregate section should serialize");
 
@@ -210,29 +204,17 @@ fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_
         serialized["contributions"][0]["contribution_id"],
         "contribution-vehicle-score-0007"
     );
-    assert_eq!(
-        serialized["contributions"][0]["kind"],
-        "vehicle_score_input"
-    );
+    assert_eq!(serialized["contributions"][0]["kind"], "vehicle_score_input");
     assert_eq!(serialized["contributions"][0]["event_id"], "event-0007");
     assert!(serialized["contributions"][0]["source_refs"].is_array());
     assert_eq!(
         serialized["contributions"][0]["source_refs"][0]["rule_id"],
         "aggregate.vehicle_score.source"
     );
-    assert_eq!(
-        serialized["contributions"][0]["rule_id"],
-        "aggregate.vehicle_score.contribution"
-    );
+    assert_eq!(serialized["contributions"][0]["rule_id"], "aggregate.vehicle_score.contribution");
     assert_eq!(serialized["contributions"][0]["value"]["weight"], 1.5);
-    assert_eq!(
-        serialized["contributions"][0]["value"]["attacker_vehicle"],
-        "apc"
-    );
-    assert_eq!(
-        serialized["contributions"][0]["value"]["killed_entity"],
-        "player"
-    );
+    assert_eq!(serialized["contributions"][0]["value"]["attacker_vehicle"], "apc");
+    assert_eq!(serialized["contributions"][0]["value"]["killed_entity"], "player");
     assert_eq!(
         serialized["projections"]
             .as_object()

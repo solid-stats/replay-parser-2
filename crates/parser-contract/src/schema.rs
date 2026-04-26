@@ -3,6 +3,8 @@ use serde_json::{Value, json};
 
 use crate::artifact::ParseArtifact;
 
+/// Builds the JSON Schema for the current parse artifact contract.
+#[must_use]
 pub fn parse_artifact_schema() -> Schema {
     let mut schema = schemars::schema_for!(ParseArtifact);
     enforce_status_failure_invariants(&mut schema);
@@ -11,7 +13,7 @@ pub fn parse_artifact_schema() -> Schema {
 }
 
 fn enforce_status_failure_invariants(schema: &mut Schema) {
-    schema.insert(
+    drop(schema.insert(
         "allOf".to_string(),
         json!([
             {
@@ -42,7 +44,7 @@ fn enforce_status_failure_invariants(schema: &mut Schema) {
                 }
             }
         ]),
-    );
+    ));
 }
 
 fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
@@ -53,7 +55,7 @@ fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
         return;
     };
 
-    source_ref_schema.insert(
+    drop(source_ref_schema.insert(
         "anyOf".to_string(),
         json!([
             {
@@ -89,5 +91,5 @@ fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
                 "properties": { "rule_id": { "type": "string" } }
             }
         ]),
-    );
+    ));
 }
