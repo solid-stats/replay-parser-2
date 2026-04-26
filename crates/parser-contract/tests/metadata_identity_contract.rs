@@ -1,4 +1,5 @@
 use parser_contract::{
+    identity::{EntityKind, EntitySide, ObservedEntity, ObservedIdentity},
     metadata::{FrameBounds, ReplayMetadata, ReplayTimeBounds},
     presence::{FieldPresence, NullReason, UnknownReason},
     source_ref::RuleId,
@@ -9,6 +10,26 @@ fn present<T>(value: T) -> FieldPresence<T> {
     FieldPresence::Present {
         value,
         source: None,
+    }
+}
+
+fn unknown<T>(reason: UnknownReason) -> FieldPresence<T> {
+    FieldPresence::Unknown {
+        reason,
+        source: None,
+    }
+}
+
+fn observed_identity_fixture() -> ObservedIdentity {
+    ObservedIdentity {
+        nickname: present("Afganor".to_string()),
+        steam_id: unknown(UnknownReason::MissingSteamId),
+        side: present(EntitySide::West),
+        faction: unknown(UnknownReason::SourceFieldAbsent),
+        group: present("Alpha 1-1".to_string()),
+        squad: unknown(UnknownReason::SourceFieldAbsent),
+        role: present("Rifleman".to_string()),
+        description: present("Squad member".to_string()),
     }
 }
 
@@ -88,6 +109,48 @@ fn replay_metadata_should_serialize_observed_top_level_keys_as_snake_case() {
     assert_eq!(serialized["players_count"]["value"], json!([42, 39]));
     assert_eq!(serialized["capture_delay"]["value"], 2.5);
     assert_eq!(serialized["end_frame"]["value"], 98_765);
+}
+
+#[test]
+fn observed_identity_should_preserve_nickname_and_source_entity_id_without_canonical_player_id() {
+    let entity = ObservedEntity {
+        source_entity_id: 42,
+        kind: EntityKind::Unit,
+        identity: observed_identity_fixture(),
+        source_refs: Vec::new(),
+    };
+
+    let serialized = serde_json::to_value(&entity).expect("entity should serialize");
+    let serialized_text = serialized.to_string();
+
+    assert_eq!(serialized["source_entity_id"], 42);
+    assert_eq!(serialized["kind"], "unit");
+    assert_eq!(serialized["identity"]["nickname"]["value"], "Afganor");
+    assert!(!serialized_text.contains("canonical_player"));
+    assert!(!serialized_text.contains("canonical_id"));
+    assert!(!serialized_text.contains("account_id"));
+}
+
+#[test]
+fn observed_identity_should_represent_missing_steam_id_as_explicit_unknown_state() {
+    let identity = observed_identity_fixture();
+
+    let serialized = serde_json::to_value(&identity).expect("identity should serialize");
+
+    assert_eq!(serialized["steam_id"]["state"], "unknown");
+    assert_eq!(serialized["steam_id"]["reason"], "missing_steam_id");
+}
+
+#[test]
+fn observed_identity_should_preserve_group_and_role_fields_when_observed() {
+    let identity = observed_identity_fixture();
+
+    let serialized = serde_json::to_value(&identity).expect("identity should serialize");
+
+    assert_eq!(serialized["group"]["state"], "present");
+    assert_eq!(serialized["group"]["value"], "Alpha 1-1");
+    assert_eq!(serialized["role"]["state"], "present");
+    assert_eq!(serialized["role"]["value"], "Rifleman");
 }
 
 #[test]
