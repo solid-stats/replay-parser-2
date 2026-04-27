@@ -23,9 +23,7 @@ pub const fn vehicle_score_weight(
     attacker: VehicleScoreCategory,
     target: VehicleScoreCategory,
 ) -> Option<f64> {
-    use VehicleScoreCategory::{
-        Apc, Car, Heli, Plane, Player, StaticWeapon, Tank, Truck, Unknown,
-    };
+    use VehicleScoreCategory::{Apc, Car, Heli, Plane, Player, StaticWeapon, Tank, Truck, Unknown};
 
     match (attacker, target) {
         (Unknown, _) | (_, Unknown) => None,

@@ -268,9 +268,9 @@ fn vehicle_score_contribution(
     let sign = match combat.semantic {
         CombatSemantic::EnemyKill | CombatSemantic::VehicleDestroyed => VehicleScoreSign::Award,
         CombatSemantic::Teamkill => VehicleScoreSign::Penalty,
-        CombatSemantic::Suicide
-        | CombatSemantic::NullKillerDeath
-        | CombatSemantic::Unknown => return None,
+        CombatSemantic::Suicide | CombatSemantic::NullKillerDeath | CombatSemantic::Unknown => {
+            return None;
+        }
     };
 
     let player_entity_id = actor_entity_id(&combat.killer)?;
@@ -786,9 +786,7 @@ fn vehicle_score_denominator_inputs(
         };
 
         let (_, contribution_ids) =
-            rows.entry(group.compatibility_key.clone()).or_insert_with(|| {
-                (group, BTreeSet::new())
-            });
+            rows.entry(group.compatibility_key.clone()).or_insert_with(|| (group, BTreeSet::new()));
         let _ = contribution_ids.insert(contribution.contribution_id.clone());
     }
 
