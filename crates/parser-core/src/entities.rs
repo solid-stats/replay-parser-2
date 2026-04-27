@@ -89,11 +89,12 @@ fn apply_connected_player_backfill(
         );
         let hint = connected_player_backfill_hint(entity, &connected_event, &connected_source_ref);
 
-        if should_infer_connected_name(&entity.observed_name)
-            && let Some(inferred_name) =
-                inferred_connected_name(&connected_event.name, connected_source_ref)
+        if let Some(inferred_name) =
+            inferred_connected_name(&connected_event.name, connected_source_ref)
         {
-            entity.observed_name = inferred_name.clone();
+            if should_infer_connected_name(&entity.observed_name) {
+                entity.observed_name = inferred_name.clone();
+            }
             entity.identity.nickname = inferred_name;
         }
 
@@ -430,11 +431,13 @@ fn normalize_entity(
         diagnostics,
     );
 
-    // The Phase 3 contract does not expose a dedicated player-flag field yet; validate drift so
-    // malformed evidence is still surfaced through diagnostics and source refs.
-    if matches!(kind, EntityKind::Unit) {
-        check_player_flag(entity_is_player(entity, index), source_entity_id, context, diagnostics);
-    }
+    let is_player = player_flag_presence(
+        entity_is_player(entity, index),
+        source_entity_id,
+        kind,
+        context,
+        diagnostics,
+    );
 
     let source_refs = entity_source_refs(entity, index, source_entity_id, context)?;
 
@@ -443,6 +446,7 @@ fn normalize_entity(
         kind,
         observed_name,
         observed_class,
+        is_player,
         identity,
         compatibility_hints: Vec::new(),
         source_refs,
@@ -791,27 +795,64 @@ fn side_presence(
     }
 }
 
-fn check_player_flag(
+fn player_flag_presence(
     raw_field: RawField<bool>,
     source_entity_id: i64,
+    kind: EntityKind,
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
-) {
-    if let RawField::Drift { json_path, expected_shape, observed_shape } = raw_field {
-        push_diagnostic(
-            diagnostics,
-            EntityDiagnostic {
-                code: "schema.entity_is_player_shape",
-                message: "Entity isPlayer flag had unexpected source shape",
-                json_path: &json_path,
-                expected_shape,
-                observed_shape: &observed_shape,
-                parser_action: "preserve_entity_without_player_flag",
-                entity_id: Some(source_entity_id),
-            },
-            context,
-            DiagnosticImpact::DataLoss,
-        );
+) -> FieldPresence<bool> {
+    if !matches!(kind, EntityKind::Unit) {
+        return FieldPresence::NotApplicable {
+            reason: "non-unit entity has no observed player flag".to_string(),
+        };
+    }
+
+    match raw_field {
+        RawField::Present { value, json_path } => FieldPresence::Present {
+            value,
+            source: Some(entity_source_ref(
+                context,
+                &json_path,
+                source_entity_id,
+                rule_id("entity.is_player.observed"),
+            )),
+        },
+        RawField::Absent { json_path } => FieldPresence::Unknown {
+            reason: UnknownReason::SourceFieldAbsent,
+            source: Some(entity_source_ref(
+                context,
+                &json_path,
+                source_entity_id,
+                rule_id("entity.is_player.observed"),
+            )),
+        },
+        RawField::Drift { json_path, expected_shape, observed_shape } => {
+            push_diagnostic(
+                diagnostics,
+                EntityDiagnostic {
+                    code: "schema.entity_is_player_shape",
+                    message: "Entity isPlayer flag had unexpected source shape",
+                    json_path: &json_path,
+                    expected_shape,
+                    observed_shape: &observed_shape,
+                    parser_action: "set_unknown",
+                    entity_id: Some(source_entity_id),
+                },
+                context,
+                DiagnosticImpact::DataLoss,
+            );
+
+            FieldPresence::Unknown {
+                reason: UnknownReason::SchemaDrift,
+                source: Some(entity_source_ref(
+                    context,
+                    &json_path,
+                    source_entity_id,
+                    rule_id("entity.is_player.observed"),
+                )),
+            }
+        }
     }
 }
 

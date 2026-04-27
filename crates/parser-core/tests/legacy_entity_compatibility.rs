@@ -103,6 +103,49 @@ fn legacy_entity_compatibility_should_infer_player_name_from_connected_event_whe
 }
 
 #[test]
+fn legacy_entity_compatibility_should_use_last_connected_name_for_player_nickname() {
+    let fixture = br#"{
+        "missionName": "sg connected overwrite",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 1],
+        "captureDelay": 0.5,
+        "endFrame": 90,
+        "entities": [
+            {
+                "id": 12,
+                "type": "unit",
+                "name": "StaleEntityName",
+                "group": "Alpha 1-1",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": 0,
+                "positions": []
+            }
+        ],
+        "events": [
+            [4, "connected", "FirstConnectedName", 12],
+            [8, "connected", "LastConnectedName", 12]
+        ],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+    let artifact = parse_fixture(fixture, "fixtures/connected-overwrite.ocap.json");
+    let player = entity_by_id(&artifact, 12);
+
+    assert!(matches!(
+        &player.observed_name,
+        FieldPresence::Present { value, .. } if value == "StaleEntityName"
+    ));
+    assert!(matches!(
+        &player.identity.nickname,
+        FieldPresence::Inferred { value, rule_id, .. }
+            if value == "LastConnectedName"
+                && rule_id.as_str() == "entity.connected_player_backfill"
+    ));
+}
+
+#[test]
 fn legacy_entity_compatibility_should_skip_connected_backfill_for_vehicle_entities() {
     let artifact = connected_artifact();
     let vehicle = entity_by_id(&artifact, 99);

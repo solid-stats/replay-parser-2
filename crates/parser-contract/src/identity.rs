@@ -52,6 +52,7 @@ pub struct EntityCompatibilityHint {
     /// Compatibility behavior represented by this hint.
     pub kind: EntityCompatibilityHintKind,
     /// Related source entity identifiers that participate in this hint.
+    #[schemars(length(min = 1))]
     pub related_entity_ids: Vec<i64>,
     /// Observed name involved in this compatibility behavior.
     pub observed_name: FieldPresence<String>,
@@ -72,6 +73,8 @@ pub struct ObservedEntity {
     pub observed_name: FieldPresence<String>,
     /// Observed entity class from replay data.
     pub observed_class: FieldPresence<String>,
+    /// Observed player flag from replay data.
+    pub is_player: FieldPresence<bool>,
     /// Observed identity fields for the entity.
     pub identity: ObservedIdentity,
     /// Legacy compatibility hints without collapsing raw observed entities.

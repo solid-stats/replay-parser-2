@@ -197,6 +197,7 @@ fn schema_contract_should_include_entity_compatibility_hint_shape() {
         "connected_player_backfill",
         "duplicate_slot_same_name",
         "related_entity_ids",
+        "is_player",
         "observed_name",
         "rule_id",
         "source_refs",
@@ -206,6 +207,26 @@ fn schema_contract_should_include_entity_compatibility_hint_shape() {
             "schema should contain {expected_fragment}"
         );
     }
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_empty_compatibility_hint_related_entity_ids() {
+    let mut success_example = read_json(success_example_path());
+    success_example["entities"][0]["compatibility_hints"] = json!([
+        {
+            "kind": "connected_player_backfill",
+            "related_entity_ids": [],
+            "observed_name": {
+                "state": "present",
+                "value": "Afganor",
+                "source": null
+            },
+            "rule_id": "entity.connected_player_backfill",
+            "source_refs": success_example["entities"][0]["source_refs"].clone()
+        }
+    ]);
+
+    assert_committed_schema_rejects(&success_example);
 }
 
 #[test]

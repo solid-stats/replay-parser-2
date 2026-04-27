@@ -89,6 +89,11 @@
         "reason": "source_field_absent",
         "source": null
       },
+      "is_player": {
+        "state": "present",
+        "value": true,
+        "source": null
+      },
       "identity": {
         "nickname": {
           "state": "present",

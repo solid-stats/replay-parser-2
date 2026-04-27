@@ -348,7 +348,8 @@
           "items": {
             "type": "integer",
             "format": "int64"
-          }
+          },
+          "minItems": 1
         },
         "rule_id": {
           "description": "Stable rule identifier that produced this hint.",
@@ -452,11 +453,11 @@
         },
         "side": {
           "description": "Observed actor side.",
-          "$ref": "#/$defs/FieldPresence8"
+          "$ref": "#/$defs/FieldPresence9"
         },
         "source_entity_id": {
           "description": "Source entity identifier for the actor.",
-          "$ref": "#/$defs/FieldPresence9"
+          "$ref": "#/$defs/FieldPresence10"
         }
       },
       "required": [
@@ -596,6 +597,168 @@
             "value": {
               "description": "Inferred value.",
               "$ref": "#/$defs/SourceChecksum"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is not applicable.",
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence10": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
+      "oneOf": [
+        {
+          "description": "Field was present in the source or adapter input.",
+          "type": "object",
+          "properties": {
+            "source": {
+              "description": "Source reference for the value, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "description": "Present value.",
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "description": "Field was explicitly null in the source or domain event.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is null.",
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "description": "Source reference for the null state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value is unknown.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is unknown.",
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "description": "Source reference for the unknown state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value was inferred rather than directly observed.",
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "description": "Optional confidence score for the inference.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "description": "Human-readable inference reason.",
+              "type": "string"
+            },
+            "rule_id": {
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
+            },
+            "source": {
+              "description": "Source reference for the inference, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "description": "Inferred value.",
+              "type": "integer",
+              "format": "int64"
             }
           },
           "required": [
@@ -1625,7 +1788,7 @@
             },
             "value": {
               "description": "Present value.",
-              "$ref": "#/$defs/EntitySide"
+              "type": "boolean"
             }
           },
           "required": [
@@ -1731,7 +1894,7 @@
             },
             "value": {
               "description": "Inferred value.",
-              "$ref": "#/$defs/EntitySide"
+              "type": "boolean"
             }
           },
           "required": [
@@ -1785,8 +1948,7 @@
             },
             "value": {
               "description": "Present value.",
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/$defs/EntitySide"
             }
           },
           "required": [
@@ -1892,8 +2054,7 @@
             },
             "value": {
               "description": "Inferred value.",
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/$defs/EntitySide"
             }
           },
           "required": [
@@ -2082,6 +2243,10 @@
           "description": "Observed identity fields for the entity.",
           "$ref": "#/$defs/ObservedIdentity"
         },
+        "is_player": {
+          "description": "Observed player flag from replay data.",
+          "$ref": "#/$defs/FieldPresence8"
+        },
         "kind": {
           "description": "Entity kind.",
           "$ref": "#/$defs/EntityKind"
@@ -2109,6 +2274,7 @@
         "kind",
         "observed_name",
         "observed_class",
+        "is_player",
         "identity",
         "compatibility_hints",
         "source_refs"
@@ -2140,7 +2306,7 @@
         },
         "side": {
           "description": "Observed side.",
-          "$ref": "#/$defs/FieldPresence8"
+          "$ref": "#/$defs/FieldPresence9"
         },
         "squad": {
           "description": "Observed squad.",

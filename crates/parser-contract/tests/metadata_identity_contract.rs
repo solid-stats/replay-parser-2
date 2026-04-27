@@ -64,6 +64,7 @@ fn observed_entity_fixture() -> ObservedEntity {
             reason: UnknownReason::SourceFieldAbsent,
             source: None,
         },
+        is_player: FieldPresence::Present { value: true, source: None },
         identity: observed_identity_fixture(),
         compatibility_hints: Vec::new(),
         source_refs: entity_source_refs(42, "$.entities[0]", "entity.observed"),
@@ -158,6 +159,8 @@ fn observed_entity_should_serialize_name_class_and_non_empty_source_refs() {
     assert_eq!(serialized["observed_name"]["state"], "present");
     assert_eq!(serialized["observed_name"]["value"], "Afganor");
     assert_eq!(serialized["observed_class"]["state"], "unknown");
+    assert_eq!(serialized["is_player"]["state"], "present");
+    assert_eq!(serialized["is_player"]["value"], true);
     assert_eq!(serialized["source_refs"][0]["json_path"], "$.entities[0]");
 }
 

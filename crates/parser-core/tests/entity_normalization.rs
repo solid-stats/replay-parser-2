@@ -83,6 +83,81 @@ fn entity_normalization_should_extract_unit_identity_when_unit_player_entity_is_
         &unit.identity.description,
         FieldPresence::Present { value, source: Some(_) } if value == "Rifleman"
     ));
+    assert!(matches!(unit.is_player, FieldPresence::Present { value: true, source: Some(_) }));
+}
+
+#[test]
+fn entity_normalization_should_preserve_false_player_flag_when_unit_entity_is_ai() {
+    let fixture = br#"{
+        "missionName": "sg ai unit",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 1],
+        "captureDelay": 0.5,
+        "endFrame": 10,
+        "entities": [
+            {
+                "id": 44,
+                "type": "unit",
+                "name": "AI Rifleman",
+                "group": "Alpha 1-2",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": 0,
+                "positions": []
+            }
+        ],
+        "events": [],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+    let artifact = parse_fixture(fixture);
+    let unit = entity_by_id(&artifact, 44);
+
+    assert!(matches!(unit.is_player, FieldPresence::Present { value: false, source: Some(_) }));
+}
+
+#[test]
+fn entity_normalization_should_emit_unknown_player_flag_when_unit_flag_has_schema_drift() {
+    let fixture = br#"{
+        "missionName": "sg player flag drift",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 1],
+        "captureDelay": 0.5,
+        "endFrame": 10,
+        "entities": [
+            {
+                "id": 45,
+                "type": "unit",
+                "name": "Flag Drift",
+                "group": "Alpha 1-2",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": "yes",
+                "positions": []
+            }
+        ],
+        "events": [],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+    let artifact = parse_fixture(fixture);
+    let unit = entity_by_id(&artifact, 45);
+
+    assert!(matches!(
+        unit.is_player,
+        FieldPresence::Unknown {
+            reason: parser_contract::presence::UnknownReason::SchemaDrift,
+            source: Some(_)
+        }
+    ));
+    assert!(
+        artifact
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "schema.entity_is_player_shape")
+    );
 }
 
 #[test]
@@ -99,6 +174,7 @@ fn entity_normalization_should_extract_vehicle_name_and_class_when_vehicle_entit
         &vehicle.observed_class,
         FieldPresence::Present { value, source: Some(_) } if value == "apc"
     ));
+    assert!(matches!(vehicle.is_player, FieldPresence::NotApplicable { .. }));
 }
 
 #[test]
