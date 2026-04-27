@@ -56,7 +56,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **PARS-06**: Parser preserves old connected-player backfill behavior needed for parity when entity data alone omits participants.
 - [x] **PARS-07**: Parser preserves old duplicate-slot same-name merge compatibility behavior for aggregate projection while retaining raw observed identifiers in normalized events.
 - [ ] **PARS-08**: Parser extracts normalized kill, death, teamkill, suicide, null-killer, player-killed, and vehicle-killed event semantics.
-- [ ] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
+- [x] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
 - [ ] **PARS-10**: Parser extracts commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, source, and confidence metadata.
 - [ ] **PARS-11**: Parser extracts winner/outcome data when present and emits unknown/inferred states when older replay data does not contain reliable winner data.
 
@@ -69,10 +69,10 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **AGG-05**: Parser preserves legacy name-normalization compatibility in aggregate projections while keeping normalized observed identity raw.
 - [x] **AGG-06**: Parser emits bounty calculation inputs for valid enemy kills, including killer/victim observed identity, frame/time, side context, replay context, and vehicle/infantry context.
 - [x] **AGG-07**: Parser excludes teamkills from bounty-awarding inputs while still exposing them as auditable normalized events.
-- [ ] **AGG-08**: Parser emits vehicle score contributions from GitHub issue #13 using only kills from vehicles and the defined attacker-vehicle by killed-entity weight matrix.
-- [ ] **AGG-09**: Parser computes vehicle score by subtracting weighted teamkill penalties from weighted vehicle-kill score and dividing by the count of games where the player had at least one kill from a vehicle.
-- [ ] **AGG-10**: Parser clamps vehicle score teamkill penalty multipliers below 1 up to 1, even when the normal matrix value for that attacker/killed type is lower.
-- [ ] **AGG-11**: Parser exposes source references for every vehicle score contribution so the score can be audited and recalculated by `server-2` if needed.
+- [x] **AGG-08**: Parser emits vehicle score contributions from GitHub issue #13 using only kills from vehicles and the defined attacker-vehicle by killed-entity weight matrix.
+- [x] **AGG-09**: Parser computes vehicle score by subtracting weighted teamkill penalties from weighted vehicle-kill score and dividing by the count of games where the player had at least one kill from a vehicle.
+- [x] **AGG-10**: Parser clamps vehicle score teamkill penalty multipliers below 1 up to 1, even when the normal matrix value for that attacker/killed type is lower.
+- [x] **AGG-11**: Parser exposes source references for every vehicle score contribution so the score can be audited and recalculated by `server-2` if needed.
 
 ### CLI and Validation
 
@@ -174,7 +174,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-06 | Phase 3 | Complete |
 | PARS-07 | Phase 3 | Complete |
 | PARS-08 | Phase 4 | Pending |
-| PARS-09 | Phase 4 | Pending |
+| PARS-09 | Phase 4 | Complete |
 | PARS-10 | Phase 4 | Pending |
 | PARS-11 | Phase 4 | Pending |
 | AGG-01 | Phase 4 | Complete |
@@ -184,10 +184,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGG-05 | Phase 4 | Complete |
 | AGG-06 | Phase 4 | Complete |
 | AGG-07 | Phase 4 | Complete |
-| AGG-08 | Phase 4 | Pending |
-| AGG-09 | Phase 4 | Pending |
-| AGG-10 | Phase 4 | Pending |
-| AGG-11 | Phase 4 | Pending |
+| AGG-08 | Phase 4 | Complete |
+| AGG-09 | Phase 4 | Complete |
+| AGG-10 | Phase 4 | Complete |
+| AGG-11 | Phase 4 | Complete |
 | CLI-01 | Phase 5 | Pending |
 | CLI-02 | Phase 5 | Pending |
 | CLI-03 | Phase 5 | Pending |
