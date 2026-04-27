@@ -14,7 +14,7 @@ pub struct ParserInput<'a> {
 }
 
 /// Deterministic parser options.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ParserOptions {
     /// Maximum number of diagnostics emitted before later plans collapse repeated issues.
     pub diagnostic_limit: usize,
