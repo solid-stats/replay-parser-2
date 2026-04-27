@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 3 complete: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata and observed entity facts, emit capped schema-drift diagnostics and structured failures instead of panics, and preserve connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. The project is ready to plan Phase 4, `Event Semantics and Aggregates`.
+Phase 3 complete: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata and observed entity facts, emit capped schema-drift diagnostics and structured failures instead of panics, and preserve connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. Phase 4, `Event Semantics and Aggregates`, is planned and ready to execute.
 
 ## Requirements
 
@@ -203,4 +203,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 after completing Phase 3 deterministic parser core*
+*Last updated: 2026-04-27 after planning Phase 4 event semantics and aggregates*

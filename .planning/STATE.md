@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-27T09:59:16.891Z"
-last_activity: 2026-04-27 - Phase 03 execution complete
+status: ready_to_execute
+stopped_at: Phase 4 planned
+last_updated: "2026-04-27T17:22:15+07:00"
+last_activity: 2026-04-27 - Phase 04 planning complete
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 17
+  total_plans: 24
   completed_plans: 17
-  percent: 100
+  percent: 71
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 4 (event-semantics-and-aggregates)
-Plan: Not planned
-Status: Ready to plan
-Last activity: 2026-04-27 - Phase 03 execution complete
+Plan: 04-00
+Status: Ready to execute
+Last activity: 2026-04-27 - Phase 04 planning complete
 
-Progress: [██████████] 100% of currently planned work
+Progress: [███████░░░] 71% of currently planned work
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100% of currently planned work
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
+| 04 | 7 planned | - | - |
 
 **Recent Trend:**
 
@@ -90,6 +91,7 @@ Recent decisions affecting current work:
 - Successful parser-worker results are stored as S3 `artifacts/` objects and reported to `server-2` by artifact reference over RabbitMQ.
 - Parser-core is now pure and transport-free: it accepts bytes plus caller metadata, decodes OCAP JSON with `serde_json`, normalizes replay metadata and observed entity facts, emits capped diagnostics/partial status for schema drift, and keeps `produced_at` unset for deterministic output.
 - Connected-player backfill and duplicate-slot same-name legacy behavior are preserved as auditable observed facts/hints; parser-core still does not perform canonical player matching.
+- Phase 4 planning splits event/aggregate work into seven execution plans: contract extensions, raw killed-event accessors, combat normalization, aggregate projections/bounty inputs, vehicle score, commander/outcome side facts, and final schema/README/quality gates.
 
 ### Pending Todos
 
@@ -125,9 +127,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-27T09:59:16.882Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-CONTEXT.md
+Last session: 2026-04-27T17:22:15+07:00
+Stopped at: Phase 4 planned
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26

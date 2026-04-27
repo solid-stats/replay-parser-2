@@ -6,9 +6,9 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 3 parser-core work is complete and verified. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, and records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. It does not yet contain the CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, combat event semantics, aggregate formulas, or benchmark suite.
+Phase 3 parser-core work is complete and verified, and Phase 4 event semantics and aggregate execution plans are ready. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, and records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. It does not yet contain the CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, combat event semantics, aggregate formulas, or benchmark suite.
 
-- Current phase: Phase 4, `Event Semantics and Aggregates` (ready to plan).
+- Current phase: Phase 4, `Event Semantics and Aggregates` (planned; ready to execute).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -16,6 +16,7 @@ Phase 3 parser-core work is complete and verified. The repository now contains t
 - Contract schema: `schemas/parse-artifact-v1.schema.json`.
 - Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
+- Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 
 The implemented developer validation commands are:
 
@@ -186,4 +187,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-27 after completing Phase 3 parser-core work.
+Last updated: 2026-04-27 after planning Phase 4 event semantics and aggregates.

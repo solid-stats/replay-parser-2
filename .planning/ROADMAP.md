@@ -94,7 +94,21 @@ Plans:
   3. Bounty calculation inputs include valid enemy-kill facts with killer/victim identity, frame/time, side, replay, and vehicle/infantry context, while teamkills remain auditable but do not award bounty inputs.
   4. Vehicle score contributions use only kills from vehicles, apply the issue #13 attacker-vehicle by killed-entity weight matrix, subtract weighted teamkill penalties, divide by games with at least one vehicle kill, and clamp teamkill penalty multipliers below 1 up to 1.
   5. Every vehicle score contribution exposes source references that let `server-2` audit or recalculate the score.
-**Plans**: TBD
+**Plans**: 7 plans
+**Execution waves**: Wave 1 runs `04-00-PLAN.md`; Wave 2 runs `04-01-PLAN.md`; Wave 3 runs `04-02-PLAN.md`; Wave 4 runs `04-03-PLAN.md`; Wave 5 runs `04-04-PLAN.md` and `04-05-PLAN.md`; Wave 6 runs `04-06-PLAN.md`.
+Cross-cutting constraints:
+- Normalized events and source references are the primary artifact; aggregate projections must derive from auditable contribution refs.
+- Parser output preserves observed identity and legacy compatibility keys only; canonical player identity, PostgreSQL persistence, public APIs, and UI presentation stay in adjacent apps.
+- Missing commander/winner data is represented as explicit unknown and does not by itself make an artifact partial.
+- Vehicle score contributions must preserve raw evidence, issue #13 categories, raw/applied weights, denominator inputs, and source refs.
+Plans:
+- [ ] 04-00-PLAN.md — Contract extensions for combat payloads, aggregate contribution values, vehicle score evidence, and replay-side facts.
+- [ ] 04-01-PLAN.md — Raw killed-event tuple accessors and event source references.
+- [ ] 04-02-PLAN.md — Combat event normalization for kills, deaths, teamkills, suicides, null killers, vehicle victims, and unknown actors.
+- [ ] 04-03-PLAN.md — Legacy per-replay projections, relationships, game-type compatibility metadata, squad/rotation inputs, and bounty inputs.
+- [ ] 04-04-PLAN.md — Issue #13 vehicle score taxonomy, weights, contributions, denominator inputs, and teamkill clamp tests.
+- [ ] 04-05-PLAN.md — Typed commander-side and winner/outcome facts with conservative known/unknown/candidate semantics.
+- [ ] 04-06-PLAN.md — Schema/example refresh, deterministic populated artifact tests, README handoff, and final quality gates.
 
 ### Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates
 **Goal**: Developers can reproduce parser results locally, compare against the old parser, enforce 100% reachable-code coverage, and measure the 10x target on equivalent workloads.
@@ -143,7 +157,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
-| 4. Event Semantics and Aggregates | 0/TBD | Ready to plan | - |
+| 4. Event Semantics and Aggregates | 0/7 | Ready to execute | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
