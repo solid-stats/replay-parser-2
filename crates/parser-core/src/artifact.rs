@@ -187,6 +187,28 @@ impl SourceContext {
             rule_id,
         }
     }
+
+    /// Builds a source reference for an event tuple with stable event coordinates.
+    #[must_use]
+    pub fn event_source_ref(
+        &self,
+        json_path: &str,
+        frame: Option<u64>,
+        event_index: Option<u64>,
+        entity_id: Option<i64>,
+        rule_id: Option<RuleId>,
+    ) -> SourceRef {
+        SourceRef {
+            replay_id: self.replay_id.clone(),
+            source_file: Some(self.source_file.clone()),
+            checksum: self.checksum.clone(),
+            frame,
+            event_index,
+            entity_id,
+            json_path: Some(json_path.to_string()),
+            rule_id,
+        }
+    }
 }
 
 enum FailureSpec {
