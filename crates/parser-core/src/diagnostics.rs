@@ -84,10 +84,10 @@ impl DiagnosticAccumulator {
     /// Consumes the accumulator and returns capped diagnostics plus status policy.
     #[must_use]
     pub fn finish(mut self, context: &SourceContext) -> DiagnosticReport {
-        if self.omitted_count > 0 {
-            if let Some(summary) = limit_exceeded_diagnostic(self.omitted_count, context) {
-                self.diagnostics.push(summary);
-            }
+        if self.omitted_count > 0
+            && let Some(summary) = limit_exceeded_diagnostic(self.omitted_count, context)
+        {
+            self.diagnostics.push(summary);
         }
 
         let status_for_successful_parse =
