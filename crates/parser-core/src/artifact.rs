@@ -12,17 +12,24 @@ use parser_contract::{
     },
     version::ContractVersion,
 };
-use serde_json::Value;
+use serde_json::{Map, Value};
 
-use crate::input::ParserInput;
+use crate::{
+    diagnostics::{DiagnosticAccumulator, DiagnosticPolicy},
+    input::ParserInput,
+    metadata::normalize_metadata,
+    raw::RawReplay,
+};
 
 /// Parses replay bytes into a deterministic artifact shell.
 #[must_use]
 pub fn parse_replay(input: ParserInput<'_>) -> ParseArtifact {
-    let _diagnostic_limit = crate::diagnostics::DiagnosticPolicy::from(input.options).limit();
+    let diagnostic_limit = DiagnosticPolicy::from(input.options).limit();
 
     match serde_json::from_slice::<Value>(input.bytes) {
-        Ok(Value::Object(_)) => success_artifact(input.parser, input.source),
+        Ok(Value::Object(root)) => {
+            success_artifact(input.parser, input.source, &root, diagnostic_limit)
+        }
         Ok(_) => failed_artifact(
             input.parser,
             input.source,
@@ -41,15 +48,24 @@ pub fn parse_replay(input: ParserInput<'_>) -> ParseArtifact {
 fn success_artifact(
     parser: parser_contract::version::ParserInfo,
     source: ReplaySource,
+    root: &Map<String, Value>,
+    diagnostic_limit: usize,
 ) -> ParseArtifact {
+    let raw = RawReplay::new(root);
+    let context = SourceContext::new(&source);
+    let mut diagnostics = DiagnosticAccumulator::new(diagnostic_limit);
+    let replay = normalize_metadata(&raw, &context, &mut diagnostics);
+    let status =
+        if diagnostics.has_data_loss() { ParseStatus::Partial } else { ParseStatus::Success };
+
     ParseArtifact {
         contract_version: ContractVersion::current(),
         parser,
         source,
-        status: ParseStatus::Success,
+        status,
         produced_at: None,
-        diagnostics: Vec::new(),
-        replay: None,
+        diagnostics: diagnostics.into_diagnostics(),
+        replay: Some(replay),
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
@@ -131,6 +147,41 @@ fn present_checksum(source: &ReplaySource) -> Option<SourceChecksum> {
         | FieldPresence::Unknown { .. }
         | FieldPresence::Inferred { .. }
         | FieldPresence::NotApplicable { .. } => None,
+    }
+}
+
+/// Source coordinates copied from caller-provided replay source metadata.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceContext {
+    replay_id: Option<String>,
+    source_file: String,
+    checksum: Option<SourceChecksum>,
+}
+
+impl SourceContext {
+    /// Creates source context from the artifact replay source.
+    #[must_use]
+    pub fn new(source: &ReplaySource) -> Self {
+        Self {
+            replay_id: source.replay_id.clone(),
+            source_file: source.source_file.clone(),
+            checksum: present_checksum(source),
+        }
+    }
+
+    /// Builds a source reference at the supplied JSON path and rule identifier.
+    #[must_use]
+    pub fn source_ref(&self, json_path: &str, rule_id: Option<RuleId>) -> SourceRef {
+        SourceRef {
+            replay_id: self.replay_id.clone(),
+            source_file: Some(self.source_file.clone()),
+            checksum: self.checksum.clone(),
+            frame: None,
+            event_index: None,
+            entity_id: None,
+            json_path: Some(json_path.to_string()),
+            rule_id,
+        }
     }
 }
 

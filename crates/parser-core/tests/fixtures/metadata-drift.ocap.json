@@ -1,0 +1,11 @@
+{
+  "missionName": "sg solid operation",
+  "worldName": "Altis",
+  "playersCount": "many",
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}

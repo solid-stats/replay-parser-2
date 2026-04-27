@@ -56,7 +56,7 @@ fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
 
     assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.produced_at, None);
-    assert_eq!(artifact.replay, None);
+    assert!(artifact.replay.is_some());
     assert!(artifact.diagnostics.is_empty());
     assert!(artifact.entities.is_empty());
     assert!(artifact.events.is_empty());

@@ -11,6 +11,10 @@ pub struct RawReplay<'a> {
     root: &'a Map<String, Value>,
 }
 
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "the plan requires RawReplay field helpers to use borrowed receiver signatures"
+)]
 impl<'a> RawReplay<'a> {
     /// Creates a raw replay wrapper from a decoded JSON object root.
     #[must_use]
@@ -47,10 +51,7 @@ impl<'a> RawReplay<'a> {
     pub fn u32_vec_field(&self, key: &str) -> RawField<Vec<u32>> {
         self.field(key, "array<unsigned integer>", |value| {
             let values = value.as_array()?;
-            values
-                .iter()
-                .map(|entry| u32::try_from(entry.as_u64()?).ok())
-                .collect()
+            values.iter().map(|entry| u32::try_from(entry.as_u64()?).ok()).collect()
         })
     }
 

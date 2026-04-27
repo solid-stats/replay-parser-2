@@ -1,0 +1,12 @@
+{
+  "missionName": "sg solid operation",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 12, 10],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}
