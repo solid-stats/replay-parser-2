@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-stopped_at: Phase 04 Plan 04 complete
-last_updated: "2026-04-27T18:53:09+07:00"
-last_activity: 2026-04-27 - Phase 04 Plan 04 vehicle score inputs complete
+stopped_at: Phase 04 Plan 05 complete
+last_updated: "2026-04-27T19:04:37+07:00"
+last_activity: 2026-04-27 - Phase 04 Plan 05 commander/outcome side facts complete
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 24
-  completed_plans: 22
-  percent: 92
+  completed_plans: 23
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 4 (event-semantics-and-aggregates)
-Plan: 04-05
+Plan: 04-06
 Status: Ready to execute
-Last activity: 2026-04-27 - Phase 04 Plan 04 vehicle score inputs complete
+Last activity: 2026-04-27 - Phase 04 Plan 05 commander/outcome side facts complete
 
-Progress: [█████████░] 92% of currently planned work
+Progress: [█████████▋] 96% of currently planned work
 
 ## Performance Metrics
 
@@ -47,7 +47,7 @@ Progress: [█████████░] 92% of currently planned work
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
-| 04 | 5/7 | 48m10s | 9m38s |
+| 04 | 6/7 | 56m40s | 9m27s |
 
 **Recent Trend:**
 
@@ -73,6 +73,7 @@ Progress: [█████████░] 92% of currently planned work
 | Phase 04 P02 | 8m27s | 3 tasks | 5 files |
 | Phase 04 P03 | 11m45s | 4 tasks | 5 files |
 | Phase 04 P04 | 8m27s | 3 tasks | 5 files |
+| Phase 04 P05 | 8m30s | 4 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,7 @@ Recent decisions affecting current work:
 - Phase 4 Plan 02 normalized source killed tuples into typed combat events with bounty eligibility/exclusion metadata, legacy counter effects, source refs, and data-loss diagnostics for unknown actor cases.
 - Phase 4 Plan 03 derives auditable per-replay legacy, relationship, game-type, squad, rotation, and bounty projections from normalized combat events without canonical player IDs or downstream totals.
 - Phase 4 Plan 04 emits issue #13 vehicle score award/penalty inputs, denominator eligibility rows, raw/applied teamkill penalty weights, and source refs without computing final cross-replay score.
+- Phase 4 Plan 05 emits typed replay-side outcome facts and commander candidates with conservative known/unknown semantics, confidence, rule IDs, and source refs without canonical commander truth.
 
 ### Pending Todos
 
@@ -137,11 +139,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-27T18:53:09+07:00
-Stopped at: Phase 04 Plan 04 complete
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-05-PLAN.md
+Last session: 2026-04-27T19:04:37+07:00
+Stopped at: Phase 04 Plan 05 complete
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-06-PLAN.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
-**Next Plan:** Phase 4 Plan 04-05 — typed commander-side and winner/outcome facts with conservative known/unknown/candidate semantics
+**Next Plan:** Phase 4 Plan 04-06 — schema/example refresh, README handoff, and final quality gates

@@ -107,7 +107,7 @@ Plans:
 - [x] 04-02-PLAN.md — Combat event normalization for kills, deaths, teamkills, suicides, null killers, vehicle victims, and unknown actors.
 - [x] 04-03-PLAN.md — Legacy per-replay projections, relationships, game-type compatibility metadata, squad/rotation inputs, and bounty inputs.
 - [x] 04-04-PLAN.md — Issue #13 vehicle score taxonomy, weights, contributions, denominator inputs, and teamkill clamp tests.
-- [ ] 04-05-PLAN.md — Typed commander-side and winner/outcome facts with conservative known/unknown/candidate semantics.
+- [x] 04-05-PLAN.md — Typed commander-side and winner/outcome facts with conservative known/unknown/candidate semantics.
 - [ ] 04-06-PLAN.md — Schema/example refresh, deterministic populated artifact tests, README handoff, and final quality gates.
 
 ### Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates
@@ -157,7 +157,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
-| 4. Event Semantics and Aggregates | 5/7 | In progress | - |
+| 4. Event Semantics and Aggregates | 6/7 | In progress | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
