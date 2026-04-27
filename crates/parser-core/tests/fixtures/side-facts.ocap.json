@@ -1,0 +1,34 @@
+{
+  "missionName": "sg side facts",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 2],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "winner": "WEST",
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Alpha KS",
+      "group": "HQ",
+      "side": "WEST",
+      "description": "Commander",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Bravo",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}

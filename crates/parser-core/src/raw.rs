@@ -255,11 +255,9 @@ pub struct RawStringCandidate {
 pub fn string_candidates(raw: RawReplay<'_>, keys: &[&str]) -> Vec<RawStringCandidate> {
     keys.iter()
         .filter_map(|key| match raw.string_field(key) {
-            RawField::Present { value, json_path } => Some(RawStringCandidate {
-                key: (*key).to_string(),
-                value,
-                json_path,
-            }),
+            RawField::Present { value, json_path } => {
+                Some(RawStringCandidate { key: (*key).to_string(), value, json_path })
+            }
             RawField::Absent { .. } | RawField::Drift { .. } => None,
         })
         .collect()

@@ -73,7 +73,10 @@ fn known_outcome(
 
     Some(OutcomeFact {
         status: OutcomeStatus::Known,
-        winner_side: FieldPresence::Present { value: winner_side, source: Some(source_ref.clone()) },
+        winner_side: FieldPresence::Present {
+            value: winner_side,
+            source: Some(source_ref.clone()),
+        },
         source_label: FieldPresence::Present {
             value: candidate.value.clone(),
             source: Some(source_ref),
@@ -113,10 +116,7 @@ fn push_unrecognized_outcome_diagnostic(
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) {
-    let source_ref = context.source_ref(
-        &candidate.json_path,
-        rule_id(OUTCOME_UNRECOGNIZED_CODE),
-    );
+    let source_ref = context.source_ref(&candidate.json_path, rule_id(OUTCOME_UNRECOGNIZED_CODE));
     let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
         return;
     };
@@ -125,10 +125,7 @@ fn push_unrecognized_outcome_diagnostic(
         Diagnostic {
             code: OUTCOME_UNRECOGNIZED_CODE.to_string(),
             severity: DiagnosticSeverity::Warning,
-            message: format!(
-                "Replay outcome field {} has unrecognized side value",
-                candidate.key
-            ),
+            message: format!("Replay outcome field {} has unrecognized side value", candidate.key),
             json_path: Some(candidate.json_path.clone()),
             expected_shape: Some(
                 "WEST, west, BLUFOR, EAST, east, OPFOR, GUER, guer, INDEPENDENT, CIV, or civilian"
@@ -158,10 +155,7 @@ fn commander_candidate(entity: &ObservedEntity) -> Option<CommanderSideFact> {
     Some(CommanderSideFact {
         side: entity.identity.side.clone(),
         side_name: side_name_presence(&entity.identity.side),
-        commander: FieldPresence::Present {
-            value: actor_ref(entity),
-            source,
-        },
+        commander: FieldPresence::Present { value: actor_ref(entity), source },
         kind: CommanderFactKind::Candidate,
         confidence: Confidence::new(0.6).ok(),
         rule_id: rule_id(COMMANDER_KEYWORD_RULE_ID)?,
@@ -216,10 +210,9 @@ fn side_name_presence(side: &FieldPresence<EntitySide>) -> FieldPresence<String>
             reason: UnknownReason::SourceFieldAbsent,
             source: source.clone(),
         },
-        FieldPresence::NotApplicable { .. } => FieldPresence::Unknown {
-            reason: UnknownReason::SourceFieldAbsent,
-            source: None,
-        },
+        FieldPresence::NotApplicable { .. } => {
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: None }
+        }
     }
 }
 
