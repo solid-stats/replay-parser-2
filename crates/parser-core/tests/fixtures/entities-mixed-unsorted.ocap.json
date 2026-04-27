@@ -1,0 +1,37 @@
+{
+  "missionName": "sg entity normalization",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 3],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 30,
+      "type": "vehicle",
+      "name": "M2 Static",
+      "class": "static-weapon",
+      "positions": []
+    },
+    {
+      "id": 10,
+      "type": "unit",
+      "name": "Alpha",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 20,
+      "type": "vehicle",
+      "name": "BTR-80",
+      "class": "apc",
+      "positions": []
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}

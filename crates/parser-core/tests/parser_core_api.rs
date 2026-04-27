@@ -50,7 +50,7 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 
 #[test]
 fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
-    let input = parser_input(br#"{"missionName":"Operation Copper"}"#);
+    let input = parser_input(br#"{"missionName":"Operation Copper","entities":[]}"#);
 
     let artifact = parse_replay(input);
 
@@ -120,7 +120,7 @@ fn parser_core_failure_should_return_structured_failure_when_root_is_not_object(
 
 #[test]
 fn parser_core_api_should_not_populate_produced_at_when_parser_core_runs() {
-    let input = parser_input(br"{}");
+    let input = parser_input(br#"{"entities":[]}"#);
 
     let artifact = parse_replay(input);
 

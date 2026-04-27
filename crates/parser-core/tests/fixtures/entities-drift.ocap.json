@@ -1,0 +1,37 @@
+{
+  "missionName": "sg entity drift",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 2],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "type": "unit",
+      "name": "Missing Id",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1
+    },
+    {
+      "id": 8,
+      "type": 10,
+      "name": "Type Drift",
+      "positions": []
+    },
+    {
+      "id": 7,
+      "type": "unit",
+      "name": "Valid Unit",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Autorifleman",
+      "isPlayer": true,
+      "positions": []
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}
