@@ -4,6 +4,7 @@
 //! versioned `parser-contract` artifacts. Runtime adapters own file access, queues,
 //! object storage, databases, and non-deterministic timestamps.
 
+pub mod aggregates;
 pub mod artifact;
 pub mod diagnostics;
 pub mod entities;
