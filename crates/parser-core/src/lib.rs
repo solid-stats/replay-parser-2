@@ -7,6 +7,7 @@
 pub mod artifact;
 pub mod diagnostics;
 pub mod input;
+pub mod raw;
 
 pub use input::{ParserInput, ParserOptions};
 
