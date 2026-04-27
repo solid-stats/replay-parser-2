@@ -179,6 +179,36 @@ fn schema_contract_gap_regression_should_reject_empty_event_source_refs() {
 }
 
 #[test]
+fn schema_contract_gap_regression_should_reject_empty_entity_source_refs() {
+    let mut success_example = read_json(success_example_path());
+    success_example["entities"][0]["source_refs"] = json!([]);
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_should_include_entity_compatibility_hint_shape() {
+    let schema_text =
+        fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
+
+    for expected_fragment in [
+        "EntityCompatibilityHint",
+        "EntityCompatibilityHintKind",
+        "connected_player_backfill",
+        "duplicate_slot_same_name",
+        "related_entity_ids",
+        "observed_name",
+        "rule_id",
+        "source_refs",
+    ] {
+        assert!(
+            schema_text.contains(expected_fragment),
+            "schema should contain {expected_fragment}"
+        );
+    }
+}
+
+#[test]
 fn schema_contract_gap_regression_should_reject_hollow_source_ref_objects() {
     let mut success_example = read_json(success_example_path());
     success_example["events"][0]["source_refs"][0] = json!({});

@@ -6,10 +6,13 @@
 )]
 
 use parser_contract::{
-    identity::{EntityKind, EntitySide, ObservedEntity, ObservedIdentity},
+    identity::{
+        EntityCompatibilityHint, EntityCompatibilityHintKind, EntityKind, EntitySide,
+        ObservedEntity, ObservedIdentity,
+    },
     metadata::{FrameBounds, ReplayMetadata, ReplayTimeBounds},
     presence::{Confidence, FieldPresence, NullReason, UnknownReason},
-    source_ref::RuleId,
+    source_ref::{RuleId, SourceRef, SourceRefs},
 };
 use serde_json::json;
 
@@ -31,6 +34,39 @@ fn observed_identity_fixture() -> ObservedIdentity {
         squad: unknown(UnknownReason::SourceFieldAbsent),
         role: present("Rifleman".to_string()),
         description: present("Squad member".to_string()),
+    }
+}
+
+fn entity_source_ref(entity_id: i64, json_path: &str, rule_id: &str) -> SourceRef {
+    SourceRef {
+        replay_id: None,
+        source_file: None,
+        checksum: None,
+        frame: None,
+        event_index: None,
+        entity_id: Some(entity_id),
+        json_path: Some(json_path.to_string()),
+        rule_id: Some(RuleId::new(rule_id).expect("test rule ID should be valid")),
+    }
+}
+
+fn entity_source_refs(entity_id: i64, json_path: &str, rule_id: &str) -> SourceRefs {
+    SourceRefs::new(vec![entity_source_ref(entity_id, json_path, rule_id)])
+        .expect("test source refs should be non-empty")
+}
+
+fn observed_entity_fixture() -> ObservedEntity {
+    ObservedEntity {
+        source_entity_id: 42,
+        kind: EntityKind::Unit,
+        observed_name: FieldPresence::Present { value: "Afganor".to_string(), source: None },
+        observed_class: FieldPresence::Unknown {
+            reason: UnknownReason::SourceFieldAbsent,
+            source: None,
+        },
+        identity: observed_identity_fixture(),
+        compatibility_hints: Vec::new(),
+        source_refs: entity_source_refs(42, "$.entities[0]", "entity.observed"),
     }
 }
 
@@ -99,12 +135,7 @@ fn replay_metadata_should_serialize_observed_top_level_keys_as_snake_case() {
 
 #[test]
 fn observed_identity_should_preserve_nickname_and_source_entity_id_without_canonical_player_id() {
-    let entity = ObservedEntity {
-        source_entity_id: 42,
-        kind: EntityKind::Unit,
-        identity: observed_identity_fixture(),
-        source_refs: Vec::new(),
-    };
+    let entity = observed_entity_fixture();
 
     let serialized = serde_json::to_value(&entity).expect("entity should serialize");
     let serialized_text = serialized.to_string();
@@ -115,6 +146,37 @@ fn observed_identity_should_preserve_nickname_and_source_entity_id_without_canon
     assert!(!serialized_text.contains("canonical_player"));
     assert!(!serialized_text.contains("canonical_id"));
     assert!(!serialized_text.contains("account_id"));
+    assert!(!serialized_text.contains("user_id"));
+}
+
+#[test]
+fn observed_entity_should_serialize_name_class_and_non_empty_source_refs() {
+    let entity = observed_entity_fixture();
+
+    let serialized = serde_json::to_value(&entity).expect("entity should serialize");
+
+    assert_eq!(serialized["observed_name"]["state"], "present");
+    assert_eq!(serialized["observed_name"]["value"], "Afganor");
+    assert_eq!(serialized["observed_class"]["state"], "unknown");
+    assert_eq!(serialized["source_refs"][0]["json_path"], "$.entities[0]");
+}
+
+#[test]
+fn observed_entity_should_serialize_duplicate_slot_compatibility_hint_without_merging_entities() {
+    let hint = EntityCompatibilityHint {
+        kind: EntityCompatibilityHintKind::DuplicateSlotSameName,
+        related_entity_ids: vec![41, 42],
+        observed_name: FieldPresence::Present { value: "SameName".to_string(), source: None },
+        rule_id: RuleId::new("entity.duplicate_slot_same_name")
+            .expect("test rule ID should be valid"),
+        source_refs: entity_source_refs(42, "$.entities[0]", "entity.duplicate_slot_same_name"),
+    };
+    let entity = ObservedEntity { compatibility_hints: vec![hint], ..observed_entity_fixture() };
+
+    let serialized = serde_json::to_value(&entity).expect("entity should serialize");
+
+    assert_eq!(serialized["compatibility_hints"][0]["kind"], "duplicate_slot_same_name");
+    assert_eq!(serialized["compatibility_hints"][0]["related_entity_ids"], json!([41, 42]));
 }
 
 #[test]

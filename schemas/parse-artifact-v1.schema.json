@@ -330,6 +330,58 @@
         }
       ]
     },
+    "EntityCompatibilityHint": {
+      "description": "Auditable legacy compatibility hint for observed entity projection behavior.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Compatibility behavior represented by this hint.",
+          "$ref": "#/$defs/EntityCompatibilityHintKind"
+        },
+        "observed_name": {
+          "description": "Observed name involved in this compatibility behavior.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "related_entity_ids": {
+          "description": "Related source entity identifiers that participate in this hint.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "rule_id": {
+          "description": "Stable rule identifier that produced this hint.",
+          "$ref": "#/$defs/RuleId"
+        },
+        "source_refs": {
+          "description": "Source references backing this hint.",
+          "$ref": "#/$defs/SourceRefs"
+        }
+      },
+      "required": [
+        "kind",
+        "related_entity_ids",
+        "observed_name",
+        "rule_id",
+        "source_refs"
+      ]
+    },
+    "EntityCompatibilityHintKind": {
+      "description": "Legacy compatibility hint kind attached to an observed entity.",
+      "oneOf": [
+        {
+          "description": "Entity identity was backfilled from a connected-player event.",
+          "type": "string",
+          "const": "connected_player_backfill"
+        },
+        {
+          "description": "Entity is a duplicate-slot same-name candidate for later aggregate projection.",
+          "type": "string",
+          "const": "duplicate_slot_same_name"
+        }
+      ]
+    },
     "EntityKind": {
       "description": "Observed replay entity category.",
       "oneOf": [
@@ -2019,6 +2071,13 @@
       "description": "Observed replay entity with identity facts and source references.",
       "type": "object",
       "properties": {
+        "compatibility_hints": {
+          "description": "Legacy compatibility hints without collapsing raw observed entities.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EntityCompatibilityHint"
+          }
+        },
         "identity": {
           "description": "Observed identity fields for the entity.",
           "$ref": "#/$defs/ObservedIdentity"
@@ -2027,6 +2086,14 @@
           "description": "Entity kind.",
           "$ref": "#/$defs/EntityKind"
         },
+        "observed_class": {
+          "description": "Observed entity class from replay data.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "observed_name": {
+          "description": "Observed entity name from replay data.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
         "source_entity_id": {
           "description": "Source entity identifier from OCAP data.",
           "type": "integer",
@@ -2034,16 +2101,16 @@
         },
         "source_refs": {
           "description": "Source references backing this entity.",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SourceRef"
-          }
+          "$ref": "#/$defs/SourceRefs"
         }
       },
       "required": [
         "source_entity_id",
         "kind",
+        "observed_name",
+        "observed_class",
         "identity",
+        "compatibility_hints",
         "source_refs"
       ]
     },

@@ -79,6 +79,16 @@
     {
       "source_entity_id": 101,
       "kind": "unit",
+      "observed_name": {
+        "state": "present",
+        "value": "Afganor",
+        "source": null
+      },
+      "observed_class": {
+        "state": "unknown",
+        "reason": "source_field_absent",
+        "source": null
+      },
       "identity": {
         "nickname": {
           "state": "present",
@@ -121,6 +131,7 @@
           "source": null
         }
       },
+      "compatibility_hints": [],
       "source_refs": [
         {
           "replay_id": "replay-0001",
