@@ -12,6 +12,7 @@ pub mod events;
 pub mod input;
 pub mod metadata;
 pub mod raw;
+pub mod vehicle_score;
 
 pub use input::{ParserInput, ParserOptions};
 
