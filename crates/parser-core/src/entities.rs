@@ -82,8 +82,11 @@ fn apply_connected_player_backfill(
             continue;
         }
 
-        let connected_source_ref =
-            connected_event_source_ref(context, &connected_event, CONNECTED_PLAYER_BACKFILL_RULE_ID);
+        let connected_source_ref = connected_event_source_ref(
+            context,
+            &connected_event,
+            CONNECTED_PLAYER_BACKFILL_RULE_ID,
+        );
         let hint = connected_player_backfill_hint(entity, &connected_event, &connected_source_ref);
 
         if should_infer_connected_name(&entity.observed_name) {

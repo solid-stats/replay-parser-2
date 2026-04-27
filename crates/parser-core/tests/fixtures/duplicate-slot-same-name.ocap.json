@@ -1,0 +1,43 @@
+{
+  "missionName": "sg duplicate slot same name",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 3],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 21,
+      "type": "unit",
+      "name": "SameName",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 22,
+      "type": "unit",
+      "name": "SameName",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Autorifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 23,
+      "type": "unit",
+      "name": "OtherName",
+      "group": "Alpha 1-3",
+      "side": "WEST",
+      "description": "Medic",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}
