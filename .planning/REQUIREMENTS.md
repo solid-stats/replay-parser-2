@@ -62,13 +62,13 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Aggregates
 
-- [ ] **AGG-01**: Parser emits legacy-compatible aggregate summaries for existing comparable fields including kills, kills from vehicle, vehicle kills, teamkills, deaths, KD ratio, vehicle kill coefficient, score, played games, weekly stats, squad stats, and rotation stats.
-- [ ] **AGG-02**: Parser derives aggregate summaries from normalized events and source references rather than directly mutating aggregate counters without audit trail.
-- [ ] **AGG-03**: Parser emits killed/killer and teamkilled/teamkiller relationship summaries compatible with old output comparison needs.
-- [ ] **AGG-04**: Parser preserves old game-type selection behavior for `sg`, `mace`, and `sm`, or emits enough metadata for identical compatibility filtering during comparison.
-- [ ] **AGG-05**: Parser preserves legacy name-normalization compatibility in aggregate projections while keeping normalized observed identity raw.
-- [ ] **AGG-06**: Parser emits bounty calculation inputs for valid enemy kills, including killer/victim observed identity, frame/time, side context, replay context, and vehicle/infantry context.
-- [ ] **AGG-07**: Parser excludes teamkills from bounty-awarding inputs while still exposing them as auditable normalized events.
+- [x] **AGG-01**: Parser emits legacy-compatible aggregate summaries for existing comparable fields including kills, kills from vehicle, vehicle kills, teamkills, deaths, KD ratio, vehicle kill coefficient, score, played games, weekly stats, squad stats, and rotation stats.
+- [x] **AGG-02**: Parser derives aggregate summaries from normalized events and source references rather than directly mutating aggregate counters without audit trail.
+- [x] **AGG-03**: Parser emits killed/killer and teamkilled/teamkiller relationship summaries compatible with old output comparison needs.
+- [x] **AGG-04**: Parser preserves old game-type selection behavior for `sg`, `mace`, and `sm`, or emits enough metadata for identical compatibility filtering during comparison.
+- [x] **AGG-05**: Parser preserves legacy name-normalization compatibility in aggregate projections while keeping normalized observed identity raw.
+- [x] **AGG-06**: Parser emits bounty calculation inputs for valid enemy kills, including killer/victim observed identity, frame/time, side context, replay context, and vehicle/infantry context.
+- [x] **AGG-07**: Parser excludes teamkills from bounty-awarding inputs while still exposing them as auditable normalized events.
 - [ ] **AGG-08**: Parser emits vehicle score contributions from GitHub issue #13 using only kills from vehicles and the defined attacker-vehicle by killed-entity weight matrix.
 - [ ] **AGG-09**: Parser computes vehicle score by subtracting weighted teamkill penalties from weighted vehicle-kill score and dividing by the count of games where the player had at least one kill from a vehicle.
 - [ ] **AGG-10**: Parser clamps vehicle score teamkill penalty multipliers below 1 up to 1, even when the normal matrix value for that attacker/killed type is lower.
@@ -177,13 +177,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-09 | Phase 4 | Pending |
 | PARS-10 | Phase 4 | Pending |
 | PARS-11 | Phase 4 | Pending |
-| AGG-01 | Phase 4 | Pending |
-| AGG-02 | Phase 4 | Pending |
-| AGG-03 | Phase 4 | Pending |
-| AGG-04 | Phase 4 | Pending |
-| AGG-05 | Phase 4 | Pending |
-| AGG-06 | Phase 4 | Pending |
-| AGG-07 | Phase 4 | Pending |
+| AGG-01 | Phase 4 | Complete |
+| AGG-02 | Phase 4 | Complete |
+| AGG-03 | Phase 4 | Complete |
+| AGG-04 | Phase 4 | Complete |
+| AGG-05 | Phase 4 | Complete |
+| AGG-06 | Phase 4 | Complete |
+| AGG-07 | Phase 4 | Complete |
 | AGG-08 | Phase 4 | Pending |
 | AGG-09 | Phase 4 | Pending |
 | AGG-10 | Phase 4 | Pending |
@@ -221,4 +221,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-27 after completing Phase 3 deterministic parser core*
+*Last updated: 2026-04-27 after completing Phase 4 Plan 03 aggregate projections*
