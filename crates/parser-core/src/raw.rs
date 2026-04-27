@@ -175,6 +175,42 @@ pub struct ConnectedEventObservation {
     pub json_path: String,
 }
 
+/// Raw killed event observation from `$.events`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct KilledEventObservation {
+    /// Original index in the source `events` array.
+    pub event_index: usize,
+    /// Source frame number from `event[0]`.
+    pub frame: u64,
+    /// Killed source entity ID from `event[2]`, when numeric.
+    pub killed_entity_id: Option<i64>,
+    /// Killer source entity and weapon evidence from `event[3]`.
+    pub kill_info: KilledEventKillInfo,
+    /// Source distance in meters from `event[4]`, when numeric.
+    pub distance_meters: Option<f64>,
+    /// JSON path to the source event tuple.
+    pub json_path: String,
+}
+
+/// Raw killer evidence from a killed event tuple.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum KilledEventKillInfo {
+    /// Source tuple explicitly records a null killer as `["null"]`.
+    NullKiller,
+    /// Source tuple records a numeric killer entity ID and optional weapon name.
+    Killer {
+        /// Killer source entity ID from `event[3][0]`.
+        killer_entity_id: i64,
+        /// Weapon name from `event[3][1]`, when it is a non-empty string.
+        weapon: Option<String>,
+    },
+    /// Source tuple had an unrecognized `event[3]` shape.
+    Malformed {
+        /// Coarse observed JSON shape, or `absent` when the tuple entry is missing.
+        observed_shape: String,
+    },
+}
+
 /// Reads connected-player event tuples shaped as `[frame, "connected", name, entity_id]`.
 #[must_use]
 pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
@@ -186,6 +222,20 @@ pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
         .iter()
         .enumerate()
         .filter_map(|(event_index, event)| connected_event(event, event_index))
+        .collect()
+}
+
+/// Reads killed event tuples shaped as `[frame, "killed", killed_id, kill_info, distance]`.
+#[must_use]
+pub fn killed_events(raw: RawReplay<'_>) -> Vec<KilledEventObservation> {
+    let RawField::Present { value: events, json_path: _ } = raw.array_field("events") else {
+        return Vec::new();
+    };
+
+    events
+        .iter()
+        .enumerate()
+        .filter_map(|(event_index, event)| killed_event(event, event_index))
         .collect()
 }
 
@@ -286,4 +336,51 @@ fn connected_event(event: &Value, event_index: usize) -> Option<ConnectedEventOb
         entity_id: event.get(3)?.as_i64()?,
         json_path: format!("$.events[{event_index}]"),
     })
+}
+
+fn killed_event(event: &Value, event_index: usize) -> Option<KilledEventObservation> {
+    let event = event.as_array()?;
+    let event_type = event.get(1)?.as_str()?;
+
+    if event_type != "killed" {
+        return None;
+    }
+
+    let frame = event.first()?.as_u64()?;
+
+    Some(KilledEventObservation {
+        event_index,
+        frame,
+        killed_entity_id: event.get(2).and_then(Value::as_i64),
+        kill_info: killed_event_kill_info(event.get(3)),
+        distance_meters: event.get(4).and_then(Value::as_f64),
+        json_path: format!("$.events[{event_index}]"),
+    })
+}
+
+fn killed_event_kill_info(value: Option<&Value>) -> KilledEventKillInfo {
+    let Some(value) = value else {
+        return KilledEventKillInfo::Malformed { observed_shape: "absent".to_string() };
+    };
+
+    let Some(values) = value.as_array() else {
+        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
+    };
+
+    if matches!(values.as_slice(), [Value::String(marker)] if marker == "null") {
+        return KilledEventKillInfo::NullKiller;
+    }
+
+    let [killer_id, weapon] = values.as_slice() else {
+        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
+    };
+
+    let Some(killer_entity_id) = killer_id.as_i64() else {
+        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
+    };
+
+    KilledEventKillInfo::Killer {
+        killer_entity_id,
+        weapon: weapon.as_str().filter(|weapon| !weapon.is_empty()).map(ToOwned::to_owned),
+    }
 }
