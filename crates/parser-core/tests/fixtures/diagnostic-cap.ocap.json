@@ -1,0 +1,47 @@
+{
+  "missionName": "sg diagnostic cap",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 5],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "type": "unit",
+      "name": "Missing Id 1",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": true
+    },
+    {
+      "type": "unit",
+      "name": "Missing Id 2",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Medic",
+      "isPlayer": true
+    },
+    {
+      "type": "unit",
+      "name": "Missing Id 3",
+      "group": "Alpha 1-3",
+      "side": "WEST",
+      "description": "Autorifleman",
+      "isPlayer": true
+    },
+    {
+      "type": "vehicle",
+      "name": "Missing Id 4",
+      "class": "truck"
+    },
+    {
+      "type": "vehicle",
+      "name": "Missing Id 5",
+      "class": "apc"
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}
