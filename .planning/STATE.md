@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-stopped_at: Phase 04 Plan 00 complete
-last_updated: "2026-04-27T17:58:03+07:00"
-last_activity: 2026-04-27 - Phase 04 Plan 00 contract extensions complete
+stopped_at: Phase 04 Plan 01 complete
+last_updated: "2026-04-27T18:07:59+07:00"
+last_activity: 2026-04-27 - Phase 04 Plan 01 raw killed-event accessors complete
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 24
-  completed_plans: 18
-  percent: 75
+  completed_plans: 19
+  percent: 79
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 4 (event-semantics-and-aggregates)
-Plan: 04-01
+Plan: 04-02
 Status: Ready to execute
-Last activity: 2026-04-27 - Phase 04 Plan 00 contract extensions complete
+Last activity: 2026-04-27 - Phase 04 Plan 01 raw killed-event accessors complete
 
-Progress: [████████░░] 75% of currently planned work
+Progress: [████████░░] 79% of currently planned work
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 18
+- Total plans completed: 19
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -47,7 +47,7 @@ Progress: [████████░░] 75% of currently planned work
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
-| 04 | 1/7 | 14m | 14m |
+| 04 | 2/7 | 19m31s | 9m45s |
 
 **Recent Trend:**
 
@@ -69,6 +69,7 @@ Progress: [████████░░] 75% of currently planned work
 | Phase 03 P04 | 7m | 3 tasks | 8 files |
 | Phase 03 P05 | 12m | 4 tasks | 7 files |
 | Phase 04 P00 | 14m | 4 tasks | 17 files |
+| Phase 04 P01 | 5m31s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ Recent decisions affecting current work:
 - Connected-player backfill and duplicate-slot same-name legacy behavior are preserved as auditable observed facts/hints; parser-core still does not perform canonical player matching.
 - Phase 4 planning splits event/aggregate work into seven execution plans: contract extensions, raw killed-event accessors, combat normalization, aggregate projections/bounty inputs, vehicle score, commander/outcome side facts, and final schema/README/quality gates.
 - Phase 4 Plan 00 added schema-visible combat payloads, aggregate contribution helper schemas, vehicle score evidence payloads, and replay-side commander/outcome facts without introducing canonical identity, persistence, queue/storage, API, or UI ownership changes.
+- Phase 4 Plan 01 added tolerant raw killed-event tuple observations and event-coordinate source refs without adding semantic counters, aggregate projections, or parser artifact event population.
 
 ### Pending Todos
 
@@ -129,11 +131,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-27T17:58:03+07:00
-Stopped at: Phase 04 Plan 00 complete
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-01-PLAN.md
+Last session: 2026-04-27T18:07:59+07:00
+Stopped at: Phase 04 Plan 01 complete
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-02-PLAN.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
-**Next Plan:** Phase 4 Plan 04-01 — raw killed-event accessors and event source references
+**Next Plan:** Phase 4 Plan 04-02 — combat event normalization for kills, deaths, teamkills, suicides, null killers, vehicle victims, and unknown actors

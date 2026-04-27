@@ -157,7 +157,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
-| 4. Event Semantics and Aggregates | 1/7 | In progress | - |
+| 4. Event Semantics and Aggregates | 2/7 | In progress | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
