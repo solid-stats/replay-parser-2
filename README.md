@@ -8,7 +8,7 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 Phase 3 parser-core work is complete and verified. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, and records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. It does not yet contain the CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, combat event semantics, aggregate formulas, or benchmark suite.
 
-- Current phase: Phase 3, `Deterministic Parser Core` (parser-core work complete).
+- Current phase: Phase 4, `Event Semantics and Aggregates` (ready to plan).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.

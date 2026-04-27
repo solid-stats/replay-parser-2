@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 2 complete: the versioned parser contract crate, generated JSON Schema, success/failure examples, explicit unknown/null states, validated source references, structured failures, checksum invariants, and inferred-confidence bounds are implemented and verified. The project is ready to plan Phase 3, `Deterministic Parser Core`.
+Phase 3 complete: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata and observed entity facts, emit capped schema-drift diagnostics and structured failures instead of panics, and preserve connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. The project is ready to plan Phase 4, `Event Semantics and Aggregates`.
 
 ## Requirements
 
@@ -23,6 +23,7 @@ Phase 2 complete: the versioned parser contract crate, generated JSON Schema, su
 - [x] Phase 1 validated Solid Stats ownership boundaries across `replay-parser-2`, `server-2`, and `web`.
 - [x] Phase 1 validated the legacy baseline command/runtime dossier, corpus manifest, legacy rule/output inventory, and old-vs-new mismatch taxonomy.
 - [x] Phase 2 validated the versioned `ParseArtifact` and `ParseFailure` contract shape, generated JSON Schema, explicit presence states, observed identity boundary, checksum/source-reference invariants, and schema-backed example validation.
+- [x] Phase 3 validated deterministic parser-core output, tolerant OCAP root/metadata/entity normalization, schema-drift diagnostics, connected-player backfill, and duplicate-slot same-name compatibility hints without canonical identity matching.
 
 ### Active
 
@@ -202,4 +203,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 after adding the `replays-fetcher` product boundary*
+*Last updated: 2026-04-27 after completing Phase 3 deterministic parser core*

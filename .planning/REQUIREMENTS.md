@@ -44,17 +44,17 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **OUT-05**: Parser contract includes source references that link normalized events and aggregate contributions back to replay, frame, event index, entity ID, and rule ID where available.
 - [x] **OUT-06**: Parser contract includes JSON Schema generation or equivalent machine-readable schema validation for `server-2` integration.
 - [x] **OUT-07**: Parser contract includes structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
-- [ ] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
+- [x] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
 
 ### Parser Core
 
-- [ ] **PARS-01**: Parser reads OCAP JSON files matching historical files in `~/sg_stats/raw_replays`.
-- [ ] **PARS-02**: Parser tolerates known OCAP schema drift without panics by producing structured warnings, explicit unknowns, or structured failures.
-- [ ] **PARS-03**: Parser extracts replay metadata from observed top-level fields such as `EditorMarkers`, `Markers`, `captureDelay`, `endFrame`, `entities`, `events`, `missionAuthor`, `missionName`, `playersCount`, and `worldName`.
-- [ ] **PARS-04**: Parser normalizes unit/player entities with source IDs, observed names, side, group, role/description, player flags, and available identity fields.
-- [ ] **PARS-05**: Parser normalizes vehicle/static weapon entities with source IDs, names, classes, side/context where available, and source positions where needed for audit.
-- [ ] **PARS-06**: Parser preserves old connected-player backfill behavior needed for parity when entity data alone omits participants.
-- [ ] **PARS-07**: Parser preserves old duplicate-slot same-name merge compatibility behavior for aggregate projection while retaining raw observed identifiers in normalized events.
+- [x] **PARS-01**: Parser reads OCAP JSON files matching historical files in `~/sg_stats/raw_replays`.
+- [x] **PARS-02**: Parser tolerates known OCAP schema drift without panics by producing structured warnings, explicit unknowns, or structured failures.
+- [x] **PARS-03**: Parser extracts replay metadata from observed top-level fields such as `EditorMarkers`, `Markers`, `captureDelay`, `endFrame`, `entities`, `events`, `missionAuthor`, `missionName`, `playersCount`, and `worldName`.
+- [x] **PARS-04**: Parser normalizes unit/player entities with source IDs, observed names, side, group, role/description, player flags, and available identity fields.
+- [x] **PARS-05**: Parser normalizes vehicle/static weapon entities with source IDs, names, classes, side/context where available, and source positions where needed for audit.
+- [x] **PARS-06**: Parser preserves old connected-player backfill behavior needed for parity when entity data alone omits participants.
+- [x] **PARS-07**: Parser preserves old duplicate-slot same-name merge compatibility behavior for aggregate projection while retaining raw observed identifiers in normalized events.
 - [ ] **PARS-08**: Parser extracts normalized kill, death, teamkill, suicide, null-killer, player-killed, and vehicle-killed event semantics.
 - [ ] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
 - [ ] **PARS-10**: Parser extracts commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, source, and confidence metadata.
@@ -165,14 +165,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-05 | Phase 2 | Complete |
 | OUT-06 | Phase 2 | Complete |
 | OUT-07 | Phase 2 | Complete |
-| OUT-08 | Phase 3 | Pending |
-| PARS-01 | Phase 3 | Pending |
-| PARS-02 | Phase 3 | Pending |
-| PARS-03 | Phase 3 | Pending |
-| PARS-04 | Phase 3 | Pending |
-| PARS-05 | Phase 3 | Pending |
-| PARS-06 | Phase 3 | Pending |
-| PARS-07 | Phase 3 | Pending |
+| OUT-08 | Phase 3 | Complete |
+| PARS-01 | Phase 3 | Complete |
+| PARS-02 | Phase 3 | Complete |
+| PARS-03 | Phase 3 | Complete |
+| PARS-04 | Phase 3 | Complete |
+| PARS-05 | Phase 3 | Complete |
+| PARS-06 | Phase 3 | Complete |
+| PARS-07 | Phase 3 | Complete |
 | PARS-08 | Phase 4 | Pending |
 | PARS-09 | Phase 4 | Pending |
 | PARS-10 | Phase 4 | Pending |
@@ -221,4 +221,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-25 after deferring annual nomination statistics to v2*
+*Last updated: 2026-04-27 after completing Phase 3 deterministic parser core*

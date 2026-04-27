@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity. (completed 2026-04-25)
 - [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
-- [ ] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts.
+- [x] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts. (completed 2026-04-27)
 - [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates.
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
@@ -77,12 +77,12 @@ Plans:
 **Plans**: 6 plans
 **Execution waves**: Wave 1 runs `03-00-PLAN.md`; Wave 2 runs `03-01-PLAN.md`; Wave 3 runs `03-02-PLAN.md`; Wave 4 runs `03-03-PLAN.md`; Wave 5 runs `03-04-PLAN.md`; Wave 6 runs `03-05-PLAN.md`.
 Plans:
-- [ ] 03-00-PLAN.md — Contract extension for typed observed entity facts and compatibility hints.
-- [ ] 03-01-PLAN.md — Parser-core crate foundation, pure API, and structured failure shell.
-- [ ] 03-02-PLAN.md — Tolerant OCAP root decode and replay metadata normalization.
-- [ ] 03-03-PLAN.md — Observed unit/player, vehicle, and static weapon entity normalization.
-- [ ] 03-04-PLAN.md — Schema-drift diagnostics, partial status policy, and deterministic output tests.
-- [ ] 03-05-PLAN.md — Connected-player backfill, duplicate-slot hints, README handoff, and final quality gates.
+- [x] 03-00-PLAN.md — Contract extension for typed observed entity facts and compatibility hints.
+- [x] 03-01-PLAN.md — Parser-core crate foundation, pure API, and structured failure shell.
+- [x] 03-02-PLAN.md — Tolerant OCAP root decode and replay metadata normalization.
+- [x] 03-03-PLAN.md — Observed unit/player, vehicle, and static weapon entity normalization.
+- [x] 03-04-PLAN.md — Schema-drift diagnostics, partial status policy, and deterministic output tests.
+- [x] 03-05-PLAN.md — Connected-player backfill, duplicate-slot hints, README handoff, and final quality gates.
 
 ### Phase 4: Event Semantics and Aggregates
 **Goal**: Users of the parse artifact can audit normalized combat/outcome events and derived aggregate summaries, including vehicle score from GitHub issue #13.
@@ -142,8 +142,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
-| 3. Deterministic Parser Core | 0/6 | Ready to execute | - |
-| 4. Event Semantics and Aggregates | 0/TBD | Not started | - |
+| 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
+| 4. Event Semantics and Aggregates | 0/TBD | Ready to plan | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |

@@ -3,40 +3,40 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 planned and ready to execute
-last_updated: "2026-04-26T08:00:28.007Z"
-last_activity: "2026-04-26 - Phase 03 planning complete"
+stopped_at: Phase 3 completed and ready to plan Phase 4
+last_updated: "2026-04-27T05:50:00.000Z"
+last_activity: "2026-04-27 - Phase 03 execution complete"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 17
-  completed_plans: 11
-  percent: 65
+  completed_plans: 17
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-26)
+See: .planning/PROJECT.md (updated 2026-04-27)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 3 — deterministic-parser-core
+**Current focus:** Phase 4 — event-semantics-and-aggregates
 
 ## Current Position
 
-Phase: 3 (deterministic-parser-core)
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-26 - Phase 03 planning complete
+Phase: 4 (event-semantics-and-aggregates)
+Plan: Not planned
+Status: Ready to plan
+Last activity: 2026-04-27 - Phase 03 execution complete
 
-Progress: [██████░░░░] 65%
+Progress: [██████████] 100% of currently planned work
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 11
+- Total plans completed: 17
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -46,6 +46,7 @@ Progress: [██████░░░░] 65%
 |-------|-------|-------|----------|
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
+| 03 | 6 | 62m23s | 10m24s |
 
 **Recent Trend:**
 
@@ -60,6 +61,12 @@ Progress: [██████░░░░] 65%
 | Phase 02 P04 | 8m47s | 4 tasks | 11 files |
 | Phase 02 P05 | planned | 4 tasks | 16 files |
 | Phase 02 P05 | 7m24s | 4 tasks | 16 files |
+| Phase 03 P00 | 11m44s | 2 tasks | 5 files |
+| Phase 03 P01 | 6m39s | 2 tasks | 9 files |
+| Phase 03 P02 | 14m | 2 tasks | 9 files |
+| Phase 03 P03 | 11m | 2 tasks | 8 files |
+| Phase 03 P04 | 7m | 3 tasks | 8 files |
+| Phase 03 P05 | 12m | 4 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +88,8 @@ Recent decisions affecting current work:
 - README.md should primarily serve humans and developers as the repository entry point; AI/GSD workflow rules belong in a dedicated development section, not as the whole document.
 - `replays-fetcher` owns production replay discovery/fetching, S3 `raw/` object writes, and ingestion staging/outbox records; `server-2` promotes staged records into `replays` and `parse_jobs`.
 - Successful parser-worker results are stored as S3 `artifacts/` objects and reported to `server-2` by artifact reference over RabbitMQ.
+- Parser-core is now pure and transport-free: it accepts bytes plus caller metadata, decodes OCAP JSON with `serde_json`, normalizes replay metadata and observed entity facts, emits capped diagnostics/partial status for schema drift, and keeps `produced_at` unset for deterministic output.
+- Connected-player backfill and duplicate-slot same-name legacy behavior are preserved as auditable observed facts/hints; parser-core still does not perform canonical player matching.
 
 ### Pending Todos
 
@@ -116,10 +125,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T08:00:28.007Z
-Stopped at: Phase 3 planned and ready to execute
-Resume file: .planning/phases/03-deterministic-parser-core/03-00-PLAN.md
+Last session: 2026-04-27T05:50:00.000Z
+Stopped at: Phase 3 completed and ready to plan Phase 4
+Resume file: .planning/phases/03-deterministic-parser-core/03-05-SUMMARY.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
-**Next Phase:** Phase 3 — run `$gsd-execute-phase 3`
+**Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
+**Next Phase:** Phase 4 — run `$gsd-plan-phase 4`
