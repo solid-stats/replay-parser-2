@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-stopped_at: Phase 4 planned
-last_updated: "2026-04-27T17:22:15+07:00"
-last_activity: 2026-04-27 - Phase 04 planning complete
+stopped_at: Phase 04 Plan 00 complete
+last_updated: "2026-04-27T17:58:03+07:00"
+last_activity: 2026-04-27 - Phase 04 Plan 00 contract extensions complete
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 24
-  completed_plans: 17
-  percent: 71
+  completed_plans: 18
+  percent: 75
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 4 (event-semantics-and-aggregates)
-Plan: 04-00
+Plan: 04-01
 Status: Ready to execute
-Last activity: 2026-04-27 - Phase 04 planning complete
+Last activity: 2026-04-27 - Phase 04 Plan 00 contract extensions complete
 
-Progress: [███████░░░] 71% of currently planned work
+Progress: [████████░░] 75% of currently planned work
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 17
+- Total plans completed: 18
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -47,7 +47,7 @@ Progress: [███████░░░] 71% of currently planned work
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
-| 04 | 7 planned | - | - |
+| 04 | 1/7 | 14m | 14m |
 
 **Recent Trend:**
 
@@ -68,6 +68,7 @@ Progress: [███████░░░] 71% of currently planned work
 | Phase 03 P03 | 11m | 2 tasks | 8 files |
 | Phase 03 P04 | 7m | 3 tasks | 8 files |
 | Phase 03 P05 | 12m | 4 tasks | 7 files |
+| Phase 04 P00 | 14m | 4 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ Recent decisions affecting current work:
 - Parser-core is now pure and transport-free: it accepts bytes plus caller metadata, decodes OCAP JSON with `serde_json`, normalizes replay metadata and observed entity facts, emits capped diagnostics/partial status for schema drift, and keeps `produced_at` unset for deterministic output.
 - Connected-player backfill and duplicate-slot same-name legacy behavior are preserved as auditable observed facts/hints; parser-core still does not perform canonical player matching.
 - Phase 4 planning splits event/aggregate work into seven execution plans: contract extensions, raw killed-event accessors, combat normalization, aggregate projections/bounty inputs, vehicle score, commander/outcome side facts, and final schema/README/quality gates.
+- Phase 4 Plan 00 added schema-visible combat payloads, aggregate contribution helper schemas, vehicle score evidence payloads, and replay-side commander/outcome facts without introducing canonical identity, persistence, queue/storage, API, or UI ownership changes.
 
 ### Pending Todos
 
@@ -127,11 +129,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-27T17:22:15+07:00
-Stopped at: Phase 4 planned
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md
+Last session: 2026-04-27T17:58:03+07:00
+Stopped at: Phase 04 Plan 00 complete
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-01-PLAN.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
-**Next Phase:** Phase 4 — run `$gsd-plan-phase 4`
+**Next Plan:** Phase 4 Plan 04-01 — raw killed-event accessors and event source references

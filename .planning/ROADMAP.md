@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity. (completed 2026-04-25)
 - [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
 - [x] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts. (completed 2026-04-27)
-- [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates.
+- [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (in progress)
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
@@ -102,7 +102,7 @@ Cross-cutting constraints:
 - Missing commander/winner data is represented as explicit unknown and does not by itself make an artifact partial.
 - Vehicle score contributions must preserve raw evidence, issue #13 categories, raw/applied weights, denominator inputs, and source refs.
 Plans:
-- [ ] 04-00-PLAN.md — Contract extensions for combat payloads, aggregate contribution values, vehicle score evidence, and replay-side facts.
+- [x] 04-00-PLAN.md — Contract extensions for combat payloads, aggregate contribution values, vehicle score evidence, and replay-side facts.
 - [ ] 04-01-PLAN.md — Raw killed-event tuple accessors and event source references.
 - [ ] 04-02-PLAN.md — Combat event normalization for kills, deaths, teamkills, suicides, null killers, vehicle victims, and unknown actors.
 - [ ] 04-03-PLAN.md — Legacy per-replay projections, relationships, game-type compatibility metadata, squad/rotation inputs, and bounty inputs.
@@ -157,7 +157,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
-| 4. Event Semantics and Aggregates | 0/7 | Ready to execute | - |
+| 4. Event Semantics and Aggregates | 1/7 | In progress | - |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
