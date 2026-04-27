@@ -18,6 +18,7 @@ use serde_json::{Map, Value};
 use crate::{
     diagnostics::{DiagnosticAccumulator, DiagnosticPolicy},
     entities::normalize_entities,
+    events::normalize_combat_events,
     input::ParserInput,
     metadata::normalize_metadata,
     raw::RawReplay,
@@ -58,6 +59,7 @@ fn success_artifact(
     let mut diagnostics = DiagnosticAccumulator::new(diagnostic_limit);
     let replay = normalize_metadata(&raw, &context, &mut diagnostics);
     let entities = normalize_entities(&raw, &context, &mut diagnostics);
+    let events = normalize_combat_events(&raw, &entities, &context, &mut diagnostics);
     let diagnostic_report = diagnostics.finish(&context);
 
     ParseArtifact {
@@ -69,7 +71,7 @@ fn success_artifact(
         diagnostics: diagnostic_report.diagnostics,
         replay: Some(replay),
         entities,
-        events: Vec::new(),
+        events,
         aggregates: AggregateSection::default(),
         side_facts: ReplaySideFacts::default(),
         failure: None,
