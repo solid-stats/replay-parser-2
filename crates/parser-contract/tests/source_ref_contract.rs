@@ -151,6 +151,7 @@ fn normalized_event_source_refs_should_serialize_vehicle_killed_event_with_sourc
         source_refs: SourceRefs::new(vec![source_ref("event.vehicle_killed.source")])
             .expect("source refs should be non-empty"),
         rule_id: RuleId::new("event.vehicle_killed").expect("test event rule ID should be valid"),
+        combat: None,
         attributes,
     };
 
