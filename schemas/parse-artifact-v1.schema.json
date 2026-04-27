@@ -213,6 +213,20 @@
         "value"
       ]
     },
+    "AggregateProjectionKey": {
+      "description": "Known namespaced aggregate projection keys emitted by parser-core v1 artifacts.",
+      "type": "string",
+      "enum": [
+        "legacy.player_game_results",
+        "legacy.relationships",
+        "legacy.game_type_compatibility",
+        "legacy.squad_inputs",
+        "legacy.rotation_inputs",
+        "bounty.inputs",
+        "vehicle_score.inputs",
+        "vehicle_score.denominator_inputs"
+      ]
+    },
     "AggregateSection": {
       "description": "Aggregate projection section of a successful or partial parse artifact.",
       "type": "object",

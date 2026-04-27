@@ -28,6 +28,7 @@ fn add_aggregate_value_helper_definitions(schema: &mut Schema) {
     add_schema_definition::<RelationshipContributionValue>(schema, "RelationshipContributionValue");
     add_schema_definition::<BountyInputContributionValue>(schema, "BountyInputContributionValue");
     add_schema_definition::<VehicleScoreInputValue>(schema, "VehicleScoreInputValue");
+    add_aggregate_projection_key_definition(schema);
 }
 
 fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definition_name: &str) {
@@ -46,6 +47,30 @@ fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definitio
 
     drop(definition.remove("$schema"));
     drop(defs.insert(definition_name.to_string(), definition.into()));
+}
+
+fn add_aggregate_projection_key_definition(schema: &mut Schema) {
+    let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
+        return;
+    };
+
+    drop(defs.insert(
+        "AggregateProjectionKey".to_string(),
+        json!({
+            "description": "Known namespaced aggregate projection keys emitted by parser-core v1 artifacts.",
+            "type": "string",
+            "enum": [
+                "legacy.player_game_results",
+                "legacy.relationships",
+                "legacy.game_type_compatibility",
+                "legacy.squad_inputs",
+                "legacy.rotation_inputs",
+                "bounty.inputs",
+                "vehicle_score.inputs",
+                "vehicle_score.denominator_inputs"
+            ]
+        }),
+    ));
 }
 
 fn enforce_status_failure_invariants(schema: &mut Schema) {

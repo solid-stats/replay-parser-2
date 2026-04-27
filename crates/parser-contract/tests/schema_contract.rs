@@ -90,10 +90,13 @@ fn schema_contract_committed_schema_should_include_phase_4_contract_surfaces() {
         fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
 
     for expected_fragment in [
+        "AggregateProjectionKey",
         "CombatEventAttributes",
         "VehicleScoreInputValue",
         "ReplaySideFacts",
         "side_facts",
+        "legacy.player_game_results",
+        "vehicle_score.denominator_inputs",
         "vehicle_score_input",
     ] {
         assert!(
