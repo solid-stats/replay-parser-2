@@ -239,6 +239,32 @@ pub fn killed_events(raw: RawReplay<'_>) -> Vec<KilledEventObservation> {
         .collect()
 }
 
+/// Raw string evidence from a top-level replay field.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RawStringCandidate {
+    /// Source top-level key that carried the string value.
+    pub key: String,
+    /// Observed string value.
+    pub value: String,
+    /// JSON path to the source field.
+    pub json_path: String,
+}
+
+/// Reads present top-level string candidates for the supplied keys.
+#[must_use]
+pub fn string_candidates(raw: RawReplay<'_>, keys: &[&str]) -> Vec<RawStringCandidate> {
+    keys.iter()
+        .filter_map(|key| match raw.string_field(key) {
+            RawField::Present { value, json_path } => Some(RawStringCandidate {
+                key: (*key).to_string(),
+                value,
+                json_path,
+            }),
+            RawField::Absent { .. } | RawField::Drift { .. } => None,
+        })
+        .collect()
+}
+
 /// Tolerant top-level field observation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RawField<T> {
