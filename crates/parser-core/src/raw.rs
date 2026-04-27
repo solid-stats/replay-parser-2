@@ -177,7 +177,7 @@ pub struct ConnectedEventObservation {
 
 /// Reads connected-player event tuples shaped as `[frame, "connected", name, entity_id]`.
 #[must_use]
-pub fn connected_events(raw: &RawReplay<'_>) -> Vec<ConnectedEventObservation> {
+pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
     let RawField::Present { value: events, json_path: _ } = raw.array_field("events") else {
         return Vec::new();
     };

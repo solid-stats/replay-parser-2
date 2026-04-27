@@ -6,12 +6,13 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 2 contract work is complete and verified. Phase 3 planning is complete and ready to execute. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, and contract tests. It does not yet contain the parser core, CLI binary, RabbitMQ/S3 worker, golden parity harness, or benchmark suite.
+Phase 3 parser-core work is complete and verified. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, and records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. It does not yet contain the CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, combat event semantics, aggregate formulas, or benchmark suite.
 
-- Current phase: Phase 3, `Deterministic Parser Core` (planned; ready to execute).
+- Current phase: Phase 3, `Deterministic Parser Core` (parser-core work complete).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
+- Parser-core crate: `crates/parser-core`.
 - Contract schema: `schemas/parse-artifact-v1.schema.json`.
 - Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
@@ -20,6 +21,7 @@ The implemented developer validation commands are:
 
 ```bash
 cargo test -p parser-contract
+cargo test -p parser-core
 cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v1.schema.json
 ```
 
@@ -42,7 +44,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Parser-core, parse, worker, comparison, and benchmark commands are still planned for later phases.
+CLI parse, worker, comparison, full corpus parity, aggregate, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -120,7 +122,7 @@ The expected implementation shape is:
 
 - Rust 2024 Cargo workspace.
 - Current contract crate at `crates/parser-contract`.
-- Pure parser core shared by CLI, worker, tests, benchmarks, and comparison tools.
+- Pure parser core at `crates/parser-core`, shared by future CLI, worker, tests, benchmarks, and comparison tools.
 - Thin runtime adapters for CLI and RabbitMQ/S3 worker mode.
 - `serde` / `serde_json` for correctness-first OCAP JSON parsing.
 - Deterministic contract serialization with stable ordering.
@@ -184,4 +186,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-26 after adding the `replays-fetcher` product boundary.
+Last updated: 2026-04-27 after completing Phase 3 parser-core work.

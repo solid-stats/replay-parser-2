@@ -51,14 +51,14 @@ pub fn normalize_entities(
         .filter_map(|(index, entity)| normalize_entity(entity, index, context, diagnostics))
         .collect::<Vec<_>>();
 
-    apply_connected_player_backfill(raw, context, &mut normalized);
+    apply_connected_player_backfill(*raw, context, &mut normalized);
     apply_duplicate_slot_same_name_hints(diagnostics, &mut normalized);
     normalized.sort_by(compare_entities);
     normalized
 }
 
 fn apply_connected_player_backfill(
-    raw: &RawReplay<'_>,
+    raw: RawReplay<'_>,
     context: &SourceContext,
     entities: &mut [ObservedEntity],
 ) {
@@ -89,13 +89,12 @@ fn apply_connected_player_backfill(
         );
         let hint = connected_player_backfill_hint(entity, &connected_event, &connected_source_ref);
 
-        if should_infer_connected_name(&entity.observed_name) {
-            if let Some(inferred_name) =
+        if should_infer_connected_name(&entity.observed_name)
+            && let Some(inferred_name) =
                 inferred_connected_name(&connected_event.name, connected_source_ref)
-            {
-                entity.observed_name = inferred_name.clone();
-                entity.identity.nickname = inferred_name;
-            }
+        {
+            entity.observed_name = inferred_name.clone();
+            entity.identity.nickname = inferred_name;
         }
 
         if let Some(hint) = hint {
@@ -104,7 +103,7 @@ fn apply_connected_player_backfill(
     }
 }
 
-fn should_infer_connected_name(observed_name: &FieldPresence<String>) -> bool {
+const fn should_infer_connected_name(observed_name: &FieldPresence<String>) -> bool {
     match observed_name {
         FieldPresence::Present { value, source: _ } => value.is_empty(),
         FieldPresence::Unknown { .. } => true,
@@ -289,7 +288,7 @@ fn push_duplicate_side_conflict_diagnostic(
     );
 }
 
-fn duplicate_hint_name_value(observed_name: &FieldPresence<String>) -> &str {
+const fn duplicate_hint_name_value(observed_name: &FieldPresence<String>) -> &str {
     match observed_name {
         FieldPresence::Present { value, source: _ } | FieldPresence::Inferred { value, .. } => {
             value.as_str()
@@ -300,7 +299,7 @@ fn duplicate_hint_name_value(observed_name: &FieldPresence<String>) -> &str {
     }
 }
 
-fn present_side_name(side: &FieldPresence<EntitySide>) -> Option<&'static str> {
+const fn present_side_name(side: &FieldPresence<EntitySide>) -> Option<&'static str> {
     match side {
         FieldPresence::Present { value, source: _ } => Some(match value {
             EntitySide::East => "east",
@@ -316,7 +315,7 @@ fn present_side_name(side: &FieldPresence<EntitySide>) -> Option<&'static str> {
     }
 }
 
-fn field_source_ref<T>(field: &FieldPresence<T>) -> Option<&SourceRef> {
+const fn field_source_ref<T>(field: &FieldPresence<T>) -> Option<&SourceRef> {
     match field {
         FieldPresence::Present { source: Some(source), .. }
         | FieldPresence::ExplicitNull { source: Some(source), .. }
