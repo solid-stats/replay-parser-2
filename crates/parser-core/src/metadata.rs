@@ -9,7 +9,7 @@ use parser_contract::{
 
 use crate::{
     artifact::SourceContext,
-    diagnostics::DiagnosticAccumulator,
+    diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
     raw::{RawField, RawReplay},
 };
 
@@ -101,7 +101,7 @@ fn normalize_field<T>(
                 &observed_shape,
                 source_key,
             ) {
-                diagnostics.push(diagnostic, true);
+                diagnostics.push(diagnostic, DiagnosticImpact::DataLoss);
             }
 
             FieldPresence::Unknown {

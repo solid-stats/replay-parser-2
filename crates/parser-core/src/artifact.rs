@@ -57,16 +57,15 @@ fn success_artifact(
     let mut diagnostics = DiagnosticAccumulator::new(diagnostic_limit);
     let replay = normalize_metadata(&raw, &context, &mut diagnostics);
     let entities = normalize_entities(&raw, &context, &mut diagnostics);
-    let status =
-        if diagnostics.has_data_loss() { ParseStatus::Partial } else { ParseStatus::Success };
+    let diagnostic_report = diagnostics.finish(&context);
 
     ParseArtifact {
         contract_version: ContractVersion::current(),
         parser,
         source,
-        status,
+        status: diagnostic_report.status_for_successful_parse,
         produced_at: None,
-        diagnostics: diagnostics.into_diagnostics(),
+        diagnostics: diagnostic_report.diagnostics,
         replay: Some(replay),
         entities,
         events: Vec::new(),

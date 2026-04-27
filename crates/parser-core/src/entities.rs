@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::{
     artifact::SourceContext,
-    diagnostics::DiagnosticAccumulator,
+    diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
     raw::{
         RawField, RawReplay, entity_class, entity_description, entity_group, entity_has_positions,
         entity_id, entity_is_player, entity_name, entity_side, entity_type,
@@ -63,7 +63,7 @@ fn push_entities_section_diagnostic(
                 entity_id: None,
             },
             context,
-            true,
+            DiagnosticImpact::DataLoss,
         ),
         RawField::Drift { json_path, expected_shape, observed_shape } => push_diagnostic(
             diagnostics,
@@ -77,7 +77,7 @@ fn push_entities_section_diagnostic(
                 entity_id: None,
             },
             context,
-            true,
+            DiagnosticImpact::DataLoss,
         ),
         RawField::Present { .. } => {}
     }
@@ -144,7 +144,7 @@ fn required_entity_id(
                     entity_id: None,
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
             None
         }
@@ -161,7 +161,7 @@ fn required_entity_id(
                     entity_id: None,
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
             None
         }
@@ -199,7 +199,7 @@ fn classify_entity(
                         entity_id: Some(source_entity_id),
                     },
                     context,
-                    true,
+                    DiagnosticImpact::DataLoss,
                 );
                 EntityKind::Unknown
             }
@@ -217,7 +217,7 @@ fn classify_entity(
                     entity_id: Some(source_entity_id),
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
             EntityKind::Unknown
         }
@@ -234,7 +234,7 @@ fn classify_entity(
                     entity_id: Some(source_entity_id),
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
             EntityKind::Unknown
         }
@@ -369,7 +369,7 @@ fn string_presence(
                     entity_id: Some(source_entity_id),
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
 
             FieldPresence::Unknown {
@@ -412,7 +412,7 @@ fn side_presence(
                             entity_id: Some(source_entity_id),
                         },
                         context,
-                        true,
+                        DiagnosticImpact::DataLoss,
                     );
                     EntitySide::Unknown
                 }
@@ -450,7 +450,7 @@ fn side_presence(
                     entity_id: Some(source_entity_id),
                 },
                 context,
-                true,
+                DiagnosticImpact::DataLoss,
             );
 
             FieldPresence::Unknown {
@@ -485,7 +485,7 @@ fn check_player_flag(
                 entity_id: Some(source_entity_id),
             },
             context,
-            true,
+            DiagnosticImpact::DataLoss,
         );
     }
 }
@@ -530,10 +530,10 @@ fn push_diagnostic(
     diagnostics: &mut DiagnosticAccumulator,
     spec: EntityDiagnostic<'_>,
     context: &SourceContext,
-    indicates_data_loss: bool,
+    impact: DiagnosticImpact,
 ) {
     if let Some(diagnostic) = entity_diagnostic(spec, context) {
-        diagnostics.push(diagnostic, indicates_data_loss);
+        diagnostics.push(diagnostic, impact);
     }
 }
 
