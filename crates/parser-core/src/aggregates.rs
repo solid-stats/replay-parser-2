@@ -6,11 +6,11 @@ use parser_contract::{
     aggregates::{
         AggregateContributionKind, AggregateContributionRef, AggregateSection,
         BountyInputContributionValue, LegacyCounterContributionValue,
-        RelationshipContributionValue,
+        RelationshipContributionValue, VehicleScoreInputValue, VehicleScoreSign,
     },
     events::{
         BountyEligibilityState, CombatEventAttributes, CombatSemantic, EventActorRef,
-        LegacyCounterEffect, NormalizedEvent,
+        LegacyCounterEffect, NormalizedEvent, VehicleScoreCategory,
     },
     identity::{EntityCompatibilityHintKind, EntityKind, EntitySide, ObservedEntity},
     metadata::ReplayMetadata,
@@ -19,15 +19,22 @@ use parser_contract::{
 };
 use serde_json::{Value, json};
 
-use crate::artifact::SourceContext;
+use crate::{
+    artifact::SourceContext,
+    vehicle_score::{teamkill_penalty_weight, vehicle_score_weight},
+};
 
 const LEGACY_PLAYER_RESULTS_KEY: &str = "legacy.player_game_results";
 const LEGACY_RELATIONSHIPS_KEY: &str = "legacy.relationships";
 const BOUNTY_INPUTS_KEY: &str = "bounty.inputs";
+const VEHICLE_SCORE_INPUTS_KEY: &str = "vehicle_score.inputs";
+const VEHICLE_SCORE_DENOMINATOR_INPUTS_KEY: &str = "vehicle_score.denominator_inputs";
 
 const AGGREGATE_LEGACY_RULE_ID: &str = "aggregate.legacy.counter";
 const AGGREGATE_RELATIONSHIP_RULE_ID: &str = "aggregate.relationship.counter";
 const AGGREGATE_BOUNTY_RULE_ID: &str = "aggregate.bounty.input";
+const AGGREGATE_VEHICLE_SCORE_AWARD_RULE_ID: &str = "aggregate.vehicle_score.award";
+const AGGREGATE_VEHICLE_SCORE_PENALTY_RULE_ID: &str = "aggregate.vehicle_score.penalty";
 
 const RELATIONSHIP_FIELDS: &[&str] = &["killed", "killers", "teamkilled", "teamkillers"];
 
@@ -40,7 +47,7 @@ pub fn derive_aggregate_section(
     _context: &SourceContext,
 ) -> AggregateSection {
     let players = player_projection_identities(entities);
-    let mut contributions = aggregate_contributions(events, &players);
+    let mut contributions = aggregate_contributions(events, &players, entities);
     contributions.sort_by(|left, right| left.contribution_id.cmp(&right.contribution_id));
     let projections = aggregate_projections(replay, &players, &contributions);
 
@@ -76,6 +83,14 @@ fn aggregate_projections(
         }),
     ));
     drop(projections.insert(BOUNTY_INPUTS_KEY.to_string(), bounty_inputs(&groups, contributions)));
+    drop(projections.insert(
+        VEHICLE_SCORE_INPUTS_KEY.to_string(),
+        vehicle_score_inputs(&groups, contributions),
+    ));
+    drop(projections.insert(
+        VEHICLE_SCORE_DENOMINATOR_INPUTS_KEY.to_string(),
+        vehicle_score_denominator_inputs(&groups, contributions),
+    ));
 
     projections
 }
@@ -83,8 +98,10 @@ fn aggregate_projections(
 fn aggregate_contributions(
     events: &[NormalizedEvent],
     players: &BTreeMap<i64, PlayerProjectionIdentity>,
+    entities: &[ObservedEntity],
 ) -> Vec<AggregateContributionRef> {
     let mut contributions = Vec::new();
+    let raw_target_classes = entity_observed_classes(entities);
 
     for event in events {
         let Some(combat) = &event.combat else {
@@ -109,6 +126,12 @@ fn aggregate_contributions(
         }
 
         if let Some(contribution) = bounty_input_contribution(event, combat) {
+            contributions.push(contribution);
+        }
+
+        if let Some(contribution) =
+            vehicle_score_contribution(event, combat, players, &raw_target_classes)
+        {
             contributions.push(contribution);
         }
     }
@@ -228,6 +251,71 @@ fn bounty_input_contribution(
         AggregateContributionKind::BountyInput,
         event,
         AGGREGATE_BOUNTY_RULE_ID,
+        serde_json::to_value(value).ok()?,
+    )
+}
+
+fn vehicle_score_contribution(
+    event: &NormalizedEvent,
+    combat: &CombatEventAttributes,
+    players: &BTreeMap<i64, PlayerProjectionIdentity>,
+    raw_target_classes: &BTreeMap<i64, Option<String>>,
+) -> Option<AggregateContributionRef> {
+    if !combat.vehicle_context.is_kill_from_vehicle {
+        return None;
+    }
+
+    let sign = match combat.semantic {
+        CombatSemantic::EnemyKill | CombatSemantic::VehicleDestroyed => VehicleScoreSign::Award,
+        CombatSemantic::Teamkill => VehicleScoreSign::Penalty,
+        CombatSemantic::Suicide
+        | CombatSemantic::NullKillerDeath
+        | CombatSemantic::Unknown => return None,
+    };
+
+    let player_entity_id = actor_entity_id(&combat.killer)?;
+    let _player = players.get(&player_entity_id)?;
+    let attacker_category =
+        present_vehicle_score_category(&combat.vehicle_context.attacker_vehicle_category)?;
+    let target_category = present_vehicle_score_category(&combat.vehicle_context.target_category)?;
+    let matrix_weight = vehicle_score_weight(attacker_category, target_category)?;
+    let applied_weight = match sign {
+        VehicleScoreSign::Award => matrix_weight,
+        VehicleScoreSign::Penalty => teamkill_penalty_weight(matrix_weight),
+    };
+    let teamkill_penalty_clamped =
+        sign == VehicleScoreSign::Penalty && applied_weight > matrix_weight;
+    let raw_target_class = actor_entity_id(&combat.victim)
+        .and_then(|entity_id| raw_target_classes.get(&entity_id))
+        .cloned()
+        .flatten();
+
+    let value = VehicleScoreInputValue {
+        player_entity_id,
+        event_id: event.event_id.clone(),
+        sign,
+        attacker_category,
+        target_category,
+        raw_attacker_vehicle_name: observed_string(&combat.vehicle_context.attacker_vehicle_name)
+            .map(ToOwned::to_owned),
+        raw_attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
+            .map(ToOwned::to_owned),
+        raw_target_class,
+        matrix_weight,
+        applied_weight,
+        teamkill_penalty_clamped,
+        denominator_eligible: sign == VehicleScoreSign::Award,
+    };
+    let rule_id = match sign {
+        VehicleScoreSign::Award => AGGREGATE_VEHICLE_SCORE_AWARD_RULE_ID,
+        VehicleScoreSign::Penalty => AGGREGATE_VEHICLE_SCORE_PENALTY_RULE_ID,
+    };
+
+    contribution_ref(
+        format!("aggregate.vehicle_score.{}", event.event_id),
+        AggregateContributionKind::VehicleScoreInput,
+        event,
+        rule_id,
         serde_json::to_value(value).ok()?,
     )
 }
@@ -633,11 +721,108 @@ fn bounty_input_row(
     }))
 }
 
+fn vehicle_score_inputs(
+    groups: &BTreeMap<String, PlayerProjectionGroup>,
+    contributions: &[AggregateContributionRef],
+) -> Value {
+    Value::Array(
+        contributions
+            .iter()
+            .filter(|contribution| {
+                contribution.kind == AggregateContributionKind::VehicleScoreInput
+            })
+            .filter_map(|contribution| vehicle_score_input_row(groups, contribution))
+            .collect(),
+    )
+}
+
+fn vehicle_score_input_row(
+    groups: &BTreeMap<String, PlayerProjectionGroup>,
+    contribution: &AggregateContributionRef,
+) -> Option<Value> {
+    let value = vehicle_score_value(contribution)?;
+    let player_group = group_by_entity_id(groups, value.player_entity_id)?;
+
+    Some(json!({
+        "source_contribution_id": contribution.contribution_id,
+        "event_id": value.event_id,
+        "player_entity_id": value.player_entity_id,
+        "compatibility_key": player_group.compatibility_key,
+        "observed_entity_ids": player_group.observed_entity_ids,
+        "sign": value.sign,
+        "attacker_category": value.attacker_category,
+        "target_category": value.target_category,
+        "raw_attacker_vehicle_name": value.raw_attacker_vehicle_name,
+        "raw_attacker_vehicle_class": value.raw_attacker_vehicle_class,
+        "raw_target_class": value.raw_target_class,
+        "matrix_weight": value.matrix_weight,
+        "applied_weight": value.applied_weight,
+        "teamkill_penalty_clamped": value.teamkill_penalty_clamped,
+        "denominator_eligible": value.denominator_eligible,
+        "rule_id": contribution.rule_id.as_str(),
+        "source_refs": source_refs_value(contribution.source_refs.as_slice()),
+    }))
+}
+
+fn vehicle_score_denominator_inputs(
+    groups: &BTreeMap<String, PlayerProjectionGroup>,
+    contributions: &[AggregateContributionRef],
+) -> Value {
+    let mut rows = BTreeMap::<String, (PlayerProjectionGroup, BTreeSet<String>)>::new();
+
+    for contribution in contributions {
+        if contribution.kind != AggregateContributionKind::VehicleScoreInput {
+            continue;
+        }
+
+        let Some(value) = vehicle_score_value(contribution) else {
+            continue;
+        };
+        if value.sign != VehicleScoreSign::Award || !value.denominator_eligible {
+            continue;
+        }
+        let Some(group) = group_by_entity_id(groups, value.player_entity_id).cloned() else {
+            continue;
+        };
+
+        let (_, contribution_ids) =
+            rows.entry(group.compatibility_key.clone()).or_insert_with(|| {
+                (group, BTreeSet::new())
+            });
+        let _ = contribution_ids.insert(contribution.contribution_id.clone());
+    }
+
+    Value::Array(
+        rows.into_values()
+            .map(|(group, contribution_ids)| {
+                json!({
+                    "compatibility_key": group.compatibility_key,
+                    "observed_entity_ids": group.observed_entity_ids,
+                    "has_vehicle_kill": true,
+                    "source_contribution_ids": contribution_ids.into_iter().collect::<Vec<_>>(),
+                })
+            })
+            .collect(),
+    )
+}
+
 fn group_by_entity_id(
     groups: &BTreeMap<String, PlayerProjectionGroup>,
     entity_id: i64,
 ) -> Option<&PlayerProjectionGroup> {
     groups.values().find(|group| group.observed_entity_ids.binary_search(&entity_id).is_ok())
+}
+
+fn entity_observed_classes(entities: &[ObservedEntity]) -> BTreeMap<i64, Option<String>> {
+    entities
+        .iter()
+        .map(|entity| {
+            (
+                entity.source_entity_id,
+                observed_string(&entity.observed_class).map(ToOwned::to_owned),
+            )
+        })
+        .collect()
 }
 
 fn compatibility_key(entity: &ObservedEntity) -> String {
@@ -726,6 +911,25 @@ fn bounty_input_value(
     contribution: &AggregateContributionRef,
 ) -> Option<BountyInputContributionValue> {
     serde_json::from_value(contribution.value.clone()).ok()
+}
+
+fn vehicle_score_value(contribution: &AggregateContributionRef) -> Option<VehicleScoreInputValue> {
+    serde_json::from_value(contribution.value.clone()).ok()
+}
+
+fn present_vehicle_score_category(
+    field: &FieldPresence<VehicleScoreCategory>,
+) -> Option<VehicleScoreCategory> {
+    match field {
+        FieldPresence::Present { value, source: _ } if *value != VehicleScoreCategory::Unknown => {
+            Some(*value)
+        }
+        FieldPresence::Present { .. }
+        | FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::Inferred { .. }
+        | FieldPresence::NotApplicable { .. } => None,
+    }
 }
 
 fn kd_ratio(kills: i64, teamkills: i64, deaths_total: i64, deaths_by_teamkills: i64) -> f64 {
