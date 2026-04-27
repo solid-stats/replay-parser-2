@@ -12,6 +12,7 @@ use parser_contract::{
     artifact::{ParseArtifact, ParseArtifactError, ParseStatus},
     failure::{ErrorCode, ParseFailure, ParseStage, Retryability},
     presence::{FieldPresence, UnknownReason},
+    side_facts::ReplaySideFacts,
     source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef, SourceRefs},
     version::{ContractVersion, ParserInfo},
 };
@@ -174,6 +175,7 @@ fn failure_contract_failed_artifact_should_carry_status_failed_and_failure_objec
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure: Some(json_decode_failure()),
         extensions: BTreeMap::new(),
     };
@@ -205,6 +207,7 @@ fn artifact_envelope_failed_artifact_should_require_failure_when_status_is_faile
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
     };
@@ -227,6 +230,7 @@ fn artifact_envelope_success_artifact_should_reject_failure_when_status_is_not_f
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure: Some(json_decode_failure()),
         extensions: BTreeMap::new(),
     };

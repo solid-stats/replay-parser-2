@@ -7,6 +7,7 @@ use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     failure::{ErrorCode, ErrorCodeError, ParseFailure, ParseStage, Retryability},
     presence::{FieldPresence, UnknownReason},
+    side_facts::ReplaySideFacts,
     source_ref::{
         ReplaySource, RuleId, RuleIdError, SourceChecksum, SourceRef, SourceRefs, SourceRefsError,
     },
@@ -70,6 +71,7 @@ fn success_artifact(
         entities,
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
     }
@@ -93,6 +95,7 @@ fn failed_artifact(
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure,
         extensions: BTreeMap::new(),
     }

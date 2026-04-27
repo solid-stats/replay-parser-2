@@ -11,6 +11,7 @@ use crate::{
     failure::ParseFailure,
     identity::ObservedEntity,
     metadata::ReplayMetadata,
+    side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
     version::{ContractVersion, ParserInfo},
 };
@@ -52,6 +53,8 @@ pub struct ParseArtifact {
     pub events: Vec<NormalizedEvent>,
     /// Derived aggregate projections and auditable contribution references.
     pub aggregates: AggregateSection,
+    /// Replay-side commander and outcome facts.
+    pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.
     pub failure: Option<ParseFailure>,
     /// Stable extension object reserved for forward-compatible parser metadata.

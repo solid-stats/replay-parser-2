@@ -31,6 +31,25 @@
     "contributions": [],
     "projections": {}
   },
+  "side_facts": {
+    "commanders": [],
+    "outcome": {
+      "status": "unknown",
+      "winner_side": {
+        "state": "unknown",
+        "reason": "missing_winner",
+        "source": null
+      },
+      "source_label": {
+        "state": "unknown",
+        "reason": "missing_winner",
+        "source": null
+      },
+      "confidence": null,
+      "rule_id": "side_facts.outcome.unknown",
+      "source_refs": null
+    }
+  },
   "failure": {
     "job_id": {
       "state": "present",

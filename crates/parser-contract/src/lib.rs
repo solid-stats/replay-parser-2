@@ -21,6 +21,8 @@ pub mod metadata;
 pub mod presence;
 /// JSON Schema generation for parser artifacts.
 pub mod schema;
+/// Replay-side commander and outcome fact contract types.
+pub mod side_facts;
 /// Source-reference and provenance contract types.
 pub mod source_ref;
 /// Parser and contract version contract types.

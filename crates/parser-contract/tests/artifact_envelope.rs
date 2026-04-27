@@ -12,6 +12,7 @@ use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     diagnostic::{Diagnostic, DiagnosticSeverity},
     presence::FieldPresence,
+    side_facts::ReplaySideFacts,
     source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef, SourceRefs},
     version::{ContractVersion, ParserInfo},
 };
@@ -59,6 +60,7 @@ fn success_artifact() -> ParseArtifact {
         entities: Vec::new(),
         events: Vec::new(),
         aggregates: AggregateSection::default(),
+        side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
     }
@@ -95,6 +97,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert!(serialized.get("entities").is_some());
     assert!(serialized.get("events").is_some());
     assert!(serialized.get("aggregates").is_some());
+    assert!(serialized.get("side_facts").is_some());
     assert!(serialized.get("failure").is_some());
 
     let extension_keys = serialized["extensions"]
