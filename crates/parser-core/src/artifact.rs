@@ -16,6 +16,7 @@ use parser_contract::{
 use serde_json::{Map, Value};
 
 use crate::{
+    aggregates::derive_aggregate_section,
     diagnostics::{DiagnosticAccumulator, DiagnosticPolicy},
     entities::normalize_entities,
     events::normalize_combat_events,
@@ -60,6 +61,7 @@ fn success_artifact(
     let replay = normalize_metadata(&raw, &context, &mut diagnostics);
     let entities = normalize_entities(&raw, &context, &mut diagnostics);
     let events = normalize_combat_events(&raw, &entities, &context, &mut diagnostics);
+    let aggregates = derive_aggregate_section(&replay, &entities, &events, &context);
     let diagnostic_report = diagnostics.finish(&context);
 
     ParseArtifact {
@@ -72,7 +74,7 @@ fn success_artifact(
         replay: Some(replay),
         entities,
         events,
-        aggregates: AggregateSection::default(),
+        aggregates,
         side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
