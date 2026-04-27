@@ -23,6 +23,7 @@ use crate::{
     input::ParserInput,
     metadata::normalize_metadata,
     raw::RawReplay,
+    side_facts::normalize_side_facts,
 };
 
 /// Parses replay bytes into a deterministic artifact shell.
@@ -61,6 +62,7 @@ fn success_artifact(
     let replay = normalize_metadata(&raw, &context, &mut diagnostics);
     let entities = normalize_entities(&raw, &context, &mut diagnostics);
     let events = normalize_combat_events(&raw, &entities, &context, &mut diagnostics);
+    let side_facts = normalize_side_facts(&raw, &entities, &context, &mut diagnostics);
     let aggregates = derive_aggregate_section(&replay, &entities, &events, &context);
     let diagnostic_report = diagnostics.finish(&context);
 
@@ -75,7 +77,7 @@ fn success_artifact(
         entities,
         events,
         aggregates,
-        side_facts: ReplaySideFacts::default(),
+        side_facts,
         failure: None,
         extensions: BTreeMap::new(),
     }
