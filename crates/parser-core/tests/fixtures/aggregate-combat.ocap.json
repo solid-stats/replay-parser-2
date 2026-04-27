@@ -1,0 +1,84 @@
+{
+  "missionName": "sg aggregate projection",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 6],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "[A] Alpha",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Bravo",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 4,
+      "type": "unit",
+      "name": "Delta",
+      "group": "Bravo 1-2",
+      "side": "EAST",
+      "description": "Grenadier",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 5,
+      "type": "unit",
+      "name": "Echo",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Autorifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 6,
+      "type": "unit",
+      "name": "Echo",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Medic",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 20,
+      "type": "vehicle",
+      "name": "BTR-80",
+      "class": "apc",
+      "side": "EAST",
+      "positions": []
+    },
+    {
+      "id": 30,
+      "type": "vehicle",
+      "name": "Offroad HMG",
+      "class": "car",
+      "side": "WEST",
+      "positions": []
+    }
+  ],
+  "events": [
+    [10, "killed", 2, [1, "Offroad HMG"], 100],
+    [20, "killed", 6, [5, "AK-74"], 25],
+    [30, "killed", 4, ["null"], 0],
+    [40, "killed", 20, [1, "RPG-7"], 80]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}
