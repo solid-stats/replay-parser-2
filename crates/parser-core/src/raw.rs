@@ -83,6 +83,83 @@ impl<'a> RawReplay<'a> {
     }
 }
 
+/// Reads a numeric source entity identifier from an entry under `$.entities`.
+#[must_use]
+pub fn entity_id(entity: &Value, index: usize) -> RawField<i64> {
+    entity_field(entity, index, "id", "integer", Value::as_i64)
+}
+
+/// Reads a source entity type from an entry under `$.entities`.
+#[must_use]
+pub fn entity_type(entity: &Value, index: usize) -> RawField<String> {
+    entity_string_field(entity, index, "type")
+}
+
+/// Reads a source entity name from an entry under `$.entities`.
+#[must_use]
+pub fn entity_name(entity: &Value, index: usize) -> RawField<String> {
+    entity_string_field(entity, index, "name")
+}
+
+/// Reads a source entity class, falling back from `class` to `_class`.
+#[must_use]
+pub fn entity_class(entity: &Value, index: usize) -> RawField<String> {
+    match entity_string_field(entity, index, "class") {
+        RawField::Present { value, json_path } => RawField::Present { value, json_path },
+        RawField::Absent { json_path } => match entity_string_field(entity, index, "_class") {
+            RawField::Present { value, json_path } => RawField::Present { value, json_path },
+            RawField::Absent { .. } => RawField::Absent { json_path },
+            drift @ RawField::Drift { .. } => drift,
+        },
+        RawField::Drift { json_path, expected_shape, observed_shape } => {
+            match entity_string_field(entity, index, "_class") {
+                RawField::Present { value, json_path } => RawField::Present { value, json_path },
+                RawField::Absent { .. } | RawField::Drift { .. } => {
+                    RawField::Drift { json_path, expected_shape, observed_shape }
+                }
+            }
+        }
+    }
+}
+
+/// Reads a source entity side from an entry under `$.entities`.
+#[must_use]
+pub fn entity_side(entity: &Value, index: usize) -> RawField<String> {
+    entity_string_field(entity, index, "side")
+}
+
+/// Reads a source entity group from an entry under `$.entities`.
+#[must_use]
+pub fn entity_group(entity: &Value, index: usize) -> RawField<String> {
+    entity_string_field(entity, index, "group")
+}
+
+/// Reads a source entity description from an entry under `$.entities`.
+#[must_use]
+pub fn entity_description(entity: &Value, index: usize) -> RawField<String> {
+    entity_string_field(entity, index, "description")
+}
+
+/// Reads a source entity player flag from an entry under `$.entities`.
+#[must_use]
+pub fn entity_is_player(entity: &Value, index: usize) -> RawField<bool> {
+    entity_field(entity, index, "isPlayer", "boolean or 0/1 number", |value| {
+        value.as_bool().or_else(|| {
+            value.as_i64().and_then(|number| match number {
+                0 => Some(false),
+                1 => Some(true),
+                _ => None,
+            })
+        })
+    })
+}
+
+/// Returns true when an entity row carries a `positions` source field.
+#[must_use]
+pub fn entity_has_positions(entity: &Value, _index: usize) -> bool {
+    entity.as_object().is_some_and(|object| object.contains_key("positions"))
+}
+
 /// Tolerant top-level field observation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RawField<T> {
@@ -125,4 +202,41 @@ pub fn observed_shape(value: &Value) -> String {
 
 fn json_path(key: &str) -> String {
     format!("$.{key}")
+}
+
+fn entity_string_field(entity: &Value, index: usize, key: &str) -> RawField<String> {
+    entity_field(entity, index, key, "string", |value| value.as_str().map(ToOwned::to_owned))
+}
+
+fn entity_field<T>(
+    entity: &Value,
+    index: usize,
+    key: &str,
+    expected_shape: &'static str,
+    parse: impl FnOnce(&Value) -> Option<T>,
+) -> RawField<T> {
+    let json_path = entity_json_path(index, key);
+
+    entity.as_object().map_or_else(
+        || RawField::Drift {
+            json_path: format!("$.entities[{index}]"),
+            expected_shape: "object",
+            observed_shape: observed_shape(entity),
+        },
+        |object| match object.get(key) {
+            Some(value) => match parse(value) {
+                Some(value) => RawField::Present { value, json_path },
+                None => RawField::Drift {
+                    json_path,
+                    expected_shape,
+                    observed_shape: observed_shape(value),
+                },
+            },
+            None => RawField::Absent { json_path },
+        },
+    )
+}
+
+fn entity_json_path(index: usize, key: &str) -> String {
+    format!("$.entities[{index}].{key}")
 }

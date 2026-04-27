@@ -6,6 +6,7 @@
 
 pub mod artifact;
 pub mod diagnostics;
+pub mod entities;
 pub mod input;
 pub mod metadata;
 pub mod raw;
