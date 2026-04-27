@@ -1,6 +1,9 @@
 //! Observed entity normalization from OCAP entity rows.
 
-use std::{cmp::Ordering, collections::BTreeMap};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},
@@ -24,6 +27,7 @@ use crate::{
 };
 
 const CONNECTED_PLAYER_BACKFILL_RULE_ID: &str = "entity.connected_player_backfill";
+const DUPLICATE_SLOT_SAME_NAME_RULE_ID: &str = "entity.duplicate_slot_same_name";
 
 /// Normalizes observed unit/player, vehicle, and static weapon entity facts.
 #[must_use]
@@ -48,6 +52,7 @@ pub fn normalize_entities(
         .collect::<Vec<_>>();
 
     apply_connected_player_backfill(raw, context, &mut normalized);
+    apply_duplicate_slot_same_name_hints(diagnostics, &mut normalized);
     normalized.sort_by(compare_entities);
     normalized
 }
@@ -114,6 +119,232 @@ fn inferred_connected_name(name: &str, source_ref: SourceRef) -> Option<FieldPre
         source: Some(source_ref),
         rule_id: RuleId::new(CONNECTED_PLAYER_BACKFILL_RULE_ID).ok()?,
     })
+}
+
+fn apply_duplicate_slot_same_name_hints(
+    diagnostics: &mut DiagnosticAccumulator,
+    entities: &mut [ObservedEntity],
+) {
+    let duplicate_groups = duplicate_slot_same_name_groups(entities);
+
+    for group in duplicate_groups {
+        if group.has_side_conflict {
+            push_duplicate_side_conflict_diagnostic(diagnostics, &group);
+        }
+
+        for entity_index in group.entity_indexes {
+            entities[entity_index].compatibility_hints.push(group.hint.clone());
+        }
+    }
+}
+
+fn duplicate_slot_same_name_groups(entities: &[ObservedEntity]) -> Vec<DuplicateSlotGroup> {
+    let mut grouped = BTreeMap::<String, SameNameAccumulator>::new();
+
+    for (entity_index, entity) in entities.iter().enumerate() {
+        if !matches!(entity.kind, EntityKind::Unit) {
+            continue;
+        }
+
+        let Some((name, name_state)) = duplicate_group_name(&entity.observed_name) else {
+            continue;
+        };
+        let group = grouped.entry(name.clone()).or_insert_with(|| SameNameAccumulator {
+            name,
+            entity_indexes: Vec::new(),
+            has_present_name: false,
+        });
+        group.entity_indexes.push(entity_index);
+        group.has_present_name |= matches!(name_state, DuplicateNameState::Present);
+    }
+
+    grouped
+        .into_values()
+        .filter(|group| group.entity_indexes.len() > 1)
+        .filter_map(|group| duplicate_slot_group(group, entities))
+        .collect()
+}
+
+fn duplicate_slot_group(
+    group: SameNameAccumulator,
+    entities: &[ObservedEntity],
+) -> Option<DuplicateSlotGroup> {
+    let mut entity_indexes = group.entity_indexes;
+    entity_indexes.sort_by_key(|entity_index| entities[*entity_index].source_entity_id);
+
+    let related_entity_ids = entity_indexes
+        .iter()
+        .map(|entity_index| entities[*entity_index].source_entity_id)
+        .collect::<Vec<_>>();
+    let source_refs = duplicate_group_source_refs(&entity_indexes, entities);
+    let source_refs = SourceRefs::new(source_refs).ok()?;
+    let observed_name =
+        duplicate_hint_observed_name(&group.name, group.has_present_name, &source_refs)?;
+    let hint = EntityCompatibilityHint {
+        kind: EntityCompatibilityHintKind::DuplicateSlotSameName,
+        related_entity_ids,
+        observed_name,
+        rule_id: RuleId::new(DUPLICATE_SLOT_SAME_NAME_RULE_ID).ok()?,
+        source_refs: source_refs.clone(),
+    };
+    let side_names = duplicate_group_present_side_names(&entity_indexes, entities);
+    let has_side_conflict = side_names.len() > 1;
+    let side_names = side_names.into_iter().collect::<Vec<_>>().join(",");
+
+    Some(DuplicateSlotGroup { entity_indexes, hint, source_refs, has_side_conflict, side_names })
+}
+
+fn duplicate_group_name(
+    observed_name: &FieldPresence<String>,
+) -> Option<(String, DuplicateNameState)> {
+    match observed_name {
+        FieldPresence::Present { value, source: _ } if !value.is_empty() => {
+            Some((value.clone(), DuplicateNameState::Present))
+        }
+        FieldPresence::Inferred { value, .. } if !value.is_empty() => {
+            Some((value.clone(), DuplicateNameState::Inferred))
+        }
+        FieldPresence::Present { .. }
+        | FieldPresence::Inferred { .. }
+        | FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => None,
+    }
+}
+
+fn duplicate_group_source_refs(
+    entity_indexes: &[usize],
+    entities: &[ObservedEntity],
+) -> Vec<SourceRef> {
+    let mut source_refs = Vec::new();
+
+    for entity_index in entity_indexes {
+        let entity = &entities[*entity_index];
+        source_refs.extend(entity.source_refs.as_slice().iter().cloned());
+
+        if let Some(source_ref) = field_source_ref(&entity.observed_name) {
+            source_refs.push(source_ref.clone());
+        }
+    }
+
+    source_refs
+}
+
+fn duplicate_hint_observed_name(
+    name: &str,
+    has_present_name: bool,
+    source_refs: &SourceRefs,
+) -> Option<FieldPresence<String>> {
+    let source = source_refs.as_slice().first().cloned();
+
+    if has_present_name {
+        return Some(FieldPresence::Present { value: name.to_string(), source });
+    }
+
+    Some(FieldPresence::Inferred {
+        value: name.to_string(),
+        reason: "legacy duplicate-slot same-name compatibility".to_string(),
+        confidence: Confidence::new(1.0).ok(),
+        source,
+        rule_id: RuleId::new(DUPLICATE_SLOT_SAME_NAME_RULE_ID).ok()?,
+    })
+}
+
+fn duplicate_group_present_side_names(
+    entity_indexes: &[usize],
+    entities: &[ObservedEntity],
+) -> BTreeSet<&'static str> {
+    entity_indexes
+        .iter()
+        .filter_map(|entity_index| present_side_name(&entities[*entity_index].identity.side))
+        .collect::<BTreeSet<_>>()
+}
+
+fn push_duplicate_side_conflict_diagnostic(
+    diagnostics: &mut DiagnosticAccumulator,
+    group: &DuplicateSlotGroup,
+) {
+    let Some(source_refs) = SourceRefs::new(group.source_refs.as_slice().to_vec()).ok() else {
+        return;
+    };
+
+    diagnostics.push(
+        Diagnostic {
+            code: "compat.entity_duplicate_side_conflict".to_string(),
+            severity: DiagnosticSeverity::Warning,
+            message: format!(
+                "Duplicate same-name entity slots for {} have conflicting present sides",
+                duplicate_hint_name_value(&group.hint.observed_name)
+            ),
+            json_path: Some("$.entities".to_string()),
+            expected_shape: Some("same present side for duplicate same-name slots".to_string()),
+            observed_shape: Some(group.side_names.clone()),
+            parser_action: "kept_entities_unmerged".to_string(),
+            source_refs,
+        },
+        DiagnosticImpact::DataLoss,
+    );
+}
+
+fn duplicate_hint_name_value(observed_name: &FieldPresence<String>) -> &str {
+    match observed_name {
+        FieldPresence::Present { value, source: _ } | FieldPresence::Inferred { value, .. } => {
+            value.as_str()
+        }
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => "unknown",
+    }
+}
+
+fn present_side_name(side: &FieldPresence<EntitySide>) -> Option<&'static str> {
+    match side {
+        FieldPresence::Present { value, source: _ } => Some(match value {
+            EntitySide::East => "east",
+            EntitySide::West => "west",
+            EntitySide::Guer => "guer",
+            EntitySide::Civ => "civ",
+            EntitySide::Unknown => "unknown",
+        }),
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::Inferred { .. }
+        | FieldPresence::NotApplicable { .. } => None,
+    }
+}
+
+fn field_source_ref<T>(field: &FieldPresence<T>) -> Option<&SourceRef> {
+    match field {
+        FieldPresence::Present { source: Some(source), .. }
+        | FieldPresence::ExplicitNull { source: Some(source), .. }
+        | FieldPresence::Unknown { source: Some(source), .. }
+        | FieldPresence::Inferred { source: Some(source), .. } => Some(source),
+        FieldPresence::Present { source: None, .. }
+        | FieldPresence::ExplicitNull { source: None, .. }
+        | FieldPresence::Unknown { source: None, .. }
+        | FieldPresence::Inferred { source: None, .. }
+        | FieldPresence::NotApplicable { .. } => None,
+    }
+}
+
+struct SameNameAccumulator {
+    name: String,
+    entity_indexes: Vec<usize>,
+    has_present_name: bool,
+}
+
+struct DuplicateSlotGroup {
+    entity_indexes: Vec<usize>,
+    hint: EntityCompatibilityHint,
+    source_refs: SourceRefs,
+    has_side_conflict: bool,
+    side_names: String,
+}
+
+#[derive(Clone, Copy)]
+enum DuplicateNameState {
+    Present,
+    Inferred,
 }
 
 fn connected_player_backfill_hint(
