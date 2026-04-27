@@ -1,14 +1,16 @@
 # replay-parser-2
 
-`replay-parser-2` is the planned Rust replacement for the legacy SolidGames OCAP replay parser.
+`replay-parser-2` is the Rust replacement for the legacy SolidGames OCAP replay parser.
 
 The parser will turn OCAP JSON replay files into deterministic, versioned artifacts: normalized replay events, source references, structured parse failures, and aggregate outputs that the Solid Stats backend can persist, audit, compare against golden data, and use for public statistics.
 
 ## Current Status
 
-Phase 3 parser-core work is complete and verified, and Phase 4 event semantics and aggregate execution plans are ready. The repository now contains the initial Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, and records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. It does not yet contain the CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, combat event semantics, aggregate formulas, or benchmark suite.
+Phase 4 Event Semantics and Aggregates work is complete and verified. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and now emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-- Current phase: Phase 4, `Event Semantics and Aggregates` (planned; ready to execute).
+The CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+
+- Current phase: Phase 4, `Event Semantics and Aggregates` (complete; ready for phase verification and Phase 5 planning).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -45,7 +47,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-CLI parse, worker, comparison, full corpus parity, aggregate, and benchmark commands are still planned for later phases.
+CLI parse, worker, comparison, full corpus parity, coverage enforcement, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -187,4 +189,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-27 after planning Phase 4 event semantics and aggregates.
+Last updated: 2026-04-27 after completing Phase 4 event semantics and aggregates.
