@@ -2,6 +2,8 @@
 
 #![allow(
     clippy::expect_used,
+    clippy::float_cmp,
+    clippy::panic,
     reason = "integration tests use expect messages as assertion context"
 )]
 

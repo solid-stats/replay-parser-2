@@ -19,6 +19,10 @@ pub fn category_from_vehicle_class(raw_class: Option<&str>) -> VehicleScoreCateg
 
 /// Returns the issue #13 matrix weight for an attacker/target category pair.
 #[must_use]
+#[allow(
+    clippy::match_same_arms,
+    reason = "the match mirrors the issue #13 matrix rows for auditability"
+)]
 pub const fn vehicle_score_weight(
     attacker: VehicleScoreCategory,
     target: VehicleScoreCategory,
@@ -53,6 +57,6 @@ pub const fn vehicle_score_weight(
 
 /// Applies the issue #13 teamkill penalty clamp.
 #[must_use]
-pub fn teamkill_penalty_weight(raw_weight: f64) -> f64 {
-    raw_weight.max(1.0)
+pub const fn teamkill_penalty_weight(raw_weight: f64) -> f64 {
+    if raw_weight < 1.0 { 1.0 } else { raw_weight }
 }

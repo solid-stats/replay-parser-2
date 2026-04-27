@@ -2,6 +2,9 @@
 
 #![allow(
     clippy::expect_used,
+    clippy::missing_const_for_fn,
+    clippy::needless_collect,
+    clippy::redundant_closure_for_method_calls,
     reason = "integration tests use expect messages as assertion context"
 )]
 

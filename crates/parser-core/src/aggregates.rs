@@ -1,5 +1,10 @@
 //! Aggregate contribution derivation from normalized combat events.
 
+#![allow(
+    clippy::missing_const_for_fn,
+    reason = "private aggregate builders favor uniform helper signatures over const qualification"
+)]
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use parser_contract::{
@@ -622,9 +627,10 @@ fn legacy_relationships(
 fn legacy_game_type_compatibility(replay: &ReplayMetadata) -> Value {
     let mission_name = observed_string(&replay.mission_name).map(ToOwned::to_owned);
     let prefix_bucket = mission_name.as_deref().map_or("other", mission_prefix_bucket);
-    let source_refs = field_source_ref(&replay.mission_name)
-        .map(|source_ref| source_refs_value(std::slice::from_ref(source_ref)))
-        .unwrap_or_else(|| Value::Array(Vec::new()));
+    let source_refs = field_source_ref(&replay.mission_name).map_or_else(
+        || Value::Array(Vec::new()),
+        |source_ref| source_refs_value(std::slice::from_ref(source_ref)),
+    );
 
     json!({
         "mission_name": mission_name,
@@ -935,10 +941,10 @@ fn kd_ratio(kills: i64, teamkills: i64, deaths_total: i64, deaths_by_teamkills: 
     let total = kills - teamkills;
 
     if deaths_without_teamkills == 0 {
-        return total as f64;
+        return legacy_count_to_f64(total);
     }
 
-    round_2(total as f64 / deaths_without_teamkills as f64)
+    round_2(legacy_count_to_f64(total) / legacy_count_to_f64(deaths_without_teamkills))
 }
 
 fn score(total_played_games: i64, kills: i64, teamkills: i64, deaths_by_teamkills: i64) -> f64 {
@@ -946,10 +952,10 @@ fn score(total_played_games: i64, kills: i64, teamkills: i64, deaths_by_teamkill
     let games_count = total_played_games - deaths_by_teamkills;
 
     if games_count <= 0 {
-        return total_score as f64;
+        return legacy_count_to_f64(total_score);
     }
 
-    round_2(total_score as f64 / games_count as f64)
+    round_2(legacy_count_to_f64(total_score) / legacy_count_to_f64(games_count))
 }
 
 fn kills_from_vehicle_coef(kills: i64, kills_from_vehicle: i64) -> f64 {
@@ -957,11 +963,20 @@ fn kills_from_vehicle_coef(kills: i64, kills_from_vehicle: i64) -> f64 {
         return 0.0;
     }
 
-    round_2(kills_from_vehicle as f64 / kills as f64)
+    round_2(legacy_count_to_f64(kills_from_vehicle) / legacy_count_to_f64(kills))
 }
 
 fn round_2(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
+}
+
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_precision_loss,
+    reason = "legacy aggregate formulas are defined as f64 projections from replay-local counters"
+)]
+fn legacy_count_to_f64(value: i64) -> f64 {
+    value as f64
 }
 
 fn source_refs_value(source_refs: &[SourceRef]) -> Value {

@@ -1,5 +1,10 @@
 //! Normalization for source-backed combat events.
 
+#![allow(
+    clippy::missing_const_for_fn,
+    reason = "private combat builders keep signatures consistent with non-const contract values"
+)]
+
 use std::collections::BTreeMap;
 
 use parser_contract::{
@@ -30,6 +35,7 @@ const UNKNOWN_RULE_ID: &str = "event.killed.unknown";
 /// Normalizes raw `killed` tuples into deterministic combat events.
 #[allow(
     clippy::needless_pass_by_value,
+    clippy::trivially_copy_pass_by_ref,
     reason = "the plan requires source observations to be consumed in source order"
 )]
 pub fn normalize_combat_events(
@@ -44,23 +50,23 @@ pub fn normalize_combat_events(
     killed_events(*raw)
         .into_iter()
         .filter_map(|observation| {
-            normalize_killed_event(observation, &entity_index, context, diagnostics)
+            normalize_killed_event(&observation, &entity_index, context, diagnostics)
         })
         .collect()
 }
 
 fn normalize_killed_event(
-    observation: KilledEventObservation,
+    observation: &KilledEventObservation,
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) -> Option<NormalizedEvent> {
     match &observation.kill_info {
         KilledEventKillInfo::NullKiller => {
-            normalize_null_killer_event(&observation, entity_index, context, diagnostics)
+            normalize_null_killer_event(observation, entity_index, context, diagnostics)
         }
         KilledEventKillInfo::Killer { killer_entity_id, weapon } => normalize_killer_event(
-            &observation,
+            observation,
             *killer_entity_id,
             weapon.as_deref(),
             entity_index,
@@ -77,10 +83,10 @@ fn normalize_killed_event(
                     observed_shape,
                     parser_action: "emit_unknown_combat_event",
                 },
-                &observation,
+                observation,
                 context,
             );
-            build_unknown_event(&observation, None, None, None, entity_index, context)
+            build_unknown_event(observation, None, None, None, entity_index, context)
         }
     }
 }
@@ -111,32 +117,27 @@ fn normalize_null_killer_event(
         return build_unknown_event(observation, None, Some(victim), None, entity_index, context);
     }
 
-    let source_ref = event_source_ref(context, observation, NULL_KILLER_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, NULL_KILLER_RULE_ID);
     let victim_actor = actor_ref(victim);
     build_event(CombatEventBuild {
         observation,
-        source_ref,
+        source_ref: source_ref.clone(),
         rule_id: NULL_KILLER_RULE_ID,
         kind: NormalizedEventKind::Death,
         semantic: CombatSemantic::NullKillerDeath,
         killer: FieldPresence::ExplicitNull {
             reason: NullReason::NullKiller,
-            source: Some(event_source_ref(context, observation, NULL_KILLER_RULE_ID)?),
+            source: Some(source_ref.clone()),
         },
         victim: FieldPresence::Present {
             value: victim_actor.clone(),
-            source: Some(event_source_ref(context, observation, NULL_KILLER_RULE_ID)?),
+            source: Some(source_ref.clone()),
         },
         actors: vec![victim_actor],
         victim_kind: CombatVictimKind::Player,
         weapon: None,
         distance_meters: observation.distance_meters,
-        vehicle_context: vehicle_context(
-            None,
-            Some(victim),
-            entity_index,
-            &event_source_ref(context, observation, NULL_KILLER_RULE_ID)?,
-        ),
+        vehicle_context: vehicle_context(None, Some(victim), entity_index, &source_ref),
         bounty: excluded_bounty(vec![BountyExclusionReason::NullKiller]),
         legacy_counter_effects: vec![legacy_effect(victim.source_entity_id, "isDead", 1, None)],
     })
@@ -245,7 +246,7 @@ fn build_enemy_kill_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, ENEMY_KILL_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, ENEMY_KILL_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
@@ -289,7 +290,7 @@ fn build_teamkill_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
@@ -330,7 +331,7 @@ fn build_suicide_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, SUICIDE_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, SUICIDE_RULE_ID);
     let victim_actor = actor_ref(victim);
 
     build_event(CombatEventBuild {
@@ -365,7 +366,7 @@ fn build_vehicle_destroyed_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, VEHICLE_DESTROYED_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, VEHICLE_DESTROYED_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
@@ -406,7 +407,7 @@ fn build_unknown_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, UNKNOWN_RULE_ID)?;
+    let source_ref = event_source_ref(context, observation, UNKNOWN_RULE_ID);
     let mut actors = Vec::new();
     let killer_presence = killer.map_or_else(
         || FieldPresence::Unknown {
@@ -500,14 +501,14 @@ fn event_source_ref(
     context: &SourceContext,
     observation: &KilledEventObservation,
     rule_id: &str,
-) -> Option<SourceRef> {
-    Some(context.event_source_ref(
+) -> SourceRef {
+    context.event_source_ref(
         &observation.json_path,
         Some(observation.frame),
         u64::try_from(observation.event_index).ok(),
         observation.killed_entity_id,
         RuleId::new(rule_id).ok(),
-    ))
+    )
 }
 
 fn event_index_presence(
@@ -717,6 +718,7 @@ fn legacy_effect(
     }
 }
 
+#[derive(Clone, Copy)]
 struct UnknownDiagnostic<'a> {
     code: &'static str,
     message: &'static str,
@@ -751,9 +753,7 @@ fn push_unknown_diagnostic(
     observation: &KilledEventObservation,
     context: &SourceContext,
 ) {
-    let Some(source_ref) = event_source_ref(context, observation, UNKNOWN_RULE_ID) else {
-        return;
-    };
+    let source_ref = event_source_ref(context, observation, UNKNOWN_RULE_ID);
     let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
         return;
     };
