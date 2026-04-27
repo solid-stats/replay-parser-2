@@ -160,6 +160,35 @@ pub fn entity_has_positions(entity: &Value, _index: usize) -> bool {
     entity.as_object().is_some_and(|object| object.contains_key("positions"))
 }
 
+/// Raw connected-player event observation from `$.events`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnectedEventObservation {
+    /// Original index in the source `events` array.
+    pub event_index: usize,
+    /// Source frame number from `event[0]`.
+    pub frame: u64,
+    /// Connected player name from `event[2]`.
+    pub name: String,
+    /// Source entity ID from `event[3]`.
+    pub entity_id: i64,
+    /// JSON path to the source event tuple.
+    pub json_path: String,
+}
+
+/// Reads connected-player event tuples shaped as `[frame, "connected", name, entity_id]`.
+#[must_use]
+pub fn connected_events(raw: &RawReplay<'_>) -> Vec<ConnectedEventObservation> {
+    let RawField::Present { value: events, json_path: _ } = raw.array_field("events") else {
+        return Vec::new();
+    };
+
+    events
+        .iter()
+        .enumerate()
+        .filter_map(|(event_index, event)| connected_event(event, event_index))
+        .collect()
+}
+
 /// Tolerant top-level field observation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RawField<T> {
@@ -239,4 +268,22 @@ fn entity_field<T>(
 
 fn entity_json_path(index: usize, key: &str) -> String {
     format!("$.entities[{index}].{key}")
+}
+
+fn connected_event(event: &Value, event_index: usize) -> Option<ConnectedEventObservation> {
+    let event = event.as_array()?;
+    let frame = event.first()?.as_u64()?;
+    let event_type = event.get(1)?.as_str()?;
+
+    if event_type != "connected" {
+        return None;
+    }
+
+    Some(ConnectedEventObservation {
+        event_index,
+        frame,
+        name: event.get(2)?.as_str()?.to_string(),
+        entity_id: event.get(3)?.as_i64()?,
+        json_path: format!("$.events[{event_index}]"),
+    })
 }

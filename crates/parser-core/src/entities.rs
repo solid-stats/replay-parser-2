@@ -1,11 +1,14 @@
 //! Observed entity normalization from OCAP entity rows.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::BTreeMap};
 
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},
-    identity::{EntityKind, EntitySide, ObservedEntity, ObservedIdentity},
-    presence::{FieldPresence, UnknownReason},
+    identity::{
+        EntityCompatibilityHint, EntityCompatibilityHintKind, EntityKind, EntitySide,
+        ObservedEntity, ObservedIdentity,
+    },
+    presence::{Confidence, FieldPresence, UnknownReason},
     source_ref::{RuleId, SourceRef, SourceRefs},
 };
 use serde_json::Value;
@@ -14,10 +17,13 @@ use crate::{
     artifact::SourceContext,
     diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
     raw::{
-        RawField, RawReplay, entity_class, entity_description, entity_group, entity_has_positions,
-        entity_id, entity_is_player, entity_name, entity_side, entity_type,
+        ConnectedEventObservation, RawField, RawReplay, connected_events, entity_class,
+        entity_description, entity_group, entity_has_positions, entity_id, entity_is_player,
+        entity_name, entity_side, entity_type,
     },
 };
+
+const CONNECTED_PLAYER_BACKFILL_RULE_ID: &str = "entity.connected_player_backfill";
 
 /// Normalizes observed unit/player, vehicle, and static weapon entity facts.
 #[must_use]
@@ -41,8 +47,94 @@ pub fn normalize_entities(
         .filter_map(|(index, entity)| normalize_entity(entity, index, context, diagnostics))
         .collect::<Vec<_>>();
 
+    apply_connected_player_backfill(raw, context, &mut normalized);
     normalized.sort_by(compare_entities);
     normalized
+}
+
+fn apply_connected_player_backfill(
+    raw: &RawReplay<'_>,
+    context: &SourceContext,
+    entities: &mut [ObservedEntity],
+) {
+    let entity_index = entities
+        .iter()
+        .enumerate()
+        .map(|(index, entity)| (entity.source_entity_id, index))
+        .collect::<BTreeMap<_, _>>();
+
+    for connected_event in connected_events(raw) {
+        if connected_event.name.is_empty() {
+            continue;
+        }
+
+        let Some(entity_index) = entity_index.get(&connected_event.entity_id).copied() else {
+            continue;
+        };
+        let entity = &mut entities[entity_index];
+
+        if matches!(entity.kind, EntityKind::Vehicle | EntityKind::StaticWeapon) {
+            continue;
+        }
+
+        let connected_source_ref =
+            connected_event_source_ref(context, &connected_event, CONNECTED_PLAYER_BACKFILL_RULE_ID);
+        let hint = connected_player_backfill_hint(entity, &connected_event, &connected_source_ref);
+
+        if should_infer_connected_name(&entity.observed_name) {
+            if let Some(inferred_name) =
+                inferred_connected_name(&connected_event.name, connected_source_ref)
+            {
+                entity.observed_name = inferred_name.clone();
+                entity.identity.nickname = inferred_name;
+            }
+        }
+
+        if let Some(hint) = hint {
+            entity.compatibility_hints.push(hint);
+        }
+    }
+}
+
+fn should_infer_connected_name(observed_name: &FieldPresence<String>) -> bool {
+    match observed_name {
+        FieldPresence::Present { value, source: _ } => value.is_empty(),
+        FieldPresence::Unknown { .. } => true,
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Inferred { .. }
+        | FieldPresence::NotApplicable { .. } => false,
+    }
+}
+
+fn inferred_connected_name(name: &str, source_ref: SourceRef) -> Option<FieldPresence<String>> {
+    Some(FieldPresence::Inferred {
+        value: name.to_string(),
+        reason: "legacy connected event player backfill".to_string(),
+        confidence: Confidence::new(1.0).ok(),
+        source: Some(source_ref),
+        rule_id: RuleId::new(CONNECTED_PLAYER_BACKFILL_RULE_ID).ok()?,
+    })
+}
+
+fn connected_player_backfill_hint(
+    entity: &ObservedEntity,
+    connected_event: &ConnectedEventObservation,
+    connected_source_ref: &SourceRef,
+) -> Option<EntityCompatibilityHint> {
+    let mut source_refs = Vec::with_capacity(entity.source_refs.as_slice().len() + 1);
+    source_refs.push(connected_source_ref.clone());
+    source_refs.extend(entity.source_refs.as_slice().iter().cloned());
+
+    Some(EntityCompatibilityHint {
+        kind: EntityCompatibilityHintKind::ConnectedPlayerBackfill,
+        related_entity_ids: vec![entity.source_entity_id],
+        observed_name: FieldPresence::Present {
+            value: connected_event.name.clone(),
+            source: Some(connected_source_ref.clone()),
+        },
+        rule_id: RuleId::new(CONNECTED_PLAYER_BACKFILL_RULE_ID).ok()?,
+        source_refs: SourceRefs::new(source_refs).ok()?,
+    })
 }
 
 fn push_entities_section_diagnostic(
@@ -523,6 +615,18 @@ fn entity_source_ref(
 ) -> SourceRef {
     let mut source_ref = context.source_ref(json_path, rule_id);
     source_ref.entity_id = Some(source_entity_id);
+    source_ref
+}
+
+fn connected_event_source_ref(
+    context: &SourceContext,
+    connected_event: &ConnectedEventObservation,
+    rule_id_value: &str,
+) -> SourceRef {
+    let mut source_ref = context.source_ref(&connected_event.json_path, rule_id(rule_id_value));
+    source_ref.frame = Some(connected_event.frame);
+    source_ref.event_index = u64::try_from(connected_event.event_index).ok();
+    source_ref.entity_id = Some(connected_event.entity_id);
     source_ref
 }
 
