@@ -77,9 +77,29 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_contract_fiel
         "entities",
         "events",
         "aggregates",
+        "side_facts",
         "failure",
     ] {
         assert!(schema_text.contains(expected_field), "schema should contain {expected_field}");
+    }
+}
+
+#[test]
+fn schema_contract_committed_schema_should_include_phase_4_contract_surfaces() {
+    let schema_text =
+        fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
+
+    for expected_fragment in [
+        "CombatEventAttributes",
+        "VehicleScoreInputValue",
+        "ReplaySideFacts",
+        "side_facts",
+        "vehicle_score_input",
+    ] {
+        assert!(
+            schema_text.contains(expected_fragment),
+            "schema should contain {expected_fragment}"
+        );
     }
 }
 

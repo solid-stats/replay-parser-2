@@ -157,7 +157,7 @@
   "events": [
     {
       "event_id": "event-0007",
-      "kind": "vehicle_killed",
+      "kind": "kill",
       "frame": {
         "state": "present",
         "value": 12345,
@@ -185,6 +185,23 @@
             "value": "west",
             "source": null
           }
+        },
+        {
+          "source_entity_id": {
+            "state": "present",
+            "value": 202,
+            "source": null
+          },
+          "observed_name": {
+            "state": "present",
+            "value": "Target",
+            "source": null
+          },
+          "side": {
+            "state": "present",
+            "value": "east",
+            "source": null
+          }
         }
       ],
       "source_refs": [
@@ -197,19 +214,216 @@
           },
           "frame": 12345,
           "event_index": 7,
-          "entity_id": 99,
+          "entity_id": 202,
           "json_path": "$.events[7]",
-          "rule_id": "event.vehicle_killed.source"
+          "rule_id": "event.kill.source"
         }
       ],
-      "rule_id": "event.vehicle_killed",
+      "rule_id": "event.kill.combat",
+      "combat": {
+        "semantic": "enemy_kill",
+        "killer": {
+          "state": "present",
+          "value": {
+            "source_entity_id": {
+              "state": "present",
+              "value": 101,
+              "source": null
+            },
+            "observed_name": {
+              "state": "present",
+              "value": "Afganor",
+              "source": null
+            },
+            "side": {
+              "state": "present",
+              "value": "west",
+              "source": null
+            }
+          },
+          "source": null
+        },
+        "victim": {
+          "state": "present",
+          "value": {
+            "source_entity_id": {
+              "state": "present",
+              "value": 202,
+              "source": null
+            },
+            "observed_name": {
+              "state": "present",
+              "value": "Target",
+              "source": null
+            },
+            "side": {
+              "state": "present",
+              "value": "east",
+              "source": null
+            }
+          },
+          "source": null
+        },
+        "victim_kind": "player",
+        "weapon": {
+          "state": "present",
+          "value": "rhs_t72",
+          "source": null
+        },
+        "distance_meters": {
+          "state": "present",
+          "value": 315.5,
+          "source": null
+        },
+        "vehicle_context": {
+          "is_kill_from_vehicle": true,
+          "raw_weapon": {
+            "state": "present",
+            "value": "rhs_t72",
+            "source": null
+          },
+          "attacker_vehicle_entity_id": {
+            "state": "present",
+            "value": 501,
+            "source": null
+          },
+          "attacker_vehicle_name": {
+            "state": "present",
+            "value": "Tank 1",
+            "source": null
+          },
+          "attacker_vehicle_class": {
+            "state": "present",
+            "value": "rhs_t72ba_tv",
+            "source": null
+          },
+          "attacker_vehicle_category": {
+            "state": "present",
+            "value": "tank",
+            "source": null
+          },
+          "target_category": {
+            "state": "present",
+            "value": "player",
+            "source": null
+          }
+        },
+        "bounty": {
+          "state": "eligible",
+          "exclusion_reasons": []
+        },
+        "legacy_counter_effects": [
+          {
+            "player_entity_id": 101,
+            "field": "kills",
+            "delta": 1,
+            "relationship_target_entity_id": 202
+          },
+          {
+            "player_entity_id": 202,
+            "field": "deaths.total",
+            "delta": 1,
+            "relationship_target_entity_id": 101
+          }
+        ]
+      },
       "attributes": {
-        "vehicle_class": "rhs_btr80"
+        "legacy_event_type": "killed"
       }
     }
   ],
   "aggregates": {
     "contributions": [
+      {
+        "contribution_id": "contribution-legacy-kills-0007",
+        "kind": "legacy_counter",
+        "event_id": "event-0007",
+        "source_refs": [
+          {
+            "replay_id": "replay-0001",
+            "source_file": "2025_04_05__23_27_21__1_ocap.json",
+            "checksum": {
+              "algorithm": "sha256",
+              "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            "frame": 12345,
+            "event_index": 7,
+            "entity_id": 101,
+            "json_path": "$.events[7]",
+            "rule_id": "aggregate.legacy.source"
+          }
+        ],
+        "rule_id": "aggregate.legacy.counter",
+        "value": {
+          "projection_key": "legacy.player_game_results",
+          "player_entity_id": 101,
+          "compatibility_key": "afganor",
+          "field": "kills",
+          "delta": 1,
+          "event_id": "event-0007"
+        }
+      },
+      {
+        "contribution_id": "contribution-relationship-0007",
+        "kind": "relationship",
+        "event_id": "event-0007",
+        "source_refs": [
+          {
+            "replay_id": "replay-0001",
+            "source_file": "2025_04_05__23_27_21__1_ocap.json",
+            "checksum": {
+              "algorithm": "sha256",
+              "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            "frame": 12345,
+            "event_index": 7,
+            "entity_id": 101,
+            "json_path": "$.events[7]",
+            "rule_id": "aggregate.relationship.source"
+          }
+        ],
+        "rule_id": "aggregate.relationship.killed",
+        "value": {
+          "projection_key": "legacy.relationships",
+          "source_player_entity_id": 101,
+          "target_player_entity_id": 202,
+          "relationship": "killed",
+          "compatibility_source_key": "afganor",
+          "compatibility_target_key": "target",
+          "count_delta": 1
+        }
+      },
+      {
+        "contribution_id": "contribution-bounty-0007",
+        "kind": "bounty_input",
+        "event_id": "event-0007",
+        "source_refs": [
+          {
+            "replay_id": "replay-0001",
+            "source_file": "2025_04_05__23_27_21__1_ocap.json",
+            "checksum": {
+              "algorithm": "sha256",
+              "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            "frame": 12345,
+            "event_index": 7,
+            "entity_id": 101,
+            "json_path": "$.events[7]",
+            "rule_id": "aggregate.bounty.source"
+          }
+        ],
+        "rule_id": "aggregate.bounty.input",
+        "value": {
+          "killer_entity_id": 101,
+          "victim_entity_id": 202,
+          "killer_side": "west",
+          "victim_side": "east",
+          "frame": 12345,
+          "event_id": "event-0007",
+          "eligible": true,
+          "exclusion_reasons": []
+        }
+      },
       {
         "contribution_id": "contribution-vehicle-score-0007",
         "kind": "vehicle_score_input",
@@ -224,24 +438,63 @@
             },
             "frame": 12345,
             "event_index": 7,
-            "entity_id": 99,
+            "entity_id": 101,
             "json_path": "$.events[7]",
             "rule_id": "aggregate.vehicle_score.source"
           }
         ],
-        "rule_id": "aggregate.vehicle_score.contribution",
+        "rule_id": "aggregate.vehicle_score.input",
         "value": {
-          "weight": 1.5,
-          "attacker_vehicle": "apc",
-          "killed_entity": "player"
+          "player_entity_id": 101,
+          "event_id": "event-0007",
+          "sign": "award",
+          "attacker_category": "tank",
+          "target_category": "player",
+          "raw_attacker_vehicle_name": "Tank 1",
+          "raw_attacker_vehicle_class": "rhs_t72ba_tv",
+          "raw_target_class": null,
+          "matrix_weight": 2.0,
+          "applied_weight": 2.0,
+          "teamkill_penalty_clamped": false,
+          "denominator_eligible": true
         }
       }
     ],
     "projections": {
-      "vehicle_score_inputs": [
+      "bounty.inputs": [
         {
-          "observed_name": "Afganor",
-          "contribution_id": "contribution-vehicle-score-0007"
+          "contribution_id": "contribution-bounty-0007",
+          "killer_entity_id": 101,
+          "victim_entity_id": 202,
+          "eligible": true
+        }
+      ],
+      "legacy.player_game_results": [
+        {
+          "compatibility_key": "afganor",
+          "kills": 1,
+          "contribution_ids": [
+            "contribution-legacy-kills-0007"
+          ]
+        }
+      ],
+      "legacy.relationships": [
+        {
+          "source_compatibility_key": "afganor",
+          "target_compatibility_key": "target",
+          "relationship": "killed",
+          "count": 1,
+          "contribution_ids": [
+            "contribution-relationship-0007"
+          ]
+        }
+      ],
+      "vehicle_score.inputs": [
+        {
+          "contribution_id": "contribution-vehicle-score-0007",
+          "player_entity_id": 101,
+          "denominator_eligible": true,
+          "teamkill_penalty_clamped": false
         }
       ]
     }

@@ -1,7 +1,14 @@
 use schemars::Schema;
 use serde_json::{Value, json};
 
-use crate::artifact::ParseArtifact;
+use crate::{
+    aggregates::{
+        BountyInputContributionValue, LegacyCounterContributionValue,
+        RelationshipContributionValue, VehicleScoreInputValue,
+    },
+    artifact::ParseArtifact,
+};
+use serde_json::map::Entry;
 
 /// Builds the JSON Schema for the current parse artifact contract.
 #[must_use]
@@ -9,7 +16,36 @@ pub fn parse_artifact_schema() -> Schema {
     let mut schema = schemars::schema_for!(ParseArtifact);
     enforce_status_failure_invariants(&mut schema);
     enforce_source_ref_evidence_invariants(&mut schema);
+    add_aggregate_value_helper_definitions(&mut schema);
     schema
+}
+
+fn add_aggregate_value_helper_definitions(schema: &mut Schema) {
+    add_schema_definition::<LegacyCounterContributionValue>(
+        schema,
+        "LegacyCounterContributionValue",
+    );
+    add_schema_definition::<RelationshipContributionValue>(schema, "RelationshipContributionValue");
+    add_schema_definition::<BountyInputContributionValue>(schema, "BountyInputContributionValue");
+    add_schema_definition::<VehicleScoreInputValue>(schema, "VehicleScoreInputValue");
+}
+
+fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definition_name: &str) {
+    let mut definition = schemars::schema_for!(T);
+    let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
+        return;
+    };
+
+    if let Some(Value::Object(nested_defs)) = definition.remove("$defs") {
+        for (key, value) in nested_defs {
+            if let Entry::Vacant(entry) = defs.entry(key) {
+                let _inserted = entry.insert(value);
+            }
+        }
+    }
+
+    drop(definition.remove("$schema"));
+    drop(defs.insert(definition_name.to_string(), definition.into()));
 }
 
 fn enforce_status_failure_invariants(schema: &mut Schema) {

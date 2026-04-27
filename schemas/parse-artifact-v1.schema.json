@@ -71,6 +71,10 @@
         }
       ]
     },
+    "side_facts": {
+      "description": "Replay-side commander and outcome facts.",
+      "$ref": "#/$defs/ReplaySideFacts"
+    },
     "source": {
       "description": "Replay source identity and checksum metadata.",
       "$ref": "#/$defs/ReplaySource"
@@ -136,6 +140,7 @@
     "entities",
     "events",
     "aggregates",
+    "side_facts",
     "extensions"
   ],
   "$defs": {
@@ -230,6 +235,140 @@
         "projections"
       ]
     },
+    "BountyEligibility": {
+      "description": "Bounty eligibility payload attached to a combat event.",
+      "type": "object",
+      "properties": {
+        "exclusion_reasons": {
+          "description": "Stable exclusion reasons when excluded.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BountyExclusionReason"
+          }
+        },
+        "state": {
+          "description": "Eligibility state.",
+          "$ref": "#/$defs/BountyEligibilityState"
+        }
+      },
+      "required": [
+        "state",
+        "exclusion_reasons"
+      ]
+    },
+    "BountyEligibilityState": {
+      "description": "Bounty eligibility state for combat events.",
+      "oneOf": [
+        {
+          "description": "Event can be consumed as a bounty-awarding input.",
+          "type": "string",
+          "const": "eligible"
+        },
+        {
+          "description": "Event is auditable but excluded from bounty-awarding inputs.",
+          "type": "string",
+          "const": "excluded"
+        }
+      ]
+    },
+    "BountyExclusionReason": {
+      "description": "Reason a combat event is excluded from bounty-awarding inputs.",
+      "oneOf": [
+        {
+          "description": "Same-side teamkill.",
+          "type": "string",
+          "const": "teamkill"
+        },
+        {
+          "description": "Suicide event.",
+          "type": "string",
+          "const": "suicide"
+        },
+        {
+          "description": "Explicit null killer.",
+          "type": "string",
+          "const": "null_killer"
+        },
+        {
+          "description": "Victim is a vehicle or static weapon.",
+          "type": "string",
+          "const": "vehicle_victim"
+        },
+        {
+          "description": "Actor lookup is incomplete.",
+          "type": "string",
+          "const": "unknown_actor"
+        },
+        {
+          "description": "Side evidence is incomplete.",
+          "type": "string",
+          "const": "unknown_side"
+        },
+        {
+          "description": "Event is not an enemy kill.",
+          "type": "string",
+          "const": "not_enemy_kill"
+        }
+      ]
+    },
+    "BountyInputContributionValue": {
+      "title": "BountyInputContributionValue",
+      "description": "Typed value for bounty input aggregate contributions.",
+      "type": "object",
+      "properties": {
+        "eligible": {
+          "description": "Whether this input awards bounty.",
+          "type": "boolean"
+        },
+        "event_id": {
+          "description": "Source normalized event identifier.",
+          "type": "string"
+        },
+        "exclusion_reasons": {
+          "description": "Exclusion reasons when not eligible.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frame": {
+          "description": "Source frame when available.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "killer_entity_id": {
+          "description": "Killer source entity identifier.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "killer_side": {
+          "description": "Killer observed side.",
+          "type": "string"
+        },
+        "victim_entity_id": {
+          "description": "Victim source entity identifier.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "victim_side": {
+          "description": "Victim observed side.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "killer_entity_id",
+        "victim_entity_id",
+        "killer_side",
+        "victim_side",
+        "event_id",
+        "eligible",
+        "exclusion_reasons"
+      ]
+    },
     "ChecksumAlgorithm": {
       "description": "Supported source checksum algorithms.",
       "oneOf": [
@@ -244,6 +383,186 @@
       "description": "Lowercase hexadecimal SHA-256 checksum value.",
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
+    },
+    "CombatEventAttributes": {
+      "description": "Typed combat payload for normalized combat events.",
+      "type": "object",
+      "properties": {
+        "bounty": {
+          "description": "Bounty eligibility and exclusion reasons.",
+          "$ref": "#/$defs/BountyEligibility"
+        },
+        "distance_meters": {
+          "description": "Distance in meters when available.",
+          "$ref": "#/$defs/FieldPresence4"
+        },
+        "killer": {
+          "description": "Killer actor when available.",
+          "$ref": "#/$defs/FieldPresence11"
+        },
+        "legacy_counter_effects": {
+          "description": "Legacy counter deltas derived from this event.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyCounterEffect"
+          }
+        },
+        "semantic": {
+          "description": "Dominant combat semantic.",
+          "$ref": "#/$defs/CombatSemantic"
+        },
+        "vehicle_context": {
+          "description": "Vehicle evidence and taxonomy context.",
+          "$ref": "#/$defs/VehicleContext"
+        },
+        "victim": {
+          "description": "Victim actor when available.",
+          "$ref": "#/$defs/FieldPresence11"
+        },
+        "victim_kind": {
+          "description": "Victim category.",
+          "$ref": "#/$defs/CombatVictimKind"
+        },
+        "weapon": {
+          "description": "Weapon string when available.",
+          "$ref": "#/$defs/FieldPresence2"
+        }
+      },
+      "required": [
+        "semantic",
+        "killer",
+        "victim",
+        "victim_kind",
+        "weapon",
+        "distance_meters",
+        "vehicle_context",
+        "bounty",
+        "legacy_counter_effects"
+      ]
+    },
+    "CombatSemantic": {
+      "description": "Dominant combat semantic represented by a source-backed combat event.",
+      "oneOf": [
+        {
+          "description": "Enemy player or entity kill.",
+          "type": "string",
+          "const": "enemy_kill"
+        },
+        {
+          "description": "Same-side non-suicide kill.",
+          "type": "string",
+          "const": "teamkill"
+        },
+        {
+          "description": "Actor killed itself.",
+          "type": "string",
+          "const": "suicide"
+        },
+        {
+          "description": "Victim death with an explicit null killer.",
+          "type": "string",
+          "const": "null_killer_death"
+        },
+        {
+          "description": "Vehicle or static weapon was destroyed.",
+          "type": "string",
+          "const": "vehicle_destroyed"
+        },
+        {
+          "description": "Combat tuple was preserved but could not be classified.",
+          "type": "string",
+          "const": "unknown"
+        }
+      ]
+    },
+    "CombatVictimKind": {
+      "description": "Victim category used by combat classification and aggregate derivation.",
+      "oneOf": [
+        {
+          "description": "Player or infantry victim.",
+          "type": "string",
+          "const": "player"
+        },
+        {
+          "description": "Vehicle victim.",
+          "type": "string",
+          "const": "vehicle"
+        },
+        {
+          "description": "Static weapon victim.",
+          "type": "string",
+          "const": "static_weapon"
+        },
+        {
+          "description": "Victim kind could not be determined.",
+          "type": "string",
+          "const": "unknown"
+        }
+      ]
+    },
+    "CommanderFactKind": {
+      "description": "Commander fact evidence kind.",
+      "oneOf": [
+        {
+          "description": "Commander was directly observed in source data.",
+          "type": "string",
+          "const": "observed"
+        },
+        {
+          "description": "Commander is a conservative candidate from parser heuristics.",
+          "type": "string",
+          "const": "candidate"
+        }
+      ]
+    },
+    "CommanderSideFact": {
+      "description": "Commander fact for one replay side.",
+      "type": "object",
+      "properties": {
+        "commander": {
+          "description": "Commander actor reference.",
+          "$ref": "#/$defs/FieldPresence11"
+        },
+        "confidence": {
+          "description": "Confidence for inferred or candidate facts.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Confidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "description": "Fact kind.",
+          "$ref": "#/$defs/CommanderFactKind"
+        },
+        "rule_id": {
+          "description": "Rule that produced this fact.",
+          "$ref": "#/$defs/RuleId"
+        },
+        "side": {
+          "description": "Observed side identifier.",
+          "$ref": "#/$defs/FieldPresence9"
+        },
+        "side_name": {
+          "description": "Observed side name or label.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "source_refs": {
+          "description": "Source references backing the fact.",
+          "$ref": "#/$defs/SourceRefs"
+        }
+      },
+      "required": [
+        "side",
+        "side_name",
+        "commander",
+        "kind",
+        "rule_id",
+        "source_refs"
+      ]
     },
     "Confidence": {
       "description": "Confidence score for inferred field values.",
@@ -759,6 +1078,326 @@
               "description": "Inferred value.",
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is not applicable.",
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence11": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
+      "oneOf": [
+        {
+          "description": "Field was present in the source or adapter input.",
+          "type": "object",
+          "properties": {
+            "source": {
+              "description": "Source reference for the value, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "description": "Present value.",
+              "$ref": "#/$defs/EventActorRef"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "description": "Field was explicitly null in the source or domain event.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is null.",
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "description": "Source reference for the null state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value is unknown.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is unknown.",
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "description": "Source reference for the unknown state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value was inferred rather than directly observed.",
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "description": "Optional confidence score for the inference.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "description": "Human-readable inference reason.",
+              "type": "string"
+            },
+            "rule_id": {
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
+            },
+            "source": {
+              "description": "Source reference for the inference, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "description": "Inferred value.",
+              "$ref": "#/$defs/EventActorRef"
+            }
+          },
+          "required": [
+            "state",
+            "value",
+            "reason",
+            "rule_id"
+          ]
+        },
+        {
+          "description": "Field does not apply to this replay, entity, event, or projection.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is not applicable.",
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    },
+    "FieldPresence12": {
+      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
+      "oneOf": [
+        {
+          "description": "Field was present in the source or adapter input.",
+          "type": "object",
+          "properties": {
+            "source": {
+              "description": "Source reference for the value, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "present"
+            },
+            "value": {
+              "description": "Present value.",
+              "$ref": "#/$defs/VehicleScoreCategory"
+            }
+          },
+          "required": [
+            "state",
+            "value"
+          ]
+        },
+        {
+          "description": "Field was explicitly null in the source or domain event.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is null.",
+              "$ref": "#/$defs/NullReason"
+            },
+            "source": {
+              "description": "Source reference for the null state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "explicit_null"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value is unknown.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "description": "Reason the field is unknown.",
+              "$ref": "#/$defs/UnknownReason"
+            },
+            "source": {
+              "description": "Source reference for the unknown state, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "description": "Field value was inferred rather than directly observed.",
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "description": "Optional confidence score for the inference.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "description": "Human-readable inference reason.",
+              "type": "string"
+            },
+            "rule_id": {
+              "description": "Rule that produced the inference.",
+              "$ref": "#/$defs/RuleId"
+            },
+            "source": {
+              "description": "Source reference for the inference, when available.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "string",
+              "const": "inferred"
+            },
+            "value": {
+              "description": "Inferred value.",
+              "$ref": "#/$defs/VehicleScoreCategory"
             }
           },
           "required": [
@@ -2106,6 +2745,80 @@
         "end_frame"
       ]
     },
+    "LegacyCounterContributionValue": {
+      "title": "LegacyCounterContributionValue",
+      "description": "Typed value for a legacy-compatible counter contribution.",
+      "type": "object",
+      "properties": {
+        "compatibility_key": {
+          "description": "Legacy compatibility key used by old aggregate comparison.",
+          "type": "string"
+        },
+        "delta": {
+          "description": "Counter delta.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "event_id": {
+          "description": "Source normalized event identifier.",
+          "type": "string"
+        },
+        "field": {
+          "description": "Legacy field name affected by the delta.",
+          "type": "string"
+        },
+        "player_entity_id": {
+          "description": "Source entity identifier for the affected player.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "projection_key": {
+          "description": "Projection key this contribution feeds.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "projection_key",
+        "player_entity_id",
+        "compatibility_key",
+        "field",
+        "delta",
+        "event_id"
+      ]
+    },
+    "LegacyCounterEffect": {
+      "description": "Legacy counter delta produced by a combat event.",
+      "type": "object",
+      "properties": {
+        "delta": {
+          "description": "Counter delta.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "field": {
+          "description": "Legacy field name affected by the delta.",
+          "type": "string"
+        },
+        "player_entity_id": {
+          "description": "Player source entity identifier affected by the delta.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "relationship_target_entity_id": {
+          "description": "Relationship target source entity identifier when applicable.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        }
+      },
+      "required": [
+        "player_entity_id",
+        "field",
+        "delta"
+      ]
+    },
     "NormalizedEvent": {
       "description": "Normalized event with source references and rule provenance.",
       "type": "object",
@@ -2121,6 +2834,17 @@
           "description": "Rule-specific event attributes.",
           "type": "object",
           "additionalProperties": true
+        },
+        "combat": {
+          "description": "Typed combat payload for combat events.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CombatEventAttributes"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "event_id": {
           "description": "Stable event identifier within the artifact.",
@@ -2328,6 +3052,76 @@
         "description"
       ]
     },
+    "OutcomeFact": {
+      "description": "Replay outcome fact.",
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "description": "Confidence for inferred outcomes.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Confidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rule_id": {
+          "description": "Rule that produced this fact.",
+          "$ref": "#/$defs/RuleId"
+        },
+        "source_label": {
+          "description": "Raw source outcome label when present.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "source_refs": {
+          "description": "Source references backing known or inferred outcomes.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceRefs"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "description": "Outcome status.",
+          "$ref": "#/$defs/OutcomeStatus"
+        },
+        "winner_side": {
+          "description": "Winner side when known or inferred.",
+          "$ref": "#/$defs/FieldPresence9"
+        }
+      },
+      "required": [
+        "status",
+        "winner_side",
+        "source_label",
+        "rule_id"
+      ]
+    },
+    "OutcomeStatus": {
+      "description": "Outcome fact status.",
+      "oneOf": [
+        {
+          "description": "Outcome is directly known.",
+          "type": "string",
+          "const": "known"
+        },
+        {
+          "description": "Outcome is absent or unavailable.",
+          "type": "string",
+          "const": "unknown"
+        },
+        {
+          "description": "Outcome was inferred from source evidence.",
+          "type": "string",
+          "const": "inferred"
+        }
+      ]
+    },
     "ParseFailure": {
       "description": "Machine-readable parse failure payload.",
       "type": "object",
@@ -2512,6 +3306,53 @@
         "version"
       ]
     },
+    "RelationshipContributionValue": {
+      "title": "RelationshipContributionValue",
+      "description": "Typed value for a killed/killer or teamkilled/teamkiller relationship contribution.",
+      "type": "object",
+      "properties": {
+        "compatibility_source_key": {
+          "description": "Legacy compatibility key for the source player.",
+          "type": "string"
+        },
+        "compatibility_target_key": {
+          "description": "Legacy compatibility key for the target player.",
+          "type": "string"
+        },
+        "count_delta": {
+          "description": "Relationship count delta.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "projection_key": {
+          "description": "Projection key this contribution feeds.",
+          "type": "string"
+        },
+        "relationship": {
+          "description": "Relationship name.",
+          "type": "string"
+        },
+        "source_player_entity_id": {
+          "description": "Source player entity identifier.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "target_player_entity_id": {
+          "description": "Target player entity identifier.",
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "projection_key",
+        "source_player_entity_id",
+        "target_player_entity_id",
+        "relationship",
+        "compatibility_source_key",
+        "compatibility_target_key",
+        "count_delta"
+      ]
+    },
     "ReplayMetadata": {
       "description": "Normalized replay-level metadata from observed OCAP top-level fields.",
       "type": "object",
@@ -2558,6 +3399,27 @@
         "end_frame",
         "time_bounds",
         "frame_bounds"
+      ]
+    },
+    "ReplaySideFacts": {
+      "description": "Replay-level side facts for commander and outcome integration.",
+      "type": "object",
+      "properties": {
+        "commanders": {
+          "description": "Commander facts observed or inferred for replay sides.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommanderSideFact"
+          }
+        },
+        "outcome": {
+          "description": "Replay outcome fact.",
+          "$ref": "#/$defs/OutcomeFact"
+        }
+      },
+      "required": [
+        "commanders",
+        "outcome"
       ]
     },
     "ReplaySource": {
@@ -2850,6 +3712,192 @@
           "description": "Checksum could not be calculated or supplied.",
           "type": "string",
           "const": "checksum_unavailable"
+        }
+      ]
+    },
+    "VehicleContext": {
+      "description": "Vehicle-related evidence attached to a combat event.",
+      "type": "object",
+      "properties": {
+        "attacker_vehicle_category": {
+          "description": "Issue #13 attacker vehicle category.",
+          "$ref": "#/$defs/FieldPresence12"
+        },
+        "attacker_vehicle_class": {
+          "description": "Raw attacker vehicle observed class.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "attacker_vehicle_entity_id": {
+          "description": "Attacker vehicle source entity identifier when matched.",
+          "$ref": "#/$defs/FieldPresence10"
+        },
+        "attacker_vehicle_name": {
+          "description": "Raw attacker vehicle observed name.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "is_kill_from_vehicle": {
+          "description": "True when the kill was attributed to a vehicle weapon/name.",
+          "type": "boolean"
+        },
+        "raw_weapon": {
+          "description": "Raw weapon string from the source tuple.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "target_category": {
+          "description": "Issue #13 target category.",
+          "$ref": "#/$defs/FieldPresence12"
+        }
+      },
+      "required": [
+        "is_kill_from_vehicle",
+        "raw_weapon",
+        "attacker_vehicle_entity_id",
+        "attacker_vehicle_name",
+        "attacker_vehicle_class",
+        "attacker_vehicle_category",
+        "target_category"
+      ]
+    },
+    "VehicleScoreCategory": {
+      "description": "Vehicle score taxonomy category from the issue #13 matrix.",
+      "oneOf": [
+        {
+          "description": "Static weapon category.",
+          "type": "string",
+          "const": "static_weapon"
+        },
+        {
+          "description": "Car category.",
+          "type": "string",
+          "const": "car"
+        },
+        {
+          "description": "Truck category.",
+          "type": "string",
+          "const": "truck"
+        },
+        {
+          "description": "APC category.",
+          "type": "string",
+          "const": "apc"
+        },
+        {
+          "description": "Tank category.",
+          "type": "string",
+          "const": "tank"
+        },
+        {
+          "description": "Helicopter category.",
+          "type": "string",
+          "const": "heli"
+        },
+        {
+          "description": "Plane category.",
+          "type": "string",
+          "const": "plane"
+        },
+        {
+          "description": "Infantry player category.",
+          "type": "string",
+          "const": "player"
+        },
+        {
+          "description": "Category could not be mapped.",
+          "type": "string",
+          "const": "unknown"
+        }
+      ]
+    },
+    "VehicleScoreInputValue": {
+      "title": "VehicleScoreInputValue",
+      "description": "Typed value for issue #13 vehicle score input aggregate contributions.",
+      "type": "object",
+      "properties": {
+        "applied_weight": {
+          "description": "Applied weight after sign-specific rules such as teamkill clamp.",
+          "type": "number",
+          "format": "double"
+        },
+        "attacker_category": {
+          "description": "Issue #13 attacker category.",
+          "$ref": "#/$defs/VehicleScoreCategory"
+        },
+        "denominator_eligible": {
+          "description": "True when this contribution makes the replay count in the denominator.",
+          "type": "boolean"
+        },
+        "event_id": {
+          "description": "Source normalized event identifier.",
+          "type": "string"
+        },
+        "matrix_weight": {
+          "description": "Raw matrix weight from the issue #13 table.",
+          "type": "number",
+          "format": "double"
+        },
+        "player_entity_id": {
+          "description": "Player source entity identifier receiving the score input.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "raw_attacker_vehicle_class": {
+          "description": "Raw attacker vehicle class evidence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "raw_attacker_vehicle_name": {
+          "description": "Raw attacker vehicle name evidence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "raw_target_class": {
+          "description": "Raw target class evidence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sign": {
+          "description": "Contribution sign.",
+          "$ref": "#/$defs/VehicleScoreSign"
+        },
+        "target_category": {
+          "description": "Issue #13 target category.",
+          "$ref": "#/$defs/VehicleScoreCategory"
+        },
+        "teamkill_penalty_clamped": {
+          "description": "True when a teamkill penalty was clamped up to at least 1.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "player_entity_id",
+        "event_id",
+        "sign",
+        "attacker_category",
+        "target_category",
+        "matrix_weight",
+        "applied_weight",
+        "teamkill_penalty_clamped",
+        "denominator_eligible"
+      ]
+    },
+    "VehicleScoreSign": {
+      "description": "Vehicle score contribution sign.",
+      "oneOf": [
+        {
+          "description": "Add weighted score.",
+          "type": "string",
+          "const": "award"
+        },
+        {
+          "description": "Subtract weighted penalty.",
+          "type": "string",
+          "const": "penalty"
         }
       ]
     }
