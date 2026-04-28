@@ -31,17 +31,15 @@ fn committed_schema_path() -> PathBuf {
 
 fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {
     let id = NEXT_TEMP_ID.fetch_add(1, Ordering::SeqCst);
-    let dir = std::env::temp_dir().join(format!(
-        "replay-parser-2-schema-{test_name}-{}-{id}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir()
+        .join(format!("replay-parser-2-schema-{test_name}-{}-{id}", std::process::id()));
     fs::create_dir_all(&dir).expect("test temp directory should be created");
     dir.join(file_name)
 }
 
 fn run_schema(args: &[&str]) -> Output {
-    let mut command = Command::cargo_bin("replay-parser-2")
-        .expect("replay-parser-2 binary should build");
+    let mut command =
+        Command::cargo_bin("replay-parser-2").expect("replay-parser-2 binary should build");
     command.arg("schema").args(args).output().expect("schema command should run")
 }
 
@@ -67,11 +65,10 @@ fn schema_command_should_write_current_schema_to_file_when_output_is_present() {
     // Act
     let command_output = run_schema(&[
         "--output",
-        output_path
-            .to_str()
-            .expect("test schema output path should be valid UTF-8"),
+        output_path.to_str().expect("test schema output path should be valid UTF-8"),
     ]);
-    let file_text = fs::read_to_string(&output_path).expect("schema output file should be readable");
+    let file_text =
+        fs::read_to_string(&output_path).expect("schema output file should be readable");
 
     // Assert
     assert!(command_output.status.success());
@@ -87,9 +84,7 @@ fn schema_command_should_match_committed_parse_artifact_schema_exactly() {
     // Act
     let command_output = run_schema(&[
         "--output",
-        output_path
-            .to_str()
-            .expect("test schema output path should be valid UTF-8"),
+        output_path.to_str().expect("test schema output path should be valid UTF-8"),
     ]);
     let fresh_schema = fs::read(&output_path).expect("schema output file should be readable");
     let committed_schema =

@@ -92,11 +92,15 @@ impl Display for CliError {
             Self::WriteStderr(source) => {
                 write!(formatter, "could not write command summary to stderr: {source}")
             }
-            Self::Serialize(source) => write!(formatter, "could not serialize JSON output: {source}"),
+            Self::Serialize(source) => {
+                write!(formatter, "could not serialize JSON output: {source}")
+            }
             Self::ParserInfo(source) => {
                 write!(formatter, "could not build parser metadata: {source}")
             }
-            Self::Checksum(source) => write!(formatter, "could not build source checksum: {source}"),
+            Self::Checksum(source) => {
+                write!(formatter, "could not build source checksum: {source}")
+            }
             Self::ComparePlanned => {
                 formatter.write_str("compare command is planned in Phase 5 Plan 02")
             }
@@ -127,26 +131,21 @@ fn main() -> ExitCode {
 
 fn run() -> Result<ExitCode, CliError> {
     match Cli::parse().command {
-        Commands::Parse { input, output, replay_id } => parse_command(input, output, replay_id),
+        Commands::Parse { input, output, replay_id } => parse_command(&input, &output, replay_id),
         Commands::Schema { output } => schema_command(output),
-        Commands::Compare {
-            replay: _,
-            new_artifact: _,
-            old_artifact: _,
-            output: _,
-        } => Err(CliError::ComparePlanned),
+        Commands::Compare { replay: _, new_artifact: _, old_artifact: _, output: _ } => {
+            Err(CliError::ComparePlanned)
+        }
     }
 }
 
 fn parse_command(
-    input: PathBuf,
-    output: PathBuf,
+    input: &Path,
+    output: &Path,
     replay_id: Option<String>,
 ) -> Result<ExitCode, CliError> {
-    let bytes = fs::read(&input).map_err(|source| CliError::ReadInput {
-        path: input.clone(),
-        source,
-    })?;
+    let bytes = fs::read(input)
+        .map_err(|source| CliError::ReadInput { path: input.to_path_buf(), source })?;
     let checksum_hex = sha256_hex(&bytes);
     let source = ReplaySource {
         replay_id,
@@ -165,15 +164,13 @@ fn parse_command(
     });
 
     let artifact_bytes = serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?;
-    write_pretty_json_file(&output, artifact_bytes)?;
+    write_pretty_json_file(output, artifact_bytes)?;
 
     if artifact.status == ParseStatus::Failed {
-        let summary = artifact
-            .failure
-            .as_ref()
-            .map_or("parse failed: no structured failure payload".to_string(), |failure| {
-                format!("parse failed: {}", failure.message)
-            });
+        let summary = artifact.failure.as_ref().map_or_else(
+            || "parse failed: no structured failure payload".to_string(),
+            |failure| format!("parse failed: {}", failure.message),
+        );
         write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
         return Ok(ExitCode::FAILURE);
     }
@@ -183,16 +180,13 @@ fn parse_command(
 
 fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
     let schema = parse_artifact_schema();
-    match output {
-        Some(path) => {
-            let schema_bytes = serde_json::to_vec_pretty(&schema).map_err(CliError::Serialize)?;
-            write_pretty_json_file(&path, schema_bytes)?;
-        }
-        None => {
-            let mut stdout = io::stdout().lock();
-            serde_json::to_writer_pretty(&mut stdout, &schema).map_err(CliError::Serialize)?;
-            stdout.write_all(b"\n").map_err(CliError::WriteStdout)?;
-        }
+    if let Some(path) = output {
+        let schema_bytes = serde_json::to_vec_pretty(&schema).map_err(CliError::Serialize)?;
+        write_pretty_json_file(&path, schema_bytes)?;
+    } else {
+        let mut stdout = io::stdout().lock();
+        serde_json::to_writer_pretty(&mut stdout, &schema).map_err(CliError::Serialize)?;
+        stdout.write_all(b"\n").map_err(CliError::WriteStdout)?;
     }
 
     Ok(ExitCode::SUCCESS)
@@ -214,10 +208,8 @@ fn parser_info() -> Result<ParserInfo, CliError> {
 
 fn write_pretty_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliError> {
     output.push(b'\n');
-    fs::write(path, output).map_err(|source| CliError::WriteOutput {
-        path: path.to_path_buf(),
-        source,
-    })
+    fs::write(path, output)
+        .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
 }
 
 fn report_error(error: &CliError) -> ExitCode {

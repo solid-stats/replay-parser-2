@@ -23,17 +23,13 @@ fn parser_core_fixture(name: &str) -> PathBuf {
         .expect("parser-cli should live under crates/")
         .to_path_buf();
 
-    crates_dir
-        .join("parser-core/tests/fixtures")
-        .join(name)
+    crates_dir.join("parser-core/tests/fixtures").join(name)
 }
 
 fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {
     let id = NEXT_TEMP_ID.fetch_add(1, Ordering::SeqCst);
-    let dir = std::env::temp_dir().join(format!(
-        "replay-parser-2-{test_name}-{}-{id}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir()
+        .join(format!("replay-parser-2-{test_name}-{}-{id}", std::process::id()));
     fs::create_dir_all(&dir).expect("test temp directory should be created");
     dir.join(file_name)
 }
@@ -101,10 +97,10 @@ fn parse_command_should_write_byte_identical_artifacts_when_same_input_runs_twic
     // Act
     let first_command_output = run_parse(&input, &first_output_path);
     let second_command_output = run_parse(&input, &second_output_path);
-    let first_artifact = fs::read_to_string(&first_output_path)
-        .expect("first output artifact should be readable");
-    let second_artifact = fs::read_to_string(&second_output_path)
-        .expect("second output artifact should be readable");
+    let first_artifact =
+        fs::read_to_string(&first_output_path).expect("first output artifact should be readable");
+    let second_artifact =
+        fs::read_to_string(&second_output_path).expect("second output artifact should be readable");
 
     // Assert
     assert!(first_command_output.status.success());
