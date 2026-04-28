@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-04-28T05:37:11.027Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-04-28T06:40:00.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 26
-  percent: 87
+  completed_plans: 27
+  percent: 90
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 ## Current Position
 
 Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-04-28
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [█████████░] 87%
 | Phase 04 P06 | 40m | 4 tasks | 14 files |
 | Phase 05 P00 | 22m | 4 tasks | 7 files |
 | Phase 05 P01 | 13min | 3 tasks | 5 files |
+| Phase 05 P02 | 65min | 4 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 00 schema command exports parser_contract::schema::parse_artifact_schema as the source of truth. — CLI schema output is byte-checked against the committed parse-artifact schema.
 - [Phase 05]: Plan 01 reuses existing compact Phase 3/4 focused fixtures via golden manifest links. — Avoids duplicating OCAP payloads while keeping fixture coverage traceable and executable.
 - [Phase 05]: Plan 01 golden behavior tests assert public parser-core artifacts through parse_replay. — Keeps tests behavior-oriented and avoids production-only exports.
+- [Phase 05]: Plan 02 comparison reports use Phase 1 mismatch categories plus parser/server/web impact dimensions. — Keeps selected-input parity review explicit without moving adjacent app behavior into parser-core.
+- [Phase 05]: Plan 02 compare command supports saved artifacts and selected replay parsing only. — Full-corpus parity remains generated harness/CI output under .planning/generated/phase-05/.
 
 ### Pending Todos
 

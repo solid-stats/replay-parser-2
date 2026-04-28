@@ -78,10 +78,10 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 - [x] **CLI-01**: CLI can parse a local OCAP JSON file and write normalized result JSON to a requested output path.
 - [x] **CLI-02**: CLI can emit contract schema information for the current parser contract version.
-- [ ] **CLI-03**: CLI can run old-vs-new comparison on selected replay files or saved old output artifacts.
+- [x] **CLI-03**: CLI can run old-vs-new comparison on selected replay files or saved old output artifacts.
 - [x] **CLI-04**: CLI exits with structured error output and non-zero status on malformed, unreadable, or unsupported replay files.
 - [x] **TEST-01**: Golden fixtures are derived from `~/sg_stats` and include representative normal, malformed, partial, old-format, winner-present, winner-missing, vehicle-kill, teamkill, and commander-side cases where available.
-- [ ] **TEST-02**: Existing result comparisons cover comparable old fields and report per-field mismatch categories.
+- [x] **TEST-02**: Existing result comparisons cover comparable old fields and report per-field mismatch categories.
 - [x] **TEST-03**: Determinism tests prove repeated parser runs on the same input produce stable JSON output.
 - [ ] **TEST-04**: Benchmark harness reports parse-only, aggregate-only, and end-to-end throughput against the pinned old parser baseline.
 - [ ] **TEST-05**: Benchmark reporting includes files/sec, MB/sec or events/sec, memory/RSS where practical, and whether output parity passed for the measured sample.
@@ -190,10 +190,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGG-11 | Phase 4 | Complete |
 | CLI-01 | Phase 5 | Complete |
 | CLI-02 | Phase 5 | Complete |
-| CLI-03 | Phase 5 | Pending |
+| CLI-03 | Phase 5 | Complete |
 | CLI-04 | Phase 5 | Complete |
 | TEST-01 | Phase 5 | Complete |
-| TEST-02 | Phase 5 | Pending |
+| TEST-02 | Phase 5 | Complete |
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Pending |
 | TEST-05 | Phase 5 | Pending |
