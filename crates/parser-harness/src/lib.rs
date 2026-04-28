@@ -4,4 +4,5 @@
 //! the pure parser core.
 
 pub mod comparison;
+pub mod coverage;
 pub mod report;
