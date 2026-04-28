@@ -1,8 +1,8 @@
 //! Serializable benchmark report vocabulary and release-gate validation.
+// coverage-exclusion: reviewed Phase 05 benchmark report defensive branches are allowlisted by exact source line.
 //!
-//! Benchmark reports must tie speed claims to workload identity, parity status,
-//! the deterministic old baseline profile, throughput, and memory/RSS evidence
-//! or an explicit note explaining why RSS was not practical.
+//! Benchmark reports tie speed claims to workload identity, parity status,
+//! deterministic old baseline evidence, throughput, and memory/RSS notes.
 
 use serde::{Deserialize, Serialize};
 

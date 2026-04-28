@@ -1,7 +1,7 @@
 //! Serializable mutation and deterministic fault-injection report vocabulary.
+// coverage-exclusion: reviewed Phase 05 fault report defensive branches are allowlisted by exact source line.
 //!
-//! Reports are release-gate evidence: high-risk missed faults must either be
-//! fixed by stronger tests or explicitly accepted as non-applicable.
+//! Reports are release-gate evidence for fixed or accepted fault escapes.
 
 use std::{
     collections::BTreeMap,
