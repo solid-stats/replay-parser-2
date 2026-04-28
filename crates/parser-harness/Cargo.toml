@@ -18,5 +18,12 @@ serde_json = "1"
 thiserror = "2"
 toml = "0.8"
 
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "parser_pipeline"
+harness = false
+
 [lints]
 workspace = true

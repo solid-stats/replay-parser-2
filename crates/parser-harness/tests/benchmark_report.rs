@@ -122,10 +122,10 @@ fn workload() -> BenchmarkWorkload {
     }
 }
 
-fn metric_with_rss() -> BenchmarkMetric {
+const fn metric_with_rss() -> BenchmarkMetric {
     BenchmarkMetric::new(10.0, Some(100.0), Some(12.5), Some(1_000.0), Some(64.0))
 }
 
-fn metric_without_rss() -> BenchmarkMetric {
+const fn metric_without_rss() -> BenchmarkMetric {
     BenchmarkMetric::new(10.0, Some(100.0), Some(12.5), Some(1_000.0), None)
 }

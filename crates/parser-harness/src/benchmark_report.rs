@@ -185,10 +185,10 @@ impl BenchmarkReport {
 
         let triage = self.triage.as_deref().unwrap_or_default();
         let triage_lower = triage.to_ascii_lowercase();
-        if !self.old_baseline_profile.contains("WORKER_COUNT=1") {
-            if self.ten_x_status != TenXStatus::Unknown || !triage_lower.contains("baseline") {
-                return Err(BenchmarkReportValidationError::MissingDeterministicOldBaseline);
-            }
+        if !self.old_baseline_profile.contains("WORKER_COUNT=1")
+            && (self.ten_x_status != TenXStatus::Unknown || !triage_lower.contains("baseline"))
+        {
+            return Err(BenchmarkReportValidationError::MissingDeterministicOldBaseline);
         }
 
         if self.ten_x_status == TenXStatus::Fail
@@ -210,7 +210,7 @@ impl BenchmarkReport {
         Ok(())
     }
 
-    fn any_missing_rss(&self) -> bool {
+    const fn any_missing_rss(&self) -> bool {
         self.parse_only.rss_mb.is_none()
             || self.aggregate_only.rss_mb.is_none()
             || self.end_to_end.rss_mb.is_none()
