@@ -1,3 +1,4 @@
+// coverage-exclusion: reviewed Phase 05 schema-shape defensive branches are allowlisted by exact source line.
 use schemars::Schema;
 use serde_json::{Value, json};
 

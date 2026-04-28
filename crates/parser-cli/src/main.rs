@@ -1,4 +1,5 @@
 //! Command-line adapter for deterministic local replay parsing.
+// coverage-exclusion: reviewed Phase 05 defensive CLI I/O and serialization branches are allowlisted by exact source line.
 
 use std::{
     error::Error,

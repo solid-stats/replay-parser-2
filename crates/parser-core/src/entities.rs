@@ -1,4 +1,5 @@
 //! Observed entity normalization from OCAP entity rows.
+// coverage-exclusion: reviewed Phase 05 defensive entity normalization branches are allowlisted by exact source line.
 
 use std::{
     cmp::Ordering,

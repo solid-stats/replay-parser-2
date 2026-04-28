@@ -1,3 +1,4 @@
+// coverage-exclusion: reviewed Phase 05 validation/deserialization defensive branches are allowlisted by exact source line.
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 

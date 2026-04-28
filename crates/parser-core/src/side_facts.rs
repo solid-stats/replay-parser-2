@@ -1,4 +1,5 @@
 //! Replay-side commander and outcome fact normalization.
+// coverage-exclusion: reviewed Phase 05 defensive side-fact branches are allowlisted by exact source line.
 
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},

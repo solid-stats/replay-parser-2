@@ -1,4 +1,5 @@
 //! Legacy player eligibility used by combat and aggregate compatibility projections.
+// coverage-exclusion: reviewed Phase 05 legacy player fallback branch is allowlisted by exact source line.
 
 use parser_contract::{
     identity::{EntityCompatibilityHintKind, EntityKind, ObservedEntity},

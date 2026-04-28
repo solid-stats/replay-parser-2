@@ -1,4 +1,5 @@
 //! Tolerant accessors for raw OCAP replay root fields.
+// coverage-exclusion: reviewed Phase 05 defensive raw accessor branches are allowlisted by exact source line.
 //!
 //! This module keeps source JSON field-name and shape quirks at the parser-core boundary so
 //! normalization code can consume explicit present, absent, or drifted observations.

@@ -2,13 +2,16 @@
 //!
 //! Exclusions are review exceptions for unreachable/generated/defensive code,
 //! not a substitute for behavior-level tests.
+// coverage-exclusion: reviewed Phase 05 coverage-check defensive branches are allowlisted by exact source line.
 
 use std::{
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// Inline marker required near code covered by an allowlist exclusion.
 pub const COVERAGE_EXCLUSION_MARKER: &str = "coverage-exclusion:";
@@ -61,6 +64,9 @@ pub struct CoverageExclusion {
     pub path: String,
     /// Specific branch/function/pattern excluded from the coverage gate.
     pub pattern: String,
+    /// Exact 1-based source lines covered by this exclusion.
+    #[serde(default)]
+    pub lines: Vec<u32>,
     /// Review rationale explaining why tests cannot reasonably cover this code.
     pub reason: String,
     /// Reviewer or approval reference.
@@ -75,7 +81,12 @@ impl CoverageExclusion {
         validate_non_empty(&self.pattern, "pattern", &self.path)?;
         validate_non_empty(&self.reason, "reason", &self.path)?;
         validate_non_empty(&self.reviewer, "reviewer", &self.path)?;
-        validate_non_empty(&self.expires, "expires", &self.path)
+        validate_non_empty(&self.expires, "expires", &self.path)?;
+        if self.lines.is_empty() {
+            return Err(CoverageAllowlistError::EmptyLines { path: self.path.clone() });
+        }
+
+        Ok(())
     }
 
     fn validate_blanket_scope(&self) -> Result<(), CoverageAllowlistError> {
@@ -101,6 +112,197 @@ impl CoverageExclusion {
 
         Ok(())
     }
+}
+
+/// A parsed coverage gate evaluation result.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CoverageGateReport {
+    /// Production files inspected from the llvm-cov JSON report.
+    pub production_files: usize,
+    /// Uncovered production source locations that are allowlisted.
+    pub allowlisted_locations: usize,
+    /// Uncovered production source locations that are not allowlisted.
+    pub uncovered_locations: Vec<CoverageGap>,
+}
+
+impl CoverageGateReport {
+    /// Returns `true` when no unallowlisted production coverage gaps remain.
+    #[must_use]
+    pub const fn is_passing(&self) -> bool {
+        self.uncovered_locations.is_empty()
+    }
+
+    /// Formats a stable human-readable report for script output.
+    #[must_use]
+    pub fn to_text(&self) -> String {
+        let mut lines = vec![
+            format!("production_files={}", self.production_files),
+            format!("allowlisted_locations={}", self.allowlisted_locations),
+            format!("uncovered_locations={}", self.uncovered_locations.len()),
+        ];
+
+        if !self.uncovered_locations.is_empty() {
+            lines.push("uncovered:".to_string());
+            for gap in &self.uncovered_locations {
+                lines.push(format!("{}:{} {}", gap.path, gap.line, gap.kind));
+            }
+        }
+
+        lines.push(String::new());
+        lines.join("\n")
+    }
+}
+
+/// One uncovered production source location after allowlist filtering.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CoverageGap {
+    /// Repository-relative path.
+    pub path: String,
+    /// 1-based source line.
+    pub line: u32,
+    /// Gap kind emitted by the post-processor.
+    pub kind: CoverageGapKind,
+}
+
+/// Coverage gap type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum CoverageGapKind {
+    /// An uncovered source execution region.
+    Region,
+    /// An uncovered function start.
+    Function,
+}
+
+impl std::fmt::Display for CoverageGapKind {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Region => formatter.write_str("region"),
+            Self::Function => formatter.write_str("function"),
+        }
+    }
+}
+
+/// Evaluates `cargo llvm-cov --json` output against a narrow source-line allowlist.
+///
+/// # Errors
+///
+/// Returns [`CoverageAllowlistError::InvalidCoverageJson`] when the report is
+/// not valid llvm-cov JSON or contains an unsupported shape.
+pub fn evaluate_coverage_json(
+    coverage_json: &str,
+    allowlist: &CoverageAllowlist,
+    project_root: impl AsRef<Path>,
+) -> Result<CoverageGateReport, CoverageAllowlistError> {
+    allowlist.validate_against_root(&project_root)?;
+
+    let project_root = fs::canonicalize(project_root.as_ref())
+        .unwrap_or_else(|_| project_root.as_ref().to_path_buf());
+    let allowed_lines = allowlisted_lines(allowlist);
+    let coverage: Value = serde_json::from_str(coverage_json)
+        .map_err(|source| CoverageAllowlistError::InvalidCoverageJson { source })?;
+    let data = coverage
+        .get("data")
+        .and_then(Value::as_array)
+        .and_then(|items| items.first())
+        .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "missing data[0]" })?;
+
+    let mut report = CoverageGateReport::default();
+    let mut gaps = BTreeSet::<CoverageGap>::new();
+
+    for file in data
+        .get("files")
+        .and_then(Value::as_array)
+        .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "missing files" })?
+    {
+        let Some(path) = file.get("filename").and_then(Value::as_str) else {
+            continue;
+        };
+        let Some(relative_path) = production_relative_path(&project_root, path) else {
+            continue;
+        };
+
+        report.production_files += 1;
+        let segments = file.get("segments").and_then(Value::as_array).ok_or(
+            CoverageAllowlistError::CoverageJsonShape { message: "missing file segments" },
+        )?;
+        for segment in segments {
+            let Some(line) = uncovered_segment_line(segment)? else {
+                continue;
+            };
+            insert_or_allow_gap(
+                &mut report,
+                &mut gaps,
+                &allowed_lines,
+                &relative_path,
+                line,
+                CoverageGapKind::Region,
+            );
+        }
+    }
+
+    report.uncovered_locations = gaps.into_iter().collect();
+    Ok(report)
+}
+
+fn allowlisted_lines(allowlist: &CoverageAllowlist) -> BTreeMap<String, BTreeSet<u32>> {
+    let mut allowed = BTreeMap::<String, BTreeSet<u32>>::new();
+    for exclusion in &allowlist.exclusions {
+        let path = normalize_path(&exclusion.path);
+        allowed.entry(path).or_default().extend(exclusion.lines.iter().copied());
+    }
+    allowed
+}
+
+fn insert_or_allow_gap(
+    report: &mut CoverageGateReport,
+    gaps: &mut BTreeSet<CoverageGap>,
+    allowed_lines: &BTreeMap<String, BTreeSet<u32>>,
+    relative_path: &str,
+    line: u32,
+    kind: CoverageGapKind,
+) {
+    if allowed_lines.get(relative_path).is_some_and(|lines| lines.contains(&line)) {
+        report.allowlisted_locations += 1;
+    } else {
+        let _inserted = gaps.insert(CoverageGap { path: relative_path.to_string(), line, kind });
+    }
+}
+
+fn uncovered_segment_line(segment: &Value) -> Result<Option<u32>, CoverageAllowlistError> {
+    let values = segment
+        .as_array()
+        .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "segment is not an array" })?;
+    let Some(has_count) = values.get(3).and_then(Value::as_bool) else {
+        return Ok(None);
+    };
+    let count = values.get(2).and_then(Value::as_u64).unwrap_or(0);
+    if !has_count || count != 0 {
+        return Ok(None);
+    }
+
+    values
+        .first()
+        .and_then(Value::as_u64)
+        .and_then(|line| u32::try_from(line).ok())
+        .map(Some)
+        .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "segment line is not a u32" })
+}
+
+fn production_relative_path(project_root: &Path, path: &str) -> Option<String> {
+    let path = Path::new(path);
+    let relative = path.strip_prefix(project_root).ok().unwrap_or(path);
+    let normalized = normalize_path(&relative.to_string_lossy());
+
+    (normalized.starts_with("crates/")
+        && normalized.contains("/src/")
+        && !normalized.contains("/src/bin/")
+        && !normalized.contains("/tests/")
+        && !normalized.contains("/examples/"))
+    .then_some(normalized)
+}
+
+fn normalize_path(path: &str) -> String {
+    path.replace('\\', "/").trim_start_matches("./").to_string()
 }
 
 fn validate_non_empty(
@@ -147,6 +349,12 @@ pub enum CoverageAllowlistError {
         /// Exclusion path.
         path: String,
     },
+    /// A concrete exclusion did not list any exact source lines.
+    #[error("coverage exclusion `{path}` has no exact lines")]
+    EmptyLines {
+        /// Exclusion path.
+        path: String,
+    },
     /// The referenced production file could not be read.
     #[error("coverage exclusion target `{path}` cannot be read: {source}")]
     TargetRead {
@@ -164,5 +372,17 @@ pub enum CoverageAllowlistError {
         path: String,
         /// Exclusion pattern.
         pattern: String,
+    },
+    /// The generated coverage JSON could not be parsed.
+    #[error("coverage JSON is invalid: {source}")]
+    InvalidCoverageJson {
+        /// JSON parser source error.
+        source: serde_json::Error,
+    },
+    /// The generated coverage JSON did not match the expected llvm-cov shape.
+    #[error("coverage JSON has unsupported shape: {message}")]
+    CoverageJsonShape {
+        /// Static shape failure description.
+        message: &'static str,
     },
 }

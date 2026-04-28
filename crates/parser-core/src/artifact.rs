@@ -1,4 +1,5 @@
 //! Parse artifact construction.
+// coverage-exclusion: reviewed Phase 05 defensive artifact construction branches are allowlisted by exact source line.
 
 use std::collections::BTreeMap;
 

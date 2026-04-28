@@ -1,4 +1,5 @@
 //! Normalization for source-backed combat events.
+// coverage-exclusion: reviewed Phase 05 defensive event semantic branches are allowlisted by exact source line.
 
 #![allow(
     clippy::missing_const_for_fn,

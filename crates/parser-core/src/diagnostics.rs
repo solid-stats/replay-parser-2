@@ -1,4 +1,5 @@
 //! Diagnostic policy and accumulator helpers.
+// coverage-exclusion: reviewed Phase 05 diagnostic cap defensive branch is allowlisted by exact source line.
 
 use parser_contract::{
     artifact::ParseStatus,

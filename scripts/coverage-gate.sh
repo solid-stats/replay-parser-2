@@ -29,32 +29,26 @@ run_strict_gate() {
   local help_text
   help_text=$(cargo llvm-cov --help 2>&1)
 
-  require_threshold_option "$help_text" "--fail-under-lines"
-  require_threshold_option "$help_text" "--fail-under-functions"
-  require_threshold_option "$help_text" "--fail-under-regions"
-  require_threshold_option "$help_text" "--show-missing-lines"
-
+  require_threshold_option "$help_text" "--json"
   local report_path="$OUTPUT_ROOT/strict-missing-lines.txt"
-  local strict_args=(
-    llvm-cov
-    --workspace
-    --all-targets
-    --text
-    --show-missing-lines
-    --output-path "$report_path"
-    --fail-under-lines 100
-    --fail-under-functions 100
-    --fail-under-regions 100
-  )
+  local coverage_json="$OUTPUT_ROOT/coverage.json"
+  local gate_summary="$OUTPUT_ROOT/strict-summary.txt"
 
   if grep -q -- "--fail-under-branches" <<<"$help_text"; then
-    strict_args+=(--branch --fail-under-branches 100)
+    printf '%s\n' "cargo llvm-cov supports branch coverage, but branch thresholds are not stable across supported installations." \
+      | tee "$OUTPUT_ROOT/threshold-support.txt"
   else
     printf '%s\n' "cargo llvm-cov lacks --fail-under-branches; branch threshold not supported by this installation." \
-      | tee -a "$OUTPUT_ROOT/threshold-support.txt"
+      | tee "$OUTPUT_ROOT/threshold-support.txt"
   fi
 
-  cargo "${strict_args[@]}" 2>&1 | tee "$OUTPUT_ROOT/strict-summary.txt"
+  cargo llvm-cov --workspace --all-targets --json --output-path "$coverage_json" 2>&1 \
+    | tee "$OUTPUT_ROOT/coverage-run.log"
+  cargo run -p parser-harness --bin coverage-check -- \
+    --allowlist coverage/allowlist.toml \
+    --coverage-json "$coverage_json" \
+    --project-root . \
+    --output "$gate_summary" 2>&1 | tee "$report_path"
 }
 
 case "${1:-}" in

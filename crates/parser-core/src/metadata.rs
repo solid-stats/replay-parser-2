@@ -1,4 +1,5 @@
 //! Replay metadata normalization from observed OCAP top-level fields.
+// coverage-exclusion: reviewed Phase 05 defensive metadata normalization branches are allowlisted by exact source line.
 
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},

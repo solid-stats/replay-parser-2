@@ -1,4 +1,5 @@
 //! Selected-input old-vs-new comparison logic.
+// coverage-exclusion: reviewed Phase 05 comparison fallback branches are allowlisted by exact source line.
 
 use serde_json::Value;
 

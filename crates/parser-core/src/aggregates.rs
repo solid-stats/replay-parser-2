@@ -1,4 +1,5 @@
 //! Aggregate contribution derivation from normalized combat events.
+// coverage-exclusion: reviewed Phase 05 defensive aggregate projection branches are allowlisted by exact source line.
 
 #![allow(
     clippy::missing_const_for_fn,

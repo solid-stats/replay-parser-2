@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use parser_harness::coverage::{CoverageAllowlist, CoverageAllowlistError};
+use parser_harness::coverage::{CoverageAllowlist, CoverageAllowlistError, evaluate_coverage_json};
 
 #[test]
 fn coverage_gate_empty_allowlist_should_validate_without_exclusions() {
@@ -34,6 +34,7 @@ fn coverage_gate_allowlist_should_reject_exclusion_with_empty_reason() {
 [[exclusions]]
 path = "crates/example/src/generated.rs"
 pattern = "fallback"
+lines = [7]
 reason = " "
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -68,6 +69,7 @@ fn coverage_gate_allowlist_should_reject_blanket_non_generated_exclusion() {
 [[exclusions]]
 path = "crates/example/src/module.rs"
 pattern = "*"
+lines = [7]
 reason = "defensive fallback"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -93,6 +95,7 @@ fn coverage_gate_allowlist_should_reject_missing_target_file() {
 [[exclusions]]
 path = "crates/example/src/missing.rs"
 pattern = "defensive_fallback"
+lines = [7]
 reason = "defensive unreachable branch kept for parser diagnostics"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -118,6 +121,7 @@ fn coverage_gate_allowlist_should_require_inline_marker_for_concrete_exclusion()
 [[exclusions]]
 path = "crates/example/src/module.rs"
 pattern = "defensive_fallback"
+lines = [7]
 reason = "defensive unreachable branch kept for parser diagnostics"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -144,6 +148,7 @@ fn coverage_gate_allowlist_should_accept_concrete_exclusion_with_inline_marker()
 [[exclusions]]
 path = "crates/example/src/module.rs"
 pattern = "defensive_fallback"
+lines = [7]
 reason = "defensive unreachable branch kept for parser diagnostics"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -179,6 +184,7 @@ fn coverage_gate_allowlist_should_accept_absolute_target_path_with_inline_marker
 [[exclusions]]
 path = "{}"
 pattern = "*"
+lines = [1]
 reason = "generated code wrapper"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -192,6 +198,61 @@ expires = "2026-05-28"
 
     // Assert
     assert!(result.is_ok());
+}
+
+#[test]
+fn coverage_gate_report_should_fail_when_uncovered_production_line_is_not_allowlisted() {
+    // Arrange
+    let root = temp_project_root("report_missing_allowlist").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        "// coverage-exclusion: defensive fallback is unreachable\npub fn fallback() {}\n",
+    );
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_file(&root, "crates/example/src/lib.rs", 2, 0);
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(!report.is_passing());
+    assert_eq!(report.uncovered_locations.len(), 1);
+    assert_eq!(report.uncovered_locations[0].line, 2);
+}
+
+#[test]
+fn coverage_gate_report_should_pass_when_uncovered_production_line_is_allowlisted() {
+    // Arrange
+    let root = temp_project_root("report_allowlisted").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        "// coverage-exclusion: defensive fallback is unreachable\npub fn fallback() {}\n",
+    );
+    let allowlist = CoverageAllowlist::from_toml_str(
+        r#"
+[[exclusions]]
+path = "crates/example/src/lib.rs"
+pattern = "fallback"
+lines = [2]
+reason = "defensive unreachable branch kept for parser diagnostics"
+reviewer = "phase-05"
+expires = "2026-05-28"
+"#,
+    )
+    .expect("allowlist should parse");
+    let coverage_json = coverage_json_for_file(&root, "crates/example/src/lib.rs", 2, 0);
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(report.is_passing());
+    assert_eq!(report.allowlisted_locations, 1);
 }
 
 fn temp_project_root(test_name: &str) -> std::io::Result<PathBuf> {
@@ -213,4 +274,36 @@ fn write_project_file(root: &Path, relative_path: &str, contents: &str) {
     let parent = path.parent().expect("test file should have a parent directory");
     fs::create_dir_all(parent).expect("test file parent directory should be created");
     fs::write(path, contents).expect("test file should be written");
+}
+
+fn coverage_json_for_file(root: &Path, relative_path: &str, line: u32, count: u32) -> String {
+    let filename = root.join(relative_path);
+    format!(
+        r#"{{
+  "data": [
+    {{
+      "files": [
+        {{
+          "filename": "{}",
+          "segments": [[{}, 1, {}, true, true]]
+        }}
+      ],
+      "functions": [
+        {{
+          "count": {},
+          "filenames": ["{}"],
+          "regions": [[{}, 1, {}, 10, 0, 0, 0, 0]]
+        }}
+      ]
+    }}
+  ]
+}}"#,
+        filename.display(),
+        line,
+        count,
+        count,
+        filename.display(),
+        line,
+        line
+    )
 }
