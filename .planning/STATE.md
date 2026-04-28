@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 05 planning complete
-last_updated: "2026-04-28T04:43:53.607Z"
-last_activity: 2026-04-28 -- Phase 05 planning complete
+stopped_at: Completed 05-00-PLAN.md
+last_updated: "2026-04-28T05:19:03.125Z"
+last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 24
-  percent: 80
+  completed_plans: 25
+  percent: 83
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 5 — cli-golden-parity-benchmarks-and-coverage-gates
+**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates
 
 ## Current Position
 
-Phase: 5 (cli-golden-parity-benchmarks-and-coverage-gates)
-Plan: not started
+Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 05 planning complete
+Last activity: 2026-04-28
 
-Progress: [████████░░] 80% of currently planned work
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Progress: [████████░░] 80% of currently planned work
 | Phase 04 P04 | 8m27s | 3 tasks | 5 files |
 | Phase 04 P05 | 8m30s | 4 tasks | 6 files |
 | Phase 04 P06 | 40m | 4 tasks | 14 files |
+| Phase 05 P00 | 22m | 4 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - Phase 4 Plan 05 emits typed replay-side outcome facts and commander candidates with conservative known/unknown semantics, confidence, rule IDs, and source refs without canonical commander truth.
 - Phase 4 review fixes add legacy player eligibility across combat and aggregate projections, zero-counter rows for eligible players, raw vehicle-class category mapping, friendly vehicle/static teamkill penalties, vehicle-score entity source refs, typed aggregate payload schema conditionals, conflicting outcome diagnostics, tokenized commander matching, and malformed killed-event diagnostics.
 - Phase 4 verification passed with UAT, security, validation, schema freshness, full Cargo quality gate, and boundary grep evidence. Phase 5 can plan CLI, golden parity, benchmarks, and coverage gates on top of verified parser-core artifacts.
+- [Phase 05]: Plan 00 locks replay-parser-2 as the public local binary with parse, schema, and reserved compare subcommands. — Matches Phase 5 CLI command contract and keeps old sg-replay-parser name as legacy baseline context only.
+- [Phase 05]: Plan 00 CLI parse computes local SHA-256 and writes parser-core ParseArtifact JSON for success and parser failures. — Keeps filesystem/stderr concerns in the CLI adapter and leaves parser-core pure.
+- [Phase 05]: Plan 00 schema command exports parser_contract::schema::parse_artifact_schema as the source of truth. — CLI schema output is byte-checked against the committed parse-artifact schema.
 
 ### Pending Todos
 
@@ -143,9 +147,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T04:20:25.969Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-CONTEXT.md
+Last session: 2026-04-28T05:19:03.121Z
+Stopped at: Completed 05-00-PLAN.md
+Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26

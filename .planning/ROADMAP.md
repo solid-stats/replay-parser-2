@@ -131,7 +131,7 @@ Cross-cutting constraints:
 - Coverage and mutation/fault gates must prove behavior through public APIs with reviewable allowlists only for generated, impossible, or defensive unreachable code.
 - Benchmark reports must include workload identity, parity status, deterministic old baseline profile, throughput/memory evidence, and 10x pass/fail/unknown status before any performance claim.
 Plans:
-- [ ] 05-00-PLAN.md — Public CLI binary, parse/schema commands, structured failure artifacts, and CLI tests.
+- [x] 05-00-PLAN.md — Public CLI binary, parse/schema commands, structured failure artifacts, and CLI tests.
 - [ ] 05-01-PLAN.md — Compact golden fixture manifest, curated fixtures, and behavior regression tests.
 - [ ] 05-02-PLAN.md — Selected-input comparison harness and `replay-parser-2 compare` reports.
 - [ ] 05-03-PLAN.md — `cargo llvm-cov` coverage gate, allowlist validation, and behavior-test strengthening.

@@ -76,21 +76,21 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### CLI and Validation
 
-- [ ] **CLI-01**: CLI can parse a local OCAP JSON file and write normalized result JSON to a requested output path.
-- [ ] **CLI-02**: CLI can emit contract schema information for the current parser contract version.
+- [x] **CLI-01**: CLI can parse a local OCAP JSON file and write normalized result JSON to a requested output path.
+- [x] **CLI-02**: CLI can emit contract schema information for the current parser contract version.
 - [ ] **CLI-03**: CLI can run old-vs-new comparison on selected replay files or saved old output artifacts.
-- [ ] **CLI-04**: CLI exits with structured error output and non-zero status on malformed, unreadable, or unsupported replay files.
+- [x] **CLI-04**: CLI exits with structured error output and non-zero status on malformed, unreadable, or unsupported replay files.
 - [ ] **TEST-01**: Golden fixtures are derived from `~/sg_stats` and include representative normal, malformed, partial, old-format, winner-present, winner-missing, vehicle-kill, teamkill, and commander-side cases where available.
 - [ ] **TEST-02**: Existing result comparisons cover comparable old fields and report per-field mismatch categories.
-- [ ] **TEST-03**: Determinism tests prove repeated parser runs on the same input produce stable JSON output.
+- [x] **TEST-03**: Determinism tests prove repeated parser runs on the same input produce stable JSON output.
 - [ ] **TEST-04**: Benchmark harness reports parse-only, aggregate-only, and end-to-end throughput against the pinned old parser baseline.
 - [ ] **TEST-05**: Benchmark reporting includes files/sec, MB/sec or events/sec, memory/RSS where practical, and whether output parity passed for the measured sample.
 - [ ] **TEST-06**: Benchmark target is approximately 10x faster than the current parser on an equivalent workload.
 - [ ] **TEST-07**: CI enforces 100% statement, branch, function, and line coverage for all reachable production Rust code in parser core, contract, CLI, worker, harness, and aggregate modules; exclusions are allowed only for impossible-to-execute platform glue, generated code, or defensive unreachable branches with an inline rationale and reviewable allowlist entry.
-- [ ] **TEST-08**: Every parser behavior requirement has at least one behavior-level test with a strong oracle, including success, boundary, error, malformed input, unknown/null state, deterministic ordering, parity, and source-reference scenarios where applicable.
-- [ ] **TEST-09**: Unit tests follow the `unit-tests-philosophy` RITE standard: readable names, explicit Arrange/Act/Assert structure, isolated fixtures/state, deterministic time/randomness/environment, and assertions against observable behavior rather than private implementation details.
-- [ ] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
-- [ ] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
+- [x] **TEST-08**: Every parser behavior requirement has at least one behavior-level test with a strong oracle, including success, boundary, error, malformed input, unknown/null state, deterministic ordering, parity, and source-reference scenarios where applicable.
+- [x] **TEST-09**: Unit tests follow the `unit-tests-philosophy` RITE standard: readable names, explicit Arrange/Act/Assert structure, isolated fixtures/state, deterministic time/randomness/environment, and assertions against observable behavior rather than private implementation details.
+- [x] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
+- [x] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
 - [ ] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
 
 ### Worker Integration
@@ -188,21 +188,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGG-09 | Phase 4 | Complete |
 | AGG-10 | Phase 4 | Complete |
 | AGG-11 | Phase 4 | Complete |
-| CLI-01 | Phase 5 | Pending |
-| CLI-02 | Phase 5 | Pending |
+| CLI-01 | Phase 5 | Complete |
+| CLI-02 | Phase 5 | Complete |
 | CLI-03 | Phase 5 | Pending |
-| CLI-04 | Phase 5 | Pending |
+| CLI-04 | Phase 5 | Complete |
 | TEST-01 | Phase 5 | Pending |
 | TEST-02 | Phase 5 | Pending |
-| TEST-03 | Phase 5 | Pending |
+| TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Pending |
 | TEST-05 | Phase 5 | Pending |
 | TEST-06 | Phase 5 | Pending |
 | TEST-07 | Phase 5 | Pending |
-| TEST-08 | Phase 5 | Pending |
-| TEST-09 | Phase 5 | Pending |
-| TEST-10 | Phase 5 | Pending |
-| TEST-11 | Phase 5 | Pending |
+| TEST-08 | Phase 5 | Complete |
+| TEST-09 | Phase 5 | Complete |
+| TEST-10 | Phase 5 | Complete |
+| TEST-11 | Phase 5 | Complete |
 | TEST-12 | Phase 5 | Pending |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
