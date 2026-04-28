@@ -1,6 +1,7 @@
 [
   {
     "fixture": "tests/fixtures/valid-minimal.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "normal",
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
@@ -23,6 +24,7 @@
   },
   {
     "fixture": "tests/fixtures/invalid-json.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "malformed",
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
@@ -41,6 +43,7 @@
   },
   {
     "fixture": "tests/fixtures/metadata-drift.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "partial_schema_drift",
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md",
@@ -59,6 +62,7 @@
   },
   {
     "fixture": "tests/fixtures/killed-events.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "old_shape",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-01-SUMMARY.md",
@@ -77,6 +81,7 @@
   },
   {
     "fixture": "tests/fixtures/side-facts.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "winner_present",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
@@ -95,6 +100,7 @@
   },
   {
     "fixture": "tests/fixtures/valid-minimal.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "winner_missing",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
@@ -113,6 +119,7 @@
   },
   {
     "fixture": "tests/fixtures/vehicle-score.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "vehicle_kill",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-04-SUMMARY.md",
@@ -131,6 +138,7 @@
   },
   {
     "fixture": "tests/fixtures/aggregate-combat.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "teamkill",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-03-SUMMARY.md",
@@ -149,6 +157,7 @@
   },
   {
     "fixture": "tests/fixtures/side-facts.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "commander_side",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
@@ -167,6 +176,7 @@
   },
   {
     "fixture": "tests/fixtures/combat-events.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "null_killer",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-02-SUMMARY.md",
@@ -185,6 +195,7 @@
   },
   {
     "fixture": "tests/fixtures/duplicate-slot-same-name.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "duplicate_slot_same_name",
     "source": {
       "artifact": ".planning/phases/03-deterministic-parser-core/03-05-SUMMARY.md",
@@ -203,6 +214,7 @@
   },
   {
     "fixture": "tests/fixtures/connected-backfill.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
     "category": "connected_player_backfill",
     "source": {
       "artifact": ".planning/phases/03-deterministic-parser-core/03-05-SUMMARY.md",
