@@ -1,0 +1,15 @@
+# Coverage exclusions are intentionally empty.
+#
+# Canonical coverage is enforced by scripts/coverage-gate.sh. Any future
+# exclusion must be narrow, reviewed, and paired with an inline production-code
+# comment containing "coverage-exclusion:" near the excluded branch.
+#
+# Template:
+# [[exclusions]]
+# path = "crates/example/src/file.rs"
+# pattern = "specific branch or function name"
+# reason = "why this reachable-looking code is generated, impossible, or defensive"
+# reviewer = "reviewer handle or approval reference"
+# expires = "YYYY-MM-DD"
+
+exclusions = []
