@@ -1,0 +1,222 @@
+[
+  {
+    "fixture": "tests/fixtures/valid-minimal.ocap.json",
+    "category": "normal",
+    "source": {
+      "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
+      "source_file": "2026_04_25__00_52_18__1_ocap.json",
+      "notes": "Compact focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads."
+    },
+    "requirements": ["TEST-01", "TEST-03", "TEST-08", "TEST-09", "TEST-10"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": [
+      "metadata_present",
+      "deterministic_serialization",
+      "winner_unknown_when_absent"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields.",
+      "server_2": "Provides a compact success artifact shape server-2 can later persist or compare through its own tables.",
+      "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/invalid-json.ocap.json",
+    "category": "malformed",
+    "source": {
+      "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
+      "source_file": ".json",
+      "notes": "Phase 1 malformed corpus evidence represented by a tiny invalid JSON fixture."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "failed",
+    "expected_features": ["structured_failure", "json_decode_failure"],
+    "cross_app_impact": {
+      "parser_artifact": "Malformed bytes produce a structured failed ParseArtifact instead of ordinary stats.",
+      "server_2": "Supports parse.failed handling without implying replay discovery or persistence ownership here.",
+      "web": "No public stats should be rendered from malformed input."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/metadata-drift.ocap.json",
+    "category": "partial_schema_drift",
+    "source": {
+      "artifact": ".planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md",
+      "source_file": "schema-shape-profile",
+      "notes": "Compact fixture for known OCAP top-level field drift summarized by Phase 1 shape profiling."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "partial",
+    "expected_features": ["schema_drift_diagnostic", "no_panic", "unknown_field_presence"],
+    "cross_app_impact": {
+      "parser_artifact": "Recoverable schema drift stays visible through diagnostics and explicit unknowns.",
+      "server_2": "Lets downstream persistence distinguish partial artifacts from hard parser failures.",
+      "web": "No direct UI behavior; public display can later hide or label incomplete fields through server-2."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/killed-events.ocap.json",
+    "category": "old_shape",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-01-SUMMARY.md",
+      "source_file": "tests/fixtures/killed-events.ocap.json",
+      "notes": "Phase 4 raw killed-event tuple fixture preserves legacy array event shapes without copying real replay files."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "partial",
+    "expected_features": ["legacy_killed_tuple_shapes", "null_killer", "malformed_tuple_diagnostic"],
+    "cross_app_impact": {
+      "parser_artifact": "Keeps old OCAP tuple compatibility evidence auditable through source refs.",
+      "server_2": "Comparison harness can classify old-shape tuple behavior without changing server data ownership.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/side-facts.ocap.json",
+    "category": "winner_present",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
+      "source_file": "tests/fixtures/side-facts.ocap.json",
+      "notes": "Focused Phase 4 fixture with explicit winner and commander candidate evidence."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["known_winner_side", "commander_candidate"],
+    "cross_app_impact": {
+      "parser_artifact": "Proves known winner and commander candidate facts are source-backed parser evidence.",
+      "server_2": "Supports later server-owned commander and outcome persistence decisions.",
+      "web": "UI-visible commander/outcome display remains downstream of server-2 APIs."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/valid-minimal.ocap.json",
+    "category": "winner_missing",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
+      "source_file": "tests/fixtures/valid-minimal.ocap.json",
+      "notes": "Normal compact fixture intentionally omits winner data to prove missing outcome remains explicit unknown."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["unknown_winner_side", "missing_winner_not_partial"],
+    "cross_app_impact": {
+      "parser_artifact": "Missing winner is represented as explicit unknown, not false negative evidence.",
+      "server_2": "Downstream correction or inference remains server-owned.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/vehicle-score.ocap.json",
+    "category": "vehicle_kill",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-04-SUMMARY.md",
+      "source_file": "tests/fixtures/vehicle-score.ocap.json",
+      "notes": "Focused Phase 4 vehicle score fixture covering issue #13 award and penalty inputs."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["vehicle_score.inputs", "vehicle_score.denominator_inputs"],
+    "cross_app_impact": {
+      "parser_artifact": "Provides auditable issue #13 vehicle score input rows and source refs.",
+      "server_2": "Final cross-replay vehicle score remains server or harness responsibility.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/aggregate-combat.ocap.json",
+    "category": "teamkill",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-03-SUMMARY.md",
+      "source_file": "tests/fixtures/aggregate-combat.ocap.json",
+      "notes": "Focused aggregate fixture where same-side combat stays auditable but excluded from bounty inputs."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["teamkill_semantic", "no_teamkill_bounty_input"],
+    "cross_app_impact": {
+      "parser_artifact": "Teamkills remain source-backed combat events and aggregate evidence.",
+      "server_2": "Bounty award calculation can consume only eligible parser inputs.",
+      "web": "Public bounty display remains downstream of server-2."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/side-facts.ocap.json",
+    "category": "commander_side",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-05-SUMMARY.md",
+      "source_file": "tests/fixtures/side-facts.ocap.json",
+      "notes": "Focused Phase 4 commander-side candidate fixture with source refs and confidence."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["commander_candidate", "no_canonical_identity"],
+    "cross_app_impact": {
+      "parser_artifact": "Commander-side evidence is candidate-level observed identity only.",
+      "server_2": "Canonical commander truth and moderation remain server-owned.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/combat-events.ocap.json",
+    "category": "null_killer",
+    "source": {
+      "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-02-SUMMARY.md",
+      "source_file": "tests/fixtures/combat-events.ocap.json",
+      "notes": "Focused Phase 4 combat fixture covering explicit null-killer deaths."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "partial",
+    "expected_features": ["null_killer_semantic", "bounty_excluded_null_killer"],
+    "cross_app_impact": {
+      "parser_artifact": "Null-killer deaths stay explicit and auditable instead of becoming enemy kills.",
+      "server_2": "Bounty and relationship calculation can exclude null-killer evidence.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/duplicate-slot-same-name.ocap.json",
+    "category": "duplicate_slot_same_name",
+    "source": {
+      "artifact": ".planning/phases/03-deterministic-parser-core/03-05-SUMMARY.md",
+      "source_file": "tests/fixtures/duplicate-slot-same-name.ocap.json",
+      "notes": "Focused Phase 3 compatibility fixture preserving duplicate same-name slot hints without entity merging."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["duplicate_slot_same_name_hint", "entities_not_merged"],
+    "cross_app_impact": {
+      "parser_artifact": "Observed entities remain separate while legacy compatibility hints are explicit.",
+      "server_2": "Canonical identity and merge decisions remain server-owned.",
+      "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/connected-backfill.ocap.json",
+    "category": "connected_player_backfill",
+    "source": {
+      "artifact": ".planning/phases/03-deterministic-parser-core/03-05-SUMMARY.md",
+      "source_file": "tests/fixtures/connected-backfill.ocap.json",
+      "notes": "Focused Phase 3 compatibility fixture for legacy connected-player name backfill."
+    },
+    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": ["connected_player_backfill_hint", "inferred_observed_name"],
+    "cross_app_impact": {
+      "parser_artifact": "Backfilled observed names are marked inferred with compatibility provenance.",
+      "server_2": "Canonical matching remains server-owned despite compatibility hints.",
+      "web": "No direct UI behavior."
+    }
+  }
+]
