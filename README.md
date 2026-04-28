@@ -6,20 +6,22 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 5 Plan 00 has added the public local CLI binary at `crates/parser-cli`. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 Plan 03 has added strict reachable-production coverage gating. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact` and export the current parser contract schema. The `compare` command slot is present in help but intentionally returns `compare command is planned in Phase 5 Plan 02` until the comparison harness is implemented. RabbitMQ/S3 worker mode, golden parity harness, full corpus comparison behavior, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. RabbitMQ/S3 worker mode, full-corpus comparison automation, mutation/fault reporting, benchmark suite, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (Plan 00 complete).
+- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (Plan 03 complete; next Plan 04).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
 - Parser-core crate: `crates/parser-core`.
 - CLI crate: `crates/parser-cli`.
+- Harness crate: `crates/parser-harness`.
 - Contract schema: `schemas/parse-artifact-v1.schema.json`.
 - Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
+- Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
 
 The implemented developer validation commands are:
 
@@ -28,6 +30,7 @@ cargo test -p parser-contract
 cargo test -p parser-core
 cargo check -p parser-cli --all-targets
 cargo test -p parser-cli
+cargo test -p parser-harness
 cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v1.schema.json
 ```
 
@@ -38,6 +41,8 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo doc --workspace --no-deps
+scripts/coverage-gate.sh --check
+scripts/coverage-gate.sh
 ```
 
 Short cargo aliases are also available:
@@ -50,7 +55,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode, comparison implementation, full corpus parity, coverage enforcement, and benchmark commands are still planned for later phases.
+Worker mode, full-corpus parity automation, mutation/fault reporting, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -151,19 +156,27 @@ replay-parser-2 parse path/to/replay.json --output path/to/artifact.json
 
 # Emit the current parser contract schema
 replay-parser-2 schema --output path/to/schema.json
+
+# Compare new parser output against legacy or golden data
+replay-parser-2 compare --replay path/to/replay.json --old-artifact path/to/old.json --output path/to/report.json
+replay-parser-2 compare --new-artifact path/to/new.json --old-artifact path/to/old.json --output path/to/report.json
+```
+
+Coverage gate:
+
+```bash
+scripts/coverage-gate.sh --check
+scripts/coverage-gate.sh
 ```
 
 Reserved command slots for later phases:
 
 ```bash
-# Compare new parser output against legacy or golden data
-replay-parser-2 compare --replay path/to/replay.json --new-artifact path/to/new.json --old-artifact path/to/old.json --output path/to/report.json
-
 # Run worker mode for server integration
 replay-parser-2 worker
 ```
 
-`compare` is reserved for Phase 5 Plan 02. Worker mode is Phase 6 scope and is not exposed by the current CLI.
+Worker mode is Phase 6 scope and is not exposed by the current CLI.
 
 ## Development Workflow
 
@@ -199,4 +212,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-28 after adding Phase 5 Plan 00 local CLI parse/schema commands.
+Last updated: 2026-04-28 after completing Phase 5 Plan 03 coverage gate enforcement.

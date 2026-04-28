@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: blocked
-stopped_at: Blocked during 05-03-PLAN.md coverage gate verification
-last_updated: "2026-04-28T08:10:00.000Z"
+status: executing
+stopped_at: Completed 05-03-PLAN.md; ready for 05-04-PLAN.md mutation/fault-injection gate
+last_updated: "2026-04-28T08:15:21.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 27
-  percent: 90
+  completed_plans: 28
+  percent: 93
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 ## Current Position
 
 Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
-Plan: 4 of 6
-Status: Blocked on 05-03 coverage gate verification
+Plan: 5 of 6
+Status: Ready to execute 05-04 mutation/fault-injection gate
 Last activity: 2026-04-28
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 26
+- Total plans completed: 28
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -48,7 +48,7 @@ Progress: [█████████░] 90%
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
-| 05 | 2/6 | 35m | 17m30s |
+| 05 | 4/6 | 173m | 43m15s |
 
 **Recent Trend:**
 
@@ -79,6 +79,7 @@ Progress: [█████████░] 90%
 | Phase 05 P00 | 22m | 4 tasks | 7 files |
 | Phase 05 P01 | 13min | 3 tasks | 5 files |
 | Phase 05 P02 | 65min | 4 tasks | 11 files |
+| Phase 05 P03 | 73min | 3 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 01 golden behavior tests assert public parser-core artifacts through parse_replay. — Keeps tests behavior-oriented and avoids production-only exports.
 - [Phase 05]: Plan 02 comparison reports use Phase 1 mismatch categories plus parser/server/web impact dimensions. — Keeps selected-input parity review explicit without moving adjacent app behavior into parser-core.
 - [Phase 05]: Plan 02 compare command supports saved artifacts and selected replay parsing only. — Full-corpus parity remains generated harness/CI output under .planning/generated/phase-05/.
+- [Phase 05]: Plan 03 uses `cargo llvm-cov --json` plus a parser-harness postprocessor for strict reachable production coverage. — Stable Rust cannot subtract narrow source-line exclusions natively, so the committed gate fails on any unallowlisted production uncovered region and records generated evidence under `.planning/generated/phase-05/coverage/`.
+- [Phase 05]: Plan 03 coverage exclusions are exact source lines with committed allowlist metadata and production-file `coverage-exclusion:` markers. — Blanket non-generated exclusions remain rejected, and behavior tests stay public-API oriented.
 
 ### Pending Todos
 
@@ -125,11 +128,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- 2026-04-28: Phase 05 Plan 03 coverage gate is blocked. Native `cargo llvm-cov`
-  can enforce 100% line/function/region thresholds, but stable Rust cannot apply
-  the planned narrow line-level allowlist to production code without a custom
-  post-processor; `#[coverage(off)]` is still experimental on rustc 1.95.0.
-  See `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
+None active. The 05-03 stable Rust coverage blocker was resolved by the custom
+`cargo llvm-cov --json` postprocessor documented in
+`.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
 ### Quick Tasks Completed
 
@@ -157,12 +158,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T05:37:11.023Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-04-28T08:15:21.000Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Phase 5 planning — CLI, golden parity, benchmarks, and coverage gates
+**Next Step:** Execute Phase 5 Plan 04 — mutation or equivalent fault-injection report gate
