@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-03-PLAN.md; ready for 05-04-PLAN.md mutation/fault-injection gate
-last_updated: "2026-04-28T08:15:21.000Z"
+stopped_at: Completed 05-04-PLAN.md; ready for 05-05-PLAN.md benchmark and final quality gates
+last_updated: "2026-04-28T08:29:18.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 28
-  percent: 93
+  completed_plans: 29
+  percent: 97
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 ## Current Position
 
 Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
-Plan: 5 of 6
-Status: Ready to execute 05-04 mutation/fault-injection gate
+Plan: 6 of 6
+Status: Ready to execute 05-05 benchmark and final quality gates
 Last activity: 2026-04-28
 
-Progress: [█████████░] 93%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 28
+- Total plans completed: 29
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -48,7 +48,7 @@ Progress: [█████████░] 93%
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
-| 05 | 4/6 | 173m | 43m15s |
+| 05 | 5/6 | 187m | 37m24s |
 
 **Recent Trend:**
 
@@ -80,6 +80,7 @@ Progress: [█████████░] 93%
 | Phase 05 P01 | 13min | 3 tasks | 5 files |
 | Phase 05 P02 | 65min | 4 tasks | 11 files |
 | Phase 05 P03 | 73min | 3 tasks | 22 files |
+| Phase 05 P04 | 14min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 02 compare command supports saved artifacts and selected replay parsing only. — Full-corpus parity remains generated harness/CI output under .planning/generated/phase-05/.
 - [Phase 05]: Plan 03 uses `cargo llvm-cov --json` plus a parser-harness postprocessor for strict reachable production coverage. — Stable Rust cannot subtract narrow source-line exclusions natively, so the committed gate fails on any unallowlisted production uncovered region and records generated evidence under `.planning/generated/phase-05/coverage/`.
 - [Phase 05]: Plan 03 coverage exclusions are exact source lines with committed allowlist metadata and production-file `coverage-exclusion:` markers. — Blanket non-generated exclusions remain rejected, and behavior tests stay public-API oriented.
+- [Phase 05]: Plan 04 adds a mutation/equivalent fault-report gate with deterministic fallback. — `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise generates a validated `deterministic-fault-injection` report covering vehicle score, combat events, aggregate source refs, and failure paths.
+- [Phase 05]: Plan 04 fault report validation blocks high-risk `missed` cases without accepted non-applicable rationale. — Report validation remains in parser-harness and does not introduce parser-core test-only hooks.
 
 ### Pending Todos
 
@@ -158,12 +161,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T08:15:21.000Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-04-28T08:29:18.000Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Execute Phase 5 Plan 04 — mutation or equivalent fault-injection report gate
+**Next Step:** Execute Phase 5 Plan 05 — benchmark reports, README command handoff, and final quality gates

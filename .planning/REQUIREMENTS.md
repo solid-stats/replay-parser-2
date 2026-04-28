@@ -91,7 +91,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **TEST-09**: Unit tests follow the `unit-tests-philosophy` RITE standard: readable names, explicit Arrange/Act/Assert structure, isolated fixtures/state, deterministic time/randomness/environment, and assertions against observable behavior rather than private implementation details.
 - [x] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
 - [x] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
-- [ ] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
+- [x] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
 
 ### Worker Integration
 
@@ -203,7 +203,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-09 | Phase 5 | Complete |
 | TEST-10 | Phase 5 | Complete |
 | TEST-11 | Phase 5 | Complete |
-| TEST-12 | Phase 5 | Pending |
+| TEST-12 | Phase 5 | Complete |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
 | WORK-03 | Phase 6 | Pending |

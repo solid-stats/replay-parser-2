@@ -135,7 +135,7 @@ Plans:
 - [x] 05-01-PLAN.md — Compact golden fixture manifest, curated fixtures, and behavior regression tests.
 - [x] 05-02-PLAN.md — Selected-input comparison harness and `replay-parser-2 compare` reports.
 - [x] 05-03-PLAN.md — `cargo llvm-cov` coverage gate, allowlist validation, and behavior-test strengthening.
-- [ ] 05-04-PLAN.md — Mutation or equivalent fault-injection report gate.
+- [x] 05-04-PLAN.md — Mutation or equivalent fault-injection report gate.
 - [ ] 05-05-PLAN.md — Benchmark reports, README command handoff, and final quality gates.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration

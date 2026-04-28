@@ -6,11 +6,11 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 5 Plan 03 has added strict reachable-production coverage gating. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 Plan 04 has added mutation/equivalent fault-report gating. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. RabbitMQ/S3 worker mode, full-corpus comparison automation, mutation/fault reporting, benchmark suite, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise validates a deterministic fault-injection report. RabbitMQ/S3 worker mode, full-corpus comparison automation, benchmark suite, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (Plan 03 complete; next Plan 04).
+- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (Plan 04 complete; next Plan 05).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -43,6 +43,7 @@ cargo test --workspace
 cargo doc --workspace --no-deps
 scripts/coverage-gate.sh --check
 scripts/coverage-gate.sh
+scripts/fault-report-gate.sh
 ```
 
 Short cargo aliases are also available:
@@ -55,7 +56,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode, full-corpus parity automation, mutation/fault reporting, and benchmark commands are still planned for later phases.
+Worker mode, full-corpus parity automation, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -162,11 +163,12 @@ replay-parser-2 compare --replay path/to/replay.json --old-artifact path/to/old.
 replay-parser-2 compare --new-artifact path/to/new.json --old-artifact path/to/old.json --output path/to/report.json
 ```
 
-Coverage gate:
+Coverage and fault gates:
 
 ```bash
 scripts/coverage-gate.sh --check
 scripts/coverage-gate.sh
+scripts/fault-report-gate.sh
 ```
 
 Reserved command slots for later phases:
@@ -212,4 +214,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-28 after completing Phase 5 Plan 03 coverage gate enforcement.
+Last updated: 2026-04-28 after completing Phase 5 Plan 04 fault-report gate enforcement.
