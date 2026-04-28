@@ -94,44 +94,62 @@ fn vehicle_score_contribution_ids(artifact: &ParseArtifact) -> BTreeSet<String> 
 #[test]
 fn vehicle_score_should_map_issue_13_categories_from_raw_vehicle_class() {
     // Arrange
-    let raw_tank_class = Some("rhs_t72ba_tv");
-    let raw_static_weapon_class = Some("static-weapon");
-    let raw_apc_class = Some("rhs_btr80_msv");
-    let raw_car_class = Some("CUP_B_UAZ_MG_CDF");
+    let cases = [
+        (Some("static-weapon"), VehicleScoreCategory::StaticWeapon),
+        (Some("mortar"), VehicleScoreCategory::StaticWeapon),
+        (Some("rhs_btr80_msv"), VehicleScoreCategory::Apc),
+        (Some("rhs_t72ba_tv"), VehicleScoreCategory::Tank),
+        (Some("mi24"), VehicleScoreCategory::Heli),
+        (Some("su25"), VehicleScoreCategory::Plane),
+        (Some("ural"), VehicleScoreCategory::Truck),
+        (Some("CUP_B_UAZ_MG_CDF"), VehicleScoreCategory::Car),
+        (Some("   "), VehicleScoreCategory::Unknown),
+        (Some("sea"), VehicleScoreCategory::Unknown),
+        (None, VehicleScoreCategory::Unknown),
+    ];
 
-    // Act
-    let tank_category = category_from_vehicle_class(raw_tank_class);
-    let static_weapon_category = category_from_vehicle_class(raw_static_weapon_class);
-    let apc_category = category_from_vehicle_class(raw_apc_class);
-    let car_category = category_from_vehicle_class(raw_car_class);
-    let unknown_category = category_from_vehicle_class(Some("sea"));
-    let absent_category = category_from_vehicle_class(None);
-
-    // Assert
-    assert_eq!(tank_category, VehicleScoreCategory::Tank);
-    assert_eq!(static_weapon_category, VehicleScoreCategory::StaticWeapon);
-    assert_eq!(apc_category, VehicleScoreCategory::Apc);
-    assert_eq!(car_category, VehicleScoreCategory::Car);
-    assert_eq!(unknown_category, VehicleScoreCategory::Unknown);
-    assert_eq!(absent_category, VehicleScoreCategory::Unknown);
+    // Act + Assert
+    for (raw_class, expected_category) in cases {
+        assert_eq!(category_from_vehicle_class(raw_class), expected_category);
+    }
 }
 
 #[test]
 fn vehicle_score_should_return_issue_13_matrix_weights() {
     // Arrange
-    let attacker = VehicleScoreCategory::Tank;
-    let static_weapon_target = VehicleScoreCategory::StaticWeapon;
-    let player_target = VehicleScoreCategory::Player;
+    use VehicleScoreCategory::{Apc, Car, Heli, Plane, Player, StaticWeapon, Tank, Truck, Unknown};
 
-    // Act
-    let static_weapon_weight = vehicle_score_weight(attacker, static_weapon_target);
-    let player_weight = vehicle_score_weight(attacker, player_target);
-    let unknown_weight = vehicle_score_weight(VehicleScoreCategory::Unknown, player_target);
+    let cases = [
+        (Unknown, Player, None),
+        (StaticWeapon, StaticWeapon, Some(1.0)),
+        (StaticWeapon, Tank, Some(1.5)),
+        (StaticWeapon, Player, Some(2.0)),
+        (Car, Apc, Some(1.0)),
+        (Truck, Plane, Some(2.0)),
+        (Apc, StaticWeapon, Some(0.5)),
+        (Apc, Tank, Some(1.0)),
+        (Apc, Heli, Some(2.0)),
+        (Tank, StaticWeapon, Some(0.25)),
+        (Tank, Car, Some(0.5)),
+        (Tank, Tank, Some(1.0)),
+        (Tank, Heli, Some(1.5)),
+        (Tank, Player, Some(2.0)),
+        (Heli, StaticWeapon, Some(0.5)),
+        (Heli, Truck, Some(1.0)),
+        (Heli, Tank, Some(1.5)),
+        (Heli, Player, Some(2.0)),
+        (Plane, StaticWeapon, Some(0.25)),
+        (Plane, Apc, Some(0.5)),
+        (Plane, Tank, Some(1.0)),
+        (Plane, Heli, Some(1.5)),
+        (Plane, Player, Some(2.0)),
+        (Player, Tank, None),
+    ];
 
-    // Assert
-    assert_eq!(static_weapon_weight, Some(0.25));
-    assert_eq!(player_weight, Some(2.0));
-    assert_eq!(unknown_weight, None);
+    // Act + Assert
+    for (attacker, target, expected_weight) in cases {
+        assert_eq!(vehicle_score_weight(attacker, target), expected_weight);
+    }
 }
 
 #[test]

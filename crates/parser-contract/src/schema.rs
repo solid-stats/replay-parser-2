@@ -191,3 +191,53 @@ fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
         ]),
     ));
 }
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use super::*;
+
+    #[test]
+    fn schema_helpers_should_skip_definitions_when_schema_has_no_defs_object() {
+        // Arrange
+        let mut schema = parse_artifact_schema();
+        drop(schema.remove("$defs"));
+
+        // Act
+        add_schema_definition::<LegacyCounterContributionValue>(
+            &mut schema,
+            "LegacyCounterContributionValue",
+        );
+        add_aggregate_projection_key_definition(&mut schema);
+        constrain_aggregate_contribution_values(&mut schema);
+        enforce_source_ref_evidence_invariants(&mut schema);
+
+        // Assert
+        assert!(schema.get("$defs").is_none());
+    }
+
+    #[test]
+    fn schema_helpers_should_skip_missing_nested_definitions_without_panicking() {
+        // Arrange
+        let mut schema = parse_artifact_schema();
+        let defs = schema
+            .get_mut("$defs")
+            .and_then(Value::as_object_mut)
+            .expect("parse artifact schema should include definitions");
+        drop(defs.remove("AggregateContributionRef"));
+        drop(defs.remove("SourceRef"));
+
+        // Act
+        constrain_aggregate_contribution_values(&mut schema);
+        enforce_source_ref_evidence_invariants(&mut schema);
+
+        // Assert
+        let defs = schema
+            .get("$defs")
+            .and_then(Value::as_object)
+            .expect("definitions should remain present");
+        assert!(!defs.contains_key("AggregateContributionRef"));
+        assert!(!defs.contains_key("SourceRef"));
+    }
+}

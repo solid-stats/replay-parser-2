@@ -149,14 +149,9 @@ fn time_bounds(
         (
             FieldPresence::Present { value: end_frame, source: _ },
             FieldPresence::Present { value: capture_delay, source: _ },
-        ) if capture_delay.is_finite() => u64_to_f64(*end_frame).map_or_else(
-            || FieldPresence::Unknown {
-                reason: UnknownReason::SchemaDrift,
-                source: Some(
-                    context.source_ref("$.endFrame", rule_id("metadata.time_bounds.observed")),
-                ),
-            },
-            |end_frame| FieldPresence::Present {
+        ) if capture_delay.is_finite() => {
+            let end_frame = u64_to_f64(*end_frame);
+            FieldPresence::Present {
                 value: ReplayTimeBounds {
                     start_seconds: Some(0.0),
                     end_seconds: Some(end_frame * *capture_delay),
@@ -164,8 +159,8 @@ fn time_bounds(
                 source: Some(
                     context.source_ref("$.captureDelay", rule_id("metadata.time_bounds.observed")),
                 ),
-            },
-        ),
+            }
+        }
         (FieldPresence::Unknown { reason, source }, _)
         | (_, FieldPresence::Unknown { reason, source }) => FieldPresence::Unknown {
             reason: *reason,
@@ -219,6 +214,106 @@ fn rule_id(value: &str) -> Option<RuleId> {
     RuleId::new(value).ok()
 }
 
-fn u64_to_f64(value: u64) -> Option<f64> {
-    value.to_string().parse::<f64>().ok()
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_precision_loss,
+    reason = "metadata time bounds mirror legacy f64 frame math and do not require exact integer precision"
+)]
+const fn u64_to_f64(value: u64) -> f64 {
+    value as f64
+}
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    use super::*;
+    use parser_contract::presence::NullReason;
+    use parser_contract::source_ref::ReplaySource;
+
+    fn context() -> SourceContext {
+        SourceContext::new(&ReplaySource {
+            replay_id: Some("metadata-unit-test".to_owned()),
+            source_file: "metadata-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: None,
+            },
+        })
+    }
+
+    #[test]
+    fn metadata_bounds_should_treat_defensive_non_observed_frame_states_as_schema_drift() {
+        // Arrange
+        let context = context();
+        let end_frame =
+            FieldPresence::ExplicitNull { reason: NullReason::SourceNull, source: None };
+
+        // Act
+        let bounds = frame_bounds(&end_frame, &context);
+
+        // Assert
+        assert!(matches!(
+            bounds,
+            FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, source: Some(_) }
+        ));
+    }
+
+    #[test]
+    fn metadata_time_bounds_should_treat_defensive_non_observed_capture_delay_as_schema_drift() {
+        // Arrange
+        let context = context();
+        let end_frame = FieldPresence::Present { value: 10, source: None };
+        let capture_delay =
+            FieldPresence::NotApplicable { reason: "unit test defensive state".to_owned() };
+
+        // Act
+        let bounds = time_bounds(&end_frame, &capture_delay, &context);
+
+        // Assert
+        assert!(matches!(
+            bounds,
+            FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, source: Some(_) }
+        ));
+    }
+
+    #[test]
+    fn metadata_time_bounds_should_propagate_unknown_end_frame_source() {
+        // Arrange
+        let context = context();
+        let end_frame = FieldPresence::Unknown {
+            reason: UnknownReason::SourceFieldAbsent,
+            source: Some(context.source_ref("$.endFrame", rule_id("metadata.end_frame.observed"))),
+        };
+        let capture_delay = FieldPresence::Present { value: 0.5, source: None };
+
+        // Act
+        let bounds = time_bounds(&end_frame, &capture_delay, &context);
+
+        // Assert
+        assert!(matches!(
+            bounds,
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+    }
+
+    #[test]
+    fn metadata_time_bounds_should_propagate_unknown_capture_delay_source() {
+        // Arrange
+        let context = context();
+        let end_frame = FieldPresence::Present { value: 10, source: None };
+        let capture_delay = FieldPresence::Unknown {
+            reason: UnknownReason::SchemaDrift,
+            source: Some(
+                context.source_ref("$.captureDelay", rule_id("metadata.capture_delay.observed")),
+            ),
+        };
+
+        // Act
+        let bounds = time_bounds(&end_frame, &capture_delay, &context);
+
+        // Assert
+        assert!(matches!(
+            bounds,
+            FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, source: Some(_) }
+        ));
+    }
 }

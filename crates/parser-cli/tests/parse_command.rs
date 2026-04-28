@@ -107,3 +107,37 @@ fn parse_command_should_write_byte_identical_artifacts_when_same_input_runs_twic
     assert!(second_command_output.status.success());
     assert_eq!(first_artifact, second_artifact);
 }
+
+#[test]
+fn parse_command_should_fail_with_human_error_when_input_file_is_missing() {
+    // Arrange
+    let input = temp_output_path("missing-input", "missing.ocap.json");
+    let output_path = temp_output_path("missing-input", "artifact.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("could not read input"));
+    assert!(!output_path.exists());
+}
+
+#[test]
+fn parse_command_should_fail_with_human_error_when_output_path_parent_is_missing() {
+    // Arrange
+    let input = parser_core_fixture("valid-minimal.ocap.json");
+    let output_path = temp_output_path("missing-output-parent", "missing").join("artifact.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("could not write output"));
+    assert!(!output_path.exists());
+}

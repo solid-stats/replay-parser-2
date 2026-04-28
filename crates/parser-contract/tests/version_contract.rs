@@ -39,6 +39,20 @@ fn version_contract_contract_version_should_serialize_as_semver_string_when_curr
 }
 
 #[test]
+fn version_contract_contract_version_should_parse_valid_semver_and_reject_invalid_values() {
+    // Arrange + Act
+    let parsed = ContractVersion::parse("1.2.3").expect("valid contract version should parse");
+    let invalid = ContractVersion::parse("not-semver");
+    let from_version =
+        ContractVersion::from(Version::parse("2.0.0").expect("test semver should parse"));
+
+    // Assert
+    assert_eq!(parsed.semver, Version::parse("1.2.3").expect("test semver should parse"));
+    assert!(invalid.is_err());
+    assert_eq!(from_version.semver, Version::parse("2.0.0").expect("test semver should parse"));
+}
+
+#[test]
 fn version_contract_parser_info_should_keep_parser_version_separate_from_contract_version() {
     // Arrange
     let artifact = VersionArtifactStub {

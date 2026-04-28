@@ -158,16 +158,21 @@ fn parse_command(
     let artifact_bytes = serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?;
     write_pretty_json_file(output, artifact_bytes)?;
 
-    if artifact.status == ParseStatus::Failed {
-        let summary = artifact.failure.as_ref().map_or_else(
-            || "parse failed: no structured failure payload".to_string(),
-            |failure| format!("parse failed: {}", failure.message),
-        );
+    if let Some(summary) = parse_failure_summary(&artifact) {
         write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
         return Ok(ExitCode::FAILURE);
     }
 
     Ok(ExitCode::SUCCESS)
+}
+
+fn parse_failure_summary(artifact: &ParseArtifact) -> Option<String> {
+    (artifact.status == ParseStatus::Failed).then(|| {
+        artifact.failure.as_ref().map_or_else(
+            || "parse failed: no structured failure payload".to_string(),
+            |failure| format!("parse failed: {}", failure.message),
+        )
+    })
 }
 
 fn parse_artifact_from_input(
@@ -216,22 +221,17 @@ fn compare_command(
     old_artifact: &Path,
     output: &Path,
 ) -> Result<ExitCode, CliError> {
-    match (replay, new_artifact) {
-        (None, None) => return Err(CliError::CompareRequiresInput),
-        (Some(_), Some(_)) => return Err(CliError::CompareConflictingInput),
-        _ => {}
-    }
-
     let old_bytes = read_file(old_artifact)?;
     let old_label = old_artifact.display().to_string();
-    let (new_label, new_bytes) = if let Some(path) = new_artifact {
-        (path.display().to_string(), read_file(path)?)
-    } else if let Some(path) = replay {
-        let artifact = parse_artifact_from_input(path, None)?;
-        let artifact_bytes = serde_json::to_vec(&artifact).map_err(CliError::Serialize)?;
-        (format!("parsed replay: {}", path.display()), artifact_bytes)
-    } else {
-        return Err(CliError::CompareRequiresInput);
+    let (new_label, new_bytes) = match (replay, new_artifact) {
+        (None, None) => return Err(CliError::CompareRequiresInput),
+        (Some(_), Some(_)) => return Err(CliError::CompareConflictingInput),
+        (_, Some(path)) => (path.display().to_string(), read_file(path)?),
+        (Some(path), None) => {
+            let artifact = parse_artifact_from_input(path, None)?;
+            let artifact_bytes = serde_json::to_vec(&artifact).map_err(CliError::Serialize)?;
+            (format!("parsed replay: {}", path.display()), artifact_bytes)
+        }
     };
 
     let report = compare_artifacts(old_label, &old_bytes, new_label, &new_bytes)
@@ -267,14 +267,118 @@ fn write_pretty_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliErr
 }
 
 fn report_error(error: &CliError) -> ExitCode {
-    match write_stderr_line(&error.to_string()) {
-        Ok(()) => ExitCode::FAILURE,
-        Err(_) => ExitCode::from(2),
-    }
+    report_error_result(write_stderr_line(&error.to_string()).is_ok())
+}
+
+fn report_error_result(write_succeeded: bool) -> ExitCode {
+    if write_succeeded { ExitCode::FAILURE } else { ExitCode::from(2) }
 }
 
 fn write_stderr_line(message: &str) -> io::Result<()> {
     let mut stderr = io::stderr().lock();
     stderr.write_all(message.as_bytes())?;
     stderr.write_all(b"\n")
+}
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use super::*;
+
+    #[test]
+    fn parse_failure_summary_should_describe_failed_artifacts_without_failure_payload() {
+        // Arrange
+        let source = ReplaySource {
+            replay_id: Some("cli-summary-test".to_owned()),
+            source_file: "invalid.ocap.json".to_owned(),
+            checksum: FieldPresence::Unknown {
+                reason: parser_contract::presence::UnknownReason::SourceFieldAbsent,
+                source: None,
+            },
+        };
+        let mut artifact = parse_replay(ParserInput {
+            bytes: b"{",
+            source,
+            parser: parser_info().expect("parser info should be valid"),
+            options: ParserOptions::default(),
+        });
+        artifact.failure = None;
+
+        // Act
+        let summary = parse_failure_summary(&artifact);
+
+        // Assert
+        assert_eq!(summary.as_deref(), Some("parse failed: no structured failure payload"));
+    }
+
+    #[test]
+    fn report_error_result_should_use_distinct_exit_code_when_stderr_write_fails() {
+        // Act
+        let exit_code = report_error_result(false);
+
+        // Assert
+        assert_eq!(exit_code, ExitCode::from(2));
+    }
+
+    #[test]
+    fn cli_error_should_display_command_context_for_each_error_variant() {
+        // Arrange
+        let serde_error =
+            serde_json::from_str::<serde_json::Value>("{").expect_err("invalid JSON should fail");
+        let parser_info_error = serde_json::from_value::<ParserInfo>(json!({
+            "name": "replay-parser-2",
+            "version": "not-semver"
+        }))
+        .expect_err("invalid parser metadata should fail");
+        let checksum_error = SourceChecksum::sha256("not-sha256")
+            .expect_err("invalid checksum should fail validation");
+        let compare_error =
+            compare_artifacts("old", br#"{"status":"success"}"#, "new", br#"{"status":"success""#)
+                .expect_err("invalid new artifact JSON should fail comparison");
+        let cases = [
+            (
+                CliError::ReadInput {
+                    path: PathBuf::from("missing.ocap.json"),
+                    source: io::Error::new(io::ErrorKind::NotFound, "missing"),
+                },
+                "could not read input",
+                true,
+            ),
+            (
+                CliError::WriteOutput {
+                    path: PathBuf::from("missing/artifact.json"),
+                    source: io::Error::new(io::ErrorKind::NotFound, "missing"),
+                },
+                "could not write output",
+                true,
+            ),
+            (
+                CliError::WriteStdout(io::Error::new(io::ErrorKind::BrokenPipe, "closed")),
+                "could not write schema to stdout",
+                true,
+            ),
+            (
+                CliError::WriteStderr(io::Error::new(io::ErrorKind::BrokenPipe, "closed")),
+                "could not write command summary to stderr",
+                true,
+            ),
+            (CliError::Serialize(serde_error), "could not serialize JSON output", true),
+            (CliError::ParserInfo(parser_info_error), "could not build parser metadata", true),
+            (CliError::Checksum(checksum_error), "could not build source checksum", true),
+            (CliError::Compare(compare_error), "could not compare artifacts", true),
+            (CliError::CompareRequiresInput, "compare requires --replay or --new-artifact", false),
+            (
+                CliError::CompareConflictingInput,
+                "compare accepts only one of --replay or --new-artifact",
+                false,
+            ),
+        ];
+
+        // Act + Assert
+        for (error, expected_text, has_source) in cases {
+            assert!(error.to_string().contains(expected_text));
+            assert_eq!(error.source().is_some(), has_source);
+        }
+    }
 }

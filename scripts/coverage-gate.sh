@@ -11,7 +11,8 @@ if ! cargo llvm-cov --version >"$OUTPUT_ROOT/cargo-llvm-cov.version" 2>"$OUTPUT_
 fi
 
 run_check() {
-  cargo llvm-cov --workspace --all-targets --summary-only 2>&1 | tee "$OUTPUT_ROOT/check-summary.txt"
+  cargo llvm-cov --workspace --all-targets --json --summary-only 2>&1 | tee "$OUTPUT_ROOT/check-summary.json" >/dev/null
+  printf '%s\n' "coverage smoke check passed; summary: $OUTPUT_ROOT/check-summary.json"
 }
 
 require_threshold_option() {
@@ -30,25 +31,24 @@ run_strict_gate() {
 
   require_threshold_option "$help_text" "--fail-under-lines"
   require_threshold_option "$help_text" "--fail-under-functions"
+  require_threshold_option "$help_text" "--fail-under-regions"
+  require_threshold_option "$help_text" "--show-missing-lines"
 
+  local report_path="$OUTPUT_ROOT/strict-missing-lines.txt"
   local strict_args=(
     llvm-cov
     --workspace
     --all-targets
-    --summary-only
+    --text
+    --show-missing-lines
+    --output-path "$report_path"
     --fail-under-lines 100
     --fail-under-functions 100
+    --fail-under-regions 100
   )
 
-  if grep -q -- "--fail-under-regions" <<<"$help_text"; then
-    strict_args+=(--fail-under-regions 100)
-  else
-    printf '%s\n' "cargo llvm-cov lacks --fail-under-regions; region threshold not supported by this installation." \
-      | tee "$OUTPUT_ROOT/threshold-support.txt"
-  fi
-
   if grep -q -- "--fail-under-branches" <<<"$help_text"; then
-    strict_args+=(--fail-under-branches 100)
+    strict_args+=(--branch --fail-under-branches 100)
   else
     printf '%s\n' "cargo llvm-cov lacks --fail-under-branches; branch threshold not supported by this installation." \
       | tee -a "$OUTPUT_ROOT/threshold-support.txt"

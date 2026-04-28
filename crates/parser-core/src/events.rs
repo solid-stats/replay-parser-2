@@ -592,13 +592,14 @@ fn event_index_presence(
     observation: &KilledEventObservation,
     source_ref: &SourceRef,
 ) -> FieldPresence<u64> {
-    u64::try_from(observation.event_index).map_or_else(
-        |_| FieldPresence::Unknown {
-            reason: UnknownReason::SchemaDrift,
-            source: Some(source_ref.clone()),
-        },
-        |value| FieldPresence::Present { value, source: Some(source_ref.clone()) },
-    )
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        reason = "source event indexes are in-memory usize values and supported parser targets fit u64 coordinates"
+    )]
+    let value = observation.event_index as u64;
+
+    FieldPresence::Present { value, source: Some(source_ref.clone()) }
 }
 
 fn actor_ref(entity: &ObservedEntity) -> EventActorRef {
@@ -808,6 +809,10 @@ fn push_actor_unknown_diagnostic(
     );
 }
 
+#[allow(
+    clippy::expect_used,
+    reason = "a single constructed diagnostic source reference is non-empty by construction"
+)]
 fn push_unknown_diagnostic(
     diagnostics: &mut DiagnosticAccumulator,
     diagnostic: UnknownDiagnostic<'_>,
@@ -815,9 +820,8 @@ fn push_unknown_diagnostic(
     context: &SourceContext,
 ) {
     let source_ref = event_source_ref(context, observation, UNKNOWN_RULE_ID);
-    let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
-        return;
-    };
+    let source_refs = SourceRefs::new(vec![source_ref])
+        .expect("diagnostic source refs are constructed with one source ref");
 
     diagnostics.push(
         Diagnostic {
@@ -832,4 +836,114 @@ fn push_unknown_diagnostic(
         },
         DiagnosticImpact::DataLoss,
     );
+}
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use super::*;
+    use parser_contract::{
+        identity::ObservedIdentity,
+        source_ref::{ReplaySource, SourceChecksum},
+    };
+
+    fn source_ref() -> SourceRef {
+        SourceContext::new(&ReplaySource {
+            replay_id: Some("events-unit-test".to_owned()),
+            source_file: "events-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Present {
+                value: SourceChecksum::sha256(
+                    "7777777777777777777777777777777777777777777777777777777777777777",
+                )
+                .expect("test checksum should be valid"),
+                source: None,
+            },
+        })
+        .source_ref("$.events[0]", RuleId::new("event.test").ok())
+    }
+
+    fn entity(kind: EntityKind, side: FieldPresence<EntitySide>) -> ObservedEntity {
+        let source_ref = source_ref();
+        ObservedEntity {
+            source_entity_id: 99,
+            kind,
+            observed_name: FieldPresence::NotApplicable {
+                reason: "unit test actor name omitted".to_owned(),
+            },
+            observed_class: FieldPresence::NotApplicable {
+                reason: "unit test actor class omitted".to_owned(),
+            },
+            is_player: FieldPresence::NotApplicable {
+                reason: "unit test player flag omitted".to_owned(),
+            },
+            identity: ObservedIdentity {
+                nickname: FieldPresence::NotApplicable {
+                    reason: "unit test nickname omitted".to_owned(),
+                },
+                steam_id: FieldPresence::NotApplicable {
+                    reason: "unit test steam omitted".to_owned(),
+                },
+                side,
+                faction: FieldPresence::NotApplicable {
+                    reason: "unit test faction omitted".to_owned(),
+                },
+                group: FieldPresence::NotApplicable {
+                    reason: "unit test group omitted".to_owned(),
+                },
+                squad: FieldPresence::NotApplicable {
+                    reason: "unit test squad omitted".to_owned(),
+                },
+                role: FieldPresence::NotApplicable { reason: "unit test role omitted".to_owned() },
+                description: FieldPresence::NotApplicable {
+                    reason: "unit test description omitted".to_owned(),
+                },
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: SourceRefs::new(vec![source_ref])
+                .expect("entity source refs should be non-empty"),
+        }
+    }
+
+    #[test]
+    fn event_presence_helpers_should_cover_defensive_states() {
+        // Arrange
+        let source_ref = source_ref();
+        let unknown_side =
+            FieldPresence::Present { value: EntitySide::Unknown, source: Some(source_ref.clone()) };
+        let guer_side =
+            FieldPresence::Present { value: EntitySide::Guer, source: Some(source_ref.clone()) };
+        let civ_side = FieldPresence::Present { value: EntitySide::Civ, source: Some(source_ref) };
+        let unknown_entity = entity(EntityKind::Unknown, unknown_side.clone());
+
+        // Act + Assert
+        assert_eq!(present_side(&unknown_side), None);
+        assert_eq!(present_side(&guer_side), Some(EntitySide::Guer));
+        assert_eq!(present_side(&civ_side), Some(EntitySide::Civ));
+        assert_eq!(victim_kind(&unknown_entity), CombatVictimKind::Unknown);
+        assert_eq!(
+            observed_string(&FieldPresence::NotApplicable {
+                reason: "unit test string omitted".to_owned()
+            }),
+            None
+        );
+    }
+
+    #[test]
+    fn vehicle_context_should_mark_absent_attacker_and_victim_as_auditable_unknowns() {
+        // Arrange
+        let source_ref = source_ref();
+        let entity_index = BTreeMap::new();
+
+        // Act
+        let context = vehicle_context(None, None, &entity_index, &source_ref);
+
+        // Assert
+        assert!(!context.is_kill_from_vehicle);
+        assert!(matches!(context.attacker_vehicle_entity_id, FieldPresence::NotApplicable { .. }));
+        assert!(matches!(
+            context.target_category,
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+    }
 }

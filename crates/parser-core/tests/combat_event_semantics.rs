@@ -224,3 +224,95 @@ fn combat_event_semantics_should_include_source_refs_with_event_coordinates() {
         Some("event.killed.enemy")
     );
 }
+
+#[test]
+fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_auditable() {
+    // Arrange
+    let fixture = br#"{
+      "missionName": "sg ambiguous combat",
+      "worldName": "Altis",
+      "missionAuthor": "SolidGames",
+      "playersCount": [0, 2],
+      "captureDelay": 0.5,
+      "endFrame": 120,
+      "entities": [
+        {
+          "id": 1,
+          "type": "unit",
+          "name": "No Side",
+          "group": "Alpha",
+          "description": "Rifleman",
+          "isPlayer": 1
+        },
+        {
+          "id": 2,
+          "type": "unit",
+          "name": "Known Side",
+          "group": "Bravo",
+          "side": "WEST",
+          "description": "Rifleman",
+          "isPlayer": 1
+        },
+        {
+          "id": 3,
+          "type": "vehicle",
+          "name": "Truck",
+          "class": "truck"
+        }
+      ],
+      "events": [
+        [10, "killed", "bad-victim", [1, "AK-74"], 100],
+        [11, "killed", 3, ["null"], 50],
+        [12, "killed", 1, [2, ""], 25],
+        [13, "killed", 3, [2, "AK-74"], 20],
+        [14, "killed", 1, [3, ""], 15]
+      ],
+      "Markers": [],
+      "EditorMarkers": []
+    }"#;
+
+    // Act
+    let artifact = parse_fixture(fixture);
+    let missing_victim = combat(event_by_id(&artifact, "event.killed.0"));
+    let null_non_player_victim = combat(event_by_id(&artifact, "event.killed.1"));
+    let incomplete_side = combat(event_by_id(&artifact, "event.killed.2"));
+    let vehicle_destroyed = combat(event_by_id(&artifact, "event.killed.3"));
+    let non_player_killer = combat(event_by_id(&artifact, "event.killed.4"));
+    let diagnostic_messages = artifact
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    // Assert
+    assert_eq!(artifact.status, ParseStatus::Partial);
+    assert_eq!(missing_victim.semantic, CombatSemantic::Unknown);
+    assert_eq!(null_non_player_victim.semantic, CombatSemantic::Unknown);
+    assert_eq!(incomplete_side.semantic, CombatSemantic::Unknown);
+    assert_eq!(vehicle_destroyed.semantic, CombatSemantic::VehicleDestroyed);
+    assert_eq!(non_player_killer.semantic, CombatSemantic::Unknown);
+    assert!(has_exclusion(missing_victim, BountyExclusionReason::UnknownActor));
+    assert!(has_exclusion(null_non_player_victim, BountyExclusionReason::UnknownActor));
+    assert!(has_exclusion(incomplete_side, BountyExclusionReason::UnknownActor));
+    assert!(has_exclusion(non_player_killer, BountyExclusionReason::UnknownActor));
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| { message.contains("explicit null killer and a non-player victim") })
+    );
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| { message.contains("no numeric victim entity identifier") })
+    );
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| { message.contains("player sides are incomplete") })
+    );
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| { message.contains("not auditable as a player combat event") })
+    );
+}

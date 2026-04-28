@@ -173,3 +173,17 @@ fn parse_artifact_success_example_should_round_trip_stable_envelope_fields() {
     assert_eq!(output_value["source"]["source_file"], input_value["source"]["source_file"]);
     assert_eq!(output_value["parser"]["name"], input_value["parser"]["name"]);
 }
+
+#[test]
+fn artifact_envelope_validate_status_payload_should_accept_non_failed_without_failure() {
+    // Arrange
+    let mut artifact = success_artifact();
+    artifact.status = ParseStatus::Skipped;
+    artifact.failure = None;
+
+    // Act
+    let result = artifact.validate_status_payload();
+
+    // Assert
+    assert!(result.is_ok());
+}

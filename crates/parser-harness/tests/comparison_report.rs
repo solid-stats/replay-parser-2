@@ -36,6 +36,26 @@ fn comparison_report_mismatch_categories_should_serialize_as_phase_1_snake_case_
 }
 
 #[test]
+fn comparison_report_mismatch_categories_should_return_stable_string_values() {
+    // Arrange
+    let cases = [
+        (MismatchCategory::Compatible, "compatible"),
+        (MismatchCategory::IntentionalChange, "intentional_change"),
+        (MismatchCategory::OldBugPreserved, "old_bug_preserved"),
+        (MismatchCategory::OldBugFixed, "old_bug_fixed"),
+        (MismatchCategory::NewBug, "new_bug"),
+        (MismatchCategory::InsufficientData, "insufficient_data"),
+        (MismatchCategory::HumanReview, "human_review"),
+    ];
+
+    // Act + Assert
+    for (category, expected) in cases {
+        assert_eq!(category.as_str(), expected);
+        assert_eq!(category.to_string(), expected);
+    }
+}
+
+#[test]
 fn comparison_report_impact_assessment_should_require_every_downstream_dimension() {
     // Arrange + Act
     let error = ImpactAssessment::try_new(
@@ -51,6 +71,66 @@ fn comparison_report_impact_assessment_should_require_every_downstream_dimension
         error,
         ReportValidationError::MissingImpactDimension { dimension: "server_2_recalculation" }
     );
+}
+
+#[test]
+fn comparison_report_impact_assessment_should_accept_complete_dimensions() {
+    // Arrange + Act
+    let assessment = ImpactAssessment::try_new(
+        Some(ImpactLevel::Yes),
+        Some(ImpactLevel::No),
+        Some(ImpactLevel::Unknown),
+        Some(ImpactLevel::Yes),
+    )
+    .expect("complete impact assessment should pass validation");
+
+    // Assert
+    assert_eq!(assessment.parser_artifact, ImpactLevel::Yes);
+    assert_eq!(assessment.server_2_persistence, ImpactLevel::No);
+    assert_eq!(assessment.server_2_recalculation, ImpactLevel::Unknown);
+    assert_eq!(assessment.ui_visible_public_stats, ImpactLevel::Yes);
+}
+
+#[test]
+fn comparison_report_impact_assessment_should_report_each_missing_dimension() {
+    // Arrange
+    let cases = [
+        (
+            ImpactAssessment::try_new(
+                None,
+                Some(ImpactLevel::No),
+                Some(ImpactLevel::Unknown),
+                Some(ImpactLevel::Yes),
+            ),
+            "parser_artifact",
+        ),
+        (
+            ImpactAssessment::try_new(
+                Some(ImpactLevel::Yes),
+                None,
+                Some(ImpactLevel::Unknown),
+                Some(ImpactLevel::No),
+            ),
+            "server_2_persistence",
+        ),
+        (
+            ImpactAssessment::try_new(
+                Some(ImpactLevel::Yes),
+                Some(ImpactLevel::No),
+                Some(ImpactLevel::Unknown),
+                None,
+            ),
+            "ui_visible_public_stats",
+        ),
+    ];
+
+    // Act + Assert
+    for (result, expected_dimension) in cases {
+        assert_eq!(
+            result.expect_err("missing impact dimension should fail validation"),
+            ReportValidationError::MissingImpactDimension { dimension: expected_dimension }
+        );
+    }
 }
 
 #[test]

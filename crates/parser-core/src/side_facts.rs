@@ -167,15 +167,18 @@ fn push_conflicting_outcome_diagnostic(
     );
 }
 
+#[allow(
+    clippy::expect_used,
+    reason = "a single constructed outcome source reference is non-empty by construction"
+)]
 fn push_unrecognized_outcome_diagnostic(
     candidate: &RawStringCandidate,
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) {
     let source_ref = context.source_ref(&candidate.json_path, rule_id(OUTCOME_UNRECOGNIZED_CODE));
-    let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
-        return;
-    };
+    let source_refs = SourceRefs::new(vec![source_ref])
+        .expect("unrecognized outcome diagnostic source refs include one source ref");
 
     diagnostics.push(
         Diagnostic {
@@ -300,4 +303,162 @@ fn actor_ref(entity: &ObservedEntity) -> EventActorRef {
 
 fn rule_id(value: &str) -> Option<RuleId> {
     RuleId::new(value).ok()
+}
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use super::*;
+    use parser_contract::{
+        identity::{EntityKind, ObservedIdentity},
+        presence::NullReason,
+        source_ref::{ReplaySource, SourceChecksum},
+    };
+
+    fn context() -> SourceContext {
+        SourceContext::new(&ReplaySource {
+            replay_id: Some("side-facts-unit-test".to_owned()),
+            source_file: "side-facts-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Present {
+                value: SourceChecksum::sha256(
+                    "9999999999999999999999999999999999999999999999999999999999999999",
+                )
+                .expect("test checksum should be valid"),
+                source: None,
+            },
+        })
+    }
+
+    fn source_refs() -> SourceRefs {
+        SourceRefs::new(vec![context().source_ref("$.entities[0]", rule_id("side.test"))])
+            .expect("test source refs should be non-empty")
+    }
+
+    fn observed_entity(side: FieldPresence<EntitySide>) -> ObservedEntity {
+        let source_refs = source_refs();
+        ObservedEntity {
+            source_entity_id: 1,
+            kind: EntityKind::Unit,
+            observed_name: FieldPresence::Present {
+                value: "Commander".to_owned(),
+                source: source_refs.as_slice().first().cloned(),
+            },
+            observed_class: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: source_refs.as_slice().first().cloned(),
+            },
+            is_player: FieldPresence::Present {
+                value: true,
+                source: source_refs.as_slice().first().cloned(),
+            },
+            identity: ObservedIdentity {
+                nickname: FieldPresence::Present {
+                    value: "Commander".to_owned(),
+                    source: source_refs.as_slice().first().cloned(),
+                },
+                steam_id: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: source_refs.as_slice().first().cloned(),
+                },
+                side,
+                faction: FieldPresence::NotApplicable {
+                    reason: "unit test faction omitted".to_owned(),
+                },
+                group: FieldPresence::NotApplicable {
+                    reason: "unit test group omitted".to_owned(),
+                },
+                squad: FieldPresence::NotApplicable {
+                    reason: "unit test squad omitted".to_owned(),
+                },
+                role: FieldPresence::Inferred {
+                    value: "commander".to_owned(),
+                    reason: "unit test".to_owned(),
+                    confidence: Confidence::new(1.0).ok(),
+                    source: source_refs.as_slice().first().cloned(),
+                    rule_id: rule_id("side.role.test").expect("rule id should be valid"),
+                },
+                description: FieldPresence::NotApplicable {
+                    reason: "unit test description omitted".to_owned(),
+                },
+            },
+            compatibility_hints: Vec::new(),
+            source_refs,
+        }
+    }
+
+    #[test]
+    fn side_fact_helpers_should_cover_empty_conflict_and_side_name_states() {
+        // Arrange
+        let context = context();
+        let mut diagnostics = DiagnosticAccumulator::new(8);
+
+        // Act
+        push_conflicting_outcome_diagnostic(&[], &context, &mut diagnostics);
+
+        // Assert
+        assert!(diagnostics.finish(&context).diagnostics.is_empty());
+        assert_eq!(side_name(EntitySide::East), Some("east"));
+        assert_eq!(side_name(EntitySide::West), Some("west"));
+        assert_eq!(side_name(EntitySide::Guer), Some("guer"));
+        assert_eq!(side_name(EntitySide::Civ), Some("civ"));
+        assert_eq!(side_name(EntitySide::Unknown), None);
+        assert!(matches!(
+            side_name_presence(&FieldPresence::Present {
+                value: EntitySide::Unknown,
+                source: Some(context.source_ref("$.winner", rule_id("side.outcome.test"))),
+            }),
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+        assert!(matches!(
+            side_name_presence(&FieldPresence::<EntitySide>::ExplicitNull {
+                reason: NullReason::SourceNull,
+                source: Some(context.source_ref("$.winner", rule_id("side.outcome.test"))),
+            }),
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+        assert!(matches!(
+            side_name_presence(&FieldPresence::<EntitySide>::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: Some(context.source_ref("$.winner", rule_id("side.outcome.test"))),
+            }),
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+        assert!(matches!(
+            side_name_presence(&FieldPresence::<EntitySide>::Inferred {
+                value: EntitySide::West,
+                reason: "unit test".to_owned(),
+                confidence: Confidence::new(1.0).ok(),
+                source: Some(context.source_ref("$.winner", rule_id("side.outcome.test"))),
+                rule_id: rule_id("side.outcome.test").expect("rule id should be valid"),
+            }),
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+        assert!(matches!(
+            side_name_presence(&FieldPresence::<EntitySide>::NotApplicable {
+                reason: "unit test".to_owned()
+            }),
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: None }
+        ));
+    }
+
+    #[test]
+    fn commander_helpers_should_accept_inferred_text_and_unknown_side() {
+        // Arrange
+        let entity = observed_entity(FieldPresence::Present {
+            value: EntitySide::Unknown,
+            source: source_refs().as_slice().first().cloned(),
+        });
+
+        // Act
+        let candidate = commander_candidate(&entity).expect("commander candidate should be built");
+
+        // Assert
+        assert!(has_commander_keyword(&entity));
+        assert!(contains_commander_keyword("field commander"));
+        assert!(matches!(
+            candidate.side_name,
+            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
+        ));
+    }
 }

@@ -94,3 +94,22 @@ fn schema_command_should_match_committed_parse_artifact_schema_exactly() {
     assert!(command_output.status.success());
     assert_eq!(fresh_schema, committed_schema);
 }
+
+#[test]
+fn schema_command_should_fail_with_human_error_when_output_path_parent_is_missing() {
+    // Arrange
+    let output_path = temp_output_path("missing-parent", "missing").join("schema.json");
+
+    // Act
+    let command_output = run_schema(&[
+        "--output",
+        output_path.to_str().expect("test schema output path should be valid UTF-8"),
+    ]);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("could not write output"));
+    assert!(!output_path.exists());
+}

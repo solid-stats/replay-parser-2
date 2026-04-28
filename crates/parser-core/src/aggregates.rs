@@ -1050,3 +1050,448 @@ fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
         | FieldPresence::NotApplicable { .. } => None,
     }
 }
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #![allow(
+        clippy::expect_used,
+        clippy::too_many_lines,
+        reason = "unit tests use local builders to cover private aggregate defensive branches"
+    )]
+
+    use super::*;
+    use parser_contract::{
+        events::{BountyEligibility, CombatVictimKind, NormalizedEventKind},
+        identity::{EntityKind, ObservedIdentity},
+        presence::{Confidence, NullReason, UnknownReason},
+        source_ref::{ReplaySource, SourceChecksum},
+    };
+
+    fn source_ref(path: &str) -> SourceRef {
+        SourceContext::new(&ReplaySource {
+            replay_id: Some("aggregate-unit-test".to_owned()),
+            source_file: "aggregate-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Present {
+                value: SourceChecksum::sha256(
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                )
+                .expect("test checksum should be valid"),
+                source: None,
+            },
+        })
+        .source_ref(path, RuleId::new("aggregate.unit_test").ok())
+    }
+
+    fn source_refs(path: &str) -> SourceRefs {
+        SourceRefs::new(vec![source_ref(path)]).expect("test source refs should be non-empty")
+    }
+
+    fn present<T>(value: T, path: &str) -> FieldPresence<T> {
+        FieldPresence::Present { value, source: Some(source_ref(path)) }
+    }
+
+    fn actor(entity_id: i64, side: EntitySide) -> FieldPresence<EventActorRef> {
+        FieldPresence::Present {
+            value: EventActorRef {
+                source_entity_id: present(entity_id, "$.events[0][3][0]"),
+                observed_name: present(format!("Player {entity_id}"), "$.entities[0].name"),
+                side: present(side, "$.entities[0].side"),
+            },
+            source: Some(source_ref("$.events[0][3]")),
+        }
+    }
+
+    fn player(source_entity_id: i64, name: Option<&str>, side: EntitySide) -> ObservedEntity {
+        let observed_name = name.map_or_else(
+            || FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: Some(source_ref("$.entities[0].name")),
+            },
+            |name| present(name.to_owned(), "$.entities[0].name"),
+        );
+
+        ObservedEntity {
+            source_entity_id,
+            kind: EntityKind::Unit,
+            observed_name: observed_name.clone(),
+            observed_class: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: Some(source_ref("$.entities[0].class")),
+            },
+            is_player: present(true, "$.entities[0].isPlayer"),
+            identity: ObservedIdentity {
+                nickname: observed_name,
+                steam_id: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: Some(source_ref("$.entities[0].steam")),
+                },
+                side: present(side, "$.entities[0].side"),
+                faction: FieldPresence::NotApplicable {
+                    reason: "unit test faction omitted".to_owned(),
+                },
+                group: FieldPresence::NotApplicable {
+                    reason: "unit test group omitted".to_owned(),
+                },
+                squad: FieldPresence::NotApplicable {
+                    reason: "unit test squad omitted".to_owned(),
+                },
+                role: FieldPresence::NotApplicable { reason: "unit test role omitted".to_owned() },
+                description: present("Rifleman".to_owned(), "$.entities[0].description"),
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: source_refs("$.entities[0]"),
+        }
+    }
+
+    fn event(event_id: &str, combat: Option<CombatEventAttributes>) -> NormalizedEvent {
+        NormalizedEvent {
+            event_id: event_id.to_owned(),
+            kind: NormalizedEventKind::Kill,
+            frame: present(1, "$.events[0][0]"),
+            event_index: present(0, "$.events[0]"),
+            actors: Vec::new(),
+            source_refs: source_refs("$.events[0]"),
+            rule_id: RuleId::new("event.unit_test").expect("rule id should be valid"),
+            combat,
+            attributes: BTreeMap::new(),
+        }
+    }
+
+    fn vehicle_context(
+        attacker_category: FieldPresence<VehicleScoreCategory>,
+        target_category: FieldPresence<VehicleScoreCategory>,
+    ) -> parser_contract::events::VehicleContext {
+        parser_contract::events::VehicleContext {
+            is_kill_from_vehicle: true,
+            raw_weapon: present("Hunter".to_owned(), "$.events[0][3][1]"),
+            attacker_vehicle_entity_id: present(50, "$.entities[2].id"),
+            attacker_vehicle_name: present("Hunter".to_owned(), "$.entities[2].name"),
+            attacker_vehicle_class: present("car".to_owned(), "$.entities[2].class"),
+            attacker_vehicle_category: attacker_category,
+            target_category,
+        }
+    }
+
+    fn combat(semantic: CombatSemantic) -> CombatEventAttributes {
+        CombatEventAttributes {
+            semantic,
+            killer: actor(1, EntitySide::West),
+            victim: actor(2, EntitySide::East),
+            victim_kind: CombatVictimKind::Player,
+            weapon: present("Hunter".to_owned(), "$.events[0][3][1]"),
+            distance_meters: present(10.0, "$.events[0][4]"),
+            vehicle_context: vehicle_context(
+                present(VehicleScoreCategory::Car, "$.entities[2].class"),
+                present(VehicleScoreCategory::Player, "$.entities[1].type"),
+            ),
+            bounty: BountyEligibility {
+                state: BountyEligibilityState::Eligible,
+                exclusion_reasons: Vec::new(),
+            },
+            legacy_counter_effects: Vec::new(),
+        }
+    }
+
+    fn contribution(
+        kind: AggregateContributionKind,
+        contribution_id: &str,
+        value: Value,
+    ) -> AggregateContributionRef {
+        AggregateContributionRef {
+            contribution_id: contribution_id.to_owned(),
+            kind,
+            event_id: Some("event.killed.0".to_owned()),
+            source_refs: source_refs("$.events[0]"),
+            rule_id: RuleId::new("aggregate.unit_test").expect("rule id should be valid"),
+            value,
+        }
+    }
+
+    #[test]
+    fn aggregate_contributions_should_skip_non_combat_and_unscored_vehicle_semantics() {
+        // Arrange
+        let players = [player(1, Some("Alpha"), EntitySide::West)];
+        let player_index = player_projection_identities(&players);
+        let non_combat = event("event.none", None);
+        let unscored = event("event.unknown", Some(combat(CombatSemantic::Unknown)));
+        let scored = event("event.scored", Some(combat(CombatSemantic::EnemyKill)));
+
+        // Act
+        let skipped = aggregate_contributions(&[non_combat, unscored], &player_index, &players);
+        let contributions = aggregate_contributions(&[scored], &player_index, &players);
+
+        // Assert
+        assert!(skipped.is_empty());
+        assert!(
+            contributions
+                .iter()
+                .any(|contribution| contribution.kind
+                    == AggregateContributionKind::VehicleScoreInput)
+        );
+    }
+
+    #[test]
+    fn aggregate_projection_helpers_should_ignore_malformed_or_orphan_contributions() {
+        // Arrange
+        let mut groups = BTreeMap::new();
+        drop(groups.insert(
+            "entity:1".to_owned(),
+            PlayerProjectionGroup {
+                compatibility_key: "entity:1".to_owned(),
+                observed_entity_ids: vec![1],
+                observed_name: Some("Alpha".to_owned()),
+                side: Some("west"),
+                source_refs: vec![source_ref("$.entities[0]")],
+            },
+        ));
+        let malformed_legacy = contribution(
+            AggregateContributionKind::LegacyCounter,
+            "bad.legacy",
+            json!({ "bad": true }),
+        );
+        let malformed_relationship = contribution(
+            AggregateContributionKind::Relationship,
+            "bad.relationship",
+            json!({ "bad": true }),
+        );
+        let orphan_source_relationship = contribution(
+            AggregateContributionKind::Relationship,
+            "orphan.source",
+            serde_json::to_value(RelationshipContributionValue {
+                projection_key: "legacy.relationships".to_owned(),
+                source_player_entity_id: 9,
+                target_player_entity_id: 1,
+                relationship: "killed".to_owned(),
+                compatibility_source_key: "entity:9".to_owned(),
+                compatibility_target_key: "entity:1".to_owned(),
+                count_delta: 1,
+            })
+            .expect("relationship value should serialize"),
+        );
+        let orphan_target_relationship = contribution(
+            AggregateContributionKind::Relationship,
+            "orphan.target",
+            serde_json::to_value(RelationshipContributionValue {
+                projection_key: "legacy.relationships".to_owned(),
+                source_player_entity_id: 1,
+                target_player_entity_id: 9,
+                relationship: "killed".to_owned(),
+                compatibility_source_key: "entity:1".to_owned(),
+                compatibility_target_key: "entity:9".to_owned(),
+                count_delta: 1,
+            })
+            .expect("relationship value should serialize"),
+        );
+        let malformed_vehicle = contribution(
+            AggregateContributionKind::VehicleScoreInput,
+            "bad.vehicle",
+            json!({ "bad": true }),
+        );
+        let orphan_vehicle = contribution(
+            AggregateContributionKind::VehicleScoreInput,
+            "orphan.vehicle",
+            serde_json::to_value(VehicleScoreInputValue {
+                player_entity_id: 9,
+                event_id: "event.killed.0".to_owned(),
+                sign: VehicleScoreSign::Award,
+                attacker_category: VehicleScoreCategory::Car,
+                target_category: VehicleScoreCategory::Player,
+                raw_attacker_vehicle_name: None,
+                raw_attacker_vehicle_class: None,
+                raw_target_class: None,
+                matrix_weight: 2.0,
+                applied_weight: 2.0,
+                teamkill_penalty_clamped: false,
+                denominator_eligible: true,
+            })
+            .expect("vehicle score value should serialize"),
+        );
+
+        // Act
+        let player_rows = legacy_player_game_results(&groups, &[malformed_legacy]);
+        let relationship_rows = legacy_relationships(
+            &groups,
+            &[malformed_relationship, orphan_source_relationship, orphan_target_relationship],
+        );
+        let vehicle_rows =
+            vehicle_score_denominator_inputs(&groups, &[malformed_vehicle, orphan_vehicle]);
+        let mut accumulator = PlayerResultAccumulator::new(
+            groups.get("entity:1").expect("group should exist").clone(),
+        );
+        accumulator.apply(
+            "unknown.contribution",
+            &LegacyCounterContributionValue {
+                projection_key: "legacy.player_game_results".to_owned(),
+                player_entity_id: 1,
+                compatibility_key: "entity:1".to_owned(),
+                field: "unknownField".to_owned(),
+                delta: 1,
+                event_id: "event.killed.0".to_owned(),
+            },
+        );
+
+        // Assert
+        assert_eq!(player_rows.as_array().map(Vec::len), Some(1));
+        assert!(
+            relationship_rows
+                .as_object()
+                .expect("relationships should be an object")
+                .values()
+                .all(|rows| rows.as_array().is_some_and(Vec::is_empty))
+        );
+        assert!(vehicle_rows.as_array().is_some_and(Vec::is_empty));
+        assert!(accumulator.source_contribution_ids.is_empty());
+    }
+
+    #[test]
+    fn aggregate_presence_helpers_should_cover_projection_buckets_and_defensive_states() {
+        // Arrange
+        let nameless_player = player(3, None, EntitySide::East);
+        let mut players = BTreeMap::new();
+        drop(players.insert(
+            1,
+            PlayerProjectionIdentity {
+                source_entity_id: 1,
+                compatibility_key: "legacy_name:Echo".to_owned(),
+                observed_name: None,
+                side: None,
+                source_refs: vec![source_ref("$.entities[0]")],
+            },
+        ));
+        drop(players.insert(
+            2,
+            PlayerProjectionIdentity {
+                source_entity_id: 2,
+                compatibility_key: "legacy_name:Echo".to_owned(),
+                observed_name: Some("Echo".to_owned()),
+                side: Some("guer"),
+                source_refs: vec![source_ref("$.entities[1]")],
+            },
+        ));
+        let explicit_null = FieldPresence::<String>::ExplicitNull {
+            reason: NullReason::SourceNull,
+            source: Some(source_ref("$.field")),
+        };
+        let inferred = FieldPresence::Inferred {
+            value: "Echo".to_owned(),
+            reason: "unit test".to_owned(),
+            confidence: Confidence::new(1.0).ok(),
+            source: Some(source_ref("$.field")),
+            rule_id: RuleId::new("aggregate.inferred.test").expect("rule id should be valid"),
+        };
+        let non_player_entities = [ObservedEntity {
+            source_entity_id: 50,
+            kind: EntityKind::Vehicle,
+            observed_name: present("Truck".to_owned(), "$.entities[0].name"),
+            observed_class: present("truck".to_owned(), "$.entities[0].class"),
+            is_player: FieldPresence::NotApplicable {
+                reason: "vehicle has no player flag".to_owned(),
+            },
+            identity: ObservedIdentity {
+                nickname: FieldPresence::NotApplicable {
+                    reason: "vehicle has no nickname".to_owned(),
+                },
+                steam_id: FieldPresence::NotApplicable {
+                    reason: "vehicle has no steam id".to_owned(),
+                },
+                side: FieldPresence::NotApplicable { reason: "vehicle has no side".to_owned() },
+                faction: FieldPresence::NotApplicable {
+                    reason: "vehicle has no faction".to_owned(),
+                },
+                group: FieldPresence::NotApplicable { reason: "vehicle has no group".to_owned() },
+                squad: FieldPresence::NotApplicable { reason: "vehicle has no squad".to_owned() },
+                role: FieldPresence::NotApplicable { reason: "vehicle has no role".to_owned() },
+                description: FieldPresence::NotApplicable {
+                    reason: "vehicle has no description".to_owned(),
+                },
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: source_refs("$.entities[0]"),
+        }];
+        let unknown_mission = ReplayMetadata {
+            mission_name: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: None,
+            },
+            world_name: FieldPresence::NotApplicable {
+                reason: "unit test world omitted".to_owned(),
+            },
+            mission_author: FieldPresence::NotApplicable {
+                reason: "unit test author omitted".to_owned(),
+            },
+            players_count: FieldPresence::NotApplicable {
+                reason: "unit test player count omitted".to_owned(),
+            },
+            capture_delay: FieldPresence::NotApplicable {
+                reason: "unit test capture delay omitted".to_owned(),
+            },
+            end_frame: FieldPresence::NotApplicable {
+                reason: "unit test end frame omitted".to_owned(),
+            },
+            time_bounds: FieldPresence::NotApplicable {
+                reason: "unit test time bounds omitted".to_owned(),
+            },
+            frame_bounds: FieldPresence::NotApplicable {
+                reason: "unit test frame bounds omitted".to_owned(),
+            },
+        };
+
+        // Act
+        let groups = player_projection_groups(&players);
+        let unknown_game_type = legacy_game_type_compatibility(&unknown_mission);
+
+        // Assert
+        assert!(matches!(nameless_player.observed_name, FieldPresence::Unknown { .. }));
+        assert_eq!(
+            groups.get("legacy_name:Echo").and_then(|group| group.observed_name.as_deref()),
+            Some("Echo")
+        );
+        assert_eq!(unknown_game_type["source_refs"], json!([]));
+        assert!(player_projection_identities(&non_player_entities).is_empty());
+        assert_eq!(mission_prefix_bucket("sgs operation"), "sgs");
+        assert_eq!(mission_prefix_bucket("mace operation"), "mace");
+        assert_eq!(mission_prefix_bucket("sm operation"), "sm");
+        assert_eq!(mission_prefix_bucket("sg operation"), "sg");
+        assert_eq!(bracket_squad_prefix("[] Echo"), None);
+        assert_eq!(
+            present_actor(&FieldPresence::NotApplicable { reason: "test".to_owned() }),
+            None
+        );
+        assert_eq!(present_i64(&FieldPresence::NotApplicable { reason: "test".to_owned() }), None);
+        assert_eq!(present_u64(&FieldPresence::NotApplicable { reason: "test".to_owned() }), None);
+        for (side, expected) in [
+            (EntitySide::Guer, Some("guer")),
+            (EntitySide::Civ, Some("civ")),
+            (EntitySide::Unknown, Some("unknown")),
+        ] {
+            assert_eq!(
+                present_side_name(&FieldPresence::Present {
+                    value: side,
+                    source: Some(source_ref("$.entities[0].side")),
+                }),
+                expected
+            );
+        }
+        assert_eq!(
+            present_vehicle_score_category(&FieldPresence::Present {
+                value: VehicleScoreCategory::Unknown,
+                source: Some(source_ref("$.entities[0].class")),
+            }),
+            None
+        );
+        assert_eq!(
+            present_vehicle_score_category(&FieldPresence::NotApplicable {
+                reason: "unit test".to_owned()
+            }),
+            None
+        );
+        assert!(field_source_ref(&explicit_null).is_some());
+        assert!(field_source_ref(&inferred).is_some());
+        assert!(
+            field_source_ref(&FieldPresence::<String>::NotApplicable {
+                reason: "unit test".to_owned()
+            })
+            .is_none()
+        );
+    }
+}

@@ -1,5 +1,5 @@
 [alias]
-coverage-gate = "llvm-cov --workspace --all-targets --summary-only"
+coverage-gate = "llvm-cov --workspace --all-targets --json --summary-only"
 fmt-check = "fmt --all -- --check"
 lint = "clippy --workspace --all-targets -- -D warnings"
 quality-check = "check --workspace --all-targets"

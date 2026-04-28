@@ -2,11 +2,12 @@
 
 #![allow(
     clippy::expect_used,
-    reason = "integration tests use expect messages as assertion context"
+    clippy::too_many_lines,
+    reason = "integration tests keep broad drift fixtures readable with inline assertions"
 )]
 
 use parser_contract::{
-    artifact::ParseArtifact,
+    artifact::{ParseArtifact, ParseStatus},
     identity::{EntityKind, EntitySide, ObservedEntity},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
@@ -221,6 +222,170 @@ fn entity_normalization_should_emit_diagnostic_and_continue_when_entity_row_has_
     assert!(
         artifact.diagnostics.iter().any(|diagnostic| diagnostic.code.starts_with("schema.entity"))
     );
+}
+
+#[test]
+fn entity_normalization_should_emit_partial_status_when_entities_section_is_absent_or_drifted() {
+    // Arrange
+    let missing_entities = br#"{
+        "missionName": "sg no entities",
+        "events": []
+    }"#;
+    let drifted_entities = br#"{
+        "missionName": "sg bad entities",
+        "entities": {"not": "an array"},
+        "events": []
+    }"#;
+
+    // Act
+    let missing_artifact = parse_fixture(missing_entities);
+    let drifted_artifact = parse_fixture(drifted_entities);
+
+    // Assert
+    assert_eq!(missing_artifact.status, ParseStatus::Partial);
+    assert_eq!(drifted_artifact.status, ParseStatus::Partial);
+    assert!(missing_artifact.entities.is_empty());
+    assert!(drifted_artifact.entities.is_empty());
+    assert!(
+        missing_artifact
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "schema.entities_absent")
+    );
+    assert!(
+        drifted_artifact
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "schema.entities_shape")
+    );
+}
+
+#[test]
+fn entity_normalization_should_diagnose_entity_shape_and_value_drift_without_panicking() {
+    // Arrange
+    let fixture = br#"{
+        "missionName": "sg entity drift branches",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 1],
+        "captureDelay": 0.5,
+        "endFrame": 10,
+        "entities": [
+            [],
+            { "type": "unit", "name": "Missing Id", "side": "WEST", "isPlayer": 1 },
+            {
+                "id": 101,
+                "type": "alien",
+                "name": true,
+                "class": 5,
+                "side": "SIDEWAYS",
+                "positions": []
+            },
+            {
+                "id": 102,
+                "type": "unit",
+                "name": 4,
+                "group": true,
+                "side": 5,
+                "description": false,
+                "isPlayer": 2
+            },
+            {
+                "id": 103,
+                "type": "vehicle",
+                "name": "Fallback Truck",
+                "_class": "truck",
+                "side": "EAST"
+            },
+            {
+                "id": 104,
+                "type": "vehicle",
+                "name": "Bad Class",
+                "class": 7,
+                "_class": []
+            },
+            {
+                "id": 105,
+                "type": "unit",
+                "name": "Civilian",
+                "side": "CIV",
+                "isPlayer": true
+            },
+            {
+                "id": 106,
+                "type": "unit",
+                "name": "Guer",
+                "side": "GUER",
+                "isPlayer": true
+            },
+            {
+                "id": 107,
+                "type": "unit",
+                "name": "Unknown Side",
+                "side": "UNKNOWN",
+                "isPlayer": true
+            },
+            {
+                "id": 108,
+                "type": "unit",
+                "name": "Duplicate",
+                "side": "EAST",
+                "isPlayer": true
+            },
+            {
+                "id": 109,
+                "type": "unit",
+                "name": "Duplicate",
+                "side": "WEST",
+                "isPlayer": true
+            }
+        ],
+        "events": [
+            [1, "connected", "", 102],
+            [2, "connected", "Missing Entity", 999],
+            [3, "connected", "Vehicle Name", 103]
+        ],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+
+    // Act
+    let artifact = parse_fixture(fixture);
+    let drifted_unit = entity_by_id(&artifact, 102);
+    let fallback_vehicle = entity_by_id(&artifact, 103);
+    let civ = entity_by_id(&artifact, 105);
+    let guer = entity_by_id(&artifact, 106);
+    let unknown_side = entity_by_id(&artifact, 107);
+    let diagnostic_codes =
+        artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
+
+    // Assert
+    assert_eq!(artifact.status, ParseStatus::Partial);
+    assert!(diagnostic_codes.contains(&"schema.entity_id_shape"));
+    assert!(diagnostic_codes.contains(&"schema.entity_id_absent"));
+    assert!(diagnostic_codes.contains(&"schema.entity_type_unknown"));
+    assert!(diagnostic_codes.contains(&"schema.entity_field"));
+    assert!(diagnostic_codes.contains(&"schema.entity_side_unknown"));
+    assert!(diagnostic_codes.contains(&"schema.entity_side_shape"));
+    assert!(diagnostic_codes.contains(&"schema.entity_is_player_shape"));
+    assert!(diagnostic_codes.contains(&"compat.entity_duplicate_side_conflict"));
+    assert!(matches!(
+        drifted_unit.identity.nickname,
+        FieldPresence::Unknown {
+            reason: parser_contract::presence::UnknownReason::SchemaDrift,
+            source: Some(_)
+        }
+    ));
+    assert!(matches!(
+        &fallback_vehicle.observed_class,
+        FieldPresence::Present { value, source: Some(_) } if value == "truck"
+    ));
+    assert!(matches!(civ.identity.side, FieldPresence::Present { value: EntitySide::Civ, .. }));
+    assert!(matches!(guer.identity.side, FieldPresence::Present { value: EntitySide::Guer, .. }));
+    assert!(matches!(
+        unknown_side.identity.side,
+        FieldPresence::Present { value: EntitySide::Unknown, .. }
+    ));
 }
 
 #[test]

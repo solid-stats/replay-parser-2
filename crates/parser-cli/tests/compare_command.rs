@@ -175,3 +175,60 @@ fn compare_command_should_fail_when_replay_and_new_artifact_are_missing() {
     assert!(!command_output.status.success());
     assert!(stderr.contains("compare requires --replay or --new-artifact"));
 }
+
+#[test]
+fn compare_command_should_fail_when_replay_and_new_artifact_are_both_present() {
+    // Arrange
+    let replay = parser_core_fixture("valid-minimal.ocap.json");
+    let old_artifact = temp_output_path("conflicting", "old.json");
+    let new_artifact = temp_output_path("conflicting", "new.json");
+    let report_path = temp_output_path("conflicting", "report.json");
+    write_selected_artifact(&old_artifact, "success");
+    write_selected_artifact(&new_artifact, "success");
+
+    // Act
+    let command_output = run_compare(&[
+        "--replay",
+        replay.to_str().expect("replay path should be valid UTF-8"),
+        "--new-artifact",
+        new_artifact.to_str().expect("new artifact path should be valid UTF-8"),
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("compare accepts only one of --replay or --new-artifact"));
+    assert!(!report_path.exists());
+}
+
+#[test]
+fn compare_command_should_fail_when_old_artifact_is_not_valid_json() {
+    // Arrange
+    let old_artifact = temp_output_path("invalid-old", "old.json");
+    let new_artifact = temp_output_path("invalid-old", "new.json");
+    let report_path = temp_output_path("invalid-old", "report.json");
+    fs::write(&old_artifact, b"{").expect("invalid old artifact should be writable");
+    write_selected_artifact(&new_artifact, "success");
+
+    // Act
+    let command_output = run_compare(&[
+        "--new-artifact",
+        new_artifact.to_str().expect("new artifact path should be valid UTF-8"),
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("could not compare artifacts"));
+    assert!(!report_path.exists());
+}

@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-04-28T06:40:00.000Z"
+status: blocked
+stopped_at: Blocked during 05-03-PLAN.md coverage gate verification
+last_updated: "2026-04-28T08:10:00.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 
 Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
 Plan: 4 of 6
-Status: Ready to execute
+Status: Blocked on 05-03 coverage gate verification
 Last activity: 2026-04-28
 
 Progress: [█████████░] 90%
@@ -125,7 +125,11 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- 2026-04-28: Phase 05 Plan 03 coverage gate is blocked. Native `cargo llvm-cov`
+  can enforce 100% line/function/region thresholds, but stable Rust cannot apply
+  the planned narrow line-level allowlist to production code without a custom
+  post-processor; `#[coverage(off)]` is still experimental on rustc 1.95.0.
+  See `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
 ### Quick Tasks Completed
 

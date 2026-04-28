@@ -406,3 +406,72 @@ fn killed_event_kill_info(value: Option<&Value>) -> KilledEventKillInfo {
         weapon: weapon.as_str().filter(|weapon| !weapon.is_empty()).map(ToOwned::to_owned),
     }
 }
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn raw_helpers_should_preserve_defensive_shape_branches() {
+        // Arrange
+        let class_absent_with_drifted_fallback = json!({ "_class": false });
+        let class_drift_with_present_fallback = json!({
+            "class": null,
+            "_class": "fallback-class"
+        });
+        let class_drift_without_fallback = json!({ "class": null });
+
+        // Act + Assert
+        assert!(matches!(
+            entity_class(&class_absent_with_drifted_fallback, 0),
+            RawField::Drift { json_path, observed_shape, .. }
+                if json_path == "$.entities[0]._class" && observed_shape == "boolean"
+        ));
+        assert!(matches!(
+            entity_class(&class_drift_with_present_fallback, 1),
+            RawField::Present { value, json_path }
+                if value == "fallback-class" && json_path == "$.entities[1]._class"
+        ));
+        assert!(matches!(
+            entity_class(&class_drift_without_fallback, 2),
+            RawField::Drift { json_path, observed_shape, .. }
+                if json_path == "$.entities[2].class" && observed_shape == "null"
+        ));
+
+        assert_eq!(observed_shape(&Value::Null), "null");
+        assert_eq!(observed_shape(&Value::Bool(true)), "boolean");
+    }
+
+    #[test]
+    fn killed_event_kill_info_should_keep_every_malformed_shape_auditable() {
+        // Arrange
+        let absent = None;
+        let non_array = json!(false);
+        let wrong_length = json!([1, "rifle", "extra"]);
+        let non_numeric_killer = json!(["one", "rifle"]);
+        let empty_weapon = json!([1, ""]);
+
+        // Act + Assert
+        assert_eq!(
+            killed_event_kill_info(absent),
+            KilledEventKillInfo::Malformed { observed_shape: "absent".to_owned() }
+        );
+        assert_eq!(
+            killed_event_kill_info(Some(&non_array)),
+            KilledEventKillInfo::Malformed { observed_shape: "boolean".to_owned() }
+        );
+        assert_eq!(
+            killed_event_kill_info(Some(&wrong_length)),
+            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
+        );
+        assert_eq!(
+            killed_event_kill_info(Some(&non_numeric_killer)),
+            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
+        );
+        assert_eq!(
+            killed_event_kill_info(Some(&empty_weapon)),
+            KilledEventKillInfo::Killer { killer_entity_id: 1, weapon: None }
+        );
+    }
+}
