@@ -5,9 +5,12 @@
     reason = "integration tests use expect messages as assertion context"
 )]
 
-use parser_harness::report::{
-    ComparisonBaseline, ComparisonFinding, ComparisonInput, ComparisonReport, ImpactAssessment,
-    ImpactLevel, MismatchCategory, ReportValidationError,
+use parser_harness::{
+    comparison::compare_artifacts,
+    report::{
+        ComparisonBaseline, ComparisonFinding, ComparisonInput, ComparisonReport, ImpactAssessment,
+        ImpactLevel, MismatchCategory, ReportValidationError,
+    },
 };
 use serde_json::{Value, json};
 
@@ -85,4 +88,83 @@ fn comparison_report_current_vs_regenerated_drift_should_remain_human_review() {
             category: MismatchCategory::Compatible,
         }
     );
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_emit_compatible_findings_when_selected_surfaces_match()
+ {
+    // Arrange
+    let old_json = selected_artifact_json("success");
+    let new_json = selected_artifact_json("success");
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("matching selected artifacts should produce a report");
+
+    // Assert
+    assert!(report.findings.iter().any(|finding| finding.category == MismatchCategory::Compatible));
+    assert_eq!(report.summary.by_category["compatible"], 7);
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_emit_insufficient_data_when_selected_surface_is_missing()
+ {
+    // Arrange
+    let old_json = br#"{"status":"success"}"#;
+    let new_json = br#"{"status":"success","events":[]}"#;
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", old_json, "new-selected-artifact", new_json)
+            .expect("structurally different selected artifacts should produce a report");
+
+    // Assert
+    assert!(
+        report
+            .findings
+            .iter()
+            .any(|finding| finding.category == MismatchCategory::InsufficientData)
+    );
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_emit_human_review_when_baseline_label_marks_regenerated_drift()
+ {
+    // Arrange
+    let old_json = selected_artifact_json("success");
+    let new_json = selected_artifact_json("success");
+
+    // Act
+    let report = compare_artifacts(
+        "current-vs-regenerated-drift worker-count-1",
+        &old_json,
+        "new-selected-artifact",
+        &new_json,
+    )
+    .expect("baseline drift reports should be held for human review");
+
+    // Assert
+    assert!(
+        report.findings.iter().all(|finding| finding.category == MismatchCategory::HumanReview)
+    );
+}
+
+fn selected_artifact_json(status: &str) -> Vec<u8> {
+    serde_json::to_vec(&json!({
+        "status": status,
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "events": [],
+        "aggregates": {
+            "projections": {
+                "legacy.player_game_results": [],
+                "legacy.relationships": [],
+                "bounty.inputs": [],
+                "vehicle_score.inputs": []
+            }
+        }
+    }))
+    .expect("selected fixture JSON should serialize")
 }
