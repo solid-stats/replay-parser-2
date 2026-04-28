@@ -1,10 +1,11 @@
 ---
 phase: 04
 slug: event-semantics-and-aggregates
-status: draft
+status: complete
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-04-27
+verified: 2026-04-28T10:29:01+07:00
 ---
 
 # Phase 04 - Validation Strategy
@@ -33,13 +34,13 @@ Per-phase validation contract for event semantics and aggregate projection.
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 04-00-01 | 04-00 | 1 | PARS-08/PARS-10/PARS-11/AGG-02/AGG-08 | T-04-00-01 | Contract has typed, schema-visible event, aggregate, vehicle-score, and side-fact payloads | contract/schema | `cargo test -p parser-contract combat_event_contract aggregate_contract replay_side_facts_contract schema_contract` | no | pending |
-| 04-01-01 | 04-01 | 2 | PARS-08/PARS-09 | T-04-01-01 | Raw killed tuple accessors preserve source coordinates without panics | unit | `cargo test -p parser-core raw_event_accessors` | no | pending |
-| 04-02-01 | 04-02 | 3 | PARS-08/PARS-09 | T-04-02-01 | Combat normalization classifies kills, deaths, teamkills, suicides, null killers, and vehicle victims from observed facts | integration | `cargo test -p parser-core combat_event_semantics` | no | pending |
-| 04-03-01 | 04-03 | 4 | AGG-01/AGG-02/AGG-03/AGG-04/AGG-05/AGG-06/AGG-07 | T-04-03-01 | Legacy, relationship, game-type, and bounty projections are derived only from event-backed contributions | integration | `cargo test -p parser-core aggregate_projection` | no | pending |
-| 04-04-01 | 04-04 | 5 | AGG-08/AGG-09/AGG-10/AGG-11 | T-04-04-01 | Vehicle score weights and teamkill clamp are source-reference-backed and recalculable | integration | `cargo test -p parser-core vehicle_score` | no | pending |
-| 04-05-01 | 04-05 | 5 | PARS-10/PARS-11 | T-04-05-01 | Missing commander/winner remains explicit unknown; candidates carry confidence and source refs | integration | `cargo test -p parser-core side_facts` | no | pending |
-| 04-06-01 | 04-06 | 6 | PARS-08..PARS-11/AGG-01..AGG-11 | T-04-06-01 | Final artifact assembly is deterministic, schema-valid, documented, and lint-clean | full | `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && cargo doc --workspace --no-deps` | no | pending |
+| 04-00-01 | 04-00 | 1 | PARS-08/PARS-10/PARS-11/AGG-02/AGG-08 | T-04-00-01 | Contract has typed, schema-visible event, aggregate, vehicle-score, and side-fact payloads | contract/schema | `cargo test -p parser-contract` | yes | passed |
+| 04-01-01 | 04-01 | 2 | PARS-08/PARS-09 | T-04-01-01 | Raw killed tuple accessors preserve source coordinates without panics | unit | `cargo test -p parser-core raw_event_accessors` | yes | passed |
+| 04-02-01 | 04-02 | 3 | PARS-08/PARS-09 | T-04-02-01 | Combat normalization classifies kills, deaths, teamkills, suicides, null killers, and vehicle victims from observed facts | integration | `cargo test -p parser-core combat_event_semantics` | yes | passed |
+| 04-03-01 | 04-03 | 4 | AGG-01/AGG-02/AGG-03/AGG-04/AGG-05/AGG-06/AGG-07 | T-04-03-01 | Legacy, relationship, game-type, and bounty projections are derived only from event-backed contributions | integration | `cargo test -p parser-core aggregate_projection` | yes | passed |
+| 04-04-01 | 04-04 | 5 | AGG-08/AGG-09/AGG-10/AGG-11 | T-04-04-01 | Vehicle score weights and teamkill clamp are source-reference-backed and recalculable | integration | `cargo test -p parser-core vehicle_score` | yes | passed |
+| 04-05-01 | 04-05 | 5 | PARS-10/PARS-11 | T-04-05-01 | Missing commander/winner remains explicit unknown; candidates carry confidence and source refs | integration | `cargo test -p parser-core side_facts` | yes | passed |
+| 04-06-01 | 04-06 | 6 | PARS-08..PARS-11/AGG-01..AGG-11 | T-04-06-01 | Final artifact assembly is deterministic, schema-valid, documented, and lint-clean | full | `cargo fmt --all -- --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace`; `cargo doc --workspace --no-deps` | yes | passed |
 
 ## Wave 0 Requirements
 
@@ -72,4 +73,24 @@ Per-phase validation contract for event semantics and aggregate projection.
 - [x] No watch-mode flags are required.
 - [x] `nyquist_compliant: true` is set in frontmatter.
 
-Approval: pending execution.
+Approval: verified 2026-04-28T10:29:01+07:00.
+
+## Phase-Level Verification Evidence
+
+Passed on 2026-04-28:
+
+- `cargo test -p parser-contract`
+- `cargo test -p parser-core raw_event_accessors`
+- `cargo test -p parser-core combat_event_semantics`
+- `cargo test -p parser-core aggregate_projection`
+- `cargo test -p parser-core vehicle_score`
+- `cargo test -p parser-core side_facts`
+- `cargo test -p parser-core deterministic_output`
+- `cargo run -p parser-contract --example export_schema > /tmp/phase4-parse-artifact-v1.schema.json`
+- `cmp /tmp/phase4-parse-artifact-v1.schema.json schemas/parse-artifact-v1.schema.json`
+- `cargo fmt --all -- --check`
+- `cargo clippy --workspace --all-targets -- -D warnings`
+- `cargo test --workspace`
+- `cargo doc --workspace --no-deps`
+- `git diff --check`
+- Boundary grep for PostgreSQL, queue/S3, public API/UI, replay discovery, and canonical identity terms.

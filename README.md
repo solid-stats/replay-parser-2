@@ -6,11 +6,11 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 4 Event Semantics and Aggregates implementation and review fixes are complete; phase-level GSD verification is still pending. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and now emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 4 Event Semantics and Aggregates is verified complete. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
 The CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 4, `Event Semantics and Aggregates` (implementation and review fixes complete; ready for phase verification before Phase 5 planning).
+- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (ready to plan).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -178,6 +178,9 @@ For project-changing work:
 - `.planning/ROADMAP.md`: milestone phase plan.
 - `.planning/STATE.md`: current GSD state and completed quick tasks.
 - `.planning/research/SUMMARY.md`: technical research and architecture rationale.
+- `.planning/phases/04-event-semantics-and-aggregates/04-VERIFICATION.md`: Phase 4 verification result.
+- `.planning/phases/04-event-semantics-and-aggregates/04-SECURITY.md`: Phase 4 threat mitigation verification.
+- `.planning/phases/04-event-semantics-and-aggregates/04-UAT.md`: Phase 4 acceptance evidence.
 - `.planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md`: Phase 1 legacy parser command/runtime baseline.
 - `.planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md`: Phase 1 full-history corpus profile summary.
 - `.planning/phases/01-legacy-baseline-and-corpus/legacy-rules-output-surfaces.md`: Phase 1 legacy filters, identity, and output-surface inventory.
@@ -189,4 +192,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-27 after completing Phase 4 event semantics and aggregates.
+Last updated: 2026-04-28 after verifying Phase 4 event semantics and aggregates.

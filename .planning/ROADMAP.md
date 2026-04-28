@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Legacy Baseline and Corpus** - Pin the old parser baseline and historical corpus facts that define v1 parity. (completed 2026-04-25)
 - [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
 - [x] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts. (completed 2026-04-27)
-- [ ] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (in progress)
+- [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
@@ -108,7 +108,7 @@ Plans:
 - [x] 04-03-PLAN.md — Legacy per-replay projections, relationships, game-type compatibility metadata, squad/rotation inputs, and bounty inputs.
 - [x] 04-04-PLAN.md — Issue #13 vehicle score taxonomy, weights, contributions, denominator inputs, and teamkill clamp tests.
 - [x] 04-05-PLAN.md — Typed commander-side and winner/outcome facts with conservative known/unknown/candidate semantics.
-- [ ] 04-06-PLAN.md — Schema/example refresh, deterministic populated artifact tests, README handoff, and final quality gates.
+- [x] 04-06-PLAN.md — Schema/example refresh, deterministic populated artifact tests, README handoff, and final quality gates.
 
 ### Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates
 **Goal**: Developers can reproduce parser results locally, compare against the old parser, enforce 100% reachable-code coverage, and measure the 10x target on equivalent workloads.
@@ -157,7 +157,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Legacy Baseline and Corpus | 5/5 | Complete    | 2026-04-25 |
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
-| 4. Event Semantics and Aggregates | 6/7 | In progress | - |
+| 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/TBD | Not started | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |

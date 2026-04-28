@@ -55,7 +55,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **PARS-05**: Parser normalizes vehicle/static weapon entities with source IDs, names, classes, side/context where available, and source positions where needed for audit.
 - [x] **PARS-06**: Parser preserves old connected-player backfill behavior needed for parity when entity data alone omits participants.
 - [x] **PARS-07**: Parser preserves old duplicate-slot same-name merge compatibility behavior for aggregate projection while retaining raw observed identifiers in normalized events.
-- [ ] **PARS-08**: Parser extracts normalized kill, death, teamkill, suicide, null-killer, player-killed, and vehicle-killed event semantics.
+- [x] **PARS-08**: Parser extracts normalized kill, death, teamkill, suicide, null-killer, player-killed, and vehicle-killed event semantics.
 - [x] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
 - [x] **PARS-10**: Parser extracts commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, source, and confidence metadata.
 - [x] **PARS-11**: Parser extracts winner/outcome data when present and emits unknown/inferred states when older replay data does not contain reliable winner data.
@@ -173,7 +173,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-05 | Phase 3 | Complete |
 | PARS-06 | Phase 3 | Complete |
 | PARS-07 | Phase 3 | Complete |
-| PARS-08 | Phase 4 | Pending |
+| PARS-08 | Phase 4 | Complete |
 | PARS-09 | Phase 4 | Complete |
 | PARS-10 | Phase 4 | Complete |
 | PARS-11 | Phase 4 | Complete |
@@ -221,4 +221,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-27 after completing Phase 4 Plan 05 side facts*
+*Last updated: 2026-04-28 after verifying Phase 4 event semantics and aggregates*

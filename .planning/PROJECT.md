@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 3 complete: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata and observed entity facts, emit capped schema-drift diagnostics and structured failures instead of panics, and preserve connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints. Phase 4, `Event Semantics and Aggregates`, is planned and ready to execute.
+Phase 4 complete and verified: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata, observed entity facts, combat events, aggregate projections, bounty inputs, issue #13 vehicle score inputs, and replay-side commander/outcome facts. Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates`, is ready to plan.
 
 ## Requirements
 
@@ -24,19 +24,12 @@ Phase 3 complete: the pure `parser-core` crate can parse OCAP JSON bytes through
 - [x] Phase 1 validated the legacy baseline command/runtime dossier, corpus manifest, legacy rule/output inventory, and old-vs-new mismatch taxonomy.
 - [x] Phase 2 validated the versioned `ParseArtifact` and `ParseFailure` contract shape, generated JSON Schema, explicit presence states, observed identity boundary, checksum/source-reference invariants, and schema-backed example validation.
 - [x] Phase 3 validated deterministic parser-core output, tolerant OCAP root/metadata/entity normalization, schema-drift diagnostics, connected-player backfill, and duplicate-slot same-name compatibility hints without canonical identity matching.
+- [x] Phase 4 validated normalized combat/outcome semantics, legacy and relationship aggregate projections, bounty inputs, issue #13 vehicle score inputs, source-reference-backed recalculation evidence, and replay-side commander/outcome facts without parser-owned persistence or canonical identity.
 
 ### Active
 
-- [ ] Build a Rust parser for OCAP JSON replay files matching the historical `~/sg_stats/raw_replays` corpus.
 - [ ] Provide a CLI that parses a local OCAP JSON file and writes normalized result JSON.
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
-- [ ] Emit deterministic normalized event output for replay metadata, observed player/entity identity, kill/death/teamkill events, vehicle context, commander-side data, and winner/outcome where present.
-- [ ] Emit aggregate summaries for current Solid Stats fields and new stats needed by player, squad, rotation, commander-side, and bounty point calculations.
-- [ ] Support the vehicle score metric from GitHub issue #13, based only on kills from vehicles, weighted by attacker vehicle type and killed entity type, with teamkill penalties clamped to at least 1.
-- [ ] Version the parser output contract and include source references that allow aggregates to be traced back to normalized events.
-- [ ] Preserve observed identifiers from the replay without attempting canonical player matching.
-- [ ] Represent missing winner, SteamID, and other absent identity fields explicitly as unknown/null states.
-- [ ] Produce structured parse failures tied to replay file and job identifiers.
 - [ ] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
 - [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
@@ -203,4 +196,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 after planning Phase 4 event semantics and aggregates*
+*Last updated: 2026-04-28 after verifying Phase 4 event semantics and aggregates*

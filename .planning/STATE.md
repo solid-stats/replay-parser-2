@@ -2,41 +2,41 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_verify
-stopped_at: Phase 04 code review fixes complete
-last_updated: "2026-04-28T10:10:19+07:00"
-last_activity: 2026-04-28 - Phase 04 review blockers and warnings fixed
+status: ready_to_plan
+stopped_at: Phase 04 verified complete
+last_updated: "2026-04-28T10:29:01+07:00"
+last_activity: 2026-04-28 - Phase 04 phase-level verification passed
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 24
-  completed_plans: 23
-  percent: 96
+  completed_plans: 24
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-27)
+See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 4 — event-semantics-and-aggregates
+**Current focus:** Phase 5 — cli-golden-parity-benchmarks-and-coverage-gates
 
 ## Current Position
 
-Phase: 4 (event-semantics-and-aggregates)
-Plan: 04-review-fix
-Status: Ready for phase verification
-Last activity: 2026-04-28 - Phase 04 review blockers and warnings fixed
+Phase: 5 (cli-golden-parity-benchmarks-and-coverage-gates)
+Plan: not started
+Status: Ready to plan
+Last activity: 2026-04-28 - Phase 04 phase-level verification passed
 
-Progress: [█████████▋] 96% of currently planned work
+Progress: [██████████] 100% of currently planned work
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 22
+- Total plans completed: 24
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -47,7 +47,7 @@ Progress: [█████████▋] 96% of currently planned work
 | 1 | 5 | - | - |
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
-| 04 | 6/7 | 56m40s | 9m27s |
+| 04 | 7/7 | 96m40s | 13m49s |
 
 **Recent Trend:**
 
@@ -74,6 +74,7 @@ Progress: [█████████▋] 96% of currently planned work
 | Phase 04 P03 | 11m45s | 4 tasks | 5 files |
 | Phase 04 P04 | 8m27s | 3 tasks | 5 files |
 | Phase 04 P05 | 8m30s | 4 tasks | 6 files |
+| Phase 04 P06 | 40m | 4 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,7 @@ Recent decisions affecting current work:
 - Phase 4 Plan 04 emits issue #13 vehicle score award/penalty inputs, denominator eligibility rows, raw/applied teamkill penalty weights, and source refs without computing final cross-replay score.
 - Phase 4 Plan 05 emits typed replay-side outcome facts and commander candidates with conservative known/unknown semantics, confidence, rule IDs, and source refs without canonical commander truth.
 - Phase 4 review fixes add legacy player eligibility across combat and aggregate projections, zero-counter rows for eligible players, raw vehicle-class category mapping, friendly vehicle/static teamkill penalties, vehicle-score entity source refs, typed aggregate payload schema conditionals, conflicting outcome diagnostics, tokenized commander matching, and malformed killed-event diagnostics.
+- Phase 4 verification passed with UAT, security, validation, schema freshness, full Cargo quality gate, and boundary grep evidence. Phase 5 can plan CLI, golden parity, benchmarks, and coverage gates on top of verified parser-core artifacts.
 
 ### Pending Todos
 
@@ -140,11 +142,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T10:10:19+07:00
-Stopped at: Phase 04 code review fixes complete
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-REVIEW-FIX.md
+Last session: 2026-04-28T10:29:01+07:00
+Stopped at: Phase 04 verified complete
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-VERIFICATION.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
-**Next Step:** Phase 4 verification — review the fix report and run phase-level verification before Phase 5 planning
+**Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
+**Next Step:** Phase 5 planning — CLI, golden parity, benchmarks, and coverage gates
