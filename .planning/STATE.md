@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-04-PLAN.md; ready for 05-05-PLAN.md benchmark and final quality gates
-last_updated: "2026-04-28T08:29:18.000Z"
+status: verification-ready
+stopped_at: Completed 05-05-PLAN.md; ready for Phase 5 verification
+last_updated: "2026-04-28T09:00:51.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 29
-  percent: 97
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates
+**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates verification
 
 ## Current Position
 
-Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
+Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTION COMPLETE
 Plan: 6 of 6
-Status: Ready to execute 05-05 benchmark and final quality gates
+Status: Ready for Phase 5 verification
 Last activity: 2026-04-28
 
 Progress: [██████████] 97%
@@ -36,7 +36,7 @@ Progress: [██████████] 97%
 
 **Velocity:**
 
-- Total plans completed: 29
+- Total plans completed: 30
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -48,7 +48,7 @@ Progress: [██████████] 97%
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
-| 05 | 5/6 | 187m | 37m24s |
+| 05 | 6/6 | 221m | 36m50s |
 
 **Recent Trend:**
 
@@ -81,6 +81,7 @@ Progress: [██████████] 97%
 | Phase 05 P02 | 65min | 4 tasks | 11 files |
 | Phase 05 P03 | 73min | 3 tasks | 22 files |
 | Phase 05 P04 | 14min | 3 tasks | 7 files |
+| Phase 05 P05 | 34min | 4 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 03 coverage exclusions are exact source lines with committed allowlist metadata and production-file `coverage-exclusion:` markers. — Blanket non-generated exclusions remain rejected, and behavior tests stay public-API oriented.
 - [Phase 05]: Plan 04 adds a mutation/equivalent fault-report gate with deterministic fallback. — `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise generates a validated `deterministic-fault-injection` report covering vehicle score, combat events, aggregate source refs, and failure paths.
 - [Phase 05]: Plan 04 fault report validation blocks high-risk `missed` cases without accepted non-applicable rationale. — Report validation remains in parser-harness and does not introduce parser-core test-only hooks.
+- [Phase 05]: Plan 05 benchmark reports carry workload identity, old baseline profile, throughput, parity status, RSS note, and 10x status. — The CI benchmark gate records `ten_x_status=unknown` and `parity_status=not_run` with explicit triage until approved old-baseline evidence is collected.
+- [Phase 05]: Final execution gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior. — Phase 5 is ready for verification, while Phase 6 still owns RabbitMQ/S3 worker integration.
 
 ### Pending Todos
 
@@ -134,6 +137,8 @@ None yet.
 None active. The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
+The Phase 5 CI benchmark report intentionally records `ten_x_status=unknown`
+because the old baseline/parity run is not part of the portable CI gate.
 
 ### Quick Tasks Completed
 
@@ -161,12 +166,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T08:29:18.000Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-04-28T09:00:51.000Z
+Stopped at: Completed 05-05-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Execute Phase 5 Plan 05 — benchmark reports, README command handoff, and final quality gates
+**Next Step:** Verify Phase 5 execution results with `$gsd-verify-work`

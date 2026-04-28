@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
 - [x] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts. (completed 2026-04-27)
 - [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
-- [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable.
+- [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification pending)
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -136,7 +136,7 @@ Plans:
 - [x] 05-02-PLAN.md — Selected-input comparison harness and `replay-parser-2 compare` reports.
 - [x] 05-03-PLAN.md — `cargo llvm-cov` coverage gate, allowlist validation, and behavior-test strengthening.
 - [x] 05-04-PLAN.md — Mutation or equivalent fault-injection report gate.
-- [ ] 05-05-PLAN.md — Benchmark reports, README command handoff, and final quality gates.
+- [x] 05-05-PLAN.md — Benchmark reports, README command handoff, and final quality gates.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.

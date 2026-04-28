@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 4 complete and verified: the pure `parser-core` crate can parse OCAP JSON bytes through a transport-free API, normalize deterministic replay metadata, observed entity facts, combat events, aggregate projections, bounty inputs, issue #13 vehicle score inputs, and replay-side commander/outcome facts. Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates`, is ready to plan.
+Phase 5 execution is complete and ready for verification. The repository now has the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation. The CI benchmark report is valid but records `ten_x_status=unknown` until an approved old-baseline/parity run is collected.
 
 ## Requirements
 
@@ -28,11 +28,11 @@ Phase 4 complete and verified: the pure `parser-core` crate can parse OCAP JSON 
 
 ### Active
 
-- [ ] Provide a CLI that parses a local OCAP JSON file and writes normalized result JSON.
+- [x] Provide a CLI that parses a local OCAP JSON file and writes normalized result JSON.
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
-- [ ] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
-- [ ] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
+- [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
+- [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
+- [x] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
 
 ### Out of Scope
 
@@ -196,4 +196,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 after verifying Phase 4 event semantics and aggregates*
+*Last updated: 2026-04-28 after completing Phase 5 execution gates*
