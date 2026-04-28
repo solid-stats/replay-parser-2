@@ -17,6 +17,7 @@ path = "src/main.rs"
 [dependencies]
 parser-contract = { path = "../parser-contract" }
 parser-core = { path = "../parser-core" }
+parser-harness = { path = "../parser-harness" }
 clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 serde_json = "1"

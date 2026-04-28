@@ -11,13 +11,14 @@ use std::{
 
 use clap::{Parser, Subcommand};
 use parser_contract::{
-    artifact::ParseStatus,
+    artifact::{ParseArtifact, ParseStatus},
     presence::FieldPresence,
     schema::parse_artifact_schema,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_harness::comparison::{ComparisonError, compare_artifacts};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
@@ -52,10 +53,10 @@ enum Commands {
     Compare {
         /// Source replay path selected for comparison.
         #[arg(long)]
-        replay: PathBuf,
+        replay: Option<PathBuf>,
         /// New parser artifact path.
         #[arg(long)]
-        new_artifact: PathBuf,
+        new_artifact: Option<PathBuf>,
         /// Old parser artifact path.
         #[arg(long)]
         old_artifact: PathBuf,
@@ -74,7 +75,9 @@ enum CliError {
     Serialize(serde_json::Error),
     ParserInfo(serde_json::Error),
     Checksum(parser_contract::source_ref::ChecksumValueError),
-    ComparePlanned,
+    Compare(ComparisonError),
+    CompareRequiresInput,
+    CompareConflictingInput,
 }
 
 impl Display for CliError {
@@ -101,8 +104,14 @@ impl Display for CliError {
             Self::Checksum(source) => {
                 write!(formatter, "could not build source checksum: {source}")
             }
-            Self::ComparePlanned => {
-                formatter.write_str("compare command is planned in Phase 5 Plan 02")
+            Self::Compare(source) => {
+                write!(formatter, "could not compare artifacts: {source}")
+            }
+            Self::CompareRequiresInput => {
+                formatter.write_str("compare requires --replay or --new-artifact")
+            }
+            Self::CompareConflictingInput => {
+                formatter.write_str("compare accepts only one of --replay or --new-artifact")
             }
         }
     }
@@ -117,7 +126,8 @@ impl Error for CliError {
             | Self::WriteStderr(source) => Some(source),
             Self::Serialize(source) | Self::ParserInfo(source) => Some(source),
             Self::Checksum(source) => Some(source),
-            Self::ComparePlanned => None,
+            Self::Compare(source) => Some(source),
+            Self::CompareRequiresInput | Self::CompareConflictingInput => None,
         }
     }
 }
@@ -133,8 +143,8 @@ fn run() -> Result<ExitCode, CliError> {
     match Cli::parse().command {
         Commands::Parse { input, output, replay_id } => parse_command(&input, &output, replay_id),
         Commands::Schema { output } => schema_command(output),
-        Commands::Compare { replay: _, new_artifact: _, old_artifact: _, output: _ } => {
-            Err(CliError::ComparePlanned)
+        Commands::Compare { replay, new_artifact, old_artifact, output } => {
+            compare_command(replay.as_deref(), new_artifact.as_deref(), &old_artifact, &output)
         }
     }
 }
@@ -144,6 +154,26 @@ fn parse_command(
     output: &Path,
     replay_id: Option<String>,
 ) -> Result<ExitCode, CliError> {
+    let artifact = parse_artifact_from_input(input, replay_id)?;
+    let artifact_bytes = serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?;
+    write_pretty_json_file(output, artifact_bytes)?;
+
+    if artifact.status == ParseStatus::Failed {
+        let summary = artifact.failure.as_ref().map_or_else(
+            || "parse failed: no structured failure payload".to_string(),
+            |failure| format!("parse failed: {}", failure.message),
+        );
+        write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
+        return Ok(ExitCode::FAILURE);
+    }
+
+    Ok(ExitCode::SUCCESS)
+}
+
+fn parse_artifact_from_input(
+    input: &Path,
+    replay_id: Option<String>,
+) -> Result<ParseArtifact, CliError> {
     let bytes = fs::read(input)
         .map_err(|source| CliError::ReadInput { path: input.to_path_buf(), source })?;
     let checksum_hex = sha256_hex(&bytes);
@@ -163,19 +193,7 @@ fn parse_command(
         options: ParserOptions::default(),
     });
 
-    let artifact_bytes = serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?;
-    write_pretty_json_file(output, artifact_bytes)?;
-
-    if artifact.status == ParseStatus::Failed {
-        let summary = artifact.failure.as_ref().map_or_else(
-            || "parse failed: no structured failure payload".to_string(),
-            |failure| format!("parse failed: {}", failure.message),
-        );
-        write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
-        return Ok(ExitCode::FAILURE);
-    }
-
-    Ok(ExitCode::SUCCESS)
+    Ok(artifact)
 }
 
 fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
@@ -190,6 +208,42 @@ fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
     }
 
     Ok(ExitCode::SUCCESS)
+}
+
+fn compare_command(
+    replay: Option<&Path>,
+    new_artifact: Option<&Path>,
+    old_artifact: &Path,
+    output: &Path,
+) -> Result<ExitCode, CliError> {
+    match (replay, new_artifact) {
+        (None, None) => return Err(CliError::CompareRequiresInput),
+        (Some(_), Some(_)) => return Err(CliError::CompareConflictingInput),
+        _ => {}
+    }
+
+    let old_bytes = read_file(old_artifact)?;
+    let old_label = old_artifact.display().to_string();
+    let (new_label, new_bytes) = if let Some(path) = new_artifact {
+        (path.display().to_string(), read_file(path)?)
+    } else if let Some(path) = replay {
+        let artifact = parse_artifact_from_input(path, None)?;
+        let artifact_bytes = serde_json::to_vec(&artifact).map_err(CliError::Serialize)?;
+        (format!("parsed replay: {}", path.display()), artifact_bytes)
+    } else {
+        return Err(CliError::CompareRequiresInput);
+    };
+
+    let report = compare_artifacts(old_label, &old_bytes, new_label, &new_bytes)
+        .map_err(CliError::Compare)?;
+    let report_bytes = serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
+    write_pretty_json_file(output, report_bytes)?;
+
+    Ok(ExitCode::SUCCESS)
+}
+
+fn read_file(path: &Path) -> Result<Vec<u8>, CliError> {
+    fs::read(path).map_err(|source| CliError::ReadInput { path: path.to_path_buf(), source })
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {

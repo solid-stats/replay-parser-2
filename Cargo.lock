@@ -691,6 +691,7 @@ dependencies = [
  "hex",
  "parser-contract",
  "parser-core",
+ "parser-harness",
  "serde_json",
  "sha2",
 ]

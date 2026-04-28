@@ -1,0 +1,177 @@
+//! Compare command behavior tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
+
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::Output,
+    sync::atomic::{AtomicU64, Ordering},
+};
+
+use assert_cmd::Command;
+use serde_json::json;
+
+static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
+
+fn parser_core_fixture(name: &str) -> PathBuf {
+    let crates_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("parser-cli should live under crates/")
+        .to_path_buf();
+
+    crates_dir.join("parser-core/tests/fixtures").join(name)
+}
+
+fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {
+    let id = NEXT_TEMP_ID.fetch_add(1, Ordering::SeqCst);
+    let dir = std::env::temp_dir()
+        .join(format!("replay-parser-2-compare-{test_name}-{}-{id}", std::process::id()));
+    fs::create_dir_all(&dir).expect("test temp directory should be created");
+    dir.join(file_name)
+}
+
+fn run_compare(args: &[&str]) -> Output {
+    let mut command =
+        Command::cargo_bin("replay-parser-2").expect("replay-parser-2 binary should build");
+    command.arg("compare").args(args).output().expect("compare command should run")
+}
+
+fn run_parse(input: &Path, output: &Path) -> Output {
+    Command::cargo_bin("replay-parser-2")
+        .expect("replay-parser-2 binary should build")
+        .arg("parse")
+        .arg(input)
+        .arg("--output")
+        .arg(output)
+        .output()
+        .expect("parse command should run")
+}
+
+fn write_selected_artifact(path: &Path, status: &str) {
+    let artifact = json!({
+        "status": status,
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "events": [],
+        "aggregates": {
+            "projections": {
+                "legacy.player_game_results": [],
+                "legacy.relationships": [],
+                "bounty.inputs": [],
+                "vehicle_score.inputs": []
+            }
+        }
+    });
+    let bytes = serde_json::to_vec_pretty(&artifact).expect("test artifact should serialize");
+    fs::write(path, bytes).expect("test artifact should be writable");
+}
+
+fn read_report(path: &Path) -> String {
+    fs::read_to_string(path).expect("comparison report should be readable")
+}
+
+#[test]
+fn compare_command_should_write_compatible_report_when_saved_artifacts_match() {
+    // Arrange
+    let old_artifact = temp_output_path("compatible", "old.json");
+    let new_artifact = temp_output_path("compatible", "new.json");
+    let report_path = temp_output_path("compatible", "report.json");
+    write_selected_artifact(&old_artifact, "success");
+    write_selected_artifact(&new_artifact, "success");
+
+    // Act
+    let command_output = run_compare(&[
+        "--new-artifact",
+        new_artifact.to_str().expect("new artifact path should be valid UTF-8"),
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let report = read_report(&report_path);
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(report.contains("\"compatible\""));
+    assert!(report.contains("\"parser_artifact\""));
+    assert!(report.contains("\"server_2_persistence\""));
+    assert!(report.contains("\"server_2_recalculation\""));
+    assert!(report.contains("\"ui_visible_public_stats\""));
+}
+
+#[test]
+fn compare_command_should_write_review_report_when_saved_artifacts_differ() {
+    // Arrange
+    let old_artifact = temp_output_path("different", "old.json");
+    let new_artifact = temp_output_path("different", "new.json");
+    let report_path = temp_output_path("different", "report.json");
+    write_selected_artifact(&old_artifact, "success");
+    write_selected_artifact(&new_artifact, "failed");
+
+    // Act
+    let command_output = run_compare(&[
+        "--new-artifact",
+        new_artifact.to_str().expect("new artifact path should be valid UTF-8"),
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let report = read_report(&report_path);
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(report.contains("\"human_review\"") || report.contains("\"insufficient_data\""));
+}
+
+#[test]
+fn compare_command_should_parse_replay_when_new_artifact_is_absent() {
+    // Arrange
+    let replay = parser_core_fixture("valid-minimal.ocap.json");
+    let old_artifact = temp_output_path("replay", "old.json");
+    let report_path = temp_output_path("replay", "report.json");
+    let parse_output = run_parse(&replay, &old_artifact);
+
+    // Act
+    let command_output = run_compare(&[
+        "--replay",
+        replay.to_str().expect("replay path should be valid UTF-8"),
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let report = read_report(&report_path);
+
+    // Assert
+    assert!(parse_output.status.success());
+    assert!(command_output.status.success());
+    assert!(report.contains("\"compatible\""));
+}
+
+#[test]
+fn compare_command_should_fail_when_replay_and_new_artifact_are_missing() {
+    // Arrange
+    let old_artifact = temp_output_path("invalid", "old.json");
+    let report_path = temp_output_path("invalid", "report.json");
+    write_selected_artifact(&old_artifact, "success");
+
+    // Act
+    let command_output = run_compare(&[
+        "--old-artifact",
+        old_artifact.to_str().expect("old artifact path should be valid UTF-8"),
+        "--output",
+        report_path.to_str().expect("report path should be valid UTF-8"),
+    ]);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("compare requires --replay or --new-artifact"));
+}
