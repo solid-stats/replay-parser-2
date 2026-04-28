@@ -1,9 +1,9 @@
 ---
-status: complete
+status: issues-found
 phase: 05-cli-golden-parity-benchmarks-and-coverage-gates
 source: [05-00-SUMMARY.md, 05-01-SUMMARY.md, 05-02-SUMMARY.md, 05-03-SUMMARY.md, 05-04-SUMMARY.md, 05-05-SUMMARY.md]
 started: 2026-04-28T09:50:39Z
-updated: 2026-04-28T09:55:29Z
+updated: 2026-04-28T10:15:28Z
 ---
 
 ## Current Test
@@ -45,18 +45,18 @@ expected: Running `scripts/fault-report-gate.sh` uses `cargo mutants` when avail
 result: pass
 
 ### 9. Benchmark Report Gate
-expected: Running `scripts/benchmark-phase5.sh --ci` writes a validated benchmark report with workload identity, parser-stage throughput, old baseline profile, parity status, RSS note, and explicit 10x status; portable CI reports `ten_x_status=unknown` with triage instead of claiming a pass.
-result: pass
+expected: Running `scripts/benchmark-phase5.sh --ci` writes a validated benchmark report with workload identity, parser-stage throughput, old baseline profile, parity status, RSS note, and explicit 10x status; when the old parser and `~/sg_stats` are available, it also records a curated old-vs-new comparison result instead of leaving parity unrun.
+result: issue
 
 ### 10. README and Scope Handoff
-expected: The README documents implemented Phase 5 commands and gates using `replay-parser-2 parse`, `schema`, and `compare`, marks Phase 5 ready for verification, and keeps RabbitMQ/S3 worker integration, server persistence, canonical identity, replay discovery, UI, and yearly nomination behavior outside Phase 5 scope.
+expected: The README documents implemented Phase 5 commands and gates using `replay-parser-2 parse`, `schema`, and `compare`, reflects the current Phase 5 verification gap, and keeps RabbitMQ/S3 worker integration, server persistence, canonical identity, replay discovery, UI, and yearly nomination behavior outside Phase 5 scope.
 result: pass
 
 ## Summary
 
 total: 10
-passed: 10
-issues: 0
+passed: 9
+issues: 1
 pending: 0
 skipped: 0
 blocked: 0
@@ -69,9 +69,16 @@ blocked: 0
 - Test 6 verified with `cargo test -p parser-cli compare_command`.
 - Test 7 verified with `scripts/coverage-gate.sh`; result included `production_files=25`, `allowlisted_locations=386`, `uncovered_locations=0`.
 - Test 8 verified with `scripts/fault-report-gate.sh`; deterministic fallback reported `total_cases=6`, `high_risk_missed=0`.
-- Test 9 verified with `scripts/benchmark-phase5.sh --ci`; result included `benchmark_report_valid=true`, `ten_x_status=Unknown`, `parity_status=Some(NotRun)`.
-- Test 10 verified by README scope grep for implemented commands, Phase 5 status, and Phase 6/adjacent-app boundaries.
+- Test 9 verified with `scripts/benchmark-phase5.sh --ci`; latest generated report is valid but includes `ten_x_status=Fail`, `parity_status=Some(HumanReview)`, so the benchmark gate exposes a Phase 5 gap instead of passing the 10x target.
+- Test 10 verified by README scope grep for implemented commands, Phase 5 gap status, and Phase 6/adjacent-app boundaries.
 
 ## Gaps
 
-[none yet]
+### Test 9: Curated Old/New Benchmark Fails 10x And Needs Parity Review
+
+- truth: Benchmark evidence must compare old and new parser results on an equivalent selected workload before claiming Phase 5 performance readiness.
+- status: failed
+- severity: major
+- root_cause: The Phase 5 benchmark gate now runs a curated selected old-parser `runParseTask` sample against the Rust release CLI. The generated report validates structurally, but the selected run remains well below the `10x` target and every compared surface is classified `human_review`.
+- evidence: `.planning/generated/phase-05/benchmarks/benchmark-report.json`, `.planning/generated/phase-05/comparison/comparison-report.json`, `scripts/benchmark-phase5.sh`.
+- missing: Accepted parity decisions for the seven selected comparison surfaces, targeted performance work or an explicitly approved benchmark model/full-corpus benchmark, and a regenerated report that records `ten_x_status=pass` or an accepted gap.

@@ -12,7 +12,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 
 ## Current State
 
-Phase 5 execution is complete and ready for verification. The repository now has the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation. The CI benchmark report is valid but records `ten_x_status=unknown` until an approved old-baseline/parity run is collected.
+Phase 5 execution is complete, but UAT found a benchmark/parity gap. The repository now has the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation. The current curated old/new benchmark report is valid but records `ten_x_status=fail`, `parity_status=human_review`; Phase 5 remains open until the selected comparison surfaces are reviewed and the 10x target is remediated or explicitly accepted as a gap.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ Phase 5 execution is complete and ready for verification. The repository now has
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [x] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing.
+- [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing. Curated selected evidence exists but currently fails the 10x target and needs parity review.
 
 ### Out of Scope
 
@@ -196,4 +196,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 after completing Phase 5 execution gates*
+*Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence*

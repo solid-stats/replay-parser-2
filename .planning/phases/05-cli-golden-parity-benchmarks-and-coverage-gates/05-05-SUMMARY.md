@@ -19,7 +19,7 @@ tech-stack:
   added: [criterion, parser-harness-benchmark-report-check]
   patterns:
     - "Benchmark reports carry workload identity, old baseline profile, parity status, throughput, RSS note, and 10x status."
-    - "Portable CI benchmark evidence may report ten_x_status=unknown when old-baseline/parity evidence is not run."
+    - "Portable CI benchmark evidence may report ten_x_status=unknown only when old-baseline/parity evidence is unavailable; local curated evidence records pass/fail/human_review explicitly."
     - "Final boundary grep treats worker, database, API, canonical identity, UI, replay discovery, and yearly nomination references as out-of-scope unless explicitly implemented."
 
 key-files:
@@ -45,7 +45,7 @@ key-files:
     - .planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-VALIDATION.md
 
 key-decisions:
-  - "The local CI benchmark gate validates report shape and stage timings, but records ten_x_status=unknown until an approved old-baseline/parity run is collected."
+  - "The local CI benchmark gate validates report shape and stage timings; when old parser and ~/sg_stats are available it also records curated old/new selected comparison evidence."
   - "Criterion measures parse-only JSON decode, aggregate projection access through public artifact surfaces, and end-to-end parse_replay."
   - "Coverage allowlist was refreshed after adding benchmark/fault report production modules so final strict coverage remains zero-uncovered."
 
@@ -54,7 +54,8 @@ patterns-established:
   - "scripts/benchmark-phase5.sh writes generated evidence under .planning/generated/phase-05/benchmarks/."
   - "README handoff separates implemented Phase 5 commands and gates from future Phase 6 worker/server integration."
 
-requirements-completed: [TEST-04, TEST-05, TEST-06]
+requirements-completed: [TEST-04, TEST-05]
+requirements-open: [TEST-06]
 
 duration: 34min
 completed: 2026-04-28
@@ -77,7 +78,7 @@ completed: 2026-04-28
 - Added `benchmark-report-check` and behavior tests for valid reports, missing parity, missing workload identity, missing RSS notes, and insufficient 10x triage.
 - Added Criterion parser-stage benchmarks for parse-only JSON decode, aggregate projection access via public artifact output, and end-to-end `parse_replay`.
 - Added `scripts/benchmark-phase5.sh --ci`, which writes `.planning/generated/phase-05/benchmarks/benchmark-report.json` and validates it.
-- Updated README and planning docs to show Phase 5 execution complete and ready for verification.
+- Updated README and planning docs; post-UAT updates now show Phase 5 execution complete with a benchmark/parity verification gap.
 - Refreshed coverage allowlist for the new benchmark/fault report modules and reran the strict coverage gate.
 
 ## Task Commits
@@ -91,7 +92,7 @@ completed: 2026-04-28
 
 - `cargo test -p parser-harness benchmark_report` - passed
 - `cargo bench -p parser-harness --bench parser_pipeline -- --sample-size 10` - passed
-- `scripts/benchmark-phase5.sh --ci` - passed; report validated with `ten_x_status=Unknown` and `parity_status=Some(NotRun)`
+- `scripts/benchmark-phase5.sh --ci` - passed structurally; report validated with `ten_x_status=Fail`, `parity_status=Some(HumanReview)`
 - `cargo fmt --all -- --check` - passed
 - `cargo clippy --workspace --all-targets -- -D warnings` - passed
 - `cargo test --workspace` - passed
@@ -103,14 +104,14 @@ completed: 2026-04-28
 
 ## Deviations from Plan
 
-### Explicit CI Benchmark Triage
+### Explicit Benchmark Gap Triage
 
-**1. [Benchmark] 10x status is unknown in portable CI**
+**1. [Benchmark] Curated selected old/new run fails the 10x target**
 
-- **Found during:** Task 2 and final gate verification
-- **Issue:** The portable `--ci` benchmark does not run the full old TypeScript baseline or parity comparison.
-- **Decision:** Keep the report valid but explicit: `ten_x_status=unknown`, `parity_status=not_run`, and triage says old-baseline/parity evidence must be approved and collected before claiming the 10x target.
-- **Verification:** `benchmark-report-check` accepts the report only because the unknown status has old-baseline/parity/bottleneck triage and an RSS note.
+- **Found during:** Post-UAT benchmark gap closure.
+- **Issue:** With the old parser and `~/sg_stats` available, `scripts/benchmark-phase5.sh --ci` now runs a curated selected old-parser `runParseTask` sample and the Rust release CLI on the same replay. The generated report is structurally valid, but records `ten_x_status=fail`, `parity_status=human_review`.
+- **Decision:** Keep the report valid but explicit: the benchmark gate must expose the failed target and comparison report path instead of claiming Phase 5 completion.
+- **Verification:** `benchmark-report-check` accepts the fail report only because triage mentions bottleneck and parity, and the generated comparison report records seven `human_review` surfaces.
 
 ---
 
@@ -119,19 +120,20 @@ completed: 2026-04-28
 
 ## Known Stubs
 
-Manual curated/full-corpus old-baseline benchmark evidence remains outside the portable CI gate. The current Phase 5 execution provides the validated report schema, parser-stage timings, and triage-safe command handoff, but does not claim a measured 10x pass.
+Manual full-corpus old-baseline benchmark evidence remains outside the portable CI gate. The current curated selected evidence is enough to block Phase 5: it does not claim a measured 10x pass, and the selected old/new comparison requires human review.
 
 ## User Setup Required
 
-Optional: install `cargo-mutants` to exercise the preferred fault-report branch. Optional manual benchmark work should use the Phase 1 fake-HOME baseline pattern before any old-parser full-corpus timing is accepted.
+Optional: install `cargo-mutants` to exercise the preferred fault-report branch. Benchmark gap closure should review the generated selected comparison report first; optional manual full-corpus timing should use the Phase 1 fake-HOME baseline pattern before any old-parser full-corpus timing is accepted.
 
 ## Next Phase Readiness
 
-Phase 5 is ready for verification. Phase 6 can add RabbitMQ/S3 worker integration without changing the parser-core public API or Phase 5 local CLI gates.
+Phase 5 is not ready to close. Phase 6 should wait until TEST-06 is remediated or explicitly accepted as a benchmark gap; RabbitMQ/S3 worker integration still does not require parser-core API changes from this benchmark evidence.
 
 ## Self-Check: PASSED
 
 - Verified benchmark reports include workload identity, old baseline profile, parity status, throughput, RSS note, and 10x status.
+- Verified the current 10x status is a failing gap, not an unknown or pass.
 - Verified README uses `replay-parser-2 parse`, `replay-parser-2 schema`, and `replay-parser-2 compare`.
 - Verified final gates passed after the coverage allowlist refresh.
 - Verified no adjacent app ownership boundaries changed.

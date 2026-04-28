@@ -85,7 +85,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **TEST-03**: Determinism tests prove repeated parser runs on the same input produce stable JSON output.
 - [x] **TEST-04**: Benchmark harness reports parse-only, aggregate-only, and end-to-end throughput against the pinned old parser baseline.
 - [x] **TEST-05**: Benchmark reporting includes files/sec, MB/sec or events/sec, memory/RSS where practical, and whether output parity passed for the measured sample.
-- [x] **TEST-06**: Benchmark target is approximately 10x faster than the current parser on an equivalent workload. Current CI evidence records `ten_x_status=unknown` with explicit old-baseline/parity triage until a curated old-baseline run is approved.
+- [ ] **TEST-06**: Benchmark target is approximately 10x faster than the current parser on an equivalent workload. Current curated old/new evidence records `ten_x_status=fail`, `parity_status=human_review`; the target remains open pending parity review, performance remediation, or an explicitly accepted benchmark gap.
 - [x] **TEST-07**: CI enforces 100% statement, branch, function, and line coverage for all reachable production Rust code in parser core, contract, CLI, worker, harness, and aggregate modules; exclusions are allowed only for impossible-to-execute platform glue, generated code, or defensive unreachable branches with an inline rationale and reviewable allowlist entry.
 - [x] **TEST-08**: Every parser behavior requirement has at least one behavior-level test with a strong oracle, including success, boundary, error, malformed input, unknown/null state, deterministic ordering, parity, and source-reference scenarios where applicable.
 - [x] **TEST-09**: Unit tests follow the `unit-tests-philosophy` RITE standard: readable names, explicit Arrange/Act/Assert structure, isolated fixtures/state, deterministic time/randomness/environment, and assertions against observable behavior rather than private implementation details.
@@ -197,7 +197,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
-| TEST-06 | Phase 5 | Complete (CI triaged unknown) |
+| TEST-06 | Phase 5 | Gap found (curated benchmark fail) |
 | TEST-07 | Phase 5 | Complete |
 | TEST-08 | Phase 5 | Complete |
 | TEST-09 | Phase 5 | Complete |
@@ -221,4 +221,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-28 after completing Phase 5 execution gates*
+*Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence*

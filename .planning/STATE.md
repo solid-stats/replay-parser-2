@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verification-ready
-stopped_at: Completed 05-05-PLAN.md; ready for Phase 5 verification
-last_updated: "2026-04-28T09:00:51.000Z"
+status: verification-gap
+stopped_at: Phase 5 UAT found curated old/new benchmark and parity gaps
+last_updated: "2026-04-28T10:15:28.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates verification
+**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates benchmark/parity gap closure
 
 ## Current Position
 
-Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTION COMPLETE
+Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTION COMPLETE, VERIFICATION GAP FOUND
 Plan: 6 of 6
-Status: Ready for Phase 5 verification
+Status: Curated old/new benchmark evidence generated; Phase 5 is blocked on 10x failure and parity human review
 Last activity: 2026-04-28
 
 Progress: [██████████] 97%
@@ -125,8 +125,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 03 coverage exclusions are exact source lines with committed allowlist metadata and production-file `coverage-exclusion:` markers. — Blanket non-generated exclusions remain rejected, and behavior tests stay public-API oriented.
 - [Phase 05]: Plan 04 adds a mutation/equivalent fault-report gate with deterministic fallback. — `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise generates a validated `deterministic-fault-injection` report covering vehicle score, combat events, aggregate source refs, and failure paths.
 - [Phase 05]: Plan 04 fault report validation blocks high-risk `missed` cases without accepted non-applicable rationale. — Report validation remains in parser-harness and does not introduce parser-core test-only hooks.
-- [Phase 05]: Plan 05 benchmark reports carry workload identity, old baseline profile, throughput, parity status, RSS note, and 10x status. — The CI benchmark gate records `ten_x_status=unknown` and `parity_status=not_run` with explicit triage until approved old-baseline evidence is collected.
-- [Phase 05]: Final execution gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior. — Phase 5 is ready for verification, while Phase 6 still owns RabbitMQ/S3 worker integration.
+- [Phase 05]: Plan 05 benchmark reports carry workload identity, old baseline profile, throughput, parity status, RSS note, and 10x status. — The benchmark gate now runs a curated selected old/new comparison when the old parser and `~/sg_stats` are available; the latest evidence records `ten_x_status=fail`, `parity_status=human_review`.
+- [Phase 05]: Final local gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior, but Phase 5 cannot be closed until the benchmark/parity gap is resolved or explicitly accepted. Phase 6 still owns RabbitMQ/S3 worker integration.
 
 ### Pending Todos
 
@@ -134,11 +134,20 @@ None yet.
 
 ### Blockers/Concerns
 
-None active. The 05-03 stable Rust coverage blocker was resolved by the custom
+Active: Phase 5 UAT Test 9 found a benchmark/parity gap. The generated
+`.planning/generated/phase-05/benchmarks/benchmark-report.json` is valid, but
+records `ten_x_status=fail`, `parity_status=human_review`, and selected
+old-parser `runParseTask` vs Rust release CLI speedup well below the `10x`
+target. The
+comparison report at
+`.planning/generated/phase-05/comparison/comparison-report.json` has seven
+`human_review` surfaces. Phase 5 should not advance to Phase 6 until parity
+decisions and performance triage are complete or an explicit accepted gap is
+recorded.
+
+Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
-The Phase 5 CI benchmark report intentionally records `ten_x_status=unknown`
-because the old baseline/parity run is not part of the portable CI gate.
 
 ### Quick Tasks Completed
 
@@ -166,12 +175,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T09:00:51.000Z
-Stopped at: Completed 05-05-PLAN.md
+Last session: 2026-04-28T10:15:28.000Z
+Stopped at: Phase 5 UAT benchmark/parity gap found
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Verify Phase 5 execution results with `$gsd-verify-work`
+**Next Step:** Close Phase 5 Test 9 by reviewing selected comparison surfaces and either improving performance to a passing benchmark report or recording an explicit accepted benchmark gap.

@@ -6,11 +6,11 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 5 execution is complete and ready for verification. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 execution is complete, but verification found a benchmark/parity gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise validates a deterministic fault-injection report. `scripts/benchmark-phase5.sh --ci` runs parser-stage benchmarks and validates a benchmark report with workload identity, parity status, RSS note, and 10x triage; the portable CI report records `ten_x_status=unknown` until old-baseline/parity evidence is collected. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise validates a deterministic fault-injection report. `scripts/benchmark-phase5.sh --ci` runs parser-stage benchmarks and, when `/home/afgan0r/Projects/SolidGames/replays-parser` plus `~/sg_stats` are available, records curated selected old/new comparison evidence under `.planning/generated/phase-05/comparison/`. The latest generated benchmark report is valid but records `ten_x_status=fail`, `parity_status=human_review`, so the 10x target remains open. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (execution complete; verification pending).
+- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (execution complete; benchmark/parity verification gap).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -57,7 +57,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases.
+Worker mode and full-corpus parity automation are still planned for later phases. Phase 5 cannot be closed until the selected comparison surfaces are reviewed and the benchmark report either passes the 10x target or records an explicitly accepted gap.
 
 ## Product Context
 
@@ -216,4 +216,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-28 after completing Phase 5 execution gates.
+Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence.

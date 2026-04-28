@@ -39,7 +39,7 @@ created: 2026-04-28
 | 05-02-02 | 02 | 3 | CLI-03, TEST-02 | T-05-02-02 | Compare CLI does not mutate old or current result trees. | integration | `cargo test -p parser-cli compare_command` | yes | passed |
 | 05-03-01 | 03 | 4 | TEST-07, TEST-08, TEST-09, TEST-10, TEST-11 | T-05-03-01 | Coverage allowlist is explicit and behavior tests remain public API based. | script + tests | `scripts/coverage-gate.sh --check` | yes | passed |
 | 05-04-01 | 04 | 5 | TEST-12 | T-05-04-01 | Fault report blocks high-risk missed cases. | script + tests | `scripts/fault-report-gate.sh` | yes | passed |
-| 05-05-01 | 05 | 6 | TEST-04, TEST-05, TEST-06 | T-05-05-01 | Benchmark reports include parity status before speed claims. | bench/report | `cargo test -p parser-harness benchmark_report` | yes | passed; CI 10x status unknown |
+| 05-05-01 | 05 | 6 | TEST-04, TEST-05, TEST-06 | T-05-05-01 | Benchmark reports include parity status before speed claims. | bench/report | `scripts/benchmark-phase5.sh --ci` and `cargo test -p parser-harness benchmark_report` | yes | gap found; curated report validates but records `ten_x_status=fail` and `parity_status=human_review` |
 | 05-05-02 | 05 | 6 | CLI-01..CLI-04, TEST-01..TEST-12 | T-05-05-02 | Final docs do not claim worker/server/UI ownership. | full suite | `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && cargo doc --workspace --no-deps` | yes | passed |
 
 ## Wave 0 Requirements
@@ -55,8 +55,8 @@ created: 2026-04-28
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Optional manual full-corpus benchmark | TEST-04, TEST-05, TEST-06 | Full corpus timing may be too expensive for normal CI. | Run the documented manual benchmark command and confirm the report contains workload selector, parity status, old profile, throughput, memory/RSS note, and 10x status. |
-| Human-review mismatch decisions | TEST-02 | Some current-vs-regenerated legacy drifts require domain approval. | Confirm report keeps unexplained drift as `human review` and does not auto-classify suspected legacy bugs as preserved or fixed. |
+| Optional manual full-corpus benchmark | TEST-04, TEST-05, TEST-06 | Full corpus timing may be too expensive for normal CI. | Run the documented manual benchmark command and confirm the report contains workload selector, parity status, old profile, throughput, memory/RSS note, and 10x status. Current curated selected evidence fails 10x, so full-corpus work is gap-closure evidence rather than a completion formality. |
+| Human-review mismatch decisions | TEST-02, TEST-06 | The curated selected comparison currently reports seven `human_review` surfaces. | Review `.planning/generated/phase-05/comparison/comparison-report.json`, classify each selected mismatch, and rerun `scripts/benchmark-phase5.sh --ci` before closing Phase 5. |
 
 ## Validation Sign-Off
 
@@ -67,4 +67,4 @@ created: 2026-04-28
 - [x] Feedback latency target is documented.
 - [x] `nyquist_compliant: true` set in frontmatter.
 
-Approval: execution complete; Phase 5 verification pending
+Approval: execution complete; Phase 5 verification blocked by curated benchmark/parity gap
