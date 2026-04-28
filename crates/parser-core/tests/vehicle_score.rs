@@ -94,18 +94,24 @@ fn vehicle_score_contribution_ids(artifact: &ParseArtifact) -> BTreeSet<String> 
 #[test]
 fn vehicle_score_should_map_issue_13_categories_from_raw_vehicle_class() {
     // Arrange
-    let raw_tank_class = Some("tank");
+    let raw_tank_class = Some("rhs_t72ba_tv");
     let raw_static_weapon_class = Some("static-weapon");
+    let raw_apc_class = Some("rhs_btr80_msv");
+    let raw_car_class = Some("CUP_B_UAZ_MG_CDF");
 
     // Act
     let tank_category = category_from_vehicle_class(raw_tank_class);
     let static_weapon_category = category_from_vehicle_class(raw_static_weapon_class);
+    let apc_category = category_from_vehicle_class(raw_apc_class);
+    let car_category = category_from_vehicle_class(raw_car_class);
     let unknown_category = category_from_vehicle_class(Some("sea"));
     let absent_category = category_from_vehicle_class(None);
 
     // Assert
     assert_eq!(tank_category, VehicleScoreCategory::Tank);
     assert_eq!(static_weapon_category, VehicleScoreCategory::StaticWeapon);
+    assert_eq!(apc_category, VehicleScoreCategory::Apc);
+    assert_eq!(car_category, VehicleScoreCategory::Car);
     assert_eq!(unknown_category, VehicleScoreCategory::Unknown);
     assert_eq!(absent_category, VehicleScoreCategory::Unknown);
 }
@@ -152,17 +158,36 @@ fn vehicle_score_should_emit_award_contributions_for_kills_from_vehicle() {
 
     // Assert
     assert_eq!(artifact.status, ParseStatus::Success);
-    assert_eq!(inputs.len(), 4);
+    assert_eq!(inputs.len(), 5);
     assert_eq!(player_kill["sign"], "award");
     assert_eq!(player_kill["attacker_category"], "tank");
     assert_eq!(player_kill["target_category"], "player");
     assert_eq!(player_kill["matrix_weight"].as_f64(), Some(2.0));
     assert_eq!(player_kill["applied_weight"].as_f64(), Some(2.0));
-    assert_eq!(player_kill["raw_attacker_vehicle_class"], "tank");
+    assert_eq!(player_kill["raw_attacker_vehicle_class"], "rhs_t72ba_tv");
     assert_eq!(static_weapon_kill["sign"], "award");
     assert_eq!(static_weapon_kill["target_category"], "static_weapon");
     assert_eq!(static_weapon_kill["raw_target_class"], "static-weapon");
     assert_eq!(static_weapon_kill["matrix_weight"].as_f64(), Some(0.25));
+}
+
+#[test]
+fn vehicle_score_should_emit_clamped_penalty_for_friendly_vehicle_or_static_destruction() {
+    // Arrange
+    let artifact = vehicle_score_artifact();
+
+    // Act
+    let friendly_static = vehicle_score_input_row(&artifact, "event.killed.4");
+
+    // Assert
+    assert_eq!(friendly_static["sign"], "penalty");
+    assert_eq!(friendly_static["rule_id"], "aggregate.vehicle_score.penalty");
+    assert_eq!(friendly_static["attacker_category"], "tank");
+    assert_eq!(friendly_static["target_category"], "static_weapon");
+    assert_eq!(friendly_static["matrix_weight"].as_f64(), Some(0.25));
+    assert_eq!(friendly_static["applied_weight"].as_f64(), Some(1.0));
+    assert_eq!(friendly_static["teamkill_penalty_clamped"], true);
+    assert_eq!(friendly_static["denominator_eligible"], false);
 }
 
 #[test]
@@ -206,7 +231,9 @@ fn vehicle_score_should_emit_denominator_input_only_for_players_with_vehicle_kil
     assert_eq!(denominator_inputs[0]["has_vehicle_kill"], true);
     assert!(source_contribution_ids.contains("aggregate.vehicle_score.event.killed.0"));
     assert!(source_contribution_ids.contains("aggregate.vehicle_score.event.killed.1"));
+    assert!(source_contribution_ids.contains("aggregate.vehicle_score.event.killed.2"));
     assert!(!source_contribution_ids.contains("aggregate.vehicle_score.event.killed.3"));
+    assert!(!source_contribution_ids.contains("aggregate.vehicle_score.event.killed.4"));
 }
 
 #[test]
@@ -244,4 +271,32 @@ fn vehicle_score_should_include_source_refs_on_every_vehicle_score_contribution(
         );
         assert!(projection_contribution_ids.contains(&contribution.contribution_id));
     }
+}
+
+#[test]
+fn vehicle_score_should_include_event_and_vehicle_entity_source_refs_for_category_evidence() {
+    // Arrange
+    let artifact = vehicle_score_artifact();
+    let contribution = artifact
+        .aggregates
+        .contributions
+        .iter()
+        .find(|contribution| {
+            contribution.contribution_id == "aggregate.vehicle_score.event.killed.0"
+        })
+        .expect("vehicle score contribution should exist");
+
+    // Act
+    let json_paths = contribution
+        .source_refs
+        .as_slice()
+        .iter()
+        .filter_map(|source_ref| source_ref.json_path.as_deref())
+        .collect::<BTreeSet<_>>();
+
+    // Assert
+    assert!(json_paths.contains("$.events[0]"));
+    assert!(json_paths.contains("$.entities[4]"));
+    assert!(json_paths.contains("$.entities[4].class"));
+    assert!(json_paths.contains("$.entities[1]"));
 }

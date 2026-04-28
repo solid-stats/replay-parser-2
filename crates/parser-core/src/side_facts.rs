@@ -3,7 +3,7 @@
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},
     events::EventActorRef,
-    identity::{EntityKind, EntitySide, ObservedEntity},
+    identity::{EntitySide, ObservedEntity},
     presence::{Confidence, FieldPresence, UnknownReason},
     side_facts::{
         CommanderFactKind, CommanderSideFact, OutcomeFact, OutcomeStatus, ReplaySideFacts,
@@ -14,12 +14,14 @@ use parser_contract::{
 use crate::{
     artifact::SourceContext,
     diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
+    legacy_player::is_legacy_player_entity,
     raw::{RawReplay, RawStringCandidate, string_candidates},
 };
 
 const OUTCOME_EXPLICIT_FIELD_RULE_ID: &str = "side_facts.outcome.explicit_field";
 const OUTCOME_UNKNOWN_RULE_ID: &str = "side_facts.outcome.unknown";
 const OUTCOME_UNRECOGNIZED_CODE: &str = "side_facts.outcome_unrecognized";
+const OUTCOME_CONFLICT_CODE: &str = "side_facts.outcome_conflict";
 const COMMANDER_KEYWORD_RULE_ID: &str = "side_facts.commander.keyword_candidate";
 
 /// Normalizes replay-level commander and winner/outcome facts.
@@ -47,12 +49,22 @@ fn normalize_outcome(
 ) -> OutcomeFact {
     let candidates = string_candidates(raw, &["winner", "winningSide", "outcome"]);
 
-    for candidate in &candidates {
-        if let Some(winner_side) = accepted_winner_side(&candidate.value)
-            && let Some(outcome) = known_outcome(candidate, winner_side, context)
-        {
-            return outcome;
-        }
+    let recognized = candidates
+        .iter()
+        .filter_map(|candidate| {
+            accepted_winner_side(&candidate.value).map(|side| (candidate, side))
+        })
+        .collect::<Vec<_>>();
+
+    if recognized_sides_conflict(&recognized) {
+        push_conflicting_outcome_diagnostic(&recognized, context, diagnostics);
+        return unknown_outcome();
+    }
+
+    if let Some((candidate, winner_side)) = recognized.first()
+        && let Some(outcome) = known_outcome(candidate, *winner_side, context)
+    {
+        return outcome;
     }
 
     for candidate in candidates {
@@ -102,13 +114,57 @@ fn unknown_outcome() -> OutcomeFact {
 }
 
 fn accepted_winner_side(value: &str) -> Option<EntitySide> {
-    match value {
-        "WEST" | "west" | "BLUFOR" => Some(EntitySide::West),
-        "EAST" | "east" | "OPFOR" => Some(EntitySide::East),
-        "GUER" | "guer" | "INDEPENDENT" => Some(EntitySide::Guer),
-        "CIV" | "civilian" => Some(EntitySide::Civ),
+    match value.trim().to_ascii_lowercase().as_str() {
+        "west" | "blufor" => Some(EntitySide::West),
+        "east" | "opfor" => Some(EntitySide::East),
+        "guer" | "independent" | "resistance" => Some(EntitySide::Guer),
+        "civ" | "civilian" => Some(EntitySide::Civ),
         _ => None,
     }
+}
+
+fn recognized_sides_conflict(recognized: &[(&RawStringCandidate, EntitySide)]) -> bool {
+    let Some((_, first_side)) = recognized.first() else {
+        return false;
+    };
+
+    recognized.iter().any(|(_, side)| side != first_side)
+}
+
+fn push_conflicting_outcome_diagnostic(
+    recognized: &[(&RawStringCandidate, EntitySide)],
+    context: &SourceContext,
+    diagnostics: &mut DiagnosticAccumulator,
+) {
+    let source_refs = recognized
+        .iter()
+        .map(|(candidate, _)| {
+            context.source_ref(&candidate.json_path, rule_id(OUTCOME_CONFLICT_CODE))
+        })
+        .collect::<Vec<_>>();
+    let Some(source_refs) = SourceRefs::new(source_refs).ok() else {
+        return;
+    };
+    let observed_shape = recognized
+        .iter()
+        .map(|(candidate, side)| format!("{}={:?}", candidate.key, side))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    diagnostics.push(
+        Diagnostic {
+            code: OUTCOME_CONFLICT_CODE.to_string(),
+            severity: DiagnosticSeverity::Warning,
+            message: "Replay outcome fields contain conflicting recognized winner sides"
+                .to_string(),
+            json_path: Some("$".to_string()),
+            expected_shape: Some("winner, winningSide, and outcome agree when present".to_string()),
+            observed_shape: Some(observed_shape),
+            parser_action: "set_outcome_unknown".to_string(),
+            source_refs,
+        },
+        DiagnosticImpact::DataLoss,
+    );
 }
 
 fn push_unrecognized_outcome_diagnostic(
@@ -142,7 +198,7 @@ fn push_unrecognized_outcome_diagnostic(
 fn commander_candidates(entities: &[ObservedEntity]) -> Vec<CommanderSideFact> {
     entities
         .iter()
-        .filter(|entity| matches!(entity.kind, EntityKind::Unit))
+        .filter(|entity| is_legacy_player_entity(entity))
         .filter(|entity| has_commander_keyword(entity))
         .filter_map(commander_candidate)
         .collect()
@@ -176,9 +232,14 @@ fn has_commander_keyword(entity: &ObservedEntity) -> bool {
 }
 
 fn contains_commander_keyword(value: &str) -> bool {
-    let value = value.to_lowercase();
-
-    value.contains("ks") || value.contains("commander") || value.contains("командир")
+    value
+        .split(|character: char| !character.is_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .any(|token| {
+            token.eq_ignore_ascii_case("ks")
+                || token.eq_ignore_ascii_case("commander")
+                || token.eq_ignore_ascii_case("командир")
+        })
 }
 
 const fn present_text(field: &FieldPresence<String>) -> Option<&str> {

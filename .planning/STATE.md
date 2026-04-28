@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_execute
-stopped_at: Phase 04 Plan 05 complete
-last_updated: "2026-04-27T19:04:37+07:00"
-last_activity: 2026-04-27 - Phase 04 Plan 05 commander/outcome side facts complete
+status: ready_to_verify
+stopped_at: Phase 04 code review fixes complete
+last_updated: "2026-04-28T10:10:19+07:00"
+last_activity: 2026-04-28 - Phase 04 review blockers and warnings fixed
 progress:
   total_phases: 7
   completed_phases: 3
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 4 (event-semantics-and-aggregates)
-Plan: 04-06
-Status: Ready to execute
-Last activity: 2026-04-27 - Phase 04 Plan 05 commander/outcome side facts complete
+Plan: 04-review-fix
+Status: Ready for phase verification
+Last activity: 2026-04-28 - Phase 04 review blockers and warnings fixed
 
 Progress: [█████████▋] 96% of currently planned work
 
@@ -104,6 +104,7 @@ Recent decisions affecting current work:
 - Phase 4 Plan 03 derives auditable per-replay legacy, relationship, game-type, squad, rotation, and bounty projections from normalized combat events without canonical player IDs or downstream totals.
 - Phase 4 Plan 04 emits issue #13 vehicle score award/penalty inputs, denominator eligibility rows, raw/applied teamkill penalty weights, and source refs without computing final cross-replay score.
 - Phase 4 Plan 05 emits typed replay-side outcome facts and commander candidates with conservative known/unknown semantics, confidence, rule IDs, and source refs without canonical commander truth.
+- Phase 4 review fixes add legacy player eligibility across combat and aggregate projections, zero-counter rows for eligible players, raw vehicle-class category mapping, friendly vehicle/static teamkill penalties, vehicle-score entity source refs, typed aggregate payload schema conditionals, conflicting outcome diagnostics, tokenized commander matching, and malformed killed-event diagnostics.
 
 ### Pending Todos
 
@@ -139,11 +140,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-27T19:04:37+07:00
-Stopped at: Phase 04 Plan 05 complete
-Resume file: .planning/phases/04-event-semantics-and-aggregates/04-06-PLAN.md
+Last session: 2026-04-28T10:10:19+07:00
+Stopped at: Phase 04 code review fixes complete
+Resume file: .planning/phases/04-event-semantics-and-aggregates/04-REVIEW-FIX.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
-**Next Plan:** Phase 4 Plan 04-06 — schema/example refresh, README handoff, and final quality gates
+**Next Step:** Phase 4 verification — review the fix report and run phase-level verification before Phase 5 planning

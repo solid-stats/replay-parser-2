@@ -5,16 +5,76 @@ use parser_contract::events::VehicleScoreCategory;
 /// Maps raw OCAP vehicle class evidence to an issue #13 vehicle score category.
 #[must_use]
 pub fn category_from_vehicle_class(raw_class: Option<&str>) -> VehicleScoreCategory {
-    match raw_class {
-        Some("static-weapon") => VehicleScoreCategory::StaticWeapon,
-        Some("car") => VehicleScoreCategory::Car,
-        Some("truck") => VehicleScoreCategory::Truck,
-        Some("apc") => VehicleScoreCategory::Apc,
-        Some("tank") => VehicleScoreCategory::Tank,
-        Some("heli") => VehicleScoreCategory::Heli,
-        Some("plane") => VehicleScoreCategory::Plane,
-        Some(_) | None => VehicleScoreCategory::Unknown,
+    let Some(normalized) =
+        raw_class.map(str::trim).filter(|value| !value.is_empty()).map(str::to_ascii_lowercase)
+    else {
+        return VehicleScoreCategory::Unknown;
+    };
+
+    if normalized == "static-weapon"
+        || normalized.contains("static")
+        || normalized.contains("weapon")
+        || normalized.contains("mortar")
+    {
+        return VehicleScoreCategory::StaticWeapon;
     }
+    if normalized == "apc"
+        || normalized.contains("apc")
+        || normalized.contains("btr")
+        || normalized.contains("bmp")
+        || normalized.contains("brdm")
+        || normalized.contains("m113")
+        || normalized.contains("stryker")
+    {
+        return VehicleScoreCategory::Apc;
+    }
+    if normalized == "tank"
+        || normalized.contains("tank")
+        || normalized.contains("t72")
+        || normalized.contains("t90")
+        || normalized.contains("m1a")
+        || normalized.contains("abrams")
+    {
+        return VehicleScoreCategory::Tank;
+    }
+    if normalized == "heli"
+        || normalized.contains("heli")
+        || normalized.contains("ah1")
+        || normalized.contains("ah64")
+        || normalized.contains("mi24")
+        || normalized.contains("mi8")
+        || normalized.contains("uh60")
+    {
+        return VehicleScoreCategory::Heli;
+    }
+    if normalized == "plane"
+        || normalized.contains("plane")
+        || normalized.contains("jet")
+        || normalized.contains("su25")
+        || normalized.contains("a10")
+    {
+        return VehicleScoreCategory::Plane;
+    }
+    if normalized == "truck"
+        || normalized.contains("truck")
+        || normalized.contains("ural")
+        || normalized.contains("kamaz")
+        || normalized.contains("mtvr")
+        || normalized.contains("hemtt")
+    {
+        return VehicleScoreCategory::Truck;
+    }
+    if normalized == "car"
+        || normalized.contains("car")
+        || normalized.contains("offroad")
+        || normalized.contains("hmmwv")
+        || normalized.contains("uaz")
+        || normalized.contains("gaz")
+    {
+        return VehicleScoreCategory::Car;
+    }
+
+    VehicleScoreCategory::Unknown
 }
 
 /// Returns the issue #13 matrix weight for an attacker/target category pair.

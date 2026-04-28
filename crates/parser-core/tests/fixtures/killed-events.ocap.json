@@ -11,6 +11,7 @@
     [20, "killed", 3, ["null"], 0],
     [30, "killed", 4, [1, ""], 12],
     [40, "killed", "bad", {"unexpected": true}, "far"],
+    ["late", "killed", 2, [1, "AK-74"], 100],
     [50, "connected", "NotKilled", 5]
   ],
   "Markers": [],

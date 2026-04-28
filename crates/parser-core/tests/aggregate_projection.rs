@@ -19,6 +19,52 @@ use parser_core::{ParserInput, ParserOptions, parse_replay};
 use serde_json::{Value, json};
 
 const AGGREGATE_FIXTURE: &[u8] = include_bytes!("fixtures/aggregate-combat.ocap.json");
+const LEGACY_PLAYER_ELIGIBILITY_FIXTURE: &[u8] = br#"{
+  "missionName": "sg legacy player eligibility",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 3],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Eligible Player",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "AI Unit",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Rifleman",
+      "isPlayer": 0,
+      "positions": []
+    },
+    {
+      "id": 3,
+      "type": "unit",
+      "name": "Empty Description",
+      "group": "Bravo 1-2",
+      "side": "EAST",
+      "description": "",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    [10, "killed", 2, [1, "AK-74"], 100],
+    [20, "killed", 1, [2, "AK-74"], 100]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -53,6 +99,10 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 
 fn aggregate_artifact() -> ParseArtifact {
     parse_replay(parser_input(AGGREGATE_FIXTURE))
+}
+
+fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
+    parse_replay(parser_input(bytes))
 }
 
 fn projection<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Value {
@@ -239,6 +289,32 @@ fn aggregate_projection_should_group_duplicate_same_name_projection_without_merg
     assert_eq!(duplicate_rows, 1);
     assert_eq!(duplicate_row["observed_entity_ids"], json!([5, 6]));
     assert_eq!(duplicate_row["observed_name"], "Echo");
+}
+
+#[test]
+fn aggregate_projection_should_emit_zero_counter_rows_for_eligible_players_without_contributions() {
+    let artifact = parse_fixture(LEGACY_PLAYER_ELIGIBILITY_FIXTURE);
+    let eligible = player_row(&artifact, "entity:1");
+
+    assert_eq!(eligible["kills"], 0);
+    assert_eq!(eligible["killsFromVehicle"], 0);
+    assert_eq!(eligible["vehicleKills"], 0);
+    assert_eq!(eligible["teamkills"], 0);
+    assert_eq!(eligible["totalPlayedGames"], 1);
+    assert_eq!(eligible["source_contribution_ids"], json!([]));
+}
+
+#[test]
+fn aggregate_projection_should_exclude_non_player_units_from_legacy_and_bounty_rows() {
+    let artifact = parse_fixture(LEGACY_PLAYER_ELIGIBILITY_FIXTURE);
+    let player_rows = projection_array(&artifact, "legacy.player_game_results");
+    let compatibility_keys =
+        player_rows.iter().map(|row| row["compatibility_key"].as_str()).collect::<Vec<_>>();
+    let bounty_inputs = projection_array(&artifact, "bounty.inputs");
+
+    assert_eq!(compatibility_keys, vec![Some("entity:1")]);
+    assert!(bounty_inputs.is_empty());
+    assert!(artifact.aggregates.contributions.is_empty());
 }
 
 #[test]

@@ -205,6 +205,96 @@
           "description": "Contribution payload, shaped by the rule and projection."
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "legacy_counter"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "#/$defs/LegacyCounterContributionValue"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "relationship"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "#/$defs/RelationshipContributionValue"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "bounty_input"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "#/$defs/BountyInputContributionValue"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "vehicle_score_input"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "$ref": "#/$defs/VehicleScoreInputValue"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          }
+        }
+      ],
       "required": [
         "contribution_id",
         "kind",

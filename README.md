@@ -6,11 +6,11 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 4 Event Semantics and Aggregates work is complete and verified. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and now emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 4 Event Semantics and Aggregates implementation and review fixes are complete; phase-level GSD verification is still pending. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and now emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
 The CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 4, `Event Semantics and Aggregates` (complete; ready for phase verification and Phase 5 planning).
+- Current phase: Phase 4, `Event Semantics and Aggregates` (implementation and review fixes complete; ready for phase verification before Phase 5 planning).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.

@@ -17,7 +17,7 @@ use parser_contract::{
         BountyEligibilityState, CombatEventAttributes, CombatSemantic, EventActorRef,
         LegacyCounterEffect, NormalizedEvent, VehicleScoreCategory,
     },
-    identity::{EntityCompatibilityHintKind, EntityKind, EntitySide, ObservedEntity},
+    identity::{EntityCompatibilityHintKind, EntitySide, ObservedEntity},
     metadata::ReplayMetadata,
     presence::FieldPresence,
     source_ref::{RuleId, SourceRef, SourceRefs},
@@ -26,6 +26,7 @@ use serde_json::{Value, json};
 
 use crate::{
     artifact::SourceContext,
+    legacy_player::is_legacy_player_entity,
     vehicle_score::{teamkill_penalty_weight, vehicle_score_weight},
 };
 
@@ -316,10 +317,11 @@ fn vehicle_score_contribution(
         VehicleScoreSign::Penalty => AGGREGATE_VEHICLE_SCORE_PENALTY_RULE_ID,
     };
 
-    contribution_ref(
+    vehicle_score_contribution_ref(
         format!("aggregate.vehicle_score.{}", event.event_id),
         AggregateContributionKind::VehicleScoreInput,
         event,
+        &combat.vehicle_context,
         rule_id,
         serde_json::to_value(value).ok()?,
     )
@@ -342,6 +344,48 @@ fn contribution_ref(
     })
 }
 
+fn vehicle_score_contribution_ref(
+    contribution_id: String,
+    kind: AggregateContributionKind,
+    event: &NormalizedEvent,
+    vehicle_context: &parser_contract::events::VehicleContext,
+    rule_id: &str,
+    value: Value,
+) -> Option<AggregateContributionRef> {
+    Some(AggregateContributionRef {
+        contribution_id,
+        kind,
+        event_id: Some(event.event_id.clone()),
+        source_refs: vehicle_score_source_refs(event, vehicle_context)?,
+        rule_id: RuleId::new(rule_id).ok()?,
+        value,
+    })
+}
+
+fn vehicle_score_source_refs(
+    event: &NormalizedEvent,
+    vehicle_context: &parser_contract::events::VehicleContext,
+) -> Option<SourceRefs> {
+    let mut source_refs = event.source_refs.as_slice().to_vec();
+    for source_ref in [
+        field_source_ref(&vehicle_context.raw_weapon),
+        field_source_ref(&vehicle_context.attacker_vehicle_entity_id),
+        field_source_ref(&vehicle_context.attacker_vehicle_name),
+        field_source_ref(&vehicle_context.attacker_vehicle_class),
+        field_source_ref(&vehicle_context.attacker_vehicle_category),
+        field_source_ref(&vehicle_context.target_category),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if !source_refs.contains(source_ref) {
+            source_refs.push(source_ref.clone());
+        }
+    }
+
+    SourceRefs::new(source_refs).ok()
+}
+
 fn is_relationship_effect(effect: &LegacyCounterEffect) -> bool {
     effect.relationship_target_entity_id.is_some()
         && RELATIONSHIP_FIELDS.contains(&effect.field.as_str())
@@ -361,7 +405,7 @@ fn player_projection_identities(
 ) -> BTreeMap<i64, PlayerProjectionIdentity> {
     entities
         .iter()
-        .filter(|entity| matches!(entity.kind, EntityKind::Unit))
+        .filter(|entity| is_legacy_player_entity(entity))
         .map(|entity| {
             (
                 entity.source_entity_id,
@@ -494,7 +538,10 @@ fn legacy_player_game_results(
     groups: &BTreeMap<String, PlayerProjectionGroup>,
     contributions: &[AggregateContributionRef],
 ) -> Value {
-    let mut rows = BTreeMap::<String, PlayerResultAccumulator>::new();
+    let mut rows = groups
+        .iter()
+        .map(|(key, group)| (key.clone(), PlayerResultAccumulator::new(group.clone())))
+        .collect::<BTreeMap<_, _>>();
 
     for contribution in contributions {
         if contribution.kind != AggregateContributionKind::LegacyCounter {
@@ -504,13 +551,9 @@ fn legacy_player_game_results(
         let Some(value) = legacy_counter_value(contribution) else {
             continue;
         };
-        let Some(group) = groups.get(&value.compatibility_key).cloned() else {
-            continue;
-        };
-
-        rows.entry(value.compatibility_key.clone())
-            .or_insert_with(|| PlayerResultAccumulator::new(group))
-            .apply(&contribution.contribution_id, &value);
+        if let Some(row) = rows.get_mut(&value.compatibility_key) {
+            row.apply(&contribution.contribution_id, &value);
+        }
     }
 
     Value::Array(rows.values().map(PlayerResultAccumulator::to_value).collect())

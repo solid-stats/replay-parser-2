@@ -180,8 +180,8 @@ pub struct ConnectedEventObservation {
 pub struct KilledEventObservation {
     /// Original index in the source `events` array.
     pub event_index: usize,
-    /// Source frame number from `event[0]`.
-    pub frame: u64,
+    /// Source frame number from `event[0]`, when numeric.
+    pub frame: Option<u64>,
     /// Killed source entity ID from `event[2]`, when numeric.
     pub killed_entity_id: Option<i64>,
     /// Killer source entity and weapon evidence from `event[3]`.
@@ -370,11 +370,9 @@ fn killed_event(event: &Value, event_index: usize) -> Option<KilledEventObservat
         return None;
     }
 
-    let frame = event.first()?.as_u64()?;
-
     Some(KilledEventObservation {
         event_index,
-        frame,
+        frame: event.first().and_then(Value::as_u64),
         killed_entity_id: event.get(2).and_then(Value::as_i64),
         kill_info: killed_event_kill_info(event.get(3)),
         distance_meters: event.get(4).and_then(Value::as_f64),

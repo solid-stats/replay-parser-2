@@ -47,9 +47,9 @@ fn raw_event_accessors_should_read_killed_event_killer_weapon_and_distance() {
     let first_observation =
         observations.first().expect("first killed event observation should exist");
 
-    assert_eq!(observations.len(), 4);
+    assert_eq!(observations.len(), 5);
     assert_eq!(first_observation.event_index, 0);
-    assert_eq!(first_observation.frame, 10);
+    assert_eq!(first_observation.frame, Some(10));
     assert_eq!(first_observation.killed_entity_id, Some(2));
     assert!(matches!(
         &first_observation.kill_info,
@@ -81,7 +81,7 @@ fn raw_event_accessors_should_read_null_killer_event() {
         observations.get(1).expect("null-killer killed event observation should exist");
 
     assert_eq!(null_killer_observation.event_index, 1);
-    assert_eq!(null_killer_observation.frame, 20);
+    assert_eq!(null_killer_observation.frame, Some(20));
     assert_eq!(null_killer_observation.killed_entity_id, Some(3));
     assert_eq!(null_killer_observation.kill_info, KilledEventKillInfo::NullKiller);
 }
@@ -94,7 +94,7 @@ fn raw_event_accessors_should_preserve_malformed_kill_info_without_panicking() {
         observations.get(3).expect("malformed killed event observation should exist");
 
     assert_eq!(malformed_observation.event_index, 3);
-    assert_eq!(malformed_observation.frame, 40);
+    assert_eq!(malformed_observation.frame, Some(40));
     assert_eq!(malformed_observation.killed_entity_id, None);
     assert!(matches!(
         &malformed_observation.kill_info,
@@ -104,14 +104,33 @@ fn raw_event_accessors_should_preserve_malformed_kill_info_without_panicking() {
 }
 
 #[test]
+fn raw_event_accessors_should_preserve_killed_event_when_frame_is_malformed() {
+    let observations = killed_observations();
+
+    let malformed_frame_observation =
+        observations.get(4).expect("malformed-frame killed event observation should exist");
+
+    assert_eq!(malformed_frame_observation.event_index, 4);
+    assert_eq!(malformed_frame_observation.frame, None);
+    assert_eq!(malformed_frame_observation.killed_entity_id, Some(2));
+    assert!(matches!(
+        &malformed_frame_observation.kill_info,
+        KilledEventKillInfo::Killer {
+            killer_entity_id: 1,
+            weapon: Some(weapon),
+        } if weapon == "AK-74"
+    ));
+}
+
+#[test]
 fn raw_event_accessors_should_ignore_non_killed_events() {
     let observations = killed_observations();
 
     let connected_event_was_ignored = observations
         .iter()
-        .all(|observation| observation.event_index != 4 && observation.json_path != "$.events[4]");
+        .all(|observation| observation.event_index != 5 && observation.json_path != "$.events[5]");
 
-    assert_eq!(observations.len(), 4);
+    assert_eq!(observations.len(), 5);
     assert!(connected_event_was_ignored);
 }
 

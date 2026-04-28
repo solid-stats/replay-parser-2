@@ -48,7 +48,15 @@
       "id": 20,
       "type": "vehicle",
       "name": "T-72",
-      "class": "tank",
+      "class": "rhs_t72ba_tv",
+      "side": "WEST",
+      "positions": []
+    },
+    {
+      "id": 21,
+      "type": "vehicle",
+      "name": "Friendly Static MG",
+      "class": "static-weapon",
       "side": "WEST",
       "positions": []
     }
@@ -57,7 +65,8 @@
     [10, "killed", 2, [1, "T-72"], 100],
     [20, "killed", 10, [1, "T-72"], 200],
     [30, "killed", 10, [1, "T-72"], 210],
-    [40, "killed", 3, [1, "T-72"], 50]
+    [40, "killed", 3, [1, "T-72"], 50],
+    [50, "killed", 21, [1, "T-72"], 50]
   ],
   "Markers": [],
   "EditorMarkers": []

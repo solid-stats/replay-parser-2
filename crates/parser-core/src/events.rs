@@ -22,7 +22,9 @@ use parser_contract::{
 use crate::{
     artifact::SourceContext,
     diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
+    legacy_player::is_legacy_player_entity,
     raw::{KilledEventKillInfo, KilledEventObservation, RawReplay, killed_events},
+    vehicle_score::category_from_vehicle_class,
 };
 
 const ENEMY_KILL_RULE_ID: &str = "event.killed.enemy";
@@ -61,6 +63,22 @@ fn normalize_killed_event(
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) -> Option<NormalizedEvent> {
+    if observation.frame.is_none() {
+        push_unknown_diagnostic(
+            diagnostics,
+            UnknownDiagnostic {
+                code: "event.killed_shape_unknown",
+                message: "Killed event frame had an unexpected source shape",
+                expected_shape: "numeric frame in killed tuple slot 0",
+                observed_shape: "absent_or_non_numeric",
+                parser_action: "emit_unknown_combat_event",
+            },
+            observation,
+            context,
+        );
+        return build_unknown_event(observation, None, None, None, entity_index, context);
+    }
+
     match &observation.kill_info {
         KilledEventKillInfo::NullKiller => {
             normalize_null_killer_event(observation, entity_index, context, diagnostics)
@@ -107,7 +125,7 @@ fn normalize_null_killer_event(
         return build_unknown_event(observation, None, None, None, entity_index, context);
     };
 
-    if !is_player(victim) {
+    if !is_legacy_player_entity(victim) {
         push_actor_unknown_diagnostic(
             diagnostics,
             "Killed event has an explicit null killer and a non-player victim",
@@ -180,18 +198,28 @@ fn normalize_killer_event(
         return build_unknown_event(observation, killer, victim, weapon, entity_index, context);
     };
 
-    if is_player(killer) && is_vehicle_or_static(victim) {
-        return build_vehicle_destroyed_event(
-            observation,
-            killer,
-            victim,
-            weapon,
-            entity_index,
-            context,
-        );
+    if is_legacy_player_entity(killer) && is_vehicle_or_static(victim) {
+        return match same_present_side(killer, victim) {
+            Some(true) => build_friendly_vehicle_destroyed_event(
+                observation,
+                killer,
+                victim,
+                weapon,
+                entity_index,
+                context,
+            ),
+            Some(false) | None => build_vehicle_destroyed_event(
+                observation,
+                killer,
+                victim,
+                weapon,
+                entity_index,
+                context,
+            ),
+        };
     }
 
-    if !(is_player(killer) && is_player(victim)) {
+    if !(is_legacy_player_entity(killer) && is_legacy_player_entity(victim)) {
         push_actor_unknown_diagnostic(
             diagnostics,
             "Killed event actor or victim type is not auditable as a player combat event",
@@ -399,6 +427,45 @@ fn build_vehicle_destroyed_event(
     })
 }
 
+fn build_friendly_vehicle_destroyed_event(
+    observation: &KilledEventObservation,
+    killer: &ObservedEntity,
+    victim: &ObservedEntity,
+    weapon: Option<&str>,
+    entity_index: &BTreeMap<i64, &ObservedEntity>,
+    context: &SourceContext,
+) -> Option<NormalizedEvent> {
+    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID);
+    let killer_actor = actor_ref(killer);
+    let victim_actor = actor_ref(victim);
+
+    build_event(CombatEventBuild {
+        observation,
+        source_ref: source_ref.clone(),
+        rule_id: TEAMKILL_RULE_ID,
+        kind: NormalizedEventKind::VehicleKilled,
+        semantic: CombatSemantic::Teamkill,
+        killer: FieldPresence::Present {
+            value: killer_actor.clone(),
+            source: Some(source_ref.clone()),
+        },
+        victim: FieldPresence::Present {
+            value: victim_actor.clone(),
+            source: Some(source_ref.clone()),
+        },
+        actors: vec![killer_actor, victim_actor],
+        victim_kind: victim_kind(victim),
+        weapon,
+        distance_meters: observation.distance_meters,
+        vehicle_context: vehicle_context(weapon, Some(victim), entity_index, &source_ref),
+        bounty: excluded_bounty(vec![
+            BountyExclusionReason::Teamkill,
+            BountyExclusionReason::VehicleVictim,
+        ]),
+        legacy_counter_effects: Vec::new(),
+    })
+}
+
 fn build_unknown_event(
     observation: &KilledEventObservation,
     killer: Option<&ObservedEntity>,
@@ -474,10 +541,7 @@ fn build_event(spec: CombatEventBuild<'_>) -> Option<NormalizedEvent> {
     Some(NormalizedEvent {
         event_id: format!("event.killed.{}", spec.observation.event_index),
         kind: spec.kind,
-        frame: FieldPresence::Present {
-            value: spec.observation.frame,
-            source: Some(spec.source_ref.clone()),
-        },
+        frame: frame_presence(spec.observation, &spec.source_ref),
         event_index: event_index_presence(spec.observation, &spec.source_ref),
         actors: spec.actors,
         source_refs,
@@ -504,10 +568,23 @@ fn event_source_ref(
 ) -> SourceRef {
     context.event_source_ref(
         &observation.json_path,
-        Some(observation.frame),
+        observation.frame,
         u64::try_from(observation.event_index).ok(),
         observation.killed_entity_id,
         RuleId::new(rule_id).ok(),
+    )
+}
+
+fn frame_presence(
+    observation: &KilledEventObservation,
+    source_ref: &SourceRef,
+) -> FieldPresence<u64> {
+    observation.frame.map_or_else(
+        || FieldPresence::Unknown {
+            reason: UnknownReason::SchemaDrift,
+            source: Some(source_ref.clone()),
+        },
+        |value| FieldPresence::Present { value, source: Some(source_ref.clone()) },
     )
 }
 
@@ -533,10 +610,6 @@ fn actor_ref(entity: &ObservedEntity) -> EventActorRef {
         observed_name: entity.observed_name.clone(),
         side: entity.identity.side.clone(),
     }
-}
-
-const fn is_player(entity: &ObservedEntity) -> bool {
-    matches!(entity.kind, EntityKind::Unit)
 }
 
 const fn is_vehicle_or_static(entity: &ObservedEntity) -> bool {
@@ -659,21 +732,9 @@ fn vehicle_score_category(entity: &ObservedEntity) -> VehicleScoreCategory {
     match entity.kind {
         EntityKind::Unit => VehicleScoreCategory::Player,
         EntityKind::StaticWeapon => VehicleScoreCategory::StaticWeapon,
-        EntityKind::Vehicle | EntityKind::Unknown => observed_string(&entity.observed_class)
-            .map_or(VehicleScoreCategory::Unknown, vehicle_score_category_from_class),
-    }
-}
-
-fn vehicle_score_category_from_class(class_name: &str) -> VehicleScoreCategory {
-    match class_name {
-        "car" => VehicleScoreCategory::Car,
-        "truck" => VehicleScoreCategory::Truck,
-        "apc" => VehicleScoreCategory::Apc,
-        "tank" => VehicleScoreCategory::Tank,
-        "heli" => VehicleScoreCategory::Heli,
-        "plane" => VehicleScoreCategory::Plane,
-        "static-weapon" => VehicleScoreCategory::StaticWeapon,
-        _ => VehicleScoreCategory::Unknown,
+        EntityKind::Vehicle | EntityKind::Unknown => {
+            category_from_vehicle_class(observed_string(&entity.observed_class))
+        }
     }
 }
 

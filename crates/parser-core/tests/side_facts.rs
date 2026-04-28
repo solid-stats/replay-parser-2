@@ -45,6 +45,66 @@ const UNRECOGNIZED_WINNER_FIXTURE: &[u8] = br#"{
   "Markers": [],
   "EditorMarkers": []
 }"#;
+const PADDED_ALIAS_WINNER_FIXTURE: &[u8] = br#"{
+  "missionName": "sg padded alias side facts",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 0],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "winner": " BLUFOR ",
+  "entities": [],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
+const CONFLICTING_WINNER_FIXTURE: &[u8] = br#"{
+  "missionName": "sg conflicting side facts",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 0],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "winner": "WEST",
+  "outcome": "EAST",
+  "entities": [],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
+const COMMANDER_FALSE_POSITIVE_FIXTURE: &[u8] = br#"{
+  "missionName": "sg commander false positives",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 2],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Maksim",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Bravo",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Marksman",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -179,4 +239,39 @@ fn side_facts_should_warn_but_not_data_loss_for_unrecognized_outcome_value() {
             .iter()
             .any(|diagnostic| diagnostic.code == "side_facts.outcome_unrecognized")
     );
+}
+
+#[test]
+fn side_facts_should_accept_trimmed_case_insensitive_winner_aliases() {
+    let artifact = parse_fixture(PADDED_ALIAS_WINNER_FIXTURE);
+
+    assert_eq!(artifact.status, ParseStatus::Success);
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Known);
+    assert_eq!(present_winner_side(&artifact), Some(EntitySide::West));
+}
+
+#[test]
+fn side_facts_should_emit_partial_unknown_outcome_when_recognized_fields_conflict() {
+    let artifact = parse_fixture(CONFLICTING_WINNER_FIXTURE);
+
+    assert_eq!(artifact.status, ParseStatus::Partial);
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
+    assert!(matches!(
+        artifact.side_facts.outcome.winner_side,
+        FieldPresence::Unknown { reason: UnknownReason::MissingWinner, source: None }
+    ));
+    assert!(
+        artifact
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "side_facts.outcome_conflict")
+    );
+}
+
+#[test]
+fn side_facts_should_not_emit_commander_candidate_for_embedded_ks_substrings() {
+    let artifact = parse_fixture(COMMANDER_FALSE_POSITIVE_FIXTURE);
+
+    assert_eq!(artifact.status, ParseStatus::Success);
+    assert!(artifact.side_facts.commanders.is_empty());
 }

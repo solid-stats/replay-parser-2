@@ -29,6 +29,7 @@ fn add_aggregate_value_helper_definitions(schema: &mut Schema) {
     add_schema_definition::<BountyInputContributionValue>(schema, "BountyInputContributionValue");
     add_schema_definition::<VehicleScoreInputValue>(schema, "VehicleScoreInputValue");
     add_aggregate_projection_key_definition(schema);
+    constrain_aggregate_contribution_values(schema);
 }
 
 fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definition_name: &str) {
@@ -71,6 +72,42 @@ fn add_aggregate_projection_key_definition(schema: &mut Schema) {
             ]
         }),
     ));
+}
+
+fn constrain_aggregate_contribution_values(schema: &mut Schema) {
+    let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
+        return;
+    };
+    let Some(Value::Object(contribution_schema)) = defs.get_mut("AggregateContributionRef") else {
+        return;
+    };
+
+    drop(contribution_schema.insert(
+        "allOf".to_string(),
+        json!([
+            aggregate_value_condition("legacy_counter", "LegacyCounterContributionValue"),
+            aggregate_value_condition("relationship", "RelationshipContributionValue"),
+            aggregate_value_condition("bounty_input", "BountyInputContributionValue"),
+            aggregate_value_condition("vehicle_score_input", "VehicleScoreInputValue")
+        ]),
+    ));
+}
+
+fn aggregate_value_condition(kind: &str, definition_name: &str) -> Value {
+    json!({
+        "if": {
+            "required": ["kind"],
+            "properties": {
+                "kind": { "const": kind }
+            }
+        },
+        "then": {
+            "required": ["value"],
+            "properties": {
+                "value": { "$ref": format!("#/$defs/{definition_name}") }
+            }
+        }
+    })
 }
 
 fn enforce_status_failure_invariants(schema: &mut Schema) {

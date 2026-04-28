@@ -36,6 +36,21 @@ fn read_json(path: PathBuf) -> Value {
     serde_json::from_str(&text).expect("JSON fixture should parse")
 }
 
+fn aggregate_contribution_value_mut<'a>(
+    artifact: &'a mut Value,
+    kind: &str,
+) -> &'a mut serde_json::Map<String, Value> {
+    let contributions = artifact["aggregates"]["contributions"]
+        .as_array_mut()
+        .expect("success example should include aggregate contributions");
+    let contribution = contributions
+        .iter_mut()
+        .find(|contribution| contribution.get("kind").and_then(Value::as_str) == Some(kind))
+        .expect("success example should include requested contribution kind");
+
+    contribution["value"].as_object_mut().expect("aggregate contribution value should be an object")
+}
+
 fn assert_committed_schema_rejects(candidate: &Value) {
     let schema = read_json(committed_schema_path());
     let validator = jsonschema::draft202012::new(&schema).expect("committed schema should compile");
@@ -271,6 +286,53 @@ fn schema_contract_gap_regression_should_reject_out_of_range_inferred_confidence
         "source": null,
         "rule_id": "metadata.mission_name.inferred"
     });
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_invalid_legacy_counter_contribution_value() {
+    let mut success_example = read_json(success_example_path());
+    aggregate_contribution_value_mut(&mut success_example, "legacy_counter")["delta"] =
+        json!("one");
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_invalid_relationship_contribution_value() {
+    let mut success_example = read_json(success_example_path());
+    aggregate_contribution_value_mut(&mut success_example, "relationship")["count_delta"] =
+        json!("one");
+
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_invalid_bounty_input_contribution_value() {
+    let mut success_example = read_json(success_example_path());
+    let removed =
+        aggregate_contribution_value_mut(&mut success_example, "bounty_input").remove("eligible");
+
+    assert!(removed.is_some(), "success example bounty input should include eligible");
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_vehicle_score_input_without_applied_weight() {
+    let mut success_example = read_json(success_example_path());
+    let removed = aggregate_contribution_value_mut(&mut success_example, "vehicle_score_input")
+        .remove("applied_weight");
+
+    assert!(removed.is_some(), "success example vehicle score input should include applied_weight");
+    assert_committed_schema_rejects(&success_example);
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_vehicle_score_input_with_string_matrix_weight() {
+    let mut success_example = read_json(success_example_path());
+    aggregate_contribution_value_mut(&mut success_example, "vehicle_score_input")["matrix_weight"] =
+        json!("2.0");
 
     assert_committed_schema_rejects(&success_example);
 }

@@ -10,6 +10,7 @@ pub mod diagnostics;
 pub mod entities;
 pub mod events;
 pub mod input;
+pub mod legacy_player;
 pub mod metadata;
 pub mod raw;
 pub mod side_facts;

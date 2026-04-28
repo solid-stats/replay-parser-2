@@ -22,6 +22,42 @@ use parser_core::{ParserInput, ParserOptions, parse_replay};
 use serde_json::json;
 
 const COMBAT_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/combat-events.ocap.json");
+const MALFORMED_KILLED_EVENTS_FIXTURE: &[u8] = br#"{
+  "missionName": "sg malformed killed events",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [0, 2],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Alpha",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Bravo",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Rifleman",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    ["late", "killed", 2, [1, "AK-74"], 100],
+    [20, "killed", 2, {"unexpected": true}, 100]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -56,6 +92,10 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 
 fn combat_artifact() -> ParseArtifact {
     parse_replay(parser_input(COMBAT_EVENTS_FIXTURE))
+}
+
+fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
+    parse_replay(parser_input(bytes))
 }
 
 fn event_by_id<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a NormalizedEvent {
@@ -141,6 +181,32 @@ fn combat_event_semantics_should_emit_unknown_event_and_partial_status_for_missi
     assert!(has_exclusion(combat, BountyExclusionReason::UnknownActor));
     assert!(combat.legacy_counter_effects.is_empty());
     assert!(diagnostic_codes.contains(&"event.killed_actor_unknown"));
+}
+
+#[test]
+fn combat_event_semantics_should_emit_unknown_events_and_diagnostics_for_malformed_killed_tuples() {
+    let artifact = parse_fixture(MALFORMED_KILLED_EVENTS_FIXTURE);
+    let malformed_frame = event_by_id(&artifact, "event.killed.0");
+    let malformed_kill_info = event_by_id(&artifact, "event.killed.1");
+    let diagnostic_codes =
+        artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
+
+    assert_eq!(artifact.status, ParseStatus::Partial);
+    assert_eq!(malformed_frame.kind, NormalizedEventKind::Unknown);
+    assert_eq!(combat(malformed_frame).semantic, CombatSemantic::Unknown);
+    assert!(matches!(
+        malformed_frame.frame,
+        FieldPresence::Unknown {
+            reason: parser_contract::presence::UnknownReason::SchemaDrift,
+            source: Some(_)
+        }
+    ));
+    assert_eq!(malformed_kill_info.kind, NormalizedEventKind::Unknown);
+    assert_eq!(combat(malformed_kill_info).semantic, CombatSemantic::Unknown);
+    assert_eq!(
+        diagnostic_codes.iter().filter(|code| **code == "event.killed_shape_unknown").count(),
+        2
+    );
 }
 
 #[test]
