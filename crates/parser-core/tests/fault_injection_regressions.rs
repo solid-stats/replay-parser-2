@@ -61,14 +61,14 @@ fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value
         .projections
         .get(key)
         .and_then(Value::as_array)
-        .unwrap_or_else(|| panic!("projection {key} should be an array"))
+        .expect("projection should be an array")
 }
 
 fn vehicle_score_input_row<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a Value {
     projection_array(artifact, "vehicle_score.inputs")
         .iter()
         .find(|row| row["event_id"] == event_id)
-        .unwrap_or_else(|| panic!("vehicle score row {event_id} should exist"))
+        .expect("vehicle score row should exist")
 }
 
 #[test]
@@ -154,16 +154,14 @@ fn fault_injection_regressions_should_catch_aggregate_contributions_without_sour
     let artifact = parse_fixture(AGGREGATE_FIXTURE, "fixtures/aggregate-combat.ocap.json");
 
     // Act
-    let missing_source_refs = artifact
+    let every_contribution_has_source_refs = artifact
         .aggregates
         .contributions
         .iter()
-        .filter(|contribution| contribution.source_refs.as_slice().is_empty())
-        .map(|contribution| contribution.contribution_id.as_str())
-        .collect::<Vec<_>>();
+        .all(|contribution| !contribution.source_refs.as_slice().is_empty());
 
     // Assert
-    assert!(missing_source_refs.is_empty(), "aggregate contributions must keep source refs");
+    assert!(every_contribution_has_source_refs, "aggregate contributions must keep source refs");
 }
 
 #[test]
