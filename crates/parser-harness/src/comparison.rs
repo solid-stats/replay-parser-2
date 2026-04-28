@@ -23,26 +23,20 @@ pub fn compare_artifacts(
     let new_label = new_label.into();
     let old_value = parse_json("old", old_json)?;
     let new_value = parse_json("new", new_json)?;
-    compare_values(old_label, old_value, new_label, new_value)
+    compare_values(old_label, &old_value, new_label, &new_value)
 }
 
-/// Compares two already parsed selected JSON artifacts.
-///
-/// # Errors
-///
-/// Returns [`ComparisonError::InvalidReport`] when report invariants are
-/// violated.
-pub fn compare_values(
+fn compare_values(
     old_label: String,
-    old_value: Value,
+    old_value: &Value,
     new_label: String,
-    new_value: Value,
+    new_value: &Value,
 ) -> Result<ComparisonReport, ComparisonError> {
     let baseline = baseline_from_old_label(&old_label);
     let baseline_is_drift = baseline.is_current_vs_regenerated_drift();
     let findings = selected_surfaces()
         .iter()
-        .map(|surface| compare_surface(surface, &old_value, &new_value, baseline_is_drift))
+        .map(|surface| compare_surface(surface, old_value, new_value, baseline_is_drift))
         .collect();
 
     ComparisonReport::new(
@@ -76,7 +70,7 @@ fn labels_current_vs_regenerated_drift(label: &str) -> bool {
     label.contains("current") && label.contains("regenerated") && label.contains("drift")
 }
 
-fn selected_surfaces() -> [SelectedSurface; 7] {
+const fn selected_surfaces() -> [SelectedSurface; 7] {
     [
         SelectedSurface::top_level("status"),
         SelectedSurface::top_level("replay"),
@@ -124,7 +118,7 @@ fn classify_values(
     }
 }
 
-fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
+const fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
     if surface.is_projection {
         return ImpactAssessment::new(
             ImpactLevel::Yes,

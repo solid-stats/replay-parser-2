@@ -1,4 +1,10 @@
 //! Serializable old-vs-new comparison report vocabulary.
+//!
+//! Full-corpus generated reports belong under [`GENERATED_REPORT_ROOT`], not in
+//! committed fixture directories. Ordinary v1 parity intentionally excludes
+//! annual/yearly nomination outputs. Reports describe parser artifact,
+//! `server-2`, and `web` impact dimensions for review; they do not mutate
+//! adjacent application state.
 
 use std::{
     collections::BTreeMap,
@@ -10,6 +16,9 @@ use serde_json::Value;
 
 /// Current comparison report schema version.
 pub const COMPARISON_REPORT_VERSION: &str = "1";
+
+/// Ignored generated-output root for bulky Phase 5 parity reports.
+pub const GENERATED_REPORT_ROOT: &str = ".planning/generated/phase-05/";
 
 /// Required Phase 1 mismatch categories.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -32,7 +41,7 @@ pub enum MismatchCategory {
 }
 
 impl MismatchCategory {
-    /// Returns the stable snake_case string used in report JSON.
+    /// Returns the stable `snake_case` string used in report JSON.
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -190,7 +199,7 @@ impl ComparisonInput {
 }
 
 /// A single surface or field-level comparison finding.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ComparisonFinding {
     /// Compared surface, such as `status`, `replay`, or an aggregate projection key.
     pub surface: String,
@@ -258,7 +267,7 @@ impl ComparisonSummary {
 }
 
 /// Full old-vs-new comparison report.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ComparisonReport {
     /// Report schema version.
     pub report_version: String,
