@@ -6,15 +6,16 @@ The parser will turn OCAP JSON replay files into deterministic, versioned artifa
 
 ## Current Status
 
-Phase 4 Event Semantics and Aggregates is verified complete. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, and the pure parser core at `crates/parser-core`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 Plan 00 has added the public local CLI binary at `crates/parser-cli`. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI binary, RabbitMQ/S3 worker, golden parity harness, full corpus comparison commands, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact` and export the current parser contract schema. The `compare` command slot is present in help but intentionally returns `compare command is planned in Phase 5 Plan 02` until the comparison harness is implemented. RabbitMQ/S3 worker mode, golden parity harness, full corpus comparison behavior, benchmark suite, 100% coverage gate enforcement, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (ready to plan).
+- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (Plan 00 complete).
 - Roadmap: 7 phases.
 - v1 requirements: 71 mapped requirements.
 - Contract crate: `crates/parser-contract`.
 - Parser-core crate: `crates/parser-core`.
+- CLI crate: `crates/parser-cli`.
 - Contract schema: `schemas/parse-artifact-v1.schema.json`.
 - Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
@@ -25,6 +26,8 @@ The implemented developer validation commands are:
 ```bash
 cargo test -p parser-contract
 cargo test -p parser-core
+cargo check -p parser-cli --all-targets
+cargo test -p parser-cli
 cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v1.schema.json
 ```
 
@@ -47,7 +50,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-CLI parse, worker, comparison, full corpus parity, coverage enforcement, and benchmark commands are still planned for later phases.
+Worker mode, comparison implementation, full corpus parity, coverage enforcement, and benchmark commands are still planned for later phases.
 
 ## Product Context
 
@@ -138,25 +141,29 @@ Production raw replay discovery is owned by `replays-fetcher`: it writes raw rep
 
 `replay-parser-2` owns the parser artifact contract and schema. Successful worker parses write deterministic parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
 
-## Planned User Commands
+## User Commands
 
-These commands are not implemented yet. They describe the intended shape of the developer and operator interface:
+Implemented local CLI commands:
 
 ```bash
 # Parse one replay file to a normalized artifact
-sg-replay-parser parse path/to/replay.json --output path/to/artifact.json
+replay-parser-2 parse path/to/replay.json --output path/to/artifact.json
 
 # Emit the current parser contract schema
-sg-replay-parser schema --output path/to/schema.json
-
-# Compare new parser output against legacy or golden data
-sg-replay-parser compare --replay path/to/replay.json --golden path/to/expected.json
-
-# Run worker mode for server integration
-sg-replay-parser worker
+replay-parser-2 schema --output path/to/schema.json
 ```
 
-Exact command names and flags will be finalized during the CLI phase.
+Reserved command slots for later phases:
+
+```bash
+# Compare new parser output against legacy or golden data
+replay-parser-2 compare --replay path/to/replay.json --new-artifact path/to/new.json --old-artifact path/to/old.json --output path/to/report.json
+
+# Run worker mode for server integration
+replay-parser-2 worker
+```
+
+`compare` is reserved for Phase 5 Plan 02. Worker mode is Phase 6 scope and is not exposed by the current CLI.
 
 ## Development Workflow
 
@@ -192,4 +199,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-28 after verifying Phase 4 event semantics and aggregates.
+Last updated: 2026-04-28 after adding Phase 5 Plan 00 local CLI parse/schema commands.
