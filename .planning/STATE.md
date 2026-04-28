@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-00-PLAN.md
-last_updated: "2026-04-28T05:19:03.125Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-04-28T05:37:11.027Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 25
-  percent: 83
+  completed_plans: 26
+  percent: 87
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 ## Current Position
 
 Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-04-28
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 24
+- Total plans completed: 26
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -48,7 +48,7 @@ Progress: [████████░░] 83%
 | 02 | 6 | - | - |
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
-| 05 | 0/6 | planned | - |
+| 05 | 2/6 | 35m | 17m30s |
 
 **Recent Trend:**
 
@@ -77,6 +77,7 @@ Progress: [████████░░] 83%
 | Phase 04 P05 | 8m30s | 4 tasks | 6 files |
 | Phase 04 P06 | 40m | 4 tasks | 14 files |
 | Phase 05 P00 | 22m | 4 tasks | 7 files |
+| Phase 05 P01 | 13min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 00 locks replay-parser-2 as the public local binary with parse, schema, and reserved compare subcommands. — Matches Phase 5 CLI command contract and keeps old sg-replay-parser name as legacy baseline context only.
 - [Phase 05]: Plan 00 CLI parse computes local SHA-256 and writes parser-core ParseArtifact JSON for success and parser failures. — Keeps filesystem/stderr concerns in the CLI adapter and leaves parser-core pure.
 - [Phase 05]: Plan 00 schema command exports parser_contract::schema::parse_artifact_schema as the source of truth. — CLI schema output is byte-checked against the committed parse-artifact schema.
+- [Phase 05]: Plan 01 reuses existing compact Phase 3/4 focused fixtures via golden manifest links. — Avoids duplicating OCAP payloads while keeping fixture coverage traceable and executable.
+- [Phase 05]: Plan 01 golden behavior tests assert public parser-core artifacts through parse_replay. — Keeps tests behavior-oriented and avoids production-only exports.
 
 ### Pending Todos
 
@@ -147,8 +150,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T05:19:03.121Z
-Stopped at: Completed 05-00-PLAN.md
+Last session: 2026-04-28T05:37:11.023Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25

@@ -132,7 +132,7 @@ Cross-cutting constraints:
 - Benchmark reports must include workload identity, parity status, deterministic old baseline profile, throughput/memory evidence, and 10x pass/fail/unknown status before any performance claim.
 Plans:
 - [x] 05-00-PLAN.md — Public CLI binary, parse/schema commands, structured failure artifacts, and CLI tests.
-- [ ] 05-01-PLAN.md — Compact golden fixture manifest, curated fixtures, and behavior regression tests.
+- [x] 05-01-PLAN.md — Compact golden fixture manifest, curated fixtures, and behavior regression tests.
 - [ ] 05-02-PLAN.md — Selected-input comparison harness and `replay-parser-2 compare` reports.
 - [ ] 05-03-PLAN.md — `cargo llvm-cov` coverage gate, allowlist validation, and behavior-test strengthening.
 - [ ] 05-04-PLAN.md — Mutation or equivalent fault-injection report gate.
@@ -171,6 +171,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
-| 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 0/6 | Ready to execute | - |
+| 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 2/6 | In Progress | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
