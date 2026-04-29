@@ -11,6 +11,7 @@ use parser_harness::{
         ComparisonBaseline, ComparisonFinding, ComparisonInput, ComparisonReport, ImpactAssessment,
         ImpactLevel, MismatchCategory, ReportValidationError,
     },
+    summary_report::{ComparisonReviewSummary, render_markdown_summary},
 };
 use serde_json::{Value, json};
 
@@ -184,7 +185,7 @@ fn comparison_report_compare_artifacts_should_emit_compatible_findings_when_sele
 
     // Assert
     assert!(report.findings.iter().any(|finding| finding.category == MismatchCategory::Compatible));
-    assert_eq!(report.summary.by_category["compatible"], 7);
+    assert_eq!(report.summary.by_category["compatible"], 9);
 }
 
 #[test]
@@ -230,14 +231,58 @@ fn comparison_report_compare_artifacts_should_emit_human_review_when_baseline_la
     );
 }
 
+#[test]
+fn comparison_report_markdown_summary_should_include_required_review_sections() {
+    // Arrange
+    let old_json = selected_artifact_json("success");
+    let new_json = selected_artifact_json("failed");
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("different selected artifacts should produce a report");
+
+    // Act
+    let markdown = render_markdown_summary(&report);
+
+    // Assert
+    assert!(markdown.starts_with("# Comparison Summary"));
+    assert!(markdown.contains("## Counts by Category"));
+    assert!(markdown.contains("## Counts by Impact"));
+    assert!(markdown.contains("## Top Diffs"));
+    assert!(markdown.contains("## Next Action"));
+    assert!(markdown.contains("Review top human_review diffs before accepting parity"));
+}
+
+#[test]
+fn comparison_report_review_summary_should_record_human_review_next_action() {
+    // Arrange
+    let old_json = selected_artifact_json("success");
+    let new_json = selected_artifact_json("failed");
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("different selected artifacts should produce a report");
+
+    // Act
+    let summary = ComparisonReviewSummary::from_report(&report);
+
+    // Assert
+    assert_eq!(summary.next_action, "Review top human_review diffs before accepting parity.");
+    assert!(
+        summary.top_diffs.iter().any(|diff| diff.note.contains("Review top human_review diffs"))
+    );
+}
+
 fn selected_artifact_json(status: &str) -> Vec<u8> {
     serde_json::to_vec(&json!({
         "status": status,
         "replay": {
             "mission_name": "SolidGames"
         },
-        "events": [],
-        "aggregates": {
+        "participants": [],
+        "facts": {
+            "combat": [],
+            "aggregate_contributions": []
+        },
+        "summaries": {
             "projections": {
                 "legacy.player_game_results": [],
                 "legacy.relationships": [],

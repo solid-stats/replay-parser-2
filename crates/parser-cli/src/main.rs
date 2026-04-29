@@ -10,7 +10,7 @@ use std::{
     process::ExitCode,
 };
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     presence::FieldPresence,
@@ -19,7 +19,10 @@ use parser_contract::{
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay};
-use parser_harness::comparison::{ComparisonError, compare_artifacts};
+use parser_harness::{
+    comparison::{ComparisonError, compare_artifacts},
+    summary_report::render_markdown_summary,
+};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
@@ -64,7 +67,19 @@ enum Commands {
         /// Output comparison report path.
         #[arg(long)]
         output: PathBuf,
+        /// Optional structured JSON detail report path when writing Markdown output.
+        #[arg(long)]
+        detail_output: Option<PathBuf>,
+        /// Comparison report output format.
+        #[arg(long, value_enum, default_value_t = CompareFormat::Markdown)]
+        format: CompareFormat,
     },
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+enum CompareFormat {
+    Markdown,
+    Json,
 }
 
 #[derive(Debug)]
@@ -79,6 +94,7 @@ enum CliError {
     Compare(ComparisonError),
     CompareRequiresInput,
     CompareConflictingInput,
+    CompareJsonDetailOutput,
 }
 
 impl Display for CliError {
@@ -114,6 +130,11 @@ impl Display for CliError {
             Self::CompareConflictingInput => {
                 formatter.write_str("compare accepts only one of --replay or --new-artifact")
             }
+            Self::CompareJsonDetailOutput => {
+                formatter.write_str(
+                    "compare --format json cannot be combined with --detail-output because --output is already detailed JSON",
+                )
+            }
         }
     }
 }
@@ -128,7 +149,9 @@ impl Error for CliError {
             Self::Serialize(source) | Self::ParserInfo(source) => Some(source),
             Self::Checksum(source) => Some(source),
             Self::Compare(source) => Some(source),
-            Self::CompareRequiresInput | Self::CompareConflictingInput => None,
+            Self::CompareRequiresInput
+            | Self::CompareConflictingInput
+            | Self::CompareJsonDetailOutput => None,
         }
     }
 }
@@ -144,8 +167,15 @@ fn run() -> Result<ExitCode, CliError> {
     match Cli::parse().command {
         Commands::Parse { input, output, replay_id } => parse_command(&input, &output, replay_id),
         Commands::Schema { output } => schema_command(output),
-        Commands::Compare { replay, new_artifact, old_artifact, output } => {
-            compare_command(replay.as_deref(), new_artifact.as_deref(), &old_artifact, &output)
+        Commands::Compare { replay, new_artifact, old_artifact, output, detail_output, format } => {
+            compare_command(
+                replay.as_deref(),
+                new_artifact.as_deref(),
+                &old_artifact,
+                &output,
+                detail_output.as_deref(),
+                format,
+            )
         }
     }
 }
@@ -221,7 +251,13 @@ fn compare_command(
     new_artifact: Option<&Path>,
     old_artifact: &Path,
     output: &Path,
+    detail_output: Option<&Path>,
+    format: CompareFormat,
 ) -> Result<ExitCode, CliError> {
+    if format == CompareFormat::Json && detail_output.is_some() {
+        return Err(CliError::CompareJsonDetailOutput);
+    }
+
     let old_bytes = read_file(old_artifact)?;
     let old_label = old_artifact.display().to_string();
     let (new_label, new_bytes) = match (replay, new_artifact) {
@@ -237,8 +273,20 @@ fn compare_command(
 
     let report = compare_artifacts(old_label, &old_bytes, new_label, &new_bytes)
         .map_err(CliError::Compare)?;
-    let report_bytes = serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
-    write_pretty_json_file(output, report_bytes)?;
+    match format {
+        CompareFormat::Markdown => {
+            write_text_file(output, render_markdown_summary(&report))?;
+            if let Some(path) = detail_output {
+                let report_bytes =
+                    serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
+                write_pretty_json_file(path, report_bytes)?;
+            }
+        }
+        CompareFormat::Json => {
+            let report_bytes = serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
+            write_pretty_json_file(output, report_bytes)?;
+        }
+    }
 
     Ok(ExitCode::SUCCESS)
 }
@@ -263,6 +311,11 @@ fn parser_info() -> Result<ParserInfo, CliError> {
 
 fn write_pretty_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliError> {
     output.push(b'\n');
+    fs::write(path, output)
+        .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
+}
+
+fn write_text_file(path: &Path, output: String) -> Result<(), CliError> {
     fs::write(path, output)
         .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
 }
@@ -372,6 +425,11 @@ mod tests {
             (
                 CliError::CompareConflictingInput,
                 "compare accepts only one of --replay or --new-artifact",
+                false,
+            ),
+            (
+                CliError::CompareJsonDetailOutput,
+                "compare --format json cannot be combined with --detail-output",
                 false,
             ),
         ];

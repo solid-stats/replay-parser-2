@@ -8,3 +8,4 @@ pub mod comparison;
 pub mod coverage;
 pub mod fault_report;
 pub mod report;
+pub mod summary_report;

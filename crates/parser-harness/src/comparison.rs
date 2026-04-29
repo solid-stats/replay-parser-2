@@ -71,15 +71,32 @@ fn labels_current_vs_regenerated_drift(label: &str) -> bool {
     label.contains("current") && label.contains("regenerated") && label.contains("drift")
 }
 
-const fn selected_surfaces() -> [SelectedSurface; 7] {
+const fn selected_surfaces() -> [SelectedSurface; 9] {
     [
-        SelectedSurface::top_level("status"),
-        SelectedSurface::top_level("replay"),
-        SelectedSurface::top_level("events"),
-        SelectedSurface::projection("legacy.player_game_results"),
-        SelectedSurface::projection("legacy.relationships"),
-        SelectedSurface::projection("bounty.inputs"),
-        SelectedSurface::projection("vehicle_score.inputs"),
+        SelectedSurface::new("status", &["status"]),
+        SelectedSurface::new("replay", &["replay"]),
+        SelectedSurface::new("participants", &["participants"]),
+        SelectedSurface::new("facts.combat", &["facts", "combat"]),
+        SelectedSurface::new(
+            "facts.aggregate_contributions",
+            &["facts", "aggregate_contributions"],
+        ),
+        SelectedSurface::new(
+            "summaries.projections.legacy.player_game_results",
+            &["summaries", "projections", "legacy.player_game_results"],
+        ),
+        SelectedSurface::new(
+            "summaries.projections.legacy.relationships",
+            &["summaries", "projections", "legacy.relationships"],
+        ),
+        SelectedSurface::new(
+            "summaries.projections.bounty.inputs",
+            &["summaries", "projections", "bounty.inputs"],
+        ),
+        SelectedSurface::new(
+            "summaries.projections.vehicle_score.inputs",
+            &["summaries", "projections", "vehicle_score.inputs"],
+        ),
     ]
 }
 
@@ -119,8 +136,8 @@ fn classify_values(
     }
 }
 
-const fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
-    if surface.is_projection {
+fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
+    if surface.is_projection() {
         return ImpactAssessment::new(
             ImpactLevel::Yes,
             ImpactLevel::Unknown,
@@ -140,24 +157,25 @@ const fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
 #[derive(Debug, Clone, Copy)]
 struct SelectedSurface {
     name: &'static str,
-    is_projection: bool,
+    path: &'static [&'static str],
 }
 
 impl SelectedSurface {
-    const fn top_level(name: &'static str) -> Self {
-        Self { name, is_projection: false }
-    }
-
-    const fn projection(name: &'static str) -> Self {
-        Self { name, is_projection: true }
+    const fn new(name: &'static str, path: &'static [&'static str]) -> Self {
+        Self { name, path }
     }
 
     fn extract<'a>(&self, root: &'a Value) -> Option<&'a Value> {
-        if self.is_projection {
-            return root.get("aggregates")?.get("projections")?.get(self.name);
+        let mut current = root;
+        for segment in self.path {
+            current = current.get(*segment)?;
         }
 
-        root.get(self.name)
+        Some(current)
+    }
+
+    fn is_projection(&self) -> bool {
+        matches!(self.path, ["summaries", "projections", ..])
     }
 }
 
