@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: redesign-needed
-stopped_at: Phase 5.1 context gathered
-last_updated: "2026-04-29T06:47:48.891Z"
+status: ready-to-execute
+stopped_at: Phase 5.1 planned
+last_updated: "2026-04-29T14:19:13+07:00"
 last_activity: 2026-04-29
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 30
+  total_plans: 38
   completed_plans: 30
-  percent: 86
+  percent: 79
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 
 ## Current Position
 
-Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — INSERTED, NOT PLANNED
-Plan: 0 of TBD
-Status: Phase 5 UAT found a product-fit gap: default output is too large, benchmark speedup is too small, and comparison reports are not reviewable. Phase 5.1 must redesign the default artifact and parser hot path before Phase 6 worker integration.
+Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — PLANNED, READY TO EXECUTE
+Plan: 0 of 8
+Status: Phase 5.1 has 8 executable plans covering the server compatibility gate, compact artifact contract, selective parser path, compact core semantics, CLI/schema updates, summary-first comparison reports, benchmark evidence, and final handoff gates. Phase 6 worker integration remains blocked until this redesign is executed and accepted.
 Last activity: 2026-04-29
 
-Progress: [████████░░] 86%
+Progress: [███████░░░] 79%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [████████░░] 86%
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
 | 05 | 6/6 | 221m | 36m50s |
+| 05.1 | 0/8 | planned | - |
 
 **Recent Trend:**
 
@@ -129,10 +130,12 @@ Recent decisions affecting current work:
 - [Phase 05]: Final local gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior, but UAT escalated the benchmark/parity gap into a parser artifact and performance redesign. Phase 6 still owns RabbitMQ/S3 worker integration after Phase 5.1.
 - [Phase 05.1]: Inserted urgent redesign phase after UAT rejected the current parser direction. — The default server-facing artifact must become compact; full normalized event/entity dumps move out of ordinary ingestion; comparison reports must become summary-first; performance work should use selective OCAP extraction instead of optimizing a large JSON-to-JSON roundtrip.
 - [Phase 05.1]: Annual/yearly nomination statistics should not force a large v1 side artifact. — Future yearly work can reprocess raw OCAP files and compare against `~/sg_stats/year_results`, matching the old-parser model more closely than carrying a heavy default document through every parse.
+- [Phase 05.1]: Planning produced 8 execution plans. — Wave 1 records `server-2` compatibility and approval state; Wave 2 replaces the public contract with compact `participants`, `facts`, and `summaries`; Wave 3 replaces the normal parser hot path with selective OCAP extraction; Wave 4 preserves combat/aggregate/side semantics in compact output; Wave 5 updates CLI/schema and summary-first comparison; Wave 6 adds compact artifact-size and whole-list/corpus benchmark evidence; Wave 7 runs final quality gates and handoff docs.
 
 ### Roadmap Evolution
 
 - Phase 5.1 inserted after Phase 5 (URGENT): Compact Artifact and Selective Parser Redesign. Reason: Phase 5 UAT found that the current parser artifact is too large, benchmark speedup is too weak, and comparison output is not reviewable; Phase 6 worker integration must wait for a compact artifact and selective parser direction.
+- Phase 5.1 planned with 8 plans and 7 execution waves on 2026-04-29.
 
 ### Pending Todos
 
@@ -140,7 +143,8 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 5 UAT found a product-fit and benchmark/parity gap. The generated
+Active: Phase 5 UAT found a product-fit and benchmark/parity gap. Phase 5.1 is
+now planned but not executed. The generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is valid, but
 records `ten_x_status=fail`, `parity_status=human_review`, and selected
 old-parser `runParseTask` vs Rust release CLI speedup well below the `10x`
@@ -192,4 +196,4 @@ Resume file: .planning/phases/05.1-compact-artifact-and-selective-parser-redesig
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** `$gsd-plan-phase 5.1` to plan compact artifact redesign, selective parser implementation, artifact-size/10x benchmark acceptance, and readable comparison reports before Phase 6.
+**Next Step:** `$gsd-execute-phase 5.1` to execute compact artifact redesign, selective parser implementation, artifact-size/10x benchmark acceptance, and readable comparison reports before Phase 6.

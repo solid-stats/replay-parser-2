@@ -154,11 +154,24 @@ Current verification gap:
   4. The parser has a selective extraction path or an accepted implementation plan that avoids unnecessary full-DOM parse/clone/serialize work for v1 statistics.
   5. Benchmark reports include raw input size, default artifact size, parse-only throughput, aggregate-only throughput, end-to-end throughput, memory/RSS where practical, parity status, and explicit 10x pass/fail evidence for both selected single-replay checks and whole-list/corpus parsing.
   6. Comparison reports are summary-first and reviewable by a human, with top mismatches, counts by category/impact, and detailed machine-readable evidence separated from the default review surface.
-**Plans**: TBD
+**Plans**: 8 plans
+**Execution waves**: Wave 1 runs `05.1-00-PLAN.md`; Wave 2 runs `05.1-01-PLAN.md`; Wave 3 runs `05.1-02-PLAN.md`; Wave 4 runs `05.1-03-PLAN.md`; Wave 5 runs `05.1-04-PLAN.md` and `05.1-05-PLAN.md`; Wave 6 runs `05.1-06-PLAN.md`; Wave 7 runs `05.1-07-PLAN.md`.
 Cross-cutting constraints:
 - This phase may revise the Phase 2-5 contract and harness decisions, but must preserve observed identity boundaries and keep canonical player matching, PostgreSQL persistence, public APIs, UI, and yearly nomination product behavior outside this parser.
 - Worker Phase 6 must not proceed until the compact artifact and selective parsing direction are planned and accepted.
 - Parser contract changes in this phase require `server-2` compatibility review or an explicit user decision because they alter the artifact shape that worker integration will deliver.
+- The default artifact must use compact `participants`, `facts`, `summaries`, `side_facts`, diagnostics, status/failure, source, parser, and contract metadata; full top-level `entities` and `events` dumps are not supported default output.
+- The normal parser path must avoid full `serde_json::Value` DOM decode and preserve source refs, rule IDs, event index, frame, entity ID, and JSON path evidence.
+- Parser emits compact bounty and vehicle-score facts only; final bounty points and cross-replay vehicle score calculation remain `server-2`/parity responsibilities.
+Plans:
+- [ ] 05.1-00-PLAN.md — Server compatibility review and compact contract implementation gate.
+- [ ] 05.1-01-PLAN.md — Compact contract envelope, schema, examples, and status/failure invariants.
+- [ ] 05.1-02-PLAN.md — Selective OCAP root/entity/event extraction without full DOM normal path.
+- [ ] 05.1-03-PLAN.md — Compact participant refs, combat facts, contribution facts, summaries, side facts, and determinism.
+- [ ] 05.1-04-PLAN.md — CLI parse/schema/golden docs for compact default output.
+- [ ] 05.1-05-PLAN.md — Summary-first comparison reports with optional structured detail evidence.
+- [ ] 05.1-06-PLAN.md — Compact artifact-size and selected plus whole-list/corpus benchmark evidence.
+- [ ] 05.1-07-PLAN.md — Final quality gates, README/ROADMAP/STATE handoff, and Phase 6 blocker status.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
@@ -194,6 +207,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 6 -> 7
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
-| 5.1. Compact Artifact and Selective Parser Redesign | 0/TBD | Inserted, not planned | - |
+| 5.1. Compact Artifact and Selective Parser Redesign | 0/8 | Planned, ready to execute | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
