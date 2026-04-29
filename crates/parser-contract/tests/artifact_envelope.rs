@@ -8,8 +8,8 @@
 use std::collections::BTreeMap;
 
 use parser_contract::{
-    aggregates::AggregateSection,
     artifact::{ParseArtifact, ParseStatus},
+    compact::{ParseFactSection, ParseSummarySection},
     diagnostic::{Diagnostic, DiagnosticSeverity},
     presence::FieldPresence,
     side_facts::ReplaySideFacts,
@@ -57,9 +57,9 @@ fn success_artifact() -> ParseArtifact {
         produced_at: None,
         diagnostics: Vec::new(),
         replay: None,
-        entities: Vec::new(),
-        events: Vec::new(),
-        aggregates: AggregateSection::default(),
+        participants: Vec::new(),
+        facts: ParseFactSection::default(),
+        summaries: ParseSummarySection::default(),
         side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
@@ -94,9 +94,12 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert!(serialized.get("produced_at").is_some());
     assert!(serialized.get("diagnostics").is_some());
     assert!(serialized.get("replay").is_some());
-    assert!(serialized.get("entities").is_some());
-    assert!(serialized.get("events").is_some());
-    assert!(serialized.get("aggregates").is_some());
+    assert!(serialized.get("participants").is_some());
+    assert!(serialized.get("facts").is_some());
+    assert!(serialized.get("summaries").is_some());
+    assert!(serialized.get("entities").is_none());
+    assert!(serialized.get("events").is_none());
+    assert!(serialized.get("aggregates").is_none());
     assert!(serialized.get("side_facts").is_some());
     assert!(serialized.get("failure").is_some());
 
