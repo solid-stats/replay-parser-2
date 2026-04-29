@@ -140,7 +140,7 @@ Plans:
 - [x] 05-05-PLAN.md — Benchmark reports, README command handoff, and final quality gates.
 
 Current verification gap:
-- `scripts/benchmark-phase5.sh --ci` now runs curated selected old/new evidence when `/home/afgan0r/Projects/SolidGames/replays-parser` and `~/sg_stats` are available. The latest generated report is structurally valid but records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup. UAT also found that the current artifact mostly reserializes large replay data and that comparison output is too large for practical review. Phase 5.1 is inserted to fix the artifact, comparison, and parser-performance direction before worker integration.
+- `scripts/benchmark-phase5.sh --ci` now runs curated selected old/new evidence when `/home/afgan0r/Projects/SolidGames/replays-parser` and `~/sg_stats` are available. The latest generated report is structurally valid but records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup. UAT also found that this benchmark compared parsing a single replay, while the product-relevant performance claim must be based on parsing the whole replay list/corpus. The current artifact mostly reserializes large replay data and comparison output is too large for practical review. Phase 5.1 is inserted to fix the artifact, comparison, and parser-performance direction before worker integration.
 
 ### Phase 5.1: Compact Artifact and Selective Parser Redesign
 **Goal**: `server-2` receives a compact, deterministic parser result that contains the statistics and minimal contribution evidence it needs, while parser performance is rebuilt around selective OCAP extraction instead of full JSON-to-JSON translation.
@@ -152,7 +152,7 @@ Current verification gap:
   2. Any heavy event/entity/audit detail is optional debug/parity output or raw-replay reprocessing material, not required for ordinary worker ingestion.
   3. Annual/yearly nomination statistics do not force a large second v1 artifact; when that v2 product surface is revisited, it can reprocess raw OCAP files and compare against `~/sg_stats/year_results`.
   4. The parser has a selective extraction path or an accepted implementation plan that avoids unnecessary full-DOM parse/clone/serialize work for v1 statistics.
-  5. Benchmark reports include raw input size, default artifact size, parse-only throughput, aggregate-only throughput, end-to-end throughput, memory/RSS where practical, parity status, and explicit 10x pass/fail evidence.
+  5. Benchmark reports include raw input size, default artifact size, parse-only throughput, aggregate-only throughput, end-to-end throughput, memory/RSS where practical, parity status, and explicit 10x pass/fail evidence for both selected single-replay checks and whole-list/corpus parsing.
   6. Comparison reports are summary-first and reviewable by a human, with top mismatches, counts by category/impact, and detailed machine-readable evidence separated from the default review surface.
 **Plans**: TBD
 Cross-cutting constraints:

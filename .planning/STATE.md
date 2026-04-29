@@ -172,6 +172,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260426-eja | Renamed project identity to `replay-parser-2` | 2026-04-26 | docs-only |  | [260426-eja-rename-project-to-replay-parser-2](./quick/260426-eja-rename-project-to-replay-parser-2/) |
 | 260426-joq | Added strict stable Rust lint, format, docs, and type-safety gates | 2026-04-26 | 7ad4af4 | Verified | [260426-joq-strict-quality-rules](./quick/260426-joq-strict-quality-rules/) |
 | 260426-rfs | Added `replays-fetcher` product boundary and S3 artifact-reference result policy | 2026-04-26 | docs-only | Verified | [260426-rfs-replays-fetcher-boundary](./quick/260426-rfs-replays-fetcher-boundary/) |
+| 260429-bench-scope | Clarified that one-replay benchmark evidence is insufficient and whole-list/corpus parsing must be measured | 2026-04-29 | docs-only | Verified |  |
 
 ## Deferred Items
 
