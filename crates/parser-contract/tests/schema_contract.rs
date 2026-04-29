@@ -242,13 +242,9 @@ fn schema_contract_should_include_compact_participant_shape() {
     let schema_text =
         fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
 
-    for expected_fragment in [
-        "ObservedParticipantRef",
-        "source_entity_id",
-        "observed_name",
-        "steam_id",
-        "source_refs",
-    ] {
+    for expected_fragment in
+        ["ObservedParticipantRef", "source_entity_id", "observed_name", "steam_id", "source_refs"]
+    {
         assert!(
             schema_text.contains(expected_fragment),
             "schema should contain {expected_fragment}"
