@@ -2,17 +2,19 @@
 
 `replay-parser-2` is the Rust replacement for the legacy SolidGames OCAP replay parser.
 
-The parser will turn OCAP JSON replay files into deterministic, versioned artifacts: normalized replay events, source references, structured parse failures, and aggregate outputs that the Solid Stats backend can persist, audit, compare against golden data, and use for public statistics.
+The parser will turn OCAP JSON replay files into compact, deterministic, versioned parser artifacts that the Solid Stats backend can persist, audit at the statistics-contribution level, compare against golden data, and use for public statistics.
+
+The default v1 output must reduce replay data for `server-2`. A 10-15 MB OCAP replay should not become another 10-15 MB JSON artifact on the ordinary ingestion path.
 
 ## Current Status
 
-Phase 5 execution is complete, but verification found a benchmark/parity gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 execution is complete, but UAT rejected the current parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Compact golden fixtures and behavior regressions are in place. `scripts/coverage-gate.sh` runs `cargo llvm-cov` and a parser-harness JSON postprocessor that fails on unallowlisted production coverage gaps. `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise validates a deterministic fault-injection report. `scripts/benchmark-phase5.sh --ci` runs parser-stage benchmarks and, when `/home/afgan0r/Projects/SolidGames/replays-parser` plus `~/sg_stats` are available, records curated selected old/new comparison evidence under `.planning/generated/phase-05/comparison/`. The latest generated benchmark report is valid but records `ten_x_status=fail`, `parity_status=human_review`, so the 10x target remains open. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into the current deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. That artifact shape is now explicitly under redesign: the default server-facing output must become compact, full normalized event/entity dumps must move out of ordinary ingestion, comparison reports must become summary-first, and parser performance must be rebuilt around selective OCAP extraction. `scripts/benchmark-phase5.sh --ci` currently records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5, `CLI, Golden Parity, Benchmarks, and Coverage Gates` (execution complete; benchmark/parity verification gap).
-- Roadmap: 7 phases.
-- v1 requirements: 71 mapped requirements.
+- Current phase: Phase 5.1, `Compact Artifact and Selective Parser Redesign` (inserted after Phase 5 UAT rejection).
+- Roadmap: 8 phases.
+- v1 requirements: 76 mapped requirements.
 - Contract crate: `crates/parser-contract`.
 - Parser-core crate: `crates/parser-core`.
 - CLI crate: `crates/parser-cli`.
@@ -22,6 +24,7 @@ The CLI can parse a local OCAP JSON file into a deterministic `ParseArtifact`, e
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
+- Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (inserted, not planned yet).
 
 The implemented developer validation commands are:
 
@@ -57,7 +60,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases. Phase 5 cannot be closed until the selected comparison surfaces are reviewed and the benchmark report either passes the 10x target or records an explicitly accepted gap.
+Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until Phase 5.1 plans and accepts the compact artifact shape, selective parser path, artifact-size benchmark evidence, and readable comparison report format.
 
 ## Product Context
 
@@ -75,10 +78,12 @@ This project only owns parser behavior and parser output contracts. Replay disco
 The first release should provide:
 
 - A Rust parser for historical OCAP JSON replay files.
-- A local CLI for parsing a replay file and writing normalized JSON output.
+- A local CLI for parsing a replay file and writing parser output JSON.
 - A RabbitMQ/S3 worker mode for `server-2` integration.
 - S3 artifact-reference result delivery for successful worker parses.
-- Deterministic normalized event output with source references.
+- A compact deterministic server-facing artifact, not a full replay-shaped JSON dump.
+- Minimal contribution/source evidence needed to audit and recalculate statistics.
+- Optional debug/parity sidecars only when they are useful and explicitly requested.
 - Explicit unknown/null states for missing winner, SteamID, killer, commander, or source fields.
 - Legacy-compatible aggregate projections for current SolidGames statistics.
 - Vehicle score support from GitHub issue #13.
@@ -100,7 +105,7 @@ The parser will not own:
 - Replay formats other than OCAP JSON in v1.
 - Production Kubernetes deployment.
 - Financial reward or payout logic.
-- Annual/yearly nomination statistics and nomination pages; these are a separate v2 product surface.
+- Annual/yearly nomination statistics and nomination pages; these are a separate v2 product surface and should reprocess raw OCAP files when revisited rather than forcing a large v1 default artifact.
 
 ## Data and References
 
@@ -120,7 +125,7 @@ Current full-history validation facts:
 - `~/sg_stats/year_results` contains 14 yearly reference files.
 
 The historical archive is for tests, golden validation, and benchmarks. It is not a production import source.
-Annual/yearly nomination statistics are a separate legacy surface and are deferred to v2.
+Annual/yearly nomination statistics are a separate legacy surface and are deferred to v2. They should not drive a large default v1 side artifact; raw replay reprocessing remains acceptable for that future product surface.
 
 Phase 1 dossiers:
 
@@ -136,6 +141,7 @@ The expected implementation shape is:
 - Rust 2024 Cargo workspace.
 - Current contract crate at `crates/parser-contract`.
 - Pure parser core at `crates/parser-core`, shared by the CLI, future worker, tests, benchmarks, and comparison tools.
+- Selective parsing for the v1 hot path, avoiding unnecessary full JSON DOM cloning or full JSON-to-JSON reserialization where practical.
 - Thin runtime adapters for CLI and RabbitMQ/S3 worker mode.
 - `serde` / `serde_json` for correctness-first OCAP JSON parsing.
 - Deterministic contract serialization with stable ordering.
@@ -146,14 +152,15 @@ Parser output must preserve observed replay identity fields only, such as nickna
 
 Production raw replay discovery is owned by `replays-fetcher`: it writes raw replay objects under S3 `raw/` and ingestion staging records. `server-2` promotes staged records into canonical `replays` and `parse_jobs`, then passes `object_key` and `checksum` to this parser through RabbitMQ.
 
-`replay-parser-2` owns the parser artifact contract and schema. Successful worker parses write deterministic parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
+`replay-parser-2` owns the parser artifact contract and schema. Successful worker parses should write deterministic compact parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
 
 ## User Commands
 
 Implemented local CLI commands:
 
 ```bash
-# Parse one replay file to a normalized artifact
+# Parse one replay file to the current artifact shape.
+# Phase 5.1 will redesign the default server-facing artifact to be compact.
 replay-parser-2 parse path/to/replay.json --output path/to/artifact.json
 
 # Emit the current parser contract schema
@@ -216,4 +223,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence.
+Last updated: 2026-04-29 after Phase 5.1 compact artifact redesign insertion.

@@ -16,7 +16,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Versioned Output Contract** - Define the stable parse artifact, failure, schema, unknown-state, and source-reference contract. (completed 2026-04-26)
 - [x] **Phase 3: Deterministic Parser Core** - Parse OCAP JSON into deterministic normalized metadata and observed entity facts. (completed 2026-04-27)
 - [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
-- [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap: curated old/new benchmark fails 10x and parity needs human review)
+- [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap escalated into Phase 5.1 redesign)
+- [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -139,11 +140,29 @@ Plans:
 - [x] 05-05-PLAN.md — Benchmark reports, README command handoff, and final quality gates.
 
 Current verification gap:
-- `scripts/benchmark-phase5.sh --ci` now runs curated selected old/new evidence when `/home/afgan0r/Projects/SolidGames/replays-parser` and `~/sg_stats` are available. The latest generated report is structurally valid but records `ten_x_status=fail`, `parity_status=human_review`, so Phase 5 is not ready to close until the parity/performance gap is resolved or explicitly accepted.
+- `scripts/benchmark-phase5.sh --ci` now runs curated selected old/new evidence when `/home/afgan0r/Projects/SolidGames/replays-parser` and `~/sg_stats` are available. The latest generated report is structurally valid but records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup. UAT also found that the current artifact mostly reserializes large replay data and that comparison output is too large for practical review. Phase 5.1 is inserted to fix the artifact, comparison, and parser-performance direction before worker integration.
+
+### Phase 5.1: Compact Artifact and Selective Parser Redesign
+**Goal**: `server-2` receives a compact, deterministic parser result that contains the statistics and minimal contribution evidence it needs, while parser performance is rebuilt around selective OCAP extraction instead of full JSON-to-JSON translation.
+**Depends on**: Phase 5
+**Requirements**: OUT-09, OUT-10, PARS-12, TEST-06, TEST-13, TEST-14
+**Status**: INSERTED urgent work after Phase 5 UAT rejection.
+**Success Criteria** (what must be TRUE):
+  1. The default server-facing artifact excludes full normalized event/entity dumps and contains only replay/source metadata, observed participant references, aggregate/stat contribution inputs, bounty/vehicle-score inputs, diagnostics, and schema/version data needed by `server-2`.
+  2. Any heavy event/entity/audit detail is optional debug/parity output or raw-replay reprocessing material, not required for ordinary worker ingestion.
+  3. Annual/yearly nomination statistics do not force a large second v1 artifact; when that v2 product surface is revisited, it can reprocess raw OCAP files and compare against `~/sg_stats/year_results`.
+  4. The parser has a selective extraction path or an accepted implementation plan that avoids unnecessary full-DOM parse/clone/serialize work for v1 statistics.
+  5. Benchmark reports include raw input size, default artifact size, parse-only throughput, aggregate-only throughput, end-to-end throughput, memory/RSS where practical, parity status, and explicit 10x pass/fail evidence.
+  6. Comparison reports are summary-first and reviewable by a human, with top mismatches, counts by category/impact, and detailed machine-readable evidence separated from the default review surface.
+**Plans**: TBD
+Cross-cutting constraints:
+- This phase may revise the Phase 2-5 contract and harness decisions, but must preserve observed identity boundaries and keep canonical player matching, PostgreSQL persistence, public APIs, UI, and yearly nomination product behavior outside this parser.
+- Worker Phase 6 must not proceed until the compact artifact and selective parsing direction are planned and accepted.
+- Parser contract changes in this phase require `server-2` compatibility review or an explicit user decision because they alter the artifact shape that worker integration will deliver.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
-**Depends on**: Phase 5
+**Depends on**: Phase 5.1
 **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05, WORK-06, WORK-07
 **Success Criteria** (what must be TRUE):
   1. Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
@@ -166,7 +185,7 @@ Current verification gap:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -174,6 +193,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Versioned Output Contract | 6/6 | Complete | 2026-04-26 |
 | 3. Deterministic Parser Core | 6/6 | Complete | 2026-04-27 |
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
-| 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap | - |
+| 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
+| 5.1. Compact Artifact and Selective Parser Redesign | 0/TBD | Inserted, not planned | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |

@@ -9,9 +9,13 @@
 
 `replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. Production replay discovery/fetching is now owned by the separate `replays-fetcher` service; this parser consumes local files or `server-2` parse jobs pointing at S3 raw objects. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
 
-The recommended approach is to start with corpus and legacy behavior discovery, then lock the output contract, then implement the Rust core and aggregate projection against executable parity tests. The parser should emit normalized observed facts with source references first, then derive legacy-compatible aggregate summaries from those normalized events. CLI and worker modes must call the same core; worker-specific RabbitMQ, S3, checksum, retry, and artifact concerns belong outside the parser core.
+The recommended approach is to start with corpus and legacy behavior discovery, then lock the output contract, then implement the Rust core and aggregate projection against executable parity tests. The parser should preserve enough observed facts and source references to derive and audit legacy-compatible aggregate summaries, but the default server-facing artifact must be compact. CLI and worker modes must call the same core; worker-specific RabbitMQ, S3, checksum, retry, and artifact concerns belong outside the parser core.
 
-The main risks are semantic drift from the old parser, aggregate-only output that cannot be audited, accidental canonical identity matching inside the parser, nondeterministic JSON output, false 10x performance claims, unsafe worker acknowledgement/checksum behavior, and accidental ownership drift into `replays-fetcher` ingestion concerns. Mitigation is mostly roadmap order: prove old behavior and corpus shapes before contract design, make normalized events primary, keep canonical identity and PostgreSQL in `server-2`, keep replay discovery/staging in `replays-fetcher`, require old-vs-new diff reports, benchmark identical file sets, and acknowledge RabbitMQ jobs only after durable artifact/result publication.
+### 2026-04-29 UAT Correction
+
+Phase 5 UAT showed that the original "normalized events as primary artifact" direction overcorrected into a large JSON-to-JSON translation. For v1, normalized event/entity detail may remain an internal model or optional debug/parity sidecar, but it must not be the default artifact consumed by `server-2`. The ordinary worker artifact should be a compact statistics/contribution result, and the parser hot path should use selective OCAP extraction instead of optimizing a full replay-shaped serialization path.
+
+The main risks are semantic drift from the old parser, aggregate output that cannot be audited, oversized default artifacts, accidental canonical identity matching inside the parser, nondeterministic JSON output, false 10x performance claims, unsafe worker acknowledgement/checksum behavior, and accidental ownership drift into `replays-fetcher` ingestion concerns. Mitigation is mostly roadmap order: prove old behavior and corpus shapes before contract design, keep compact contribution evidence in the server artifact, keep full event detail optional, keep canonical identity and PostgreSQL in `server-2`, keep replay discovery/staging in `replays-fetcher`, require reviewable old-vs-new diff reports, benchmark identical file sets, and acknowledge RabbitMQ jobs only after durable artifact/result publication.
 
 ## Key Findings
 
@@ -61,7 +65,7 @@ The product should not become a broader stats platform. Parser-owned output is o
 - Structured failures/skips and observability - machine-readable operator and retry decisions.
 
 **Should have (competitive):**
-- Dual artifact output - normalized events plus legacy-compatible aggregates.
+- Compact default artifact plus optional debug/parity sidecar - ordinary ingestion stays small, while deeper evidence remains available when explicitly needed.
 - Rule-level provenance - named classification rules for enemy kill, teamkill, vehicle kill, ignored event, and compatibility behavior.
 - Corpus schema profiler - turn historical OCAP drift into known data before broad implementation.
 - Contract diff tooling - old vs new reports by replay, field, and rule category.
@@ -96,7 +100,7 @@ The architecture should be "pure core, imperative shell" plus a dedicated legacy
 ### Critical Pitfalls
 
 1. **Treating the old parser as either absolute truth or disposable legacy** - create an old-parser behavior dossier, pin command/commit/environment, and classify every mismatch as compatible, intentional change, old bug preserved, old bug fixed, new bug, insufficient data, or human review.
-2. **Designing around aggregates instead of normalized source events** - make normalized events the primary artifact and derive aggregates from event IDs/source refs only.
+2. **Designing either opaque aggregates or oversized normalized dumps** - keep enough contribution/source evidence to audit derived stats, but do not make full normalized event/entity dumps the default server artifact.
 3. **Collapsing observed identity into canonical identity** - emit observed names, SteamIDs, sides, groups, entity IDs, and typed unknowns; isolate old `nameChanges.csv` behavior to compatibility projections.
 4. **Hard-coding OCAP tuple offsets and misclassifying event semantics** - use a raw adapter layer, fixture every known event/entity shape, and test enemy kills, teamkills, suicides, unknown actors, vehicle kills, and disconnected/deleted entities.
 5. **Trusting runtime defaults for determinism, benchmarks, and worker reliability** - define stable output order, benchmark identical release-mode old/new workloads, validate S3 checksums, and ack RabbitMQ jobs only after durable artifact/result publication.
@@ -119,13 +123,13 @@ Based on research, suggested phase structure:
 
 **Rationale:** `server-2` integrates with contract artifacts, not parser internals. The contract must be grounded in Phase 1 before core implementation hardens around the wrong shape.
 
-**Delivers:** Cargo workspace skeleton, `parser-contract`, `ParseArtifact`, `ParseFailure`, request/result message types, source refs, explicit unknown/null states, semver policy, JSON Schema generation, old-field compatibility map, observed-identity boundary, aggregate traceability requirements.
+**Delivers:** Cargo workspace skeleton, `parser-contract`, compact `ParseArtifact`, `ParseFailure`, request/result message types, source refs, explicit unknown/null states, semver policy, JSON Schema generation, old-field compatibility map, observed-identity boundary, aggregate traceability requirements.
 
 **Uses:** `serde`, `schemars`, `semver`, `sha2`, deterministic structs/ordered maps.
 
 **Implements:** public API boundary between parser, worker, harness, and `server-2`.
 
-**Avoids:** aggregate-only output, canonical identity leakage, false winner/SteamID facts, version-as-string-only contracts, parser scope creep into `server-2`.
+**Avoids:** opaque aggregate-only output, oversized default event dumps, canonical identity leakage, false winner/SteamID facts, version-as-string-only contracts, parser scope creep into `server-2`.
 
 ### Phase 3: Deterministic Parser Core Foundation
 

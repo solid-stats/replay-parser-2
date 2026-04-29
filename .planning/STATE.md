@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verification-gap
-stopped_at: Phase 5 UAT found curated old/new benchmark and parity gaps
-last_updated: "2026-04-28T10:15:28.000Z"
-last_activity: 2026-04-28
+status: redesign-needed
+stopped_at: Phase 5 UAT rejected the current large artifact and weak benchmark direction; Phase 5.1 inserted
+last_updated: "2026-04-29T11:58:57+07:00"
+last_activity: 2026-04-29
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 4
   total_plans: 30
   completed_plans: 30
-  percent: 100
+  percent: 86
 ---
 
 # Project State
@@ -20,17 +20,17 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-04-28)
 
-**Core value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 05 — cli-golden-parity-benchmarks-and-coverage-gates benchmark/parity gap closure
+**Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
+**Current focus:** Phase 05.1 — compact-artifact-and-selective-parser-redesign
 
 ## Current Position
 
-Phase: 05 (cli-golden-parity-benchmarks-and-coverage-gates) — EXECUTION COMPLETE, VERIFICATION GAP FOUND
-Plan: 6 of 6
-Status: Curated old/new benchmark evidence generated; Phase 5 is blocked on 10x failure and parity human review
-Last activity: 2026-04-28
+Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — INSERTED, NOT PLANNED
+Plan: 0 of TBD
+Status: Phase 5 UAT found a product-fit gap: default output is too large, benchmark speedup is too small, and comparison reports are not reviewable. Phase 5.1 must redesign the default artifact and parser hot path before Phase 6 worker integration.
+Last activity: 2026-04-29
 
-Progress: [██████████] 97%
+Progress: [████████░░] 86%
 
 ## Performance Metrics
 
@@ -126,7 +126,13 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 04 adds a mutation/equivalent fault-report gate with deterministic fallback. — `scripts/fault-report-gate.sh` prefers `cargo mutants` when installed and otherwise generates a validated `deterministic-fault-injection` report covering vehicle score, combat events, aggregate source refs, and failure paths.
 - [Phase 05]: Plan 04 fault report validation blocks high-risk `missed` cases without accepted non-applicable rationale. — Report validation remains in parser-harness and does not introduce parser-core test-only hooks.
 - [Phase 05]: Plan 05 benchmark reports carry workload identity, old baseline profile, throughput, parity status, RSS note, and 10x status. — The benchmark gate now runs a curated selected old/new comparison when the old parser and `~/sg_stats` are available; the latest evidence records `ten_x_status=fail`, `parity_status=human_review`.
-- [Phase 05]: Final local gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior, but Phase 5 cannot be closed until the benchmark/parity gap is resolved or explicitly accepted. Phase 6 still owns RabbitMQ/S3 worker integration.
+- [Phase 05]: Final local gates pass without adding worker, database, API, replay discovery, canonical identity, UI, or yearly nomination behavior, but UAT escalated the benchmark/parity gap into a parser artifact and performance redesign. Phase 6 still owns RabbitMQ/S3 worker integration after Phase 5.1.
+- [Phase 05.1]: Inserted urgent redesign phase after UAT rejected the current parser direction. — The default server-facing artifact must become compact; full normalized event/entity dumps move out of ordinary ingestion; comparison reports must become summary-first; performance work should use selective OCAP extraction instead of optimizing a large JSON-to-JSON roundtrip.
+- [Phase 05.1]: Annual/yearly nomination statistics should not force a large v1 side artifact. — Future yearly work can reprocess raw OCAP files and compare against `~/sg_stats/year_results`, matching the old-parser model more closely than carrying a heavy default document through every parse.
+
+### Roadmap Evolution
+
+- Phase 5.1 inserted after Phase 5 (URGENT): Compact Artifact and Selective Parser Redesign. Reason: Phase 5 UAT found that the current parser artifact is too large, benchmark speedup is too weak, and comparison output is not reviewable; Phase 6 worker integration must wait for a compact artifact and selective parser direction.
 
 ### Pending Todos
 
@@ -134,16 +140,18 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 5 UAT Test 9 found a benchmark/parity gap. The generated
+Active: Phase 5 UAT found a product-fit and benchmark/parity gap. The generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is valid, but
 records `ten_x_status=fail`, `parity_status=human_review`, and selected
 old-parser `runParseTask` vs Rust release CLI speedup well below the `10x`
-target. The
+target. UAT also found that the current parser largely turns one 10-15 MB JSON
+file into another large JSON artifact, which does not meet the parser's purpose
+for `server-2`. The
 comparison report at
 `.planning/generated/phase-05/comparison/comparison-report.json` has seven
-`human_review` surfaces. Phase 5 should not advance to Phase 6 until parity
-decisions and performance triage are complete or an explicit accepted gap is
-recorded.
+`human_review` surfaces and is not practical to inspect directly. Phase 5.1
+must redesign the default artifact, comparison report, and selective parser
+performance path before Phase 6 worker integration.
 
 Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
@@ -175,12 +183,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T10:15:28.000Z
-Stopped at: Phase 5 UAT benchmark/parity gap found
+Last session: 2026-04-29T11:58:57+07:00
+Stopped at: Phase 5.1 inserted after artifact/performance redesign decision
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Close Phase 5 Test 9 by reviewing selected comparison surfaces and either improving performance to a passing benchmark report or recording an explicit accepted benchmark gap.
+**Next Step:** `$gsd-plan-phase 5.1` to plan compact artifact redesign, selective parser implementation, artifact-size/10x benchmark acceptance, and readable comparison reports before Phase 6.

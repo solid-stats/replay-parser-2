@@ -2,17 +2,21 @@
 
 ## What This Is
 
-`replay-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into deterministic normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public SolidGames statistics.
+`replay-parser-2` is a Rust replay parsing application for Solid Stats. It parses local OCAP JSON replay files into compact, deterministic server-facing parse artifacts that `server-2` can persist, audit at the contribution level, compare against golden data, and use for public SolidGames statistics.
+
+The default v1 parser output must reduce replay information for `server-2`; it must not simply translate a 10-15 MB OCAP JSON file into another 10-15 MB JSON file. Full normalized event/entity dumps are not part of the default server artifact. If deeper evidence is needed for debugging, parity review, or future analytics, it belongs in optional sidecar/debug tooling or raw replay reprocessing, not in the primary worker artifact.
 
 Solid Stats is a multi-project product made of `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`. This project owns the parsing engine and parsing result contract only. Replay discovery/fetching, public website behavior, Steam OAuth, moderation UI, correction requests, canonical player identity, and PostgreSQL business persistence belong to adjacent applications.
 
 ## Core Value
 
-Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
+Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
 
 ## Current State
 
-Phase 5 execution is complete, but UAT found a benchmark/parity gap. The repository now has the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation. The current curated old/new benchmark report is valid but records `ten_x_status=fail`, `parity_status=human_review`; Phase 5 remains open until the selected comparison surfaces are reviewed and the 10x target is remediated or explicitly accepted as a gap.
+Phase 5 execution produced the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation, but UAT rejected the current parser direction as a product-fit gap. The current parser mostly reserializes a large normalized artifact instead of reducing replay information for `server-2`; the curated old/new benchmark records only a small speedup, `ten_x_status=fail`, and `parity_status=human_review`; and the generated comparison surface is too large for practical human review.
+
+Phase 5.1 has been inserted before worker integration to redesign the default artifact as a compact server-facing result, move full event/entity detail out of the default contract, and implement a selective parser path that reads only the OCAP fields required for v1 statistics and audit contributions.
 
 ## Requirements
 
@@ -28,11 +32,15 @@ Phase 5 execution is complete, but UAT found a benchmark/parity gap. The reposit
 
 ### Active
 
-- [x] Provide a CLI that parses a local OCAP JSON file and writes normalized result JSON.
+- [x] Provide a CLI that parses a local OCAP JSON file and writes parser output JSON.
+- [ ] Redesign the default parser output as a compact server-facing artifact rather than a full normalized event/entity dump.
+- [ ] Move heavy audit/parity/debug detail out of the default worker artifact; optional sidecars must not be required for ordinary `server-2` ingestion.
+- [ ] Implement a selective parser path that avoids full JSON-to-JSON roundtrips and reads only the OCAP metadata, entities, and events required for v1 statistics.
+- [ ] Replace unreadable large comparison output with summary-first parity reports plus machine-readable detailed evidence.
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing. Curated selected evidence exists but currently fails the 10x target and needs parity review.
+- [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing with artifact-size reporting. Curated selected evidence exists but currently fails the 10x target and needs parser redesign.
 
 ### Out of Scope
 
@@ -97,7 +105,7 @@ The intended integration flow is:
 1. `replays-fetcher` discovers a replay from the external source, stores the raw replay object under S3 `raw/`, computes checksum/source metadata, and writes an ingestion staging/outbox record.
 2. `server-2` polls/promotes staging rows, handles duplicate conflicts, creates canonical `replays` and `parse_jobs`, and publishes a RabbitMQ parse request containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
 3. `replay-parser-2` downloads the replay file from storage and verifies the checksum before parsing.
-4. `replay-parser-2` writes a deterministic normalized parse artifact under S3 `artifacts/` and emits `parse.completed` with an artifact reference, or emits `parse.failed` with structured error data.
+4. `replay-parser-2` writes a deterministic compact parse artifact under S3 `artifacts/` and emits `parse.completed` with an artifact reference, or emits `parse.failed` with structured error data. Optional debug/parity sidecars, if implemented, are separate from the default server-facing artifact.
 5. `server-2` persists results into PostgreSQL and publishes aggregate statistics.
 
 In this domain, "KS" means commander of a side. The parser should detect commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, winner/outcome if present, and source/confidence metadata if available.
@@ -125,7 +133,9 @@ Open implementation details for later phases:
 - Exact README sections and command examples once the Rust workspace, CLI, worker, validation, and benchmark commands exist.
 - Exact old parser command used for baseline benchmark.
 - Exact old/new comparison tolerances.
-- Final normalized JSON schema names and field types.
+- Final compact artifact field set, JSON schema names, field types, and artifact-size target.
+- Optional sidecar/debug artifact policy for parity review and future analytics.
+- Selective parser implementation strategy and acceptance thresholds for parse-only, aggregate-only, and end-to-end throughput.
 - Final contract field name for vehicle score and whether `server-2` stores the derived score or recalculates it from parser-provided vehicle score inputs.
 - Exact deterministic artifact key format under S3 `artifacts/`.
 - Exact RabbitMQ exchange and routing key naming.
@@ -137,7 +147,7 @@ Open implementation details for later phases:
 - **Language**: Rust - chosen for deterministic parsing, performance, and deployable CLI/worker binaries.
 - **Replay format**: OCAP JSON only - supporting other formats is outside v1 scope.
 - **Validation data**: `~/sg_stats` - historical data is the golden/test baseline, not a production import source.
-- **Performance**: Roughly 10x faster than the current parser - must be measured against a baseline benchmark.
+- **Performance**: Roughly 10x faster than the current parser on equivalent workloads, with raw-input size, output-artifact size, parse-only time, aggregate-only time, end-to-end time, and parity status reported before any performance claim.
 - **Runtime modes**: CLI plus worker/container mode - local reproducibility and server integration are both required.
 - **Queue integration**: RabbitMQ - worker mode consumes parse requests and publishes parse results/failures.
 - **File input**: S3-compatible object storage - parser worker reads replay content by object key/checksum.
@@ -166,6 +176,10 @@ Open implementation details for later phases:
 | Keep canonical identity outside parser | Nicknames, SteamIDs, and real players are many-to-many; `server-2` owns matching. | - Pending |
 | Keep PostgreSQL persistence outside parser | Parser output should be an explicit contract, not direct table mutation. | - Pending |
 | Version the parser output contract | `server-2` must be able to audit, compare, and recalculate safely. | - Pending |
+| Make the default server artifact compact | UAT showed that reserializing a 10-15 MB replay into another 10-15 MB JSON artifact does not deliver parser value. `server-2` needs a reduced statistics/evidence artifact, not a full normalized dump. | - Pending |
+| Keep full event/entity dumps out of the default v1 artifact | Detailed evidence can be useful for parity and debugging, but it should not slow or bloat ordinary worker ingestion. | - Pending |
+| Reprocess raw files for annual/yearly statistics instead of adding a large v1 side artifact | Yearly nominations are deferred to v2, and raw OCAP files plus legacy yearly outputs remain the reference when that product surface is revisited. | - Pending |
+| Use selective parsing before worker integration | Worker mode should not be built on a parser hot path that performs an expensive full JSON-to-JSON translation. | - Pending |
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
 | Include vehicle score from issue #13 | Explicit user-requested statistic that depends on correct vehicle kill context and teamkill penalty semantics. | - Pending |
 | Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
@@ -196,4 +210,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence*
+*Last updated: 2026-04-29 after Phase 5 UAT parser redesign decision*

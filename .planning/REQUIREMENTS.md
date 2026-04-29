@@ -1,7 +1,7 @@
 # Requirements: replay-parser-2
 
 **Defined:** 2026-04-24
-**Core Value:** Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
+**Core Value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
 
 ## v1 Requirements
 
@@ -45,6 +45,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **OUT-06**: Parser contract includes JSON Schema generation or equivalent machine-readable schema validation for `server-2` integration.
 - [x] **OUT-07**: Parser contract includes structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
 - [x] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
+- [ ] **OUT-09**: Default parser output for `server-2` is a compact artifact that excludes full normalized event/entity dumps and includes only replay/source metadata, observed participant references, aggregate/stat contribution inputs, bounty inputs, vehicle score inputs, diagnostics, and schema/version data needed for ingestion and recalculation.
+- [ ] **OUT-10**: Heavy audit, debug, parity, or future-analytics detail is optional sidecar/debug output or raw-replay reprocessing material; it is not required for ordinary worker ingestion and must not be sent as the default `parse.completed` artifact.
 
 ### Parser Core
 
@@ -59,6 +61,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
 - [x] **PARS-10**: Parser extracts commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, source, and confidence metadata.
 - [x] **PARS-11**: Parser extracts winner/outcome data when present and emits unknown/inferred states when older replay data does not contain reliable winner data.
+- [ ] **PARS-12**: Parser provides a selective extraction path for v1 statistics that reads only required OCAP metadata, entity facts, and relevant events where practical, and avoids unnecessary full JSON DOM cloning or full JSON-to-JSON reserialization on the default path.
 
 ### Aggregates
 
@@ -92,6 +95,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
 - [x] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
 - [x] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
+- [ ] **TEST-13**: Benchmark reports include raw input size, default artifact size, parse-only throughput, aggregate-only throughput, end-to-end throughput, memory/RSS where practical, parity status, and explicit 10x pass/fail evidence for the compact artifact path.
+- [ ] **TEST-14**: Old-vs-new comparison reports are summary-first and human-reviewable by default, with mismatch counts by category and impact, top actionable diffs, and detailed machine-readable evidence separated from the default review surface.
 
 ### Worker Integration
 
@@ -116,7 +121,7 @@ Deferred to future release. Tracked but not in current roadmap.
 - **FUT-03**: Parser can expose a streaming event API for live or incremental consumers.
 - **FUT-04**: Parser can emit advanced anomaly detection reports after normalized event semantics are stable.
 - **FUT-05**: Parser can provide richer replay quality reports for user-facing correction workflows if `server-2` needs parser-specific evidence.
-- **FUT-06**: Solid Stats can support annual/yearly nomination statistics as a separate v2 product surface. The legacy `src/!yearStatistics` pipeline and `~/sg_stats/year_results` outputs are historical references only in v1 and must not be folded into ordinary player, squad, rotation, weekly, or bounty statistics.
+- **FUT-06**: Solid Stats can support annual/yearly nomination statistics as a separate v2 product surface. The legacy `src/!yearStatistics` pipeline and `~/sg_stats/year_results` outputs are historical references only in v1 and must not be folded into ordinary player, squad, rotation, weekly, or bounty statistics. V1 should not create a large yearly-statistics side artifact by default; future yearly work can reprocess raw OCAP files when needed.
 
 ## Out of Scope
 
@@ -135,6 +140,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Production Kubernetes deployment | Container/worker readiness is in scope, cluster deployment is not. |
 | Financial rewards or payout logic | Parser emits bounty inputs; reward rules belong to `server-2`. |
 | Annual/yearly nomination statistics in v1 | These are a separate legacy surface with unique nominations; defer product support to v2 while preserving `src/!yearStatistics` and `~/sg_stats/year_results` as historical references. |
+| Large default debug/yearly side artifact in v1 | UAT chose compact server output as the v1 default; deeper yearly/debug analysis can reprocess raw OCAP files or use optional tooling later. |
 
 ## Traceability
 
@@ -166,6 +172,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-06 | Phase 2 | Complete |
 | OUT-07 | Phase 2 | Complete |
 | OUT-08 | Phase 3 | Complete |
+| OUT-09 | Phase 5.1 | Pending |
+| OUT-10 | Phase 5.1 | Pending |
 | PARS-01 | Phase 3 | Complete |
 | PARS-02 | Phase 3 | Complete |
 | PARS-03 | Phase 3 | Complete |
@@ -177,6 +185,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-09 | Phase 4 | Complete |
 | PARS-10 | Phase 4 | Complete |
 | PARS-11 | Phase 4 | Complete |
+| PARS-12 | Phase 5.1 | Pending |
 | AGG-01 | Phase 4 | Complete |
 | AGG-02 | Phase 4 | Complete |
 | AGG-03 | Phase 4 | Complete |
@@ -204,6 +213,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-10 | Phase 5 | Complete |
 | TEST-11 | Phase 5 | Complete |
 | TEST-12 | Phase 5 | Complete |
+| TEST-13 | Phase 5.1 | Pending |
+| TEST-14 | Phase 5.1 | Pending |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
 | WORK-03 | Phase 6 | Pending |
@@ -215,10 +226,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 71 total
-- Mapped to phases: 71
+- v1 requirements: 76 total
+- Mapped to phases: 76
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-04-28 after Phase 5 curated benchmark gap evidence*
+*Last updated: 2026-04-29 after Phase 5.1 compact artifact redesign insertion*

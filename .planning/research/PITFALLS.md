@@ -52,22 +52,22 @@ Phase 1 prevents this by creating the corpus manifest, old-parser behavior dossi
 
 ---
 
-### Pitfall 2: Designing the contract around aggregates instead of normalized source events
+### Pitfall 2: Designing either opaque aggregates or oversized normalized dumps
 
 **What goes wrong:**
-The parser can output `kills`, `deaths`, or `score`, but `server-2` cannot audit, recalculate, explain corrections, or trace bounty inputs back to raw replay evidence.
+The parser can output `kills`, `deaths`, or `score`, but `server-2` cannot audit, recalculate, explain corrections, or trace bounty inputs back to raw replay evidence. The opposite failure is also possible: the parser emits every normalized event/entity detail by default and turns one large OCAP JSON file into another large JSON artifact without reducing the information for server ingestion.
 
 **Why it happens:**
-Aggregate parity is tempting because old Solid Stats results are aggregate-heavy. The project requirement is broader: deterministic normalized raw events plus aggregate summaries and source references.
+Aggregate parity is tempting because old Solid Stats results are aggregate-heavy. Full normalized event dumps are also tempting because they make audits easy. UAT showed that the v1 server-facing contract needs the middle path: compact statistics outputs with enough contribution/source evidence to audit and recalculate, while full event/entity detail stays internal or optional.
 
 **How to avoid:**
-Make normalized events the primary artifact and keep old-compatible aggregates as derived projections. Every aggregate row must cite event IDs/source references: replay ID, source top-level section, event index or entity ID, frame, observed actor IDs, and derivation rule version. Aggregates should be reproducible from the normalized artifact without reparsing the original OCAP JSON. For each legacy output field, document whether it is preserved exactly, preserved with a named compatibility rule, replaced by a new field, or intentionally dropped.
+Make contribution evidence, not full replay-shaped event dumps, the primary server artifact. Every aggregate row must cite compact source references: replay ID, source top-level section, event index or entity ID, frame where available, observed actor IDs, and derivation rule version. Full normalized events/entities may exist as internal structures or optional debug/parity sidecars, but they should not be required for ordinary `server-2` ingestion. For each legacy output field, document whether it is preserved exactly, preserved with a named compatibility rule, replaced by a new field, or intentionally dropped.
 
 **Warning signs:**
-Aggregate structs are implemented before normalized event structs; source file positions or event indices are absent; bounty inputs require re-reading `events` or `entities`; tests compare only final totals; old output fields such as `killsFromVehicleCoef`, `kdRatio`, or other-player relationship lists are not mapped.
+Aggregate structs have no source references; bounty inputs require re-reading `events` or `entities`; tests compare only final totals; old output fields such as `killsFromVehicleCoef`, `kdRatio`, or other-player relationship lists are not mapped; default artifacts are close to raw replay size; comparison reports are too large for human review.
 
 **Phase to address:**
-Phase 2 prevents this by locking the artifact model before parser implementation. Phase 4 verifies aggregate traceability from normalized events.
+Phase 2 originally locked the artifact model, but Phase 5.1 must correct the default artifact size and contribution-evidence boundary before worker integration. Phase 4 semantics remain useful, but Phase 5.1 decides what detail belongs in the compact server artifact versus optional sidecars.
 
 ---
 
