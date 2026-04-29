@@ -5,11 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
-    aggregates::AggregateSection,
+    compact::{ObservedParticipantRef, ParseFactSection, ParseSummarySection},
     diagnostic::Diagnostic,
-    events::NormalizedEvent,
     failure::ParseFailure,
-    identity::ObservedEntity,
     metadata::ReplayMetadata,
     side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
@@ -47,12 +45,15 @@ pub struct ParseArtifact {
     pub diagnostics: Vec<Diagnostic>,
     /// Normalized replay metadata when it could be extracted.
     pub replay: Option<ReplayMetadata>,
-    /// Observed entity and identity facts from the replay.
-    pub entities: Vec<ObservedEntity>,
-    /// Normalized replay events.
-    pub events: Vec<NormalizedEvent>,
-    /// Derived aggregate projections and auditable contribution references.
-    pub aggregates: AggregateSection,
+    /// Compact observed participant references from the replay.
+    #[serde(default)]
+    pub participants: Vec<ObservedParticipantRef>,
+    /// Compact facts and auditable contribution references.
+    #[serde(default)]
+    pub facts: ParseFactSection,
+    /// Compact summary projections for review and ingestion sanity checks.
+    #[serde(default)]
+    pub summaries: ParseSummarySection,
     /// Replay-side commander and outcome facts.
     pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.

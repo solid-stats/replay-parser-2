@@ -4,9 +4,10 @@
 use std::collections::BTreeMap;
 
 use parser_contract::{
-    aggregates::AggregateSection,
     artifact::{ParseArtifact, ParseStatus},
+    compact::{CombatFact, ObservedParticipantRef, ParseFactSection, ParseSummarySection},
     failure::{ErrorCode, ErrorCodeError, ParseFailure, ParseStage, Retryability},
+    identity::ObservedEntity,
     presence::{FieldPresence, UnknownReason},
     side_facts::ReplaySideFacts,
     source_ref::{
@@ -66,6 +67,31 @@ fn success_artifact(
     let side_facts = normalize_side_facts(&raw, &entities, &context, &mut diagnostics);
     let aggregates = derive_aggregate_section(&replay, &entities, &events, &context);
     let diagnostic_report = diagnostics.finish(&context);
+    let participants = compact_participants(&entities);
+    let facts = ParseFactSection {
+        combat: events
+            .iter()
+            .filter_map(|event| {
+                let combat = event.combat.as_ref()?;
+                Some(CombatFact {
+                    fact_id: event.event_id.clone(),
+                    semantic: combat.semantic,
+                    frame: event.frame.clone(),
+                    event_index: event.event_index.clone(),
+                    killer: combat.killer.clone(),
+                    victim: combat.victim.clone(),
+                    victim_kind: combat.victim_kind,
+                    vehicle_context: combat.vehicle_context.clone(),
+                    bounty: combat.bounty.clone(),
+                    legacy_counter_effects: combat.legacy_counter_effects.clone(),
+                    source_refs: event.source_refs.clone(),
+                    rule_id: event.rule_id.clone(),
+                })
+            })
+            .collect(),
+        aggregate_contributions: aggregates.contributions,
+    };
+    let summaries = ParseSummarySection { projections: aggregates.projections };
 
     ParseArtifact {
         contract_version: ContractVersion::current(),
@@ -75,9 +101,9 @@ fn success_artifact(
         produced_at: None,
         diagnostics: diagnostic_report.diagnostics,
         replay: Some(replay),
-        entities,
-        events,
-        aggregates,
+        participants,
+        facts,
+        summaries,
         side_facts,
         failure: None,
         extensions: BTreeMap::new(),
@@ -99,12 +125,60 @@ fn failed_artifact(
         produced_at: None,
         diagnostics: Vec::new(),
         replay: None,
-        entities: Vec::new(),
-        events: Vec::new(),
-        aggregates: AggregateSection::default(),
+        participants: Vec::new(),
+        facts: ParseFactSection::default(),
+        summaries: ParseSummarySection::default(),
         side_facts: ReplaySideFacts::default(),
         failure,
         extensions: BTreeMap::new(),
+    }
+}
+
+fn compact_participants(entities: &[ObservedEntity]) -> Vec<ObservedParticipantRef> {
+    entities
+        .iter()
+        .map(|entity| ObservedParticipantRef {
+            source_entity_id: entity.source_entity_id,
+            observed_name: participant_name(entity),
+            side: entity.identity.side.clone(),
+            group: participant_group(entity),
+            role: participant_role(entity),
+            steam_id: entity.identity.steam_id.clone(),
+            source_refs: entity.source_refs.clone(),
+        })
+        .collect()
+}
+
+fn participant_name(entity: &ObservedEntity) -> FieldPresence<String> {
+    match &entity.identity.nickname {
+        FieldPresence::Present { .. } | FieldPresence::Inferred { .. } => {
+            entity.identity.nickname.clone()
+        }
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => entity.observed_name.clone(),
+    }
+}
+
+fn participant_group(entity: &ObservedEntity) -> FieldPresence<String> {
+    match &entity.identity.squad {
+        FieldPresence::Present { .. } | FieldPresence::Inferred { .. } => {
+            entity.identity.squad.clone()
+        }
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => entity.identity.group.clone(),
+    }
+}
+
+fn participant_role(entity: &ObservedEntity) -> FieldPresence<String> {
+    match &entity.identity.role {
+        FieldPresence::Present { .. } | FieldPresence::Inferred { .. } => {
+            entity.identity.role.clone()
+        }
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => entity.identity.description.clone(),
     }
 }
 

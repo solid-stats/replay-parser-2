@@ -7,6 +7,8 @@ use jsonschema as _;
 pub mod aggregates;
 /// Parse artifact envelope contract types.
 pub mod artifact;
+/// Compact server-facing participant, fact, and summary contract types.
+pub mod compact;
 /// Structured parser diagnostic contract types.
 pub mod diagnostic;
 /// Normalized event contract types.
