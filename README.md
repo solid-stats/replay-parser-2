@@ -8,9 +8,9 @@ The default v1 output must reduce replay data for `server-2`. A 10-15 MB OCAP re
 
 ## Current Status
 
-Phase 5 execution is complete, but UAT rejected the current parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Parser-core currently decodes OCAP JSON bytes through an adapter-safe API, normalizes replay metadata and observed entity facts, emits schema-drift diagnostics, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits normalized combat events, aggregate contributions/projections, bounty inputs, vehicle score inputs, and typed side facts.
+Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 is being executed to replace the default artifact with compact output, keep full event/entity detail out of ordinary ingestion, make comparison reports summary-first, and rebuild parser performance around selective OCAP extraction. Parser-core currently decodes OCAP JSON bytes through a selective adapter-safe API, preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits compact participants, facts, summaries, bounty inputs, vehicle score inputs, and typed side facts.
 
-The CLI can parse a local OCAP JSON file into the current deterministic `ParseArtifact`, export the current parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. That artifact shape is now explicitly under redesign: the default server-facing output must become compact, full normalized event/entity dumps must move out of ordinary ingestion, comparison reports must become summary-first, and parser performance must be rebuilt around selective OCAP extraction. `scripts/benchmark-phase5.sh --ci` currently records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup, but that evidence compared parsing a single replay; the real performance claim must be measured on parsing the whole replay list/corpus. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into the compact server-facing artifact, export the compact parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. `scripts/benchmark-phase5.sh --ci` currently records `ten_x_status=fail`, `parity_status=human_review`, and only a small speedup, but that evidence compared parsing a single replay; the real performance claim must be measured on parsing the whole replay list/corpus. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
 - Current phase: Phase 5.1, `Compact Artifact and Selective Parser Redesign` (inserted after Phase 5 UAT rejection).
 - Roadmap: 8 phases.
@@ -24,7 +24,7 @@ The CLI can parse a local OCAP JSON file into the current deterministic `ParseAr
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
-- Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (inserted, not planned yet).
+- Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (inserted and in execution).
 
 The implemented developer validation commands are:
 
@@ -60,7 +60,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until Phase 5.1 plans and accepts the compact artifact shape, selective parser path, artifact-size benchmark evidence, and readable comparison report format.
+Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until Phase 5.1 completes and accepts the compact artifact shape, selective parser path, artifact-size benchmark evidence, and readable comparison report format.
 
 ## Product Context
 
@@ -159,11 +159,10 @@ Production raw replay discovery is owned by `replays-fetcher`: it writes raw rep
 Implemented local CLI commands:
 
 ```bash
-# Parse one replay file to the current artifact shape.
-# Phase 5.1 will redesign the default server-facing artifact to be compact.
+# Parse one replay file to a compact server-facing artifact.
 replay-parser-2 parse path/to/replay.json --output path/to/artifact.json
 
-# Emit the current parser contract schema
+# Emit the compact parser contract schema
 replay-parser-2 schema --output path/to/schema.json
 
 # Compare new parser output against legacy or golden data
@@ -192,6 +191,7 @@ Worker mode is Phase 6 scope and is not exposed by the current CLI.
 ## Development Workflow
 
 Project development is performed only by AI agents using the GSD workflow. Direct non-GSD development is out of process for this repository.
+This is an AI agents plus GSD-only workflow: project-changing work must be captured in GSD planning, phase execution, or quick-task artifacts.
 
 For project-changing work:
 

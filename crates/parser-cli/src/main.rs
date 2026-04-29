@@ -33,18 +33,18 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    /// Parse a local OCAP JSON replay into a parse artifact.
+    /// Parse a local OCAP JSON replay into a compact parse artifact.
     Parse {
         /// Input OCAP JSON replay path.
         input: PathBuf,
-        /// Output parse artifact JSON path.
+        /// Output compact parse artifact JSON path.
         #[arg(long)]
         output: PathBuf,
         /// Optional replay identifier to embed in source metadata.
         #[arg(long)]
         replay_id: Option<String>,
     },
-    /// Export the current parse artifact JSON Schema.
+    /// Export the current compact parse artifact JSON Schema.
     Schema {
         /// Output schema JSON path. Writes to stdout when omitted.
         #[arg(long)]

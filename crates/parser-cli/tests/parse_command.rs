@@ -50,6 +50,21 @@ fn read_json(path: &PathBuf) -> Value {
     serde_json::from_str(&text).expect("output artifact should be valid JSON")
 }
 
+fn assert_compact_artifact_root(artifact: &Value) {
+    for expected_field in ["participants", "facts", "summaries", "side_facts", "failure"] {
+        assert!(artifact.get(expected_field).is_some(), "artifact should contain {expected_field}");
+    }
+
+    let removed_fields =
+        [["entit", "ies"].concat(), ["ev", "ents"].concat(), ["aggre", "gates"].concat()];
+    for removed_field in removed_fields {
+        assert!(
+            artifact.get(&removed_field).is_none(),
+            "artifact should not contain removed top-level field {removed_field}"
+        );
+    }
+}
+
 #[test]
 fn parse_command_should_write_success_artifact_when_input_is_valid() {
     // Arrange
@@ -66,10 +81,16 @@ fn parse_command_should_write_success_artifact_when_input_is_valid() {
     assert_eq!(artifact["source"]["source_file"], input.display().to_string());
     assert!(artifact["source"].get("checksum").is_some());
     assert!(artifact.get("replay").is_some());
+    assert_compact_artifact_root(&artifact);
+    assert!(artifact["participants"].is_array());
+    assert!(artifact["facts"].is_object());
+    assert!(artifact["summaries"].is_object());
+    assert!(artifact["side_facts"].is_object());
+    assert!(artifact["failure"].is_null());
 }
 
 #[test]
-fn parse_command_should_write_failure_artifact_and_stderr_summary_when_input_is_invalid() {
+fn parse_command_should_write_compact_failure_artifact_and_stderr_summary_when_input_is_invalid() {
     // Arrange
     let input = parser_core_fixture("invalid-json.ocap.json");
     let output_path = temp_output_path("invalid", "artifact.json");
@@ -84,6 +105,12 @@ fn parse_command_should_write_failure_artifact_and_stderr_summary_when_input_is_
     assert!(!command_output.status.success());
     assert_eq!(artifact["status"], "failed");
     assert!(artifact.get("failure").is_some());
+    assert_compact_artifact_root(&artifact);
+    assert!(artifact["participants"].is_array());
+    assert!(artifact["facts"].is_object());
+    assert!(artifact["summaries"].is_object());
+    assert!(artifact["side_facts"].is_object());
+    assert!(artifact["failure"].is_object());
     assert!(stderr.contains("parse failed:"));
 }
 

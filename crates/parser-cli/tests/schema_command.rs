@@ -43,6 +43,23 @@ fn run_schema(args: &[&str]) -> Output {
     command.arg("schema").args(args).output().expect("schema command should run")
 }
 
+fn assert_schema_contains_compact_contract_symbols(schema_text: &str) {
+    for expected_fragment in [
+        "ObservedParticipantRef",
+        "CombatFact",
+        "ParseFactSection",
+        "ParseSummarySection",
+        "participants",
+        "facts",
+        "summaries",
+    ] {
+        assert!(
+            schema_text.contains(expected_fragment),
+            "schema should contain {expected_fragment}"
+        );
+    }
+}
+
 #[test]
 fn schema_command_should_write_current_schema_to_stdout_when_output_is_absent() {
     // Arrange and Act
@@ -55,6 +72,7 @@ fn schema_command_should_write_current_schema_to_stdout_when_output_is_absent() 
     assert!(stdout.contains("ParseArtifact"));
     assert!(stdout.contains("ReplaySideFacts"));
     assert!(stdout.contains("vehicle_score.denominator_inputs"));
+    assert_schema_contains_compact_contract_symbols(&stdout);
 }
 
 #[test]
@@ -74,6 +92,7 @@ fn schema_command_should_write_current_schema_to_file_when_output_is_present() {
     assert!(command_output.status.success());
     assert!(command_output.stdout.is_empty());
     assert!(file_text.contains("ParseArtifact"));
+    assert_schema_contains_compact_contract_symbols(&file_text);
 }
 
 #[test]

@@ -6,18 +6,34 @@
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
       "source_file": "2026_04_25__00_52_18__1_ocap.json",
-      "notes": "Compact focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads."
+      "notes": "Compact focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.1 compact default assertions target participants, facts, summaries, source refs, and absence of top-level entities/events."
     },
-    "requirements": ["TEST-01", "TEST-03", "TEST-08", "TEST-09", "TEST-10"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-03",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "OUT-09",
+      "OUT-10",
+      "PARS-12",
+      "TEST-13"
+    ],
+    "decisions": ["D-08", "D-13", "D-20", "D-23"],
     "expected_status": "success",
     "expected_features": [
       "metadata_present",
       "deterministic_serialization",
-      "winner_unknown_when_absent"
+      "winner_unknown_when_absent",
+      "compact_participants",
+      "compact_facts",
+      "compact_summaries",
+      "source_refs_present",
+      "no_top_level_entities",
+      "no_top_level_events"
     ],
     "cross_app_impact": {
-      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields.",
+      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields while using compact participants, facts, summaries, and source refs instead of full top-level entities/events.",
       "server_2": "Provides a compact success artifact shape server-2 can later persist or compare through its own tables.",
       "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs."
     }
@@ -29,12 +45,26 @@
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
       "source_file": ".json",
-      "notes": "Phase 1 malformed corpus evidence represented by a tiny invalid JSON fixture."
+      "notes": "Phase 1 malformed corpus evidence represented by a tiny invalid JSON fixture. Phase 5.1 keeps malformed input on the same compact envelope with structured failure details."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11",
+      "OUT-09",
+      "OUT-10"
+    ],
+    "decisions": ["D-08", "D-13", "D-20"],
     "expected_status": "failed",
-    "expected_features": ["structured_failure", "json_decode_failure"],
+    "expected_features": [
+      "structured_failure",
+      "json_decode_failure",
+      "compact_participants",
+      "compact_facts",
+      "compact_summaries"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Malformed bytes produce a structured failed ParseArtifact instead of ordinary stats.",
       "server_2": "Supports parse.failed handling without implying replay discovery or persistence ownership here.",
