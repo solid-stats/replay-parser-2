@@ -1,4 +1,4 @@
-//! Parser-stage benchmark entrypoints for Phase 05.
+//! Parser-stage benchmark entrypoints for Phase 05.1 compact artifacts.
 
 #![allow(
     missing_docs,
@@ -54,7 +54,7 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 }
 
 fn parse_only(criterion: &mut Criterion) {
-    criterion.bench_function("parse_only_json_decode", |bencher| {
+    criterion.bench_function("parse_only_compact_decode", |bencher| {
         bencher.iter(|| {
             serde_json::from_slice::<Value>(black_box(AGGREGATE_FIXTURE))
                 .expect("benchmark fixture should decode as JSON")
@@ -65,9 +65,9 @@ fn parse_only(criterion: &mut Criterion) {
 fn aggregate_only(criterion: &mut Criterion) {
     let artifact = parse_replay(parser_input(AGGREGATE_FIXTURE));
 
-    criterion.bench_function("aggregate_only_public_projection_access", |bencher| {
+    criterion.bench_function("facts_only_compact_projection", |bencher| {
         bencher.iter(|| {
-            let projections = black_box(&artifact.aggregates.projections);
+            let projections = black_box(&artifact.summaries.projections);
             projections
                 .get("legacy.player_game_results")
                 .expect("aggregate fixture should include player projection")
@@ -77,7 +77,7 @@ fn aggregate_only(criterion: &mut Criterion) {
 }
 
 fn end_to_end(criterion: &mut Criterion) {
-    criterion.bench_function("end_to_end_parse_replay", |bencher| {
+    criterion.bench_function("end_to_end_compact_parse_replay", |bencher| {
         bencher.iter(|| parse_replay(parser_input(black_box(AGGREGATE_FIXTURE))));
     });
 }

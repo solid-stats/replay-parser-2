@@ -76,6 +76,29 @@ impl BenchmarkMetric {
     }
 }
 
+/// Compact artifact-size evidence for a measured workload.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct ArtifactSizeEvidence {
+    /// Raw replay input bytes processed by the workload.
+    pub raw_input_bytes: u64,
+    /// Compact parser artifact bytes emitted by the workload.
+    pub compact_artifact_bytes: u64,
+    /// `compact_artifact_bytes / raw_input_bytes`.
+    pub artifact_raw_ratio: f64,
+}
+
+impl ArtifactSizeEvidence {
+    /// Builds compact artifact-size evidence.
+    #[must_use]
+    pub const fn new(
+        raw_input_bytes: u64,
+        compact_artifact_bytes: u64,
+        artifact_raw_ratio: f64,
+    ) -> Self {
+        Self { raw_input_bytes, compact_artifact_bytes, artifact_raw_ratio }
+    }
+}
+
 /// Workload identity for a benchmark report.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchmarkWorkload {
@@ -96,19 +119,17 @@ impl BenchmarkWorkload {
     }
 }
 
-/// Parser benchmark report.
+/// Benchmark evidence for one selected or whole-list/corpus workload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct BenchmarkReport {
-    /// Report schema version.
-    pub report_version: String,
-    /// Old baseline profile, normally deterministic `WORKER_COUNT=1`.
-    pub old_baseline_profile: String,
-    /// Old command used or documented for the run.
-    pub old_command: String,
-    /// New parser command used or documented for the run.
-    pub new_command: String,
-    /// Workload identity.
+pub struct BenchmarkEvidence {
+    /// Human-readable workload name.
+    pub workload_name: String,
+    /// Workload tier.
+    pub tier: BenchmarkTier,
+    /// Workload identity and byte count.
     pub workload: BenchmarkWorkload,
+    /// Compact artifact-size evidence for the workload.
+    pub artifact_size: ArtifactSizeEvidence,
     /// Parse-only stage evidence.
     pub parse_only: BenchmarkMetric,
     /// Aggregate-only or nearest public equivalent stage evidence.
@@ -116,11 +137,89 @@ pub struct BenchmarkReport {
     /// End-to-end parser evidence.
     pub end_to_end: BenchmarkMetric,
     /// Parity status for the measured workload.
-    pub parity_status: Option<ParityStatus>,
+    pub parity_status: ParityStatus,
     /// 10x target status.
     pub ten_x_status: TenXStatus,
-    /// Required triage for failed or unknown 10x status when baseline evidence is missing.
+    /// Required triage for failed or unknown 10x status.
     pub triage: Option<String>,
+}
+
+impl BenchmarkEvidence {
+    /// Validates evidence invariants for one workload.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BenchmarkReportValidationError`] when workload identity,
+    /// compact size evidence, or 10x triage is missing.
+    pub fn validate(&self) -> Result<(), BenchmarkReportValidationError> {
+        validate_non_empty(&self.workload_name, "workload_name")?;
+
+        if self.tier != self.workload.tier {
+            return Err(BenchmarkReportValidationError::MismatchedEvidenceTier);
+        }
+        if !self.workload.has_identity() {
+            return Err(BenchmarkReportValidationError::MissingWorkloadIdentity);
+        }
+        if self.artifact_size.raw_input_bytes == 0 {
+            return Err(BenchmarkReportValidationError::MissingArtifactSizeEvidence {
+                field: "raw_input_bytes",
+            });
+        }
+        if self.artifact_size.compact_artifact_bytes == 0 {
+            return Err(BenchmarkReportValidationError::MissingArtifactSizeEvidence {
+                field: "compact_artifact_bytes",
+            });
+        }
+
+        let expected_ratio = self.artifact_size.compact_artifact_bytes as f64
+            / self.artifact_size.raw_input_bytes as f64;
+        if (self.artifact_size.artifact_raw_ratio - expected_ratio).abs() > 0.0001 {
+            return Err(BenchmarkReportValidationError::InvalidArtifactRawRatio);
+        }
+
+        let triage = self.triage.as_deref().unwrap_or_default();
+        let triage_lower = triage.to_ascii_lowercase();
+        if self.ten_x_status == TenXStatus::Fail
+            && !(triage_lower.contains("bottleneck")
+                && triage_lower.contains("parity")
+                && triage_lower.contains("artifact"))
+        {
+            return Err(BenchmarkReportValidationError::FailedTenXRequiresTriage);
+        }
+
+        if self.ten_x_status == TenXStatus::Unknown && triage.trim().is_empty() {
+            return Err(BenchmarkReportValidationError::UnknownTenXRequiresTriage);
+        }
+
+        Ok(())
+    }
+
+    const fn any_missing_rss(&self) -> bool {
+        self.parse_only.rss_mb.is_none()
+            || self.aggregate_only.rss_mb.is_none()
+            || self.end_to_end.rss_mb.is_none()
+    }
+}
+
+/// Parser benchmark report.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BenchmarkReport {
+    /// Report schema version.
+    pub report_version: String,
+    /// Phase that produced this report.
+    pub phase: String,
+    /// Old baseline profile, normally deterministic `WORKER_COUNT=1`.
+    pub old_baseline_profile: String,
+    /// Old command used or documented for the run.
+    pub old_command: String,
+    /// New parser command used or documented for the run.
+    pub new_command: String,
+    /// Selected replay/sample evidence that is cheap enough for CI.
+    pub selected_evidence: BenchmarkEvidence,
+    /// Whole-list or corpus evidence when prerequisites are available.
+    pub whole_list_or_corpus_evidence: Option<BenchmarkEvidence>,
+    /// Concrete reason whole-list/corpus evidence is unavailable.
+    pub whole_list_unavailable_reason: Option<String>,
     /// Explanation when memory/RSS is not practical for one or more metrics.
     pub rss_note: Option<String>,
 }
@@ -134,30 +233,24 @@ impl BenchmarkReport {
     /// evidence is missing or an under-10x report lacks triage.
     #[allow(clippy::too_many_arguments, reason = "report schema mirrors persisted JSON fields")]
     pub fn new(
+        phase: impl Into<String>,
         old_baseline_profile: impl Into<String>,
         old_command: impl Into<String>,
         new_command: impl Into<String>,
-        workload: BenchmarkWorkload,
-        parse_only: BenchmarkMetric,
-        aggregate_only: BenchmarkMetric,
-        end_to_end: BenchmarkMetric,
-        parity_status: Option<ParityStatus>,
-        ten_x_status: TenXStatus,
-        triage: Option<String>,
+        selected_evidence: BenchmarkEvidence,
+        whole_list_or_corpus_evidence: Option<BenchmarkEvidence>,
+        whole_list_unavailable_reason: Option<String>,
         rss_note: Option<String>,
     ) -> Result<Self, BenchmarkReportValidationError> {
         let report = Self {
             report_version: BENCHMARK_REPORT_VERSION.to_owned(),
+            phase: phase.into(),
             old_baseline_profile: old_baseline_profile.into(),
             old_command: old_command.into(),
             new_command: new_command.into(),
-            workload,
-            parse_only,
-            aggregate_only,
-            end_to_end,
-            parity_status,
-            ten_x_status,
-            triage,
+            selected_evidence,
+            whole_list_or_corpus_evidence,
+            whole_list_unavailable_reason,
             rss_note,
         };
         report.validate()?;
@@ -172,33 +265,29 @@ impl BenchmarkReport {
     /// missing or inconsistent with Phase 05 benchmark decisions.
     pub fn validate(&self) -> Result<(), BenchmarkReportValidationError> {
         validate_non_empty(&self.report_version, "report_version")?;
+        validate_non_empty(&self.phase, "phase")?;
         validate_non_empty(&self.old_baseline_profile, "old_baseline_profile")?;
         validate_non_empty(&self.old_command, "old_command")?;
         validate_non_empty(&self.new_command, "new_command")?;
+        self.selected_evidence.validate()?;
 
-        if !self.workload.has_identity() {
-            return Err(BenchmarkReportValidationError::MissingWorkloadIdentity);
-        }
-        if self.parity_status.is_none() {
-            return Err(BenchmarkReportValidationError::MissingParityStatus);
+        if let Some(evidence) = &self.whole_list_or_corpus_evidence {
+            evidence.validate()?;
+        } else if self
+            .whole_list_unavailable_reason
+            .as_deref()
+            .is_none_or(|reason| reason.trim().is_empty())
+        {
+            return Err(BenchmarkReportValidationError::MissingWholeListEvidence);
         }
 
-        let triage = self.triage.as_deref().unwrap_or_default();
-        let triage_lower = triage.to_ascii_lowercase();
+        let selected_triage = self.selected_evidence.triage.as_deref().unwrap_or_default();
+        let selected_triage_lower = selected_triage.to_ascii_lowercase();
         if !self.old_baseline_profile.contains("WORKER_COUNT=1")
-            && (self.ten_x_status != TenXStatus::Unknown || !triage_lower.contains("baseline"))
+            && (self.selected_evidence.ten_x_status != TenXStatus::Unknown
+                || !selected_triage_lower.contains("baseline"))
         {
             return Err(BenchmarkReportValidationError::MissingDeterministicOldBaseline);
-        }
-
-        if self.ten_x_status == TenXStatus::Fail
-            && !(triage_lower.contains("bottleneck") && triage_lower.contains("parity"))
-        {
-            return Err(BenchmarkReportValidationError::FailedTenXRequiresTriage);
-        }
-
-        if self.ten_x_status == TenXStatus::Unknown && triage.trim().is_empty() {
-            return Err(BenchmarkReportValidationError::UnknownTenXRequiresTriage);
         }
 
         if self.any_missing_rss()
@@ -210,10 +299,12 @@ impl BenchmarkReport {
         Ok(())
     }
 
-    const fn any_missing_rss(&self) -> bool {
-        self.parse_only.rss_mb.is_none()
-            || self.aggregate_only.rss_mb.is_none()
-            || self.end_to_end.rss_mb.is_none()
+    fn any_missing_rss(&self) -> bool {
+        self.selected_evidence.any_missing_rss()
+            || self
+                .whole_list_or_corpus_evidence
+                .as_ref()
+                .is_some_and(BenchmarkEvidence::any_missing_rss)
     }
 }
 
@@ -240,14 +331,30 @@ pub enum BenchmarkReportValidationError {
     /// Neither fixture list nor corpus selector identified the workload.
     #[error("benchmark report is missing workload identity")]
     MissingWorkloadIdentity,
-    /// The report did not provide a parity status.
-    #[error("benchmark report is missing parity_status")]
-    MissingParityStatus,
+    /// BenchmarkEvidence tier and nested workload tier differ.
+    #[error("benchmark evidence tier does not match workload tier")]
+    MismatchedEvidenceTier,
+    /// Compact artifact-size evidence is missing.
+    #[error("benchmark report is missing artifact size field `{field}`")]
+    MissingArtifactSizeEvidence {
+        /// Missing or zero artifact-size field.
+        field: &'static str,
+    },
+    /// Artifact/raw ratio does not match the recorded bytes.
+    #[error(
+        "benchmark report artifact_raw_ratio does not match compact_artifact_bytes/raw_input_bytes"
+    )]
+    InvalidArtifactRawRatio,
+    /// No whole-list/corpus evidence and no unavailable rationale were provided.
+    #[error(
+        "benchmark report requires whole-list/corpus evidence or whole_list_unavailable_reason"
+    )]
+    MissingWholeListEvidence,
     /// Old baseline profile is not the deterministic baseline and lacks accepted unknown triage.
     #[error("benchmark report is missing deterministic WORKER_COUNT=1 old baseline")]
     MissingDeterministicOldBaseline,
-    /// Failed 10x status lacks required bottleneck and parity triage.
-    #[error("benchmark report ten_x_status=fail requires bottleneck and parity triage")]
+    /// Failed 10x status lacks required bottleneck, parity, and artifact triage.
+    #[error("benchmark report ten_x_status=fail requires bottleneck, parity, and artifact triage")]
     FailedTenXRequiresTriage,
     /// Unknown 10x status lacks explanatory triage.
     #[error("benchmark report ten_x_status=unknown requires triage")]

@@ -25,8 +25,11 @@ fn run() -> Result<String, String> {
     report.validate().map_err(|error| error.to_string())?;
 
     Ok(format!(
-        "benchmark_report_valid=true\nten_x_status={:?}\nparity_status={:?}\n",
-        report.ten_x_status, report.parity_status
+        "benchmark_report_valid=true\nphase={}\nselected_ten_x_status={:?}\nselected_parity_status={:?}\nwhole_list_or_corpus_evidence={}\n",
+        report.phase,
+        report.selected_evidence.ten_x_status,
+        report.selected_evidence.parity_status,
+        report.whole_list_or_corpus_evidence.is_some()
     ))
 }
 
