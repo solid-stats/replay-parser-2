@@ -24,6 +24,7 @@ use crate::{
         entity_class, entity_description, entity_group, entity_has_positions, entity_id,
         entity_is_player, entity_name, entity_side, entity_type,
     },
+    raw_compact::{observed_raw_shape, parse_raw_string},
 };
 
 const CONNECTED_PLAYER_BACKFILL_RULE_ID: &str = "entity.connected_player_backfill";
@@ -616,10 +617,12 @@ fn observed_identity(
 
         return ObservedIdentity {
             nickname: observed_name.clone(),
-            steam_id: FieldPresence::Unknown {
-                reason: UnknownReason::MissingSteamId,
-                source: None,
-            },
+            steam_id: steam_id_presence(
+                entity_steam_id(entity, index),
+                source_entity_id,
+                context,
+                diagnostics,
+            ),
             side,
             faction: FieldPresence::Unknown {
                 reason: UnknownReason::SourceFieldAbsent,
@@ -656,6 +659,84 @@ fn observed_identity(
         description: FieldPresence::NotApplicable {
             reason: "non-player entity has no observed description".to_string(),
         },
+    }
+}
+
+fn entity_steam_id(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
+    let json_path = format!("$.entities[{index}].steamID");
+
+    let Some(compact_entity) = &entity.entity else {
+        return RawField::Drift {
+            json_path: format!("$.entities[{index}]"),
+            expected_shape: "object",
+            observed_shape: entity.observed_shape.clone().unwrap_or_else(|| "unknown".to_string()),
+        };
+    };
+
+    match compact_entity.raw_value_at("steamID") {
+        Some(value) => match parse_raw_string(value) {
+            Some(value) => RawField::Present { value, json_path },
+            None => RawField::Drift {
+                json_path,
+                expected_shape: "string",
+                observed_shape: observed_raw_shape(value),
+            },
+        },
+        None => RawField::Absent { json_path },
+    }
+}
+
+fn steam_id_presence(
+    raw_field: RawField<String>,
+    source_entity_id: i64,
+    context: &SourceContext,
+    diagnostics: &mut DiagnosticAccumulator,
+) -> FieldPresence<String> {
+    match raw_field {
+        RawField::Present { value, json_path } => FieldPresence::Present {
+            value,
+            source: Some(entity_source_ref(
+                context,
+                &json_path,
+                source_entity_id,
+                rule_id("entity.steam_id.observed"),
+            )),
+        },
+        RawField::Absent { json_path } => FieldPresence::Unknown {
+            reason: UnknownReason::MissingSteamId,
+            source: Some(entity_source_ref(
+                context,
+                &json_path,
+                source_entity_id,
+                rule_id("entity.steam_id.observed"),
+            )),
+        },
+        RawField::Drift { json_path, expected_shape, observed_shape } => {
+            push_diagnostic(
+                diagnostics,
+                EntityDiagnostic {
+                    code: "schema.entity_steam_id_shape",
+                    message: "Entity SteamID field had unexpected source shape",
+                    json_path: &json_path,
+                    expected_shape,
+                    observed_shape: &observed_shape,
+                    parser_action: "set_unknown",
+                    entity_id: Some(source_entity_id),
+                },
+                context,
+                DiagnosticImpact::DataLoss,
+            );
+
+            FieldPresence::Unknown {
+                reason: UnknownReason::SchemaDrift,
+                source: Some(entity_source_ref(
+                    context,
+                    &json_path,
+                    source_entity_id,
+                    rule_id("entity.steam_id.observed"),
+                )),
+            }
+        }
     }
 }
 

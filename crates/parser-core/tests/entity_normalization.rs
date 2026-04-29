@@ -10,7 +10,7 @@ use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     compact::ObservedParticipantRef,
     identity::EntitySide,
-    presence::FieldPresence,
+    presence::{FieldPresence, UnknownReason},
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
@@ -84,6 +84,61 @@ fn entity_normalization_should_extract_unit_identity_when_unit_player_entity_is_
         &unit.role,
         FieldPresence::Present { value, source: Some(_) } if value == "Rifleman"
     ));
+}
+
+#[test]
+fn entity_normalization_should_preserve_steam_id_presence_and_missing_state_in_participants() {
+    let fixture = br#"{
+        "missionName": "sg participant steam ids",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 2],
+        "captureDelay": 0.5,
+        "endFrame": 10,
+        "entities": [
+            {
+                "id": 41,
+                "type": "unit",
+                "name": "Steam Player",
+                "steamID": "76561198000000001",
+                "group": "Alpha 1-1",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": 1,
+                "positions": []
+            },
+            {
+                "id": 42,
+                "type": "unit",
+                "name": "No Steam Player",
+                "group": "Alpha 1-2",
+                "side": "WEST",
+                "description": "Medic",
+                "isPlayer": 1,
+                "positions": []
+            }
+        ],
+        "events": [],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+    let artifact = parse_fixture(fixture);
+    let steam_player = participant_by_id(&artifact, 41);
+    let no_steam_player = participant_by_id(&artifact, 42);
+
+    assert!(matches!(
+        &steam_player.steam_id,
+        FieldPresence::Present { value, source: Some(source) }
+            if value == "76561198000000001"
+                && source.json_path.as_deref() == Some("$.entities[0].steamID")
+    ));
+    assert!(matches!(
+        &no_steam_player.steam_id,
+        FieldPresence::Unknown { reason: UnknownReason::MissingSteamId, source: Some(source) }
+            if source.json_path.as_deref() == Some("$.entities[1].steamID")
+    ));
+    assert!(!steam_player.source_refs.as_slice().is_empty());
+    assert!(!no_steam_player.source_refs.as_slice().is_empty());
 }
 
 #[test]
@@ -362,10 +417,7 @@ fn entity_normalization_should_diagnose_entity_shape_and_value_drift_without_pan
     assert!(diagnostic_codes.contains(&"compat.entity_duplicate_side_conflict"));
     assert!(matches!(
         drifted_unit.observed_name,
-        FieldPresence::Unknown {
-            reason: parser_contract::presence::UnknownReason::SchemaDrift,
-            source: Some(_)
-        }
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, source: Some(_) }
     ));
     assert!(matches!(
         &fallback_vehicle.observed_name,
