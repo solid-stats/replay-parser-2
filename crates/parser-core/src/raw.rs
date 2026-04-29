@@ -34,7 +34,7 @@ impl<'a> RawReplay<'a> {
 
     /// Returns a raw top-level value by source key.
     #[must_use]
-    pub fn value_at(&self, key: &str) -> Option<&'a RawValue> {
+    pub const fn value_at(&self, key: &str) -> Option<&'a RawValue> {
         self.root.raw_value_at(key)
     }
 
@@ -279,7 +279,11 @@ fn entity_json_path(index: usize, key: &str) -> String {
 
 #[cfg(all(test, not(coverage)))]
 mod tests {
-    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+    #![allow(
+        clippy::expect_used,
+        clippy::panic,
+        reason = "unit tests use explicit failure messages as assertion context"
+    )]
 
     use super::*;
     use crate::raw_compact::decode_compact_root;

@@ -1,6 +1,6 @@
 //! Human-readable summary rendering for comparison reports.
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Write as _};
 
 use crate::report::{ComparisonReport, ImpactLevel, MismatchCategory};
 
@@ -109,7 +109,7 @@ pub fn render_markdown_summary(report: &ComparisonReport) -> String {
     let mut markdown = String::new();
 
     markdown.push_str("# Comparison Summary\n\n");
-    markdown.push_str(&format!("Total findings: {}\n\n", summary.total_findings));
+    let _ = write!(markdown, "Total findings: {}\n\n", summary.total_findings);
 
     markdown.push_str("## Counts by Category\n\n");
     push_count_lines(&mut markdown, &summary.by_category);
@@ -122,15 +122,16 @@ pub fn render_markdown_summary(report: &ComparisonReport) -> String {
         markdown.push_str("- None\n");
     } else {
         for diff in summary.top_diffs {
-            markdown.push_str(&format!(
-                "- `{}`: `{}`; parser_artifact={}; server_2_recalculation={}; ui_visible_public_stats={}; note={}\n",
+            let _ = writeln!(
+                markdown,
+                "- `{}`: `{}`; parser_artifact={}; server_2_recalculation={}; ui_visible_public_stats={}; note={}",
                 diff.surface,
                 diff.category,
                 impact_str(diff.parser_artifact_impact),
                 impact_str(diff.server_2_recalculation_impact),
                 impact_str(diff.ui_visible_public_stats_impact),
                 diff.note
-            ));
+            );
         }
     }
 
@@ -177,7 +178,7 @@ fn push_count_lines(markdown: &mut String, counts: &BTreeMap<String, usize>) {
     }
 
     for (key, count) in counts {
-        markdown.push_str(&format!("- `{key}`: {count}\n"));
+        let _ = writeln!(markdown, "- `{key}`: {count}");
     }
 }
 

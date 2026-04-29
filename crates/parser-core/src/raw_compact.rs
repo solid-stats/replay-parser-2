@@ -122,18 +122,23 @@ pub enum CompactDecodeError {
     /// Replay bytes are not valid JSON syntax.
     #[error("replay JSON could not be decoded: {source_cause}")]
     JsonDecode {
-        /// serde_json source error text.
+        /// `serde_json` source error text.
         source_cause: String,
     },
     /// Replay bytes are valid JSON but the root is not an object.
     #[error("OCAP replay root must be a JSON object: {source_cause}")]
     RootNotObject {
-        /// serde_json source error text.
+        /// `serde_json` source error text.
         source_cause: String,
     },
 }
 
 /// Selectively decodes a replay root without constructing a full `serde_json::Value` DOM.
+///
+/// # Errors
+///
+/// Returns [`CompactDecodeError`] when the replay bytes are not valid JSON or the root is not a
+/// JSON object.
 pub fn decode_compact_root(bytes: &[u8]) -> Result<RawOcapRoot<'_>, CompactDecodeError> {
     serde_json::from_slice::<RawOcapRoot<'_>>(bytes).map_err(|error| match error.classify() {
         Category::Data => CompactDecodeError::RootNotObject {
@@ -354,10 +359,10 @@ pub fn compact_killed_events(root: &RawOcapRoot<'_>) -> Vec<KilledEventObservati
         .collect()
 }
 
-pub(crate) fn raw_array_field<'a>(
-    value: Option<&'a RawValue>,
+pub(crate) fn raw_array_field(
+    value: Option<&RawValue>,
     json_path: String,
-) -> RawField<Vec<&'a RawValue>> {
+) -> RawField<Vec<&RawValue>> {
     match value {
         Some(value) => match raw_array_items(value) {
             Some(value) => RawField::Present { value, json_path },

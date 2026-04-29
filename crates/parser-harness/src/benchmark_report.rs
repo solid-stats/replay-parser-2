@@ -171,8 +171,8 @@ impl BenchmarkEvidence {
             });
         }
 
-        let expected_ratio = self.artifact_size.compact_artifact_bytes as f64
-            / self.artifact_size.raw_input_bytes as f64;
+        let expected_ratio = bytes_as_f64(self.artifact_size.compact_artifact_bytes)
+            / bytes_as_f64(self.artifact_size.raw_input_bytes);
         if (self.artifact_size.artifact_raw_ratio - expected_ratio).abs() > 0.0001 {
             return Err(BenchmarkReportValidationError::InvalidArtifactRawRatio);
         }
@@ -319,6 +319,15 @@ fn validate_non_empty(
     Ok(())
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_precision_loss,
+    reason = "benchmark byte-count ratios are approximate evidence and validated with tolerance"
+)]
+const fn bytes_as_f64(value: u64) -> f64 {
+    value as f64
+}
+
 /// Benchmark report validation failures.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum BenchmarkReportValidationError {
@@ -331,7 +340,7 @@ pub enum BenchmarkReportValidationError {
     /// Neither fixture list nor corpus selector identified the workload.
     #[error("benchmark report is missing workload identity")]
     MissingWorkloadIdentity,
-    /// BenchmarkEvidence tier and nested workload tier differ.
+    /// `BenchmarkEvidence` tier and nested workload tier differ.
     #[error("benchmark evidence tier does not match workload tier")]
     MismatchedEvidenceTier,
     /// Compact artifact-size evidence is missing.

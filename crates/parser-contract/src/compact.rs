@@ -73,7 +73,7 @@ pub struct ParseFactSection {
 }
 
 /// Compact summary projections for human review and ingestion sanity checks.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ParseSummarySection {
     /// Stable key-value projections for legacy, bounty, vehicle-score, and side surfaces.
     pub projections: BTreeMap<String, Value>,

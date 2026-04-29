@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready-to-execute
-stopped_at: Phase 5.1 planned
-last_updated: "2026-04-29T14:19:13+07:00"
+status: phase-05.1-executed-with-acceptance-gap
+stopped_at: Phase 5.1 benchmark/parity acceptance gap
+last_updated: "2026-04-29T16:03:40+07:00"
 last_activity: 2026-04-29
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 38
-  completed_plans: 30
-  percent: 79
+  completed_plans: 38
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-28)
 
 ## Current Position
 
-Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — PLANNED, READY TO EXECUTE
-Plan: 0 of 8
-Status: Phase 5.1 has 8 executable plans covering the server compatibility gate, compact artifact contract, selective parser path, compact core semantics, CLI/schema updates, summary-first comparison reports, benchmark evidence, and final handoff gates. Phase 6 worker integration remains blocked until this redesign is executed and accepted.
+Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — EXECUTION COMPLETE, ACCEPTANCE GAP OPEN
+Plan: 8 of 8
+Status: Phase 5.1 executed all 8 plans. The compact artifact contract, selective parser boundary, compact core semantics, CLI/schema updates, summary-first comparison reports, benchmark report schema, final gates, and handoff docs are implemented. Final code gates passed, but the generated benchmark report is not an accepted performance/parity pass: selected `ten_x_status=unknown`, selected `parity_status=not_run`, whole-list/corpus evidence is unavailable because `RUN_PHASE5_FULL_CORPUS` was not enabled, and selected artifact/raw ratio is `59.97366881` on the tiny CI fixture. Phase 6 worker integration remains blocked until full-corpus benchmark/parity evidence passes or the gap is explicitly accepted.
 Last activity: 2026-04-29
 
-Progress: [███████░░░] 79%
+Progress: [██████████] 100% of planned Phase 5.1 execution, with acceptance gap
 
 ## Performance Metrics
 
@@ -49,7 +49,7 @@ Progress: [███████░░░] 79%
 | 03 | 6 | 62m23s | 10m24s |
 | 04 | 7/7 | 96m40s | 13m49s |
 | 05 | 6/6 | 221m | 36m50s |
-| 05.1 | 0/8 | planned | - |
+| 05.1 | 8/8 | executed; acceptance gap | - |
 
 **Recent Trend:**
 
@@ -131,11 +131,17 @@ Recent decisions affecting current work:
 - [Phase 05.1]: Inserted urgent redesign phase after UAT rejected the current parser direction. — The default server-facing artifact must become compact; full normalized event/entity dumps move out of ordinary ingestion; comparison reports must become summary-first; performance work should use selective OCAP extraction instead of optimizing a large JSON-to-JSON roundtrip.
 - [Phase 05.1]: Annual/yearly nomination statistics should not force a large v1 side artifact. — Future yearly work can reprocess raw OCAP files and compare against `~/sg_stats/year_results`, matching the old-parser model more closely than carrying a heavy default document through every parse.
 - [Phase 05.1]: Planning produced 8 execution plans. — Wave 1 records `server-2` compatibility and approval state; Wave 2 replaces the public contract with compact `participants`, `facts`, and `summaries`; Wave 3 replaces the normal parser hot path with selective OCAP extraction; Wave 4 preserves combat/aggregate/side semantics in compact output; Wave 5 updates CLI/schema and summary-first comparison; Wave 6 adds compact artifact-size and whole-list/corpus benchmark evidence; Wave 7 runs final quality gates and handoff docs.
+- [Phase 05.1]: User accepted the server-2 compatibility gate before compact contract implementation. — `05.1-SERVER-COMPATIBILITY.md` records accepted compact artifact delivery with observed identity boundaries and no parser-owned persistence/API/UI/canonical identity behavior.
+- [Phase 05.1]: The default public artifact now uses compact `participants`, `facts`, `summaries`, `side_facts`, diagnostics, status/failure, source, parser, and contract metadata. — Top-level full `entities`, `events`, and `aggregates` are no longer default serialized output.
+- [Phase 05.1]: Parser-core normal input now passes through a selective root boundary instead of `serde_json::Value` full-DOM decode in the checked hot-path files. — Internal normalized semantics are still used before compact mapping where needed for behavior preservation.
+- [Phase 05.1]: Comparison output is summary-first Markdown by default with explicit JSON details through `--detail-output` or `--format json`. — Compact surfaces replace old top-level event/entity comparison surfaces.
+- [Phase 05.1]: Benchmark reports now require raw input bytes, compact artifact bytes, artifact/raw ratio, selected evidence, and whole-list/corpus evidence or a concrete unavailable reason. — The latest CI report is valid but records selected `ten_x_status=unknown`, selected `parity_status=not_run`, `whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and artifact/raw ratio `59.97366881`; Phase 6 remains blocked pending acceptance or remediation.
 
 ### Roadmap Evolution
 
 - Phase 5.1 inserted after Phase 5 (URGENT): Compact Artifact and Selective Parser Redesign. Reason: Phase 5 UAT found that the current parser artifact is too large, benchmark speedup is too weak, and comparison output is not reviewable; Phase 6 worker integration must wait for a compact artifact and selective parser direction.
 - Phase 5.1 planned with 8 plans and 7 execution waves on 2026-04-29.
+- Phase 5.1 executed all 8 plans on 2026-04-29; Phase 6 remains blocked by benchmark/parity acceptance evidence.
 
 ### Pending Todos
 
@@ -143,19 +149,19 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 5 UAT found a product-fit and benchmark/parity gap. Phase 5.1 is
-now planned but not executed. The generated
-`.planning/generated/phase-05/benchmarks/benchmark-report.json` is valid, but
-records `ten_x_status=fail`, `parity_status=human_review`, and selected
-old-parser `runParseTask` vs Rust release CLI speedup well below the `10x`
-target. UAT also found that the current parser largely turns one 10-15 MB JSON
-file into another large JSON artifact, which does not meet the parser's purpose
-for `server-2`. The
-comparison report at
-`.planning/generated/phase-05/comparison/comparison-report.json` has seven
-`human_review` surfaces and is not practical to inspect directly. Phase 5.1
-must redesign the default artifact, comparison report, and selective parser
-performance path before Phase 6 worker integration.
+Active: Phase 5.1 implementation and code gates are complete, but the generated
+`.planning/generated/phase-05/benchmarks/benchmark-report.json` is not a
+performance/parity acceptance pass. It records selected
+`ten_x_status=unknown`, selected `parity_status=not_run`,
+`whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and
+selected artifact/raw ratio `59.97366881` on the tiny CI fixture. Phase 6
+worker integration remains blocked until whole-list/corpus benchmark and parity
+evidence pass, or the user explicitly accepts the gap.
+
+Resolved: Phase 5.1 replaced the default artifact with compact
+`participants`/`facts`/`summaries`, removed full top-level `entities` and
+`events` from default output, added a selective parser boundary, and made
+comparison reports summary-first with explicit JSON detail output.
 
 Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
@@ -188,12 +194,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-29T06:46:58.462Z
-Stopped at: Phase 5.1 context gathered
+Last session: 2026-04-29T16:03:40+07:00
+Stopped at: Phase 5.1 executed with benchmark/parity acceptance gap
 Resume file: .planning/phases/05.1-compact-artifact-and-selective-parser-redesign/05.1-CONTEXT.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** `$gsd-execute-phase 5.1` to execute compact artifact redesign, selective parser implementation, artifact-size/10x benchmark acceptance, and readable comparison reports before Phase 6.
+**Next Step:** Resolve Phase 5.1 acceptance before Phase 6: run `RUN_PHASE5_FULL_CORPUS=1 scripts/benchmark-phase5.sh --ci` with old-parser prerequisites and parity evidence, remediate the compactness/performance gap, or record explicit user acceptance of the benchmark/parity gap.

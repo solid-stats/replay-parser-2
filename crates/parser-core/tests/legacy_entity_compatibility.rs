@@ -149,14 +149,14 @@ fn legacy_entity_compatibility_should_attach_connected_backfill_hint_with_event_
  {
     let artifact = connected_artifact();
     let player = participant_by_id(&artifact, 11);
-    let source_paths = player
+    let has_entity_source_path = player
         .source_refs
         .as_slice()
         .iter()
         .filter_map(|source_ref| source_ref.json_path.as_deref())
-        .collect::<Vec<_>>();
+        .any(|json_path| json_path == "$.entities[0]");
 
-    assert!(source_paths.contains(&"$.entities[0]"));
+    assert!(has_entity_source_path);
     assert!(matches!(
         &player.observed_name,
         FieldPresence::Inferred { source: Some(source_ref), .. }
