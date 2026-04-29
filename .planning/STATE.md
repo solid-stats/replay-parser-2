@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: redesign-needed
-stopped_at: Phase 5 UAT rejected the current large artifact and weak benchmark direction; Phase 5.1 inserted
-last_updated: "2026-04-29T11:58:57+07:00"
+stopped_at: Phase 5.1 context gathered
+last_updated: "2026-04-29T06:47:48.891Z"
 last_activity: 2026-04-29
 progress:
   total_phases: 8
@@ -184,9 +184,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-29T11:58:57+07:00
-Stopped at: Phase 5.1 inserted after artifact/performance redesign decision
-Resume file: None
+Last session: 2026-04-29T06:46:58.462Z
+Stopped at: Phase 5.1 context gathered
+Resume file: .planning/phases/05.1-compact-artifact-and-selective-parser-redesign/05.1-CONTEXT.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
