@@ -25,10 +25,12 @@
   "produced_at": null,
   "diagnostics": [],
   "replay": null,
-  "entities": [],
-  "events": [],
-  "aggregates": {
-    "contributions": [],
+  "participants": [],
+  "facts": {
+    "combat": [],
+    "aggregate_contributions": []
+  },
+  "summaries": {
     "projections": {}
   },
   "side_facts": {

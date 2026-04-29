@@ -40,7 +40,7 @@ fn aggregate_contribution_value_mut<'a>(
     artifact: &'a mut Value,
     kind: &str,
 ) -> &'a mut serde_json::Map<String, Value> {
-    let contributions = artifact["aggregates"]["contributions"]
+    let contributions = artifact["facts"]["aggregate_contributions"]
         .as_array_mut()
         .expect("success example should include aggregate contributions");
     let contribution = contributions
@@ -89,13 +89,20 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_contract_fiel
         "status",
         "diagnostics",
         "replay",
-        "entities",
-        "events",
-        "aggregates",
+        "participants",
+        "facts",
+        "summaries",
         "side_facts",
         "failure",
     ] {
         assert!(schema_text.contains(expected_field), "schema should contain {expected_field}");
+    }
+
+    for removed_field in ["\"entities\"", "\"events\"", "\"aggregates\""] {
+        assert!(
+            !schema_text.contains(removed_field),
+            "schema should not contain removed top-level field {removed_field}"
+        );
     }
 }
 
@@ -106,9 +113,15 @@ fn schema_contract_committed_schema_should_include_phase_4_contract_surfaces() {
 
     for expected_fragment in [
         "AggregateProjectionKey",
-        "CombatEventAttributes",
+        "ObservedParticipantRef",
+        "CombatFact",
+        "ParseFactSection",
+        "ParseSummarySection",
         "VehicleScoreInputValue",
         "ReplaySideFacts",
+        "participants",
+        "facts",
+        "summaries",
         "side_facts",
         "legacy.player_game_results",
         "vehicle_score.denominator_inputs",
@@ -211,33 +224,29 @@ fn schema_contract_gap_regression_should_reject_non_failed_artifact_with_failure
 #[test]
 fn schema_contract_gap_regression_should_reject_empty_event_source_refs() {
     let mut success_example = read_json(success_example_path());
-    success_example["events"][0]["source_refs"] = json!([]);
+    success_example["facts"]["combat"][0]["source_refs"] = json!([]);
 
     assert_committed_schema_rejects(&success_example);
 }
 
 #[test]
-fn schema_contract_gap_regression_should_reject_empty_entity_source_refs() {
+fn schema_contract_gap_regression_should_reject_empty_participant_source_refs() {
     let mut success_example = read_json(success_example_path());
-    success_example["entities"][0]["source_refs"] = json!([]);
+    success_example["participants"][0]["source_refs"] = json!([]);
 
     assert_committed_schema_rejects(&success_example);
 }
 
 #[test]
-fn schema_contract_should_include_entity_compatibility_hint_shape() {
+fn schema_contract_should_include_compact_participant_shape() {
     let schema_text =
         fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
 
     for expected_fragment in [
-        "EntityCompatibilityHint",
-        "EntityCompatibilityHintKind",
-        "connected_player_backfill",
-        "duplicate_slot_same_name",
-        "related_entity_ids",
-        "is_player",
+        "ObservedParticipantRef",
+        "source_entity_id",
         "observed_name",
-        "rule_id",
+        "steam_id",
         "source_refs",
     ] {
         assert!(
@@ -248,21 +257,9 @@ fn schema_contract_should_include_entity_compatibility_hint_shape() {
 }
 
 #[test]
-fn schema_contract_gap_regression_should_reject_empty_compatibility_hint_related_entity_ids() {
+fn schema_contract_gap_regression_should_reject_empty_participant_source_refs_against_schema() {
     let mut success_example = read_json(success_example_path());
-    success_example["entities"][0]["compatibility_hints"] = json!([
-        {
-            "kind": "connected_player_backfill",
-            "related_entity_ids": [],
-            "observed_name": {
-                "state": "present",
-                "value": "Afganor",
-                "source": null
-            },
-            "rule_id": "entity.connected_player_backfill",
-            "source_refs": success_example["entities"][0]["source_refs"].clone()
-        }
-    ]);
+    success_example["participants"][0]["source_refs"] = json!([]);
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -270,7 +267,7 @@ fn schema_contract_gap_regression_should_reject_empty_compatibility_hint_related
 #[test]
 fn schema_contract_gap_regression_should_reject_hollow_source_ref_objects() {
     let mut success_example = read_json(success_example_path());
-    success_example["events"][0]["source_refs"][0] = json!({});
+    success_example["facts"]["combat"][0]["source_refs"][0] = json!({});
 
     assert_committed_schema_rejects(&success_example);
 }

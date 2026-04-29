@@ -4,10 +4,6 @@
   "description": "Versioned parser output consumed by downstream Solid Stats services.",
   "type": "object",
   "properties": {
-    "aggregates": {
-      "description": "Derived aggregate projections and auditable contribution references.",
-      "$ref": "#/$defs/AggregateSection"
-    },
     "contract_version": {
       "description": "Parser contract version used to shape this artifact.",
       "$ref": "#/$defs/ContractVersion"
@@ -19,24 +15,18 @@
         "$ref": "#/$defs/Diagnostic"
       }
     },
-    "entities": {
-      "description": "Observed entity and identity facts from the replay.",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/ObservedEntity"
-      }
-    },
-    "events": {
-      "description": "Normalized replay events.",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/NormalizedEvent"
-      }
-    },
     "extensions": {
       "description": "Stable extension object reserved for forward-compatible parser metadata.",
       "type": "object",
       "additionalProperties": true
+    },
+    "facts": {
+      "description": "Compact facts and auditable contribution references.",
+      "$ref": "#/$defs/ParseFactSection",
+      "default": {
+        "aggregate_contributions": [],
+        "combat": []
+      }
     },
     "failure": {
       "description": "Structured failure details required when status is `failed`.",
@@ -52,6 +42,14 @@
     "parser": {
       "description": "Parser binary and build metadata.",
       "$ref": "#/$defs/ParserInfo"
+    },
+    "participants": {
+      "description": "Compact observed participant references from the replay.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ObservedParticipantRef"
+      }
     },
     "produced_at": {
       "description": "Optional production timestamp supplied by non-deterministic adapters.",
@@ -82,6 +80,13 @@
     "status": {
       "description": "Overall parse status.",
       "$ref": "#/$defs/ParseStatus"
+    },
+    "summaries": {
+      "description": "Compact summary projections for review and ingestion sanity checks.",
+      "$ref": "#/$defs/ParseSummarySection",
+      "default": {
+        "projections": {}
+      }
     }
   },
   "allOf": [
@@ -137,9 +142,6 @@
     "source",
     "status",
     "diagnostics",
-    "entities",
-    "events",
-    "aggregates",
     "side_facts",
     "extensions"
   ],
@@ -317,28 +319,6 @@
         "vehicle_score.denominator_inputs"
       ]
     },
-    "AggregateSection": {
-      "description": "Aggregate projection section of a successful or partial parse artifact.",
-      "type": "object",
-      "properties": {
-        "contributions": {
-          "description": "Auditable contribution list used to derive projections.",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AggregateContributionRef"
-          }
-        },
-        "projections": {
-          "description": "Stable key-value projections for legacy and parser-owned aggregate surfaces.",
-          "type": "object",
-          "additionalProperties": true
-        }
-      },
-      "required": [
-        "contributions",
-        "projections"
-      ]
-    },
     "BountyEligibility": {
       "description": "Bounty eligibility payload attached to a combat event.",
       "type": "object",
@@ -488,32 +468,48 @@
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
-    "CombatEventAttributes": {
-      "description": "Typed combat payload for normalized combat events.",
+    "CombatFact": {
+      "description": "Compact source-backed combat fact emitted by the default artifact.",
       "type": "object",
       "properties": {
         "bounty": {
           "description": "Bounty eligibility and exclusion reasons.",
           "$ref": "#/$defs/BountyEligibility"
         },
-        "distance_meters": {
-          "description": "Distance in meters when available.",
-          "$ref": "#/$defs/FieldPresence4"
+        "event_index": {
+          "description": "Source event index when available.",
+          "$ref": "#/$defs/FieldPresence5"
+        },
+        "fact_id": {
+          "description": "Stable fact identifier within the artifact.",
+          "type": "string"
+        },
+        "frame": {
+          "description": "Event frame when available.",
+          "$ref": "#/$defs/FieldPresence5"
         },
         "killer": {
           "description": "Killer actor when available.",
-          "$ref": "#/$defs/FieldPresence11"
+          "$ref": "#/$defs/FieldPresence9"
         },
         "legacy_counter_effects": {
-          "description": "Legacy counter deltas derived from this event.",
+          "description": "Legacy counter deltas derived from this fact.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/LegacyCounterEffect"
           }
         },
+        "rule_id": {
+          "description": "Rule that produced this fact.",
+          "$ref": "#/$defs/RuleId"
+        },
         "semantic": {
           "description": "Dominant combat semantic.",
           "$ref": "#/$defs/CombatSemantic"
+        },
+        "source_refs": {
+          "description": "Non-empty source references backing this fact.",
+          "$ref": "#/$defs/SourceRefs"
         },
         "vehicle_context": {
           "description": "Vehicle evidence and taxonomy context.",
@@ -521,27 +517,26 @@
         },
         "victim": {
           "description": "Victim actor when available.",
-          "$ref": "#/$defs/FieldPresence11"
+          "$ref": "#/$defs/FieldPresence9"
         },
         "victim_kind": {
           "description": "Victim category.",
           "$ref": "#/$defs/CombatVictimKind"
-        },
-        "weapon": {
-          "description": "Weapon string when available.",
-          "$ref": "#/$defs/FieldPresence2"
         }
       },
       "required": [
+        "fact_id",
         "semantic",
+        "frame",
+        "event_index",
         "killer",
         "victim",
         "victim_kind",
-        "weapon",
-        "distance_meters",
         "vehicle_context",
         "bounty",
-        "legacy_counter_effects"
+        "legacy_counter_effects",
+        "source_refs",
+        "rule_id"
       ]
     },
     "CombatSemantic": {
@@ -625,7 +620,7 @@
       "properties": {
         "commander": {
           "description": "Commander actor reference.",
-          "$ref": "#/$defs/FieldPresence11"
+          "$ref": "#/$defs/FieldPresence9"
         },
         "confidence": {
           "description": "Confidence for inferred or candidate facts.",
@@ -648,7 +643,7 @@
         },
         "side": {
           "description": "Observed side identifier.",
-          "$ref": "#/$defs/FieldPresence9"
+          "$ref": "#/$defs/FieldPresence8"
         },
         "side_name": {
           "description": "Observed side name or label.",
@@ -753,84 +748,6 @@
         }
       ]
     },
-    "EntityCompatibilityHint": {
-      "description": "Auditable legacy compatibility hint for observed entity projection behavior.",
-      "type": "object",
-      "properties": {
-        "kind": {
-          "description": "Compatibility behavior represented by this hint.",
-          "$ref": "#/$defs/EntityCompatibilityHintKind"
-        },
-        "observed_name": {
-          "description": "Observed name involved in this compatibility behavior.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "related_entity_ids": {
-          "description": "Related source entity identifiers that participate in this hint.",
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "minItems": 1
-        },
-        "rule_id": {
-          "description": "Stable rule identifier that produced this hint.",
-          "$ref": "#/$defs/RuleId"
-        },
-        "source_refs": {
-          "description": "Source references backing this hint.",
-          "$ref": "#/$defs/SourceRefs"
-        }
-      },
-      "required": [
-        "kind",
-        "related_entity_ids",
-        "observed_name",
-        "rule_id",
-        "source_refs"
-      ]
-    },
-    "EntityCompatibilityHintKind": {
-      "description": "Legacy compatibility hint kind attached to an observed entity.",
-      "oneOf": [
-        {
-          "description": "Entity identity was backfilled from a connected-player event.",
-          "type": "string",
-          "const": "connected_player_backfill"
-        },
-        {
-          "description": "Entity is a duplicate-slot same-name candidate for later aggregate projection.",
-          "type": "string",
-          "const": "duplicate_slot_same_name"
-        }
-      ]
-    },
-    "EntityKind": {
-      "description": "Observed replay entity category.",
-      "oneOf": [
-        {
-          "description": "Infantry or player-like unit.",
-          "type": "string",
-          "const": "unit"
-        },
-        {
-          "description": "Vehicle entity.",
-          "type": "string",
-          "const": "vehicle"
-        },
-        {
-          "description": "Static weapon entity.",
-          "type": "string",
-          "const": "static_weapon"
-        },
-        {
-          "description": "Entity kind could not be classified.",
-          "type": "string",
-          "const": "unknown"
-        }
-      ]
-    },
     "EntitySide": {
       "description": "Observed side or faction alignment.",
       "oneOf": [
@@ -876,7 +793,7 @@
         },
         "side": {
           "description": "Observed actor side.",
-          "$ref": "#/$defs/FieldPresence9"
+          "$ref": "#/$defs/FieldPresence8"
         },
         "source_entity_id": {
           "description": "Source entity identifier for the actor.",
@@ -1212,166 +1129,6 @@
       ]
     },
     "FieldPresence11": {
-      "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
-      "oneOf": [
-        {
-          "description": "Field was present in the source or adapter input.",
-          "type": "object",
-          "properties": {
-            "source": {
-              "description": "Source reference for the value, when available.",
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/SourceRef"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "state": {
-              "type": "string",
-              "const": "present"
-            },
-            "value": {
-              "description": "Present value.",
-              "$ref": "#/$defs/EventActorRef"
-            }
-          },
-          "required": [
-            "state",
-            "value"
-          ]
-        },
-        {
-          "description": "Field was explicitly null in the source or domain event.",
-          "type": "object",
-          "properties": {
-            "reason": {
-              "description": "Reason the field is null.",
-              "$ref": "#/$defs/NullReason"
-            },
-            "source": {
-              "description": "Source reference for the null state, when available.",
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/SourceRef"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "state": {
-              "type": "string",
-              "const": "explicit_null"
-            }
-          },
-          "required": [
-            "state",
-            "reason"
-          ]
-        },
-        {
-          "description": "Field value is unknown.",
-          "type": "object",
-          "properties": {
-            "reason": {
-              "description": "Reason the field is unknown.",
-              "$ref": "#/$defs/UnknownReason"
-            },
-            "source": {
-              "description": "Source reference for the unknown state, when available.",
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/SourceRef"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "state": {
-              "type": "string",
-              "const": "unknown"
-            }
-          },
-          "required": [
-            "state",
-            "reason"
-          ]
-        },
-        {
-          "description": "Field value was inferred rather than directly observed.",
-          "type": "object",
-          "properties": {
-            "confidence": {
-              "description": "Optional confidence score for the inference.",
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/Confidence"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "reason": {
-              "description": "Human-readable inference reason.",
-              "type": "string"
-            },
-            "rule_id": {
-              "description": "Rule that produced the inference.",
-              "$ref": "#/$defs/RuleId"
-            },
-            "source": {
-              "description": "Source reference for the inference, when available.",
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/SourceRef"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "state": {
-              "type": "string",
-              "const": "inferred"
-            },
-            "value": {
-              "description": "Inferred value.",
-              "$ref": "#/$defs/EventActorRef"
-            }
-          },
-          "required": [
-            "state",
-            "value",
-            "reason",
-            "rule_id"
-          ]
-        },
-        {
-          "description": "Field does not apply to this replay, entity, event, or projection.",
-          "type": "object",
-          "properties": {
-            "reason": {
-              "description": "Reason the field is not applicable.",
-              "type": "string"
-            },
-            "state": {
-              "type": "string",
-              "const": "not_applicable"
-            }
-          },
-          "required": [
-            "state",
-            "reason"
-          ]
-        }
-      ]
-    },
-    "FieldPresence12": {
       "description": "Explicit state wrapper for fields that may be present, null, unknown, inferred, or irrelevant.",
       "oneOf": [
         {
@@ -2531,7 +2288,7 @@
             },
             "value": {
               "description": "Present value.",
-              "type": "boolean"
+              "$ref": "#/$defs/EntitySide"
             }
           },
           "required": [
@@ -2637,7 +2394,7 @@
             },
             "value": {
               "description": "Inferred value.",
-              "type": "boolean"
+              "$ref": "#/$defs/EntitySide"
             }
           },
           "required": [
@@ -2691,7 +2448,7 @@
             },
             "value": {
               "description": "Present value.",
-              "$ref": "#/$defs/EntitySide"
+              "$ref": "#/$defs/EventActorRef"
             }
           },
           "required": [
@@ -2797,7 +2554,7 @@
             },
             "value": {
               "description": "Inferred value.",
-              "$ref": "#/$defs/EntitySide"
+              "$ref": "#/$defs/EventActorRef"
             }
           },
           "required": [
@@ -2923,119 +2680,6 @@
         "delta"
       ]
     },
-    "NormalizedEvent": {
-      "description": "Normalized event with source references and rule provenance.",
-      "type": "object",
-      "properties": {
-        "actors": {
-          "description": "Actors associated with this event.",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/EventActorRef"
-          }
-        },
-        "attributes": {
-          "description": "Rule-specific event attributes.",
-          "type": "object",
-          "additionalProperties": true
-        },
-        "combat": {
-          "description": "Typed combat payload for combat events.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/CombatEventAttributes"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "event_id": {
-          "description": "Stable event identifier within the artifact.",
-          "type": "string"
-        },
-        "event_index": {
-          "description": "Source event index when available.",
-          "$ref": "#/$defs/FieldPresence5"
-        },
-        "frame": {
-          "description": "Event frame when available.",
-          "$ref": "#/$defs/FieldPresence5"
-        },
-        "kind": {
-          "description": "Normalized event kind.",
-          "$ref": "#/$defs/NormalizedEventKind"
-        },
-        "rule_id": {
-          "description": "Rule that normalized this event.",
-          "$ref": "#/$defs/RuleId"
-        },
-        "source_refs": {
-          "description": "Non-empty source references backing this event.",
-          "$ref": "#/$defs/SourceRefs"
-        }
-      },
-      "required": [
-        "event_id",
-        "kind",
-        "frame",
-        "event_index",
-        "actors",
-        "source_refs",
-        "rule_id",
-        "attributes"
-      ]
-    },
-    "NormalizedEventKind": {
-      "description": "Normalized replay event category.",
-      "oneOf": [
-        {
-          "description": "Player or entity connected.",
-          "type": "string",
-          "const": "connected"
-        },
-        {
-          "description": "Player or entity disconnected.",
-          "type": "string",
-          "const": "disconnected"
-        },
-        {
-          "description": "Kill event.",
-          "type": "string",
-          "const": "kill"
-        },
-        {
-          "description": "Death event.",
-          "type": "string",
-          "const": "death"
-        },
-        {
-          "description": "Teamkill event.",
-          "type": "string",
-          "const": "teamkill"
-        },
-        {
-          "description": "Suicide event.",
-          "type": "string",
-          "const": "suicide"
-        },
-        {
-          "description": "Player-killed event.",
-          "type": "string",
-          "const": "player_killed"
-        },
-        {
-          "description": "Vehicle-killed event.",
-          "type": "string",
-          "const": "vehicle_killed"
-        },
-        {
-          "description": "Event shape was preserved but could not be classified.",
-          "type": "string",
-          "const": "unknown"
-        }
-      ]
-    },
     "NullReason": {
       "description": "Reason for an explicit null field state.",
       "oneOf": [
@@ -3056,36 +2700,25 @@
         }
       ]
     },
-    "ObservedEntity": {
-      "description": "Observed replay entity with identity facts and source references.",
+    "ObservedParticipantRef": {
+      "description": "Compact observed participant reference used by the default server-facing artifact.",
       "type": "object",
       "properties": {
-        "compatibility_hints": {
-          "description": "Legacy compatibility hints without collapsing raw observed entities.",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/EntityCompatibilityHint"
-          }
-        },
-        "identity": {
-          "description": "Observed identity fields for the entity.",
-          "$ref": "#/$defs/ObservedIdentity"
-        },
-        "is_player": {
-          "description": "Observed player flag from replay data.",
-          "$ref": "#/$defs/FieldPresence8"
-        },
-        "kind": {
-          "description": "Entity kind.",
-          "$ref": "#/$defs/EntityKind"
-        },
-        "observed_class": {
-          "description": "Observed entity class from replay data.",
+        "group": {
+          "description": "Observed group or squad label where available.",
           "$ref": "#/$defs/FieldPresence2"
         },
         "observed_name": {
-          "description": "Observed entity name from replay data.",
+          "description": "Observed participant nickname or display name.",
           "$ref": "#/$defs/FieldPresence2"
+        },
+        "role": {
+          "description": "Observed role or description where available.",
+          "$ref": "#/$defs/FieldPresence2"
+        },
+        "side": {
+          "description": "Observed side alignment.",
+          "$ref": "#/$defs/FieldPresence8"
         },
         "source_entity_id": {
           "description": "Source entity identifier from OCAP data.",
@@ -3093,52 +2726,8 @@
           "format": "int64"
         },
         "source_refs": {
-          "description": "Source references backing this entity.",
+          "description": "Source references backing this compact participant reference.",
           "$ref": "#/$defs/SourceRefs"
-        }
-      },
-      "required": [
-        "source_entity_id",
-        "kind",
-        "observed_name",
-        "observed_class",
-        "is_player",
-        "identity",
-        "compatibility_hints",
-        "source_refs"
-      ]
-    },
-    "ObservedIdentity": {
-      "description": "Observed identity fields preserved without canonical player matching.",
-      "type": "object",
-      "properties": {
-        "description": {
-          "description": "Observed description field.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "faction": {
-          "description": "Observed faction.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "group": {
-          "description": "Observed group.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "nickname": {
-          "description": "Observed nickname.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "role": {
-          "description": "Observed role.",
-          "$ref": "#/$defs/FieldPresence2"
-        },
-        "side": {
-          "description": "Observed side.",
-          "$ref": "#/$defs/FieldPresence9"
-        },
-        "squad": {
-          "description": "Observed squad.",
-          "$ref": "#/$defs/FieldPresence2"
         },
         "steam_id": {
           "description": "Observed `SteamID`, when present.",
@@ -3146,14 +2735,13 @@
         }
       },
       "required": [
-        "nickname",
-        "steam_id",
+        "source_entity_id",
+        "observed_name",
         "side",
-        "faction",
         "group",
-        "squad",
         "role",
-        "description"
+        "steam_id",
+        "source_refs"
       ]
     },
     "OutcomeFact": {
@@ -3196,7 +2784,7 @@
         },
         "winner_side": {
           "description": "Winner side when known or inferred.",
-          "$ref": "#/$defs/FieldPresence9"
+          "$ref": "#/$defs/FieldPresence8"
         }
       },
       "required": [
@@ -3224,6 +2812,30 @@
           "type": "string",
           "const": "inferred"
         }
+      ]
+    },
+    "ParseFactSection": {
+      "description": "Compact facts and contribution references needed for server ingestion and audit.",
+      "type": "object",
+      "properties": {
+        "aggregate_contributions": {
+          "description": "Auditable aggregate contribution references derived from compact facts.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AggregateContributionRef"
+          }
+        },
+        "combat": {
+          "description": "Compact combat facts.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CombatFact"
+          }
+        }
+      },
+      "required": [
+        "combat",
+        "aggregate_contributions"
       ]
     },
     "ParseFailure": {
@@ -3352,6 +2964,20 @@
           "type": "string",
           "const": "failed"
         }
+      ]
+    },
+    "ParseSummarySection": {
+      "description": "Compact summary projections for human review and ingestion sanity checks.",
+      "type": "object",
+      "properties": {
+        "projections": {
+          "description": "Stable key-value projections for legacy, bounty, vehicle-score, and side surfaces.",
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "projections"
       ]
     },
     "ParserBuildInfo": {
@@ -3825,7 +3451,7 @@
       "properties": {
         "attacker_vehicle_category": {
           "description": "Issue #13 attacker vehicle category.",
-          "$ref": "#/$defs/FieldPresence12"
+          "$ref": "#/$defs/FieldPresence11"
         },
         "attacker_vehicle_class": {
           "description": "Raw attacker vehicle observed class.",
@@ -3849,7 +3475,7 @@
         },
         "target_category": {
           "description": "Issue #13 target category.",
-          "$ref": "#/$defs/FieldPresence12"
+          "$ref": "#/$defs/FieldPresence11"
         }
       },
       "required": [
