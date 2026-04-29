@@ -271,6 +271,24 @@ fn comparison_report_review_summary_should_record_human_review_next_action() {
     );
 }
 
+#[test]
+fn comparison_report_review_summary_should_not_list_compatible_surfaces_as_top_diffs() {
+    // Arrange
+    let old_json = selected_artifact_json("success");
+    let new_json = selected_artifact_json("success");
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("matching selected artifacts should produce a report");
+
+    // Act
+    let summary = ComparisonReviewSummary::from_report(&report);
+    let markdown = render_markdown_summary(&report);
+
+    // Assert
+    assert!(summary.top_diffs.is_empty());
+    assert!(markdown.contains("## Top Diffs\n\n- None"));
+}
+
 fn selected_artifact_json(status: &str) -> Vec<u8> {
     serde_json::to_vec(&json!({
         "status": status,

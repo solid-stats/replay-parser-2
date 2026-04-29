@@ -19,7 +19,7 @@ use parser_contract::{
 use semver::Version;
 use serde_json::{Value, json};
 
-const SUCCESS_EXAMPLE: &str = include_str!("../examples/parse_artifact_success.v1.json");
+const SUCCESS_EXAMPLE: &str = include_str!("../examples/parse_artifact_success.v2.json");
 
 fn parser_info() -> ParserInfo {
     ParserInfo {
@@ -86,7 +86,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
 
     let serialized = serde_json::to_value(&artifact).expect("artifact should serialize");
 
-    assert_eq!(serialized["contract_version"], "1.0.0");
+    assert_eq!(serialized["contract_version"], "2.0.0");
     assert_eq!(serialized["parser"]["name"], "replay-parser-2");
     assert_eq!(serialized["source"]["source_file"], "2025_04_05__23_27_21__1_ocap.json");
     assert_eq!(serialized["source"]["checksum"]["value"]["algorithm"], "sha256");
@@ -170,7 +170,7 @@ fn parse_artifact_success_example_should_round_trip_stable_envelope_fields() {
 
     let output_value = serde_json::to_value(&artifact).expect("example should reserialize");
 
-    assert_eq!(input_value["contract_version"], "1.0.0");
+    assert_eq!(input_value["contract_version"], "2.0.0");
     assert_eq!(output_value["contract_version"], input_value["contract_version"]);
     assert_eq!(output_value["status"], input_value["status"]);
     assert_eq!(output_value["source"]["source_file"], input_value["source"]["source_file"]);

@@ -663,8 +663,6 @@ fn observed_identity(
 }
 
 fn entity_steam_id(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
-    let json_path = format!("$.entities[{index}].steamID");
-
     let Some(compact_entity) = &entity.entity else {
         return RawField::Drift {
             json_path: format!("$.entities[{index}]"),
@@ -673,16 +671,19 @@ fn entity_steam_id(entity: &RawEntityObservation<'_>, index: usize) -> RawField<
         };
     };
 
-    match compact_entity.raw_value_at("steamID") {
-        Some(value) => match parse_raw_string(value) {
-            Some(value) => RawField::Present { value, json_path },
-            None => RawField::Drift {
-                json_path,
-                expected_shape: "string",
-                observed_shape: observed_raw_shape(value),
-            },
-        },
-        None => RawField::Absent { json_path },
+    match compact_entity.raw_steam_id_field() {
+        Some((key, value)) => {
+            let json_path = format!("$.entities[{index}].{key}");
+            match parse_raw_string(value) {
+                Some(value) => RawField::Present { value, json_path },
+                None => RawField::Drift {
+                    json_path,
+                    expected_shape: "string",
+                    observed_shape: observed_raw_shape(value),
+                },
+            }
+        }
+        None => RawField::Absent { json_path: format!("$.entities[{index}].steamID") },
     }
 }
 

@@ -238,11 +238,21 @@ old_wall_ms = float(json.load(open(old_response_path, encoding='utf-8'))['wall_t
 new_wall_ms = float(new_wall_ms_raw)
 speedup = old_wall_ms / new_wall_ms if new_wall_ms > 0 else 0.0
 report = json.load(open(comparison_report_path, encoding='utf-8'))
-categories = report.get('summary', {}).get('by_category', {})
+legacy_surfaces = {
+    'status',
+    'summaries.projections.legacy.player_game_results',
+    'summaries.projections.legacy.relationships',
+}
+legacy_categories = {
+    finding.get('category')
+    for finding in report.get('findings', [])
+    if finding.get('surface') in legacy_surfaces
+}
+legacy_categories.discard(None)
 
-if set(categories) == {'compatible'}:
+if legacy_categories == {'compatible'}:
     parity = 'passed'
-elif categories.get('human_review', 0) > 0:
+elif 'human_review' in legacy_categories:
     parity = 'human_review'
 else:
     parity = 'failed'
@@ -251,7 +261,7 @@ ten_x = 'pass' if speedup >= 10.0 and parity == 'passed' else 'fail'
 triage = (
     f"bottleneck: curated old runParseTask vs new release CLI speedup is {speedup:.2f}x "
     f"({old_wall_ms:.3f}ms old parse task vs {new_wall_ms:.3f}ms new command), below the 10x target; "
-    f"parity status is {parity}; compact artifact size is {artifact_bytes} bytes from {raw_bytes} raw bytes "
+    f"legacy parity status is {parity}; compact artifact size is {artifact_bytes} bytes from {raw_bytes} raw bytes "
     f"(artifact/raw ratio {artifact_ratio}); comparison report: {comparison_report_path}"
 )
 print(f"{old_wall_ms:.6f} {speedup:.6f} {parity} {ten_x} {triage!r}")
@@ -387,6 +397,12 @@ def metric(wall_ms, files_per_sec, mb_per_sec):
         'rss_mb': None,
     }
 
+selected_triage = (
+    'selected small-ci fixture records compact artifact size and compact Criterion throughput only; '
+    'old-baseline parity is not run for this fixture, so bottleneck and parity acceptance remain unknown; '
+    f'compact artifact ratio is {artifact_raw_ratio}; release parser-stage command wall time was {new_command_wall_ms}ms'
+)
+
 selected_evidence = {
     'workload_name': 'selected compact replay',
     'tier': 'small_ci',
@@ -404,9 +420,9 @@ selected_evidence = {
     'parse_only': metric(parse_only_ms, parse_files_per_sec, parse_mb_per_sec),
     'aggregate_only': metric(aggregate_only_ms, aggregate_files_per_sec, aggregate_mb_per_sec),
     'end_to_end': metric(end_to_end_ms, end_to_end_files_per_sec, end_to_end_mb_per_sec),
-    'parity_status': parity_status,
-    'ten_x_status': ten_x_status,
-    'triage': triage,
+    'parity_status': 'not_run',
+    'ten_x_status': 'unknown',
+    'triage': selected_triage,
 }
 
 report = {
@@ -460,6 +476,9 @@ if old_baseline_available == 'true':
         'old_wall_time_ms': nullable_float(old_wall_time_ms),
         'new_wall_time_ms': nullable_float(new_selected_wall_time_ms),
         'speedup': nullable_float(old_new_speedup),
+        'parity_status': parity_status,
+        'ten_x_status': ten_x_status,
+        'triage': triage,
         'comparison_report': comparison_report,
         'old_command': 'WORKER_COUNT=1 HOME=<generated-fake-home> pnpm exec tsx .planning/generated/phase-05/comparison/run-old-selected.ts',
         'new_command': f'target/release/replay-parser-2 parse {curated_replay_path} --output .planning/generated/phase-05/comparison/new-selected-artifact.json',

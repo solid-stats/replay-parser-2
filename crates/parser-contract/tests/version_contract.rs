@@ -39,6 +39,16 @@ fn version_contract_contract_version_should_serialize_as_semver_string_when_curr
 }
 
 #[test]
+fn version_contract_current_version_should_mark_breaking_compact_artifact_contract() {
+    // Arrange + Act
+    let current = ContractVersion::current();
+
+    // Assert
+    assert_eq!(CURRENT_CONTRACT_VERSION, "2.0.0");
+    assert_eq!(current.semver, Version::new(2, 0, 0));
+}
+
+#[test]
 fn version_contract_contract_version_should_parse_valid_semver_and_reject_invalid_values() {
     // Arrange + Act
     let parsed = ContractVersion::parse("1.2.3").expect("valid contract version should parse");
@@ -74,7 +84,7 @@ fn version_contract_parser_info_should_keep_parser_version_separate_from_contrac
     assert_eq!(
         serialized_artifact,
         json!({
-            "contract_version": "1.0.0",
+            "contract_version": "2.0.0",
             "parser": {
                 "name": "replay-parser-2",
                 "version": "0.1.0",

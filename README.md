@@ -16,11 +16,12 @@ The CLI can parse a local OCAP JSON file into the compact server-facing artifact
 - Roadmap: 8 phases.
 - v1 requirements: 76 mapped requirements.
 - Contract crate: `crates/parser-contract`.
+- Current artifact contract version: `2.0.0`.
 - Parser-core crate: `crates/parser-core`.
 - CLI crate: `crates/parser-cli`.
 - Harness crate: `crates/parser-harness`.
-- Contract schema: `schemas/parse-artifact-v1.schema.json`.
-- Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v1.json` and `crates/parser-contract/examples/parse_failure.v1.json`.
+- Contract schema: `schemas/parse-artifact-v2.schema.json`.
+- Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v2.json` and `crates/parser-contract/examples/parse_failure.v2.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
@@ -34,7 +35,7 @@ cargo test -p parser-core
 cargo check -p parser-cli --all-targets
 cargo test -p parser-cli
 cargo test -p parser-harness
-cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v1.schema.json
+cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v2.schema.json
 ```
 
 The broader workspace gate is:

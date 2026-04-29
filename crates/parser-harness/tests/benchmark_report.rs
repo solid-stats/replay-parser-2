@@ -10,6 +10,8 @@ use parser_harness::benchmark_report::{
     BenchmarkReportValidationError, BenchmarkTier, BenchmarkWorkload, ParityStatus, TenXStatus,
 };
 
+const PARSER_PIPELINE_BENCH: &str = include_str!("../benches/parser_pipeline.rs");
+
 #[test]
 fn benchmark_report_should_accept_selected_and_whole_list_evidence() {
     // Arrange + Act
@@ -123,6 +125,12 @@ fn benchmark_report_should_reject_missing_rss_note_when_rss_is_absent() {
 
     // Assert
     assert_eq!(error, BenchmarkReportValidationError::MissingRssNote);
+}
+
+#[test]
+fn benchmark_report_should_measure_selective_compact_decode_not_full_value_decode() {
+    assert!(PARSER_PIPELINE_BENCH.contains("decode_compact_root"));
+    assert!(!PARSER_PIPELINE_BENCH.contains("from_slice::<Value>"));
 }
 
 fn valid_report(

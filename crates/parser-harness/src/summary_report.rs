@@ -64,6 +64,7 @@ impl ComparisonReviewSummary {
         prioritized_findings.sort_by_key(|finding| category_priority(finding.category));
         let top_diffs = prioritized_findings
             .into_iter()
+            .filter(|finding| finding.category != MismatchCategory::Compatible)
             .take(10)
             .map(|finding| ComparisonTopDiff {
                 surface: finding.surface.clone(),

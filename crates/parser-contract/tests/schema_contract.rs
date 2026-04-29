@@ -20,15 +20,15 @@ fn workspace_root() -> PathBuf {
 }
 
 fn committed_schema_path() -> PathBuf {
-    workspace_root().join("schemas/parse-artifact-v1.schema.json")
+    workspace_root().join("schemas/parse-artifact-v2.schema.json")
 }
 
 fn success_example_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_artifact_success.v1.json")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_artifact_success.v2.json")
 }
 
 fn failure_example_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_failure.v1.json")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_failure.v2.json")
 }
 
 fn read_json(path: PathBuf) -> Value {
@@ -73,7 +73,7 @@ fn freshly_generated_schema_text() -> String {
 fn schema_contract_committed_parse_artifact_schema_should_exist() {
     assert!(
         committed_schema_path().is_file(),
-        "schemas/parse-artifact-v1.schema.json should be committed"
+        "schemas/parse-artifact-v2.schema.json should be committed"
     );
 }
 

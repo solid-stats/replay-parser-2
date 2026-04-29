@@ -26,7 +26,7 @@ fn workspace_root() -> PathBuf {
 }
 
 fn committed_schema_path() -> PathBuf {
-    workspace_root().join("schemas/parse-artifact-v1.schema.json")
+    workspace_root().join("schemas/parse-artifact-v2.schema.json")
 }
 
 fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {

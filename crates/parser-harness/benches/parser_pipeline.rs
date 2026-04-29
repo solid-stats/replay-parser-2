@@ -16,8 +16,8 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
-use serde_json::{Value, json};
+use parser_core::{ParserInput, ParserOptions, parse_replay, raw_compact::decode_compact_root};
+use serde_json::json;
 
 const AGGREGATE_FIXTURE: &[u8] =
     include_bytes!("../../parser-core/tests/fixtures/aggregate-combat.ocap.json");
@@ -56,8 +56,8 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 fn parse_only(criterion: &mut Criterion) {
     criterion.bench_function("parse_only_compact_decode", |bencher| {
         bencher.iter(|| {
-            serde_json::from_slice::<Value>(black_box(AGGREGATE_FIXTURE))
-                .expect("benchmark fixture should decode as JSON")
+            decode_compact_root(black_box(AGGREGATE_FIXTURE))
+                .expect("benchmark fixture should decode through compact root")
         });
     });
 }

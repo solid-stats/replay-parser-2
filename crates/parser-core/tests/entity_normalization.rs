@@ -92,7 +92,7 @@ fn entity_normalization_should_preserve_steam_id_presence_and_missing_state_in_p
         "missionName": "sg participant steam ids",
         "worldName": "Altis",
         "missionAuthor": "SolidGames",
-        "playersCount": [0, 2],
+        "playersCount": [0, 4],
         "captureDelay": 0.5,
         "endFrame": 10,
         "entities": [
@@ -116,6 +116,28 @@ fn entity_normalization_should_preserve_steam_id_presence_and_missing_state_in_p
                 "description": "Medic",
                 "isPlayer": 1,
                 "positions": []
+            },
+            {
+                "id": 43,
+                "type": "unit",
+                "name": "Camel Steam Player",
+                "steamId": "76561198000000003",
+                "group": "Alpha 1-3",
+                "side": "WEST",
+                "description": "Autorifleman",
+                "isPlayer": 1,
+                "positions": []
+            },
+            {
+                "id": 44,
+                "type": "unit",
+                "name": "Snake Steam Player",
+                "steam_id": "76561198000000004",
+                "group": "Alpha 1-4",
+                "side": "WEST",
+                "description": "Grenadier",
+                "isPlayer": 1,
+                "positions": []
             }
         ],
         "events": [],
@@ -125,6 +147,8 @@ fn entity_normalization_should_preserve_steam_id_presence_and_missing_state_in_p
     let artifact = parse_fixture(fixture);
     let steam_player = participant_by_id(&artifact, 41);
     let no_steam_player = participant_by_id(&artifact, 42);
+    let camel_steam_player = participant_by_id(&artifact, 43);
+    let snake_steam_player = participant_by_id(&artifact, 44);
 
     assert!(matches!(
         &steam_player.steam_id,
@@ -136,6 +160,18 @@ fn entity_normalization_should_preserve_steam_id_presence_and_missing_state_in_p
         &no_steam_player.steam_id,
         FieldPresence::Unknown { reason: UnknownReason::MissingSteamId, source: Some(source) }
             if source.json_path.as_deref() == Some("$.entities[1].steamID")
+    ));
+    assert!(matches!(
+        &camel_steam_player.steam_id,
+        FieldPresence::Present { value, source: Some(source) }
+            if value == "76561198000000003"
+                && source.json_path.as_deref() == Some("$.entities[2].steamId")
+    ));
+    assert!(matches!(
+        &snake_steam_player.steam_id,
+        FieldPresence::Present { value, source: Some(source) }
+            if value == "76561198000000004"
+                && source.json_path.as_deref() == Some("$.entities[3].steam_id")
     ));
     assert!(!steam_player.source_refs.as_slice().is_empty());
     assert!(!no_steam_player.source_refs.as_slice().is_empty());

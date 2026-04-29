@@ -162,6 +162,7 @@ pub struct RawEntityCompact<'a> {
     group: Option<&'a RawValue>,
     description: Option<&'a RawValue>,
     is_player: Option<&'a RawValue>,
+    steam_id_key: Option<&'a str>,
     steam_id: Option<&'a RawValue>,
     positions: Option<&'a RawValue>,
 }
@@ -182,6 +183,15 @@ impl<'a> RawEntityCompact<'a> {
             b"isPlayer" => self.is_player,
             b"steamID" | b"steamId" | b"steam_id" => self.steam_id,
             b"positions" => self.positions,
+            _ => None,
+        }
+    }
+
+    /// Returns the observed `SteamID` source key and value when any accepted alias is present.
+    #[must_use]
+    pub const fn raw_steam_id_field(&self) -> Option<(&'a str, &'a RawValue)> {
+        match (self.steam_id_key, self.steam_id) {
+            (Some(key), Some(value)) => Some((key, value)),
             _ => None,
         }
     }
@@ -225,6 +235,7 @@ impl<'de> Visitor<'de> for RawEntityCompactVisitor {
             group: None,
             description: None,
             is_player: None,
+            steam_id_key: None,
             steam_id: None,
             positions: None,
         };
@@ -240,7 +251,10 @@ impl<'de> Visitor<'de> for RawEntityCompactVisitor {
                 "group" => entity.group = Some(map.next_value()?),
                 "description" => entity.description = Some(map.next_value()?),
                 "isPlayer" => entity.is_player = Some(map.next_value()?),
-                "steamID" | "steamId" | "steam_id" => entity.steam_id = Some(map.next_value()?),
+                "steamID" | "steamId" | "steam_id" => {
+                    entity.steam_id_key = Some(key);
+                    entity.steam_id = Some(map.next_value()?);
+                }
                 "positions" => entity.positions = Some(map.next_value()?),
                 _ => {
                     let _ = map.next_value::<IgnoredAny>()?;
