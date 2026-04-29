@@ -255,6 +255,19 @@ fn vehicle_score_should_emit_denominator_input_only_for_players_with_vehicle_kil
 }
 
 #[test]
+fn vehicle_score_should_emit_inputs_without_final_cross_replay_score() {
+    // Arrange
+    let artifact = vehicle_score_artifact();
+    let inputs = projection_array(&artifact, "vehicle_score.inputs");
+
+    // Assert
+    assert!(!artifact.summaries.projections.contains_key("vehicle_score.score"));
+    assert!(!artifact.summaries.projections.contains_key("vehicle_score.final_score"));
+    assert!(inputs.iter().all(|row| row.get("score").is_none()));
+    assert!(inputs.iter().all(|row| row.get("final_score").is_none()));
+}
+
+#[test]
 fn vehicle_score_should_include_source_refs_on_every_vehicle_score_contribution() {
     // Arrange
     let artifact = vehicle_score_artifact();

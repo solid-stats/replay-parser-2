@@ -89,7 +89,7 @@ fn deterministic_output_should_not_include_parser_core_timestamp() {
 }
 
 #[test]
-fn deterministic_output_should_serialize_populated_events_and_aggregates_identically() {
+fn deterministic_output_should_serialize_compact_artifact_identically() {
     // Arrange
     let first_artifact = parse_aggregate_fixture();
     let second_artifact = parse_aggregate_fixture();
@@ -102,13 +102,15 @@ fn deterministic_output_should_serialize_populated_events_and_aggregates_identic
 
     // Assert
     assert_eq!(first_serialized, second_serialized);
+    assert!(!first_artifact.participants.is_empty());
     assert!(!first_artifact.facts.combat.is_empty());
     assert!(!first_artifact.facts.aggregate_contributions.is_empty());
+    assert!(!first_artifact.summaries.projections.is_empty());
     assert!(first_artifact.produced_at.is_none());
 }
 
 #[test]
-fn deterministic_output_should_keep_aggregate_contributions_sorted_by_id() {
+fn deterministic_output_should_keep_compact_contributions_sorted_by_id() {
     // Arrange
     let artifact = parse_aggregate_fixture();
 
@@ -141,4 +143,21 @@ fn deterministic_output_should_keep_projection_keys_sorted() {
     // Assert
     assert!(!projection_keys.is_empty());
     assert_eq!(projection_keys, sorted_projection_keys);
+}
+
+#[test]
+fn deterministic_output_should_omit_full_entity_and_event_dumps() {
+    // Arrange
+    let artifact = parse_aggregate_fixture();
+
+    // Act
+    let serialized = serde_json::to_value(&artifact).expect("artifact should serialize");
+    let root = serialized.as_object().expect("artifact should serialize as an object");
+
+    // Assert
+    assert!(root.contains_key("participants"));
+    assert!(root.contains_key("facts"));
+    assert!(root.contains_key("summaries"));
+    assert!(!root.contains_key("entities"));
+    assert!(!root.contains_key("events"));
 }

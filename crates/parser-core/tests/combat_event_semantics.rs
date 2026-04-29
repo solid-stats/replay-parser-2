@@ -211,6 +211,7 @@ fn combat_event_semantics_should_include_source_refs_with_event_coordinates() {
         source_ref.rule_id.as_ref().map(|rule_id| rule_id.as_str()),
         Some("event.killed.enemy")
     );
+    assert_eq!(enemy_kill.rule_id.as_str(), "event.killed.enemy");
 }
 
 #[test]

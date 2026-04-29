@@ -168,12 +168,30 @@ fn aggregate_projection_should_emit_namespaced_legacy_and_bounty_projection_keys
         "legacy.squad_inputs",
         "legacy.rotation_inputs",
         "bounty.inputs",
+        "vehicle_score.inputs",
+        "vehicle_score.denominator_inputs",
     ] {
         assert!(
             projection_keys.contains(&expected_key),
             "projection should contain {expected_key}"
         );
     }
+}
+
+#[test]
+fn aggregate_projection_should_emit_all_compact_contribution_families() {
+    let artifact = aggregate_artifact();
+    let contribution_kinds = artifact
+        .facts
+        .aggregate_contributions
+        .iter()
+        .map(|contribution| contribution.kind)
+        .collect::<Vec<_>>();
+
+    assert!(contribution_kinds.contains(&AggregateContributionKind::LegacyCounter));
+    assert!(contribution_kinds.contains(&AggregateContributionKind::Relationship));
+    assert!(contribution_kinds.contains(&AggregateContributionKind::BountyInput));
+    assert!(contribution_kinds.contains(&AggregateContributionKind::VehicleScoreInput));
 }
 
 #[test]
@@ -247,6 +265,17 @@ fn aggregate_projection_should_exclude_teamkill_suicide_null_and_vehicle_events_
     assert!(!bounty_event_ids.contains(&Some("event.killed.1")));
     assert!(!bounty_event_ids.contains(&Some("event.killed.2")));
     assert!(!bounty_event_ids.contains(&Some("event.killed.3")));
+}
+
+#[test]
+fn aggregate_projection_should_emit_bounty_inputs_without_final_bounty_points() {
+    let artifact = aggregate_artifact();
+    let bounty_inputs = projection_array(&artifact, "bounty.inputs");
+
+    assert!(!artifact.summaries.projections.contains_key("bounty.points"));
+    assert!(!artifact.summaries.projections.contains_key("bounty.final_points"));
+    assert!(bounty_inputs.iter().all(|row| row.get("points").is_none()));
+    assert!(bounty_inputs.iter().all(|row| row.get("final_points").is_none()));
 }
 
 #[test]
