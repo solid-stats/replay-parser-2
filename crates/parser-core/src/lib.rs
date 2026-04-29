@@ -13,6 +13,7 @@ pub mod input;
 pub mod legacy_player;
 pub mod metadata;
 pub mod raw;
+pub mod raw_compact;
 pub mod side_facts;
 pub mod vehicle_score;
 

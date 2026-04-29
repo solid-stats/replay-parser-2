@@ -57,7 +57,7 @@ fn parse_fixture(bytes: &[u8], source_file: &str) -> ParseArtifact {
 
 fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value> {
     artifact
-        .aggregates
+        .summaries
         .projections
         .get(key)
         .and_then(Value::as_array)
@@ -111,16 +111,16 @@ fn fault_injection_regressions_should_catch_same_side_kills_counted_as_enemy_kil
 
     // Act
     let teamkill_event = artifact
-        .events
+        .facts
+        .combat
         .iter()
-        .find(|event| event.event_id == "event.killed.1")
+        .find(|event| event.fact_id == "event.killed.1")
         .expect("same-side event should exist");
-    let combat = teamkill_event.combat.as_ref().expect("same-side event should have combat data");
 
     // Assert
-    assert_eq!(combat.semantic, CombatSemantic::Teamkill);
-    assert_eq!(combat.bounty.state, BountyEligibilityState::Excluded);
-    assert!(combat.bounty.exclusion_reasons.contains(&BountyExclusionReason::Teamkill));
+    assert_eq!(teamkill_event.semantic, CombatSemantic::Teamkill);
+    assert_eq!(teamkill_event.bounty.state, BountyEligibilityState::Excluded);
+    assert!(teamkill_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::Teamkill));
 }
 
 #[test]
@@ -130,21 +130,22 @@ fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_
 
     // Act
     let null_killer_event = artifact
-        .events
+        .facts
+        .combat
         .iter()
-        .find(|event| event.event_id == "event.killed.3")
+        .find(|event| event.fact_id == "event.killed.3")
         .expect("null-killer event should exist");
-    let combat =
-        null_killer_event.combat.as_ref().expect("null-killer event should have combat data");
     let bounty_event_ids = projection_array(&artifact, "bounty.inputs")
         .iter()
         .filter_map(|row| row["event_id"].as_str())
         .collect::<BTreeSet<_>>();
 
     // Assert
-    assert_eq!(combat.semantic, CombatSemantic::NullKillerDeath);
-    assert_eq!(combat.bounty.state, BountyEligibilityState::Excluded);
-    assert!(combat.bounty.exclusion_reasons.contains(&BountyExclusionReason::NullKiller));
+    assert_eq!(null_killer_event.semantic, CombatSemantic::NullKillerDeath);
+    assert_eq!(null_killer_event.bounty.state, BountyEligibilityState::Excluded);
+    assert!(
+        null_killer_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::NullKiller)
+    );
     assert!(!bounty_event_ids.contains("event.killed.3"));
 }
 
@@ -155,8 +156,8 @@ fn fault_injection_regressions_should_catch_aggregate_contributions_without_sour
 
     // Act
     let every_contribution_has_source_refs = artifact
-        .aggregates
-        .contributions
+        .facts
+        .aggregate_contributions
         .iter()
         .all(|contribution| !contribution.source_refs.as_slice().is_empty());
 

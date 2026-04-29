@@ -11,8 +11,9 @@ use std::path::Path;
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    events::{BountyExclusionReason, CombatSemantic, NormalizedEvent},
-    identity::{EntityCompatibilityHintKind, EntitySide},
+    compact::CombatFact,
+    events::{BountyExclusionReason, CombatSemantic},
+    identity::EntitySide,
     presence::{FieldPresence, UnknownReason},
     side_facts::OutcomeStatus,
     source_ref::{ReplaySource, SourceChecksum},
@@ -79,19 +80,20 @@ fn parse_manifest_category(category: &str) -> ParseArtifact {
 
 fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value> {
     artifact
-        .aggregates
+        .summaries
         .projections
         .get(key)
         .and_then(Value::as_array)
         .unwrap_or_else(|| panic!("projection {key} should be an array"))
 }
 
-fn event_by_id<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a NormalizedEvent {
+fn event_by_id<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a CombatFact {
     artifact
-        .events
+        .facts
+        .combat
         .iter()
-        .find(|event| event.event_id == event_id)
-        .unwrap_or_else(|| panic!("event {event_id} should exist"))
+        .find(|event| event.fact_id == event_id)
+        .unwrap_or_else(|| panic!("combat fact {event_id} should exist"))
 }
 
 #[test]
@@ -102,8 +104,8 @@ fn golden_fixture_behavior_should_return_failed_artifact_when_fixture_is_malform
     // Assert
     assert_eq!(artifact.status, ParseStatus::Failed);
     assert!(artifact.failure.is_some());
-    assert!(artifact.events.is_empty());
-    assert!(artifact.aggregates.contributions.is_empty());
+    assert!(artifact.facts.combat.is_empty());
+    assert!(artifact.facts.aggregate_contributions.is_empty());
 }
 
 #[test]
@@ -125,7 +127,7 @@ fn golden_fixture_behavior_should_preserve_old_shape_cases_without_panicking() {
 
     // Assert
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert!(!artifact.events.is_empty());
+    assert!(!artifact.facts.combat.is_empty());
     assert!(
         artifact
             .diagnostics
@@ -151,13 +153,11 @@ fn golden_fixture_behavior_should_exclude_teamkill_from_bounty_awards() {
     // Arrange + Act
     let artifact = parse_manifest_category("teamkill");
     let teamkill_event = event_by_id(&artifact, "event.killed.1");
-    let teamkill_combat =
-        teamkill_event.combat.as_ref().expect("teamkill event should have combat payload");
     let bounty_inputs = projection_array(&artifact, "bounty.inputs");
 
     // Assert
-    assert_eq!(teamkill_combat.semantic, CombatSemantic::Teamkill);
-    assert!(teamkill_combat.bounty.exclusion_reasons.contains(&BountyExclusionReason::Teamkill));
+    assert_eq!(teamkill_event.semantic, CombatSemantic::Teamkill);
+    assert!(teamkill_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::Teamkill));
     assert!(!bounty_inputs.iter().any(|row| row["event_id"] == "event.killed.1"));
 }
 
@@ -208,12 +208,12 @@ fn golden_fixture_behavior_should_preserve_null_killer_semantics() {
     // Arrange + Act
     let artifact = parse_manifest_category("null_killer");
     let null_killer_event = event_by_id(&artifact, "event.killed.3");
-    let combat =
-        null_killer_event.combat.as_ref().expect("null-killer event should have combat payload");
 
     // Assert
-    assert_eq!(combat.semantic, CombatSemantic::NullKillerDeath);
-    assert!(combat.bounty.exclusion_reasons.contains(&BountyExclusionReason::NullKiller));
+    assert_eq!(null_killer_event.semantic, CombatSemantic::NullKillerDeath);
+    assert!(
+        null_killer_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::NullKiller)
+    );
 }
 
 #[test]
@@ -223,20 +223,11 @@ fn golden_fixture_behavior_should_preserve_duplicate_slot_compatibility_hints() 
 
     // Assert
     assert_eq!(artifact.status, ParseStatus::Success);
-    assert_eq!(artifact.entities.len(), 3);
-    assert!(
-        artifact
-            .entities
-            .iter()
-            .filter(|entity| {
-                entity
-                    .compatibility_hints
-                    .iter()
-                    .any(|hint| hint.kind == EntityCompatibilityHintKind::DuplicateSlotSameName)
-            })
-            .count()
-            >= 2
-    );
+    assert_eq!(artifact.participants.len(), 3);
+    assert!(projection_array(&artifact, "legacy.player_game_results").iter().any(|row| {
+        row["compatibility_key"] == "legacy_name:SameName"
+            && row["observed_entity_ids"] == json!([21, 22])
+    }));
 }
 
 #[test]
@@ -244,22 +235,21 @@ fn golden_fixture_behavior_should_preserve_connected_player_backfill_facts() {
     // Arrange + Act
     let artifact = parse_manifest_category("connected_player_backfill");
     let player = artifact
-        .entities
+        .participants
         .iter()
-        .find(|entity| entity.source_entity_id == 11)
-        .expect("backfilled player entity should exist");
+        .find(|participant| participant.source_entity_id == 11)
+        .expect("backfilled player participant should exist");
 
     // Assert
     assert!(matches!(
-        &player.identity.nickname,
+        &player.observed_name,
         FieldPresence::Inferred { value, rule_id, .. }
             if value == "BackfilledName"
                 && rule_id.as_str() == "entity.connected_player_backfill"
     ));
-    assert!(
-        player
-            .compatibility_hints
-            .iter()
-            .any(|hint| { hint.kind == EntityCompatibilityHintKind::ConnectedPlayerBackfill })
-    );
+    assert!(matches!(
+        &player.observed_name,
+        FieldPresence::Inferred { source: Some(source), .. }
+            if source.json_path.as_deref() == Some("$.events[0]")
+    ));
 }

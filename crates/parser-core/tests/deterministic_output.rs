@@ -72,8 +72,11 @@ fn deterministic_output_should_serialize_identically_when_same_input_is_parsed_t
 #[test]
 fn deterministic_output_should_keep_entities_ordered_after_input_entities_are_unsorted() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let entity_ids =
-        artifact.entities.iter().map(|entity| entity.source_entity_id).collect::<Vec<_>>();
+    let entity_ids = artifact
+        .participants
+        .iter()
+        .map(|participant| participant.source_entity_id)
+        .collect::<Vec<_>>();
 
     assert_eq!(entity_ids, vec![10, 20, 30]);
 }
@@ -99,8 +102,8 @@ fn deterministic_output_should_serialize_populated_events_and_aggregates_identic
 
     // Assert
     assert_eq!(first_serialized, second_serialized);
-    assert!(!first_artifact.events.is_empty());
-    assert!(!first_artifact.aggregates.contributions.is_empty());
+    assert!(!first_artifact.facts.combat.is_empty());
+    assert!(!first_artifact.facts.aggregate_contributions.is_empty());
     assert!(first_artifact.produced_at.is_none());
 }
 
@@ -111,8 +114,8 @@ fn deterministic_output_should_keep_aggregate_contributions_sorted_by_id() {
 
     // Act
     let contribution_ids = artifact
-        .aggregates
-        .contributions
+        .facts
+        .aggregate_contributions
         .iter()
         .map(|contribution| contribution.contribution_id.as_str())
         .collect::<Vec<_>>();
@@ -131,7 +134,7 @@ fn deterministic_output_should_keep_projection_keys_sorted() {
 
     // Act
     let projection_keys =
-        artifact.aggregates.projections.keys().map(String::as_str).collect::<Vec<_>>();
+        artifact.summaries.projections.keys().map(String::as_str).collect::<Vec<_>>();
     let mut sorted_projection_keys = projection_keys.clone();
     sorted_projection_keys.sort_unstable();
 

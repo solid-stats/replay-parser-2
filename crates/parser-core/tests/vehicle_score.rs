@@ -62,7 +62,7 @@ fn vehicle_score_artifact() -> ParseArtifact {
 
 fn projection<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Value {
     artifact
-        .aggregates
+        .summaries
         .projections
         .get(key)
         .unwrap_or_else(|| panic!("projection {key} should exist"))
@@ -83,8 +83,8 @@ fn vehicle_score_input_row<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &
 
 fn vehicle_score_contribution_ids(artifact: &ParseArtifact) -> BTreeSet<String> {
     artifact
-        .aggregates
-        .contributions
+        .facts
+        .aggregate_contributions
         .iter()
         .filter(|contribution| contribution.kind == AggregateContributionKind::VehicleScoreInput)
         .map(|contribution| contribution.contribution_id.clone())
@@ -274,7 +274,7 @@ fn vehicle_score_should_include_source_refs_on_every_vehicle_score_contribution(
     // Assert
     assert_eq!(contribution_ids, projection_contribution_ids);
     for contribution in
-        artifact.aggregates.contributions.iter().filter(|contribution| {
+        artifact.facts.aggregate_contributions.iter().filter(|contribution| {
             contribution.kind == AggregateContributionKind::VehicleScoreInput
         })
     {
@@ -296,8 +296,8 @@ fn vehicle_score_should_include_event_and_vehicle_entity_source_refs_for_categor
     // Arrange
     let artifact = vehicle_score_artifact();
     let contribution = artifact
-        .aggregates
-        .contributions
+        .facts
+        .aggregate_contributions
         .iter()
         .find(|contribution| {
             contribution.contribution_id == "aggregate.vehicle_score.event.killed.0"

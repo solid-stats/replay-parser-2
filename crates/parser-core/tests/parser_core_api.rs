@@ -54,19 +54,19 @@ fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
 
     let artifact = parse_replay(input);
     let player_results = artifact
-        .aggregates
+        .summaries
         .projections
         .get("legacy.player_game_results")
         .and_then(serde_json::Value::as_array)
         .expect("player game result projection should be present");
     let bounty_inputs = artifact
-        .aggregates
+        .summaries
         .projections
         .get("bounty.inputs")
         .and_then(serde_json::Value::as_array)
         .expect("bounty input projection should be present");
     let game_type = artifact
-        .aggregates
+        .summaries
         .projections
         .get("legacy.game_type_compatibility")
         .and_then(serde_json::Value::as_object)
@@ -76,9 +76,9 @@ fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
     assert_eq!(artifact.produced_at, None);
     assert!(artifact.replay.is_some());
     assert!(artifact.diagnostics.is_empty());
-    assert!(artifact.entities.is_empty());
-    assert!(artifact.events.is_empty());
-    assert!(artifact.aggregates.contributions.is_empty());
+    assert!(artifact.participants.is_empty());
+    assert!(artifact.facts.combat.is_empty());
+    assert!(artifact.facts.aggregate_contributions.is_empty());
     assert!(player_results.is_empty());
     assert!(bounty_inputs.is_empty());
     assert_eq!(game_type["mission_name"], "Operation Copper");

@@ -15,7 +15,6 @@ use parser_contract::{
     },
     version::ContractVersion,
 };
-use serde_json::{Map, Value};
 
 use crate::{
     aggregates::derive_aggregate_section,
@@ -25,6 +24,7 @@ use crate::{
     input::ParserInput,
     metadata::normalize_metadata,
     raw::RawReplay,
+    raw_compact::{CompactDecodeError, RawOcapRoot, decode_compact_root},
     side_facts::normalize_side_facts,
 };
 
@@ -33,29 +33,23 @@ use crate::{
 pub fn parse_replay(input: ParserInput<'_>) -> ParseArtifact {
     let diagnostic_limit = DiagnosticPolicy::from(input.options).limit();
 
-    match serde_json::from_slice::<Value>(input.bytes) {
-        Ok(Value::Object(root)) => {
-            success_artifact(input.parser, input.source, &root, diagnostic_limit)
+    match decode_compact_root(input.bytes) {
+        Ok(root) => success_artifact(input.parser, input.source, &root, diagnostic_limit),
+        Err(CompactDecodeError::RootNotObject { source_cause }) => failed_artifact(
+            input.parser,
+            input.source,
+            &FailureSpec::RootNotObject { source_cause },
+        ),
+        Err(CompactDecodeError::JsonDecode { source_cause }) => {
+            failed_artifact(input.parser, input.source, &FailureSpec::JsonDecode { source_cause })
         }
-        Ok(_) => failed_artifact(
-            input.parser,
-            input.source,
-            &FailureSpec::RootNotObject {
-                source_cause: "OCAP replay root must be a JSON object".to_string(),
-            },
-        ),
-        Err(error) => failed_artifact(
-            input.parser,
-            input.source,
-            &FailureSpec::JsonDecode { source_cause: error.to_string() },
-        ),
     }
 }
 
 fn success_artifact(
     parser: parser_contract::version::ParserInfo,
     source: ReplaySource,
-    root: &Map<String, Value>,
+    root: &RawOcapRoot<'_>,
     diagnostic_limit: usize,
 ) -> ParseArtifact {
     let raw = RawReplay::new(root);

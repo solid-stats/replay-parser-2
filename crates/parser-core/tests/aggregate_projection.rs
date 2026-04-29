@@ -107,7 +107,7 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
 
 fn projection<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Value {
     artifact
-        .aggregates
+        .summaries
         .projections
         .get(key)
         .unwrap_or_else(|| panic!("projection {key} should exist"))
@@ -146,8 +146,8 @@ fn source_contribution_ids(row: &Value) -> BTreeSet<String> {
 
 fn aggregate_contribution_ids(artifact: &ParseArtifact) -> BTreeSet<String> {
     artifact
-        .aggregates
-        .contributions
+        .facts
+        .aggregate_contributions
         .iter()
         .map(|contribution| contribution.contribution_id.clone())
         .collect()
@@ -158,7 +158,7 @@ fn aggregate_projection_should_emit_namespaced_legacy_and_bounty_projection_keys
     let artifact = aggregate_artifact();
 
     let projection_keys =
-        artifact.aggregates.projections.keys().map(String::as_str).collect::<Vec<_>>();
+        artifact.summaries.projections.keys().map(String::as_str).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Success);
     for expected_key in [
@@ -275,9 +275,11 @@ fn aggregate_projection_should_emit_game_type_squad_and_rotation_inputs_without_
 fn aggregate_projection_should_group_duplicate_same_name_projection_without_merging_entities() {
     let artifact = aggregate_artifact();
     let duplicate_entities = artifact
-        .entities
+        .participants
         .iter()
-        .filter(|entity| entity.source_entity_id == 5 || entity.source_entity_id == 6)
+        .filter(|participant| {
+            participant.source_entity_id == 5 || participant.source_entity_id == 6
+        })
         .count();
     let duplicate_rows = projection_array(&artifact, "legacy.player_game_results")
         .iter()
@@ -314,7 +316,7 @@ fn aggregate_projection_should_exclude_non_player_units_from_legacy_and_bounty_r
 
     assert_eq!(compatibility_keys, vec![Some("entity:1")]);
     assert!(bounty_inputs.is_empty());
-    assert!(artifact.aggregates.contributions.is_empty());
+    assert!(artifact.facts.aggregate_contributions.is_empty());
 }
 
 #[test]
@@ -322,7 +324,7 @@ fn aggregate_projection_should_keep_every_counter_traceable_to_source_refs() {
     let artifact = aggregate_artifact();
     let contribution_ids = aggregate_contribution_ids(&artifact);
 
-    for contribution in &artifact.aggregates.contributions {
+    for contribution in &artifact.facts.aggregate_contributions {
         assert!(
             !contribution.source_refs.as_slice().is_empty(),
             "contribution {} should have source refs",
@@ -355,7 +357,7 @@ fn aggregate_projection_should_keep_every_counter_traceable_to_source_refs() {
             .expect("bounty row should carry contribution ID");
 
         assert!(contribution_ids.contains(contribution_id));
-        assert!(artifact.aggregates.contributions.iter().any(|contribution| {
+        assert!(artifact.facts.aggregate_contributions.iter().any(|contribution| {
             contribution.contribution_id == contribution_id
                 && contribution.kind == AggregateContributionKind::BountyInput
         }));

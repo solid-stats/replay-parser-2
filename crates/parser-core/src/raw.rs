@@ -1,15 +1,24 @@
-//! Tolerant accessors for raw OCAP replay root fields.
+//! Tolerant accessors for selective OCAP replay root fields.
 // coverage-exclusion: reviewed Phase 05 defensive raw accessor branches are allowlisted by exact source line.
 //!
 //! This module keeps source JSON field-name and shape quirks at the parser-core boundary so
 //! normalization code can consume explicit present, absent, or drifted observations.
 
-use serde_json::{Map, Value};
+use serde_json::value::RawValue;
+
+pub use crate::raw_compact::{
+    ConnectedEventObservation, KilledEventKillInfo, KilledEventObservation, RawEntityObservation,
+};
+use crate::raw_compact::{
+    RawOcapRoot, compact_connected_events, compact_entities, compact_killed_events,
+    observed_raw_shape, parse_raw_bool_or_numeric, parse_raw_f64, parse_raw_i64, parse_raw_string,
+    parse_raw_u32_vec, parse_raw_u64, raw_array_field,
+};
 
 /// Borrowed wrapper around an OCAP replay root object.
 #[derive(Debug, Clone, Copy)]
 pub struct RawReplay<'a> {
-    root: &'a Map<String, Value>,
+    root: &'a RawOcapRoot<'a>,
 }
 
 #[allow(
@@ -17,56 +26,63 @@ pub struct RawReplay<'a> {
     reason = "the plan requires RawReplay field helpers to use borrowed receiver signatures"
 )]
 impl<'a> RawReplay<'a> {
-    /// Creates a raw replay wrapper from a decoded JSON object root.
+    /// Creates a raw replay wrapper from a selectively decoded JSON object root.
     #[must_use]
-    pub const fn new(root: &'a Map<String, Value>) -> Self {
+    pub const fn new(root: &'a RawOcapRoot<'a>) -> Self {
         Self { root }
     }
 
     /// Returns a raw top-level value by source key.
     #[must_use]
-    pub fn value_at(&self, key: &str) -> Option<&'a Value> {
-        self.root.get(key)
+    pub fn value_at(&self, key: &str) -> Option<&'a RawValue> {
+        self.root.raw_value_at(key)
     }
 
     /// Reads a string top-level field.
     #[must_use]
     pub fn string_field(&self, key: &str) -> RawField<String> {
-        self.field(key, "string", |value| value.as_str().map(ToOwned::to_owned))
+        self.field(key, "string", parse_raw_string)
     }
 
     /// Reads an unsigned 64-bit integer top-level field.
     #[must_use]
     pub fn u64_field(&self, key: &str) -> RawField<u64> {
-        self.field(key, "unsigned integer", Value::as_u64)
+        self.field(key, "unsigned integer", parse_raw_u64)
     }
 
     /// Reads a floating-point number top-level field.
     #[must_use]
     pub fn f64_field(&self, key: &str) -> RawField<f64> {
-        self.field(key, "number", Value::as_f64)
+        self.field(key, "number", parse_raw_f64)
     }
 
     /// Reads an array of unsigned 32-bit integer values from a top-level field.
     #[must_use]
     pub fn u32_vec_field(&self, key: &str) -> RawField<Vec<u32>> {
-        self.field(key, "array<unsigned integer>", |value| {
-            let values = value.as_array()?;
-            values.iter().map(|entry| u32::try_from(entry.as_u64()?).ok()).collect()
-        })
+        self.field(key, "array<unsigned integer>", parse_raw_u32_vec)
     }
 
-    /// Reads an array top-level field.
+    /// Reads compact source entity rows from `$.entities`.
     #[must_use]
-    pub fn array_field(&self, key: &str) -> RawField<&'a Vec<Value>> {
-        self.field(key, "array", Value::as_array)
+    pub fn entities_field(&self) -> RawField<Vec<RawEntityObservation<'a>>> {
+        let json_path = json_path("entities");
+
+        match raw_array_field(self.value_at("entities"), json_path) {
+            RawField::Present { json_path, .. } => {
+                RawField::Present { value: compact_entities(self.root), json_path }
+            }
+            RawField::Absent { json_path } => RawField::Absent { json_path },
+            RawField::Drift { json_path, expected_shape, observed_shape } => {
+                RawField::Drift { json_path, expected_shape, observed_shape }
+            }
+        }
     }
 
     fn field<T>(
         &self,
         key: &str,
         expected_shape: &'static str,
-        parse: impl FnOnce(&'a Value) -> Option<T>,
+        parse: impl FnOnce(&'a RawValue) -> Option<T>,
     ) -> RawField<T> {
         let json_path = json_path(key);
 
@@ -76,7 +92,7 @@ impl<'a> RawReplay<'a> {
                 None => RawField::Drift {
                     json_path,
                     expected_shape,
-                    observed_shape: observed_shape(value),
+                    observed_shape: observed_raw_shape(value),
                 },
             },
             None => RawField::Absent { json_path },
@@ -86,25 +102,25 @@ impl<'a> RawReplay<'a> {
 
 /// Reads a numeric source entity identifier from an entry under `$.entities`.
 #[must_use]
-pub fn entity_id(entity: &Value, index: usize) -> RawField<i64> {
-    entity_field(entity, index, "id", "integer", Value::as_i64)
+pub fn entity_id(entity: &RawEntityObservation<'_>, index: usize) -> RawField<i64> {
+    entity_field(entity, index, "id", "integer", parse_raw_i64)
 }
 
 /// Reads a source entity type from an entry under `$.entities`.
 #[must_use]
-pub fn entity_type(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_type(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     entity_string_field(entity, index, "type")
 }
 
 /// Reads a source entity name from an entry under `$.entities`.
 #[must_use]
-pub fn entity_name(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_name(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     entity_string_field(entity, index, "name")
 }
 
 /// Reads a source entity class, falling back from `class` to `_class`.
 #[must_use]
-pub fn entity_class(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_class(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     match entity_string_field(entity, index, "class") {
         RawField::Present { value, json_path } => RawField::Present { value, json_path },
         RawField::Absent { json_path } => match entity_string_field(entity, index, "_class") {
@@ -125,119 +141,44 @@ pub fn entity_class(entity: &Value, index: usize) -> RawField<String> {
 
 /// Reads a source entity side from an entry under `$.entities`.
 #[must_use]
-pub fn entity_side(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_side(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     entity_string_field(entity, index, "side")
 }
 
 /// Reads a source entity group from an entry under `$.entities`.
 #[must_use]
-pub fn entity_group(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_group(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     entity_string_field(entity, index, "group")
 }
 
 /// Reads a source entity description from an entry under `$.entities`.
 #[must_use]
-pub fn entity_description(entity: &Value, index: usize) -> RawField<String> {
+pub fn entity_description(entity: &RawEntityObservation<'_>, index: usize) -> RawField<String> {
     entity_string_field(entity, index, "description")
 }
 
 /// Reads a source entity player flag from an entry under `$.entities`.
 #[must_use]
-pub fn entity_is_player(entity: &Value, index: usize) -> RawField<bool> {
-    entity_field(entity, index, "isPlayer", "boolean or 0/1 number", |value| {
-        value.as_bool().or_else(|| {
-            value.as_i64().and_then(|number| match number {
-                0 => Some(false),
-                1 => Some(true),
-                _ => None,
-            })
-        })
-    })
+pub fn entity_is_player(entity: &RawEntityObservation<'_>, index: usize) -> RawField<bool> {
+    entity_field(entity, index, "isPlayer", "boolean or 0/1 number", parse_raw_bool_or_numeric)
 }
 
 /// Returns true when an entity row carries a `positions` source field.
 #[must_use]
-pub fn entity_has_positions(entity: &Value, _index: usize) -> bool {
-    entity.as_object().is_some_and(|object| object.contains_key("positions"))
-}
-
-/// Raw connected-player event observation from `$.events`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConnectedEventObservation {
-    /// Original index in the source `events` array.
-    pub event_index: usize,
-    /// Source frame number from `event[0]`.
-    pub frame: u64,
-    /// Connected player name from `event[2]`.
-    pub name: String,
-    /// Source entity ID from `event[3]`.
-    pub entity_id: i64,
-    /// JSON path to the source event tuple.
-    pub json_path: String,
-}
-
-/// Raw killed event observation from `$.events`.
-#[derive(Debug, Clone, PartialEq)]
-pub struct KilledEventObservation {
-    /// Original index in the source `events` array.
-    pub event_index: usize,
-    /// Source frame number from `event[0]`, when numeric.
-    pub frame: Option<u64>,
-    /// Killed source entity ID from `event[2]`, when numeric.
-    pub killed_entity_id: Option<i64>,
-    /// Killer source entity and weapon evidence from `event[3]`.
-    pub kill_info: KilledEventKillInfo,
-    /// Source distance in meters from `event[4]`, when numeric.
-    pub distance_meters: Option<f64>,
-    /// JSON path to the source event tuple.
-    pub json_path: String,
-}
-
-/// Raw killer evidence from a killed event tuple.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum KilledEventKillInfo {
-    /// Source tuple explicitly records a null killer as `["null"]`.
-    NullKiller,
-    /// Source tuple records a numeric killer entity ID and optional weapon name.
-    Killer {
-        /// Killer source entity ID from `event[3][0]`.
-        killer_entity_id: i64,
-        /// Weapon name from `event[3][1]`, when it is a non-empty string.
-        weapon: Option<String>,
-    },
-    /// Source tuple had an unrecognized `event[3]` shape.
-    Malformed {
-        /// Coarse observed JSON shape, or `absent` when the tuple entry is missing.
-        observed_shape: String,
-    },
+pub fn entity_has_positions(entity: &RawEntityObservation<'_>, _index: usize) -> bool {
+    entity.entity.as_ref().is_some_and(crate::raw_compact::RawEntityCompact::has_positions)
 }
 
 /// Reads connected-player event tuples shaped as `[frame, "connected", name, entity_id]`.
 #[must_use]
 pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
-    let RawField::Present { value: events, json_path: _ } = raw.array_field("events") else {
-        return Vec::new();
-    };
-
-    events
-        .iter()
-        .enumerate()
-        .filter_map(|(event_index, event)| connected_event(event, event_index))
-        .collect()
+    compact_connected_events(raw.root)
 }
 
 /// Reads killed event tuples shaped as `[frame, "killed", killed_id, kill_info, distance]`.
 #[must_use]
 pub fn killed_events(raw: RawReplay<'_>) -> Vec<KilledEventObservation> {
-    let RawField::Present { value: events, json_path: _ } = raw.array_field("events") else {
-        return Vec::new();
-    };
-
-    events
-        .iter()
-        .enumerate()
-        .filter_map(|(event_index, event)| killed_event(event, event_index))
-        .collect()
+    compact_killed_events(raw.root)
 }
 
 /// Raw string evidence from a top-level replay field.
@@ -290,189 +231,113 @@ pub enum RawField<T> {
     },
 }
 
-/// Returns a stable, coarse JSON shape name for diagnostics.
-#[must_use]
-pub fn observed_shape(value: &Value) -> String {
-    match value {
-        Value::Null => "null",
-        Value::Bool(_) => "boolean",
-        Value::Number(_) => "number",
-        Value::String(_) => "string",
-        Value::Array(_) => "array",
-        Value::Object(_) => "object",
-    }
-    .to_string()
-}
-
 fn json_path(key: &str) -> String {
     format!("$.{key}")
 }
 
-fn entity_string_field(entity: &Value, index: usize, key: &str) -> RawField<String> {
-    entity_field(entity, index, key, "string", |value| value.as_str().map(ToOwned::to_owned))
+fn entity_string_field(
+    entity: &RawEntityObservation<'_>,
+    index: usize,
+    key: &str,
+) -> RawField<String> {
+    entity_field(entity, index, key, "string", parse_raw_string)
 }
 
 fn entity_field<T>(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     key: &str,
     expected_shape: &'static str,
-    parse: impl FnOnce(&Value) -> Option<T>,
+    parse: impl FnOnce(&RawValue) -> Option<T>,
 ) -> RawField<T> {
     let json_path = entity_json_path(index, key);
 
-    entity.as_object().map_or_else(
-        || RawField::Drift {
+    let Some(compact_entity) = &entity.entity else {
+        return RawField::Drift {
             json_path: format!("$.entities[{index}]"),
             expected_shape: "object",
-            observed_shape: observed_shape(entity),
-        },
-        |object| match object.get(key) {
-            Some(value) => match parse(value) {
-                Some(value) => RawField::Present { value, json_path },
-                None => RawField::Drift {
-                    json_path,
-                    expected_shape,
-                    observed_shape: observed_shape(value),
-                },
+            observed_shape: entity.observed_shape.clone().unwrap_or_else(|| "unknown".to_string()),
+        };
+    };
+
+    match compact_entity.raw_value_at(key) {
+        Some(value) => match parse(value) {
+            Some(value) => RawField::Present { value, json_path },
+            None => RawField::Drift {
+                json_path,
+                expected_shape,
+                observed_shape: observed_raw_shape(value),
             },
-            None => RawField::Absent { json_path },
         },
-    )
+        None => RawField::Absent { json_path },
+    }
 }
 
 fn entity_json_path(index: usize, key: &str) -> String {
     format!("$.entities[{index}].{key}")
 }
 
-fn connected_event(event: &Value, event_index: usize) -> Option<ConnectedEventObservation> {
-    let event = event.as_array()?;
-    let frame = event.first()?.as_u64()?;
-    let event_type = event.get(1)?.as_str()?;
-
-    if event_type != "connected" {
-        return None;
-    }
-
-    Some(ConnectedEventObservation {
-        event_index,
-        frame,
-        name: event.get(2)?.as_str()?.to_string(),
-        entity_id: event.get(3)?.as_i64()?,
-        json_path: format!("$.events[{event_index}]"),
-    })
-}
-
-fn killed_event(event: &Value, event_index: usize) -> Option<KilledEventObservation> {
-    let event = event.as_array()?;
-    let event_type = event.get(1)?.as_str()?;
-
-    if event_type != "killed" {
-        return None;
-    }
-
-    Some(KilledEventObservation {
-        event_index,
-        frame: event.first().and_then(Value::as_u64),
-        killed_entity_id: event.get(2).and_then(Value::as_i64),
-        kill_info: killed_event_kill_info(event.get(3)),
-        distance_meters: event.get(4).and_then(Value::as_f64),
-        json_path: format!("$.events[{event_index}]"),
-    })
-}
-
-fn killed_event_kill_info(value: Option<&Value>) -> KilledEventKillInfo {
-    let Some(value) = value else {
-        return KilledEventKillInfo::Malformed { observed_shape: "absent".to_string() };
-    };
-
-    let Some(values) = value.as_array() else {
-        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
-    };
-
-    if matches!(values.as_slice(), [Value::String(marker)] if marker == "null") {
-        return KilledEventKillInfo::NullKiller;
-    }
-
-    let [killer_id, weapon] = values.as_slice() else {
-        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
-    };
-
-    let Some(killer_entity_id) = killer_id.as_i64() else {
-        return KilledEventKillInfo::Malformed { observed_shape: observed_shape(value) };
-    };
-
-    KilledEventKillInfo::Killer {
-        killer_entity_id,
-        weapon: weapon.as_str().filter(|weapon| !weapon.is_empty()).map(ToOwned::to_owned),
-    }
-}
-
 #[cfg(all(test, not(coverage)))]
 mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
     use super::*;
-    use serde_json::json;
+    use crate::raw_compact::decode_compact_root;
 
     #[test]
     fn raw_helpers_should_preserve_defensive_shape_branches() {
         // Arrange
-        let class_absent_with_drifted_fallback = json!({ "_class": false });
-        let class_drift_with_present_fallback = json!({
-            "class": null,
-            "_class": "fallback-class"
-        });
-        let class_drift_without_fallback = json!({ "class": null });
+        let root = decode_compact_root(
+            br#"{
+                "entities": [
+                    {"_class": false},
+                    {"class": null, "_class": "fallback-class"},
+                    {"class": null}
+                ]
+            }"#,
+        )
+        .expect("test root should decode");
+        let RawField::Present { value: entities, .. } = RawReplay::new(&root).entities_field()
+        else {
+            panic!("test entities should be present");
+        };
 
         // Act + Assert
         assert!(matches!(
-            entity_class(&class_absent_with_drifted_fallback, 0),
+            entity_class(&entities[0], 0),
             RawField::Drift { json_path, observed_shape, .. }
                 if json_path == "$.entities[0]._class" && observed_shape == "boolean"
         ));
         assert!(matches!(
-            entity_class(&class_drift_with_present_fallback, 1),
+            entity_class(&entities[1], 1),
             RawField::Present { value, json_path }
                 if value == "fallback-class" && json_path == "$.entities[1]._class"
         ));
         assert!(matches!(
-            entity_class(&class_drift_without_fallback, 2),
+            entity_class(&entities[2], 2),
             RawField::Drift { json_path, observed_shape, .. }
                 if json_path == "$.entities[2].class" && observed_shape == "null"
         ));
-
-        assert_eq!(observed_shape(&Value::Null), "null");
-        assert_eq!(observed_shape(&Value::Bool(true)), "boolean");
     }
 
     #[test]
-    fn killed_event_kill_info_should_keep_every_malformed_shape_auditable() {
+    fn raw_helpers_should_report_non_object_entity_rows() {
         // Arrange
-        let absent = None;
-        let non_array = json!(false);
-        let wrong_length = json!([1, "rifle", "extra"]);
-        let non_numeric_killer = json!(["one", "rifle"]);
-        let empty_weapon = json!([1, ""]);
+        let root =
+            decode_compact_root(br#"{"entities":[false]}"#).expect("test root should decode");
+        let RawField::Present { value: entities, .. } = RawReplay::new(&root).entities_field()
+        else {
+            panic!("test entities should be present");
+        };
 
-        // Act + Assert
-        assert_eq!(
-            killed_event_kill_info(absent),
-            KilledEventKillInfo::Malformed { observed_shape: "absent".to_owned() }
-        );
-        assert_eq!(
-            killed_event_kill_info(Some(&non_array)),
-            KilledEventKillInfo::Malformed { observed_shape: "boolean".to_owned() }
-        );
-        assert_eq!(
-            killed_event_kill_info(Some(&wrong_length)),
-            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
-        );
-        assert_eq!(
-            killed_event_kill_info(Some(&non_numeric_killer)),
-            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
-        );
-        assert_eq!(
-            killed_event_kill_info(Some(&empty_weapon)),
-            KilledEventKillInfo::Killer { killer_entity_id: 1, weapon: None }
-        );
+        // Act
+        let entity_id = entity_id(&entities[0], 0);
+
+        // Assert
+        assert!(matches!(
+            entity_id,
+            RawField::Drift { json_path, observed_shape, .. }
+                if json_path == "$.entities[0]" && observed_shape == "boolean"
+        ));
     }
 }

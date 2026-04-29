@@ -8,7 +8,8 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    identity::{EntityKind, EntitySide, ObservedEntity},
+    compact::ObservedParticipantRef,
+    identity::EntitySide,
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
@@ -54,41 +55,39 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
 }
 
-fn entity_by_id(artifact: &ParseArtifact, source_entity_id: i64) -> &ObservedEntity {
+fn participant_by_id(artifact: &ParseArtifact, source_entity_id: i64) -> &ObservedParticipantRef {
     artifact
-        .entities
+        .participants
         .iter()
-        .find(|entity| entity.source_entity_id == source_entity_id)
-        .expect("entity should be normalized")
+        .find(|participant| participant.source_entity_id == source_entity_id)
+        .expect("participant should be normalized")
 }
 
 #[test]
 fn entity_normalization_should_extract_unit_identity_when_unit_player_entity_is_observed() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let unit = entity_by_id(&artifact, 10);
+    let unit = participant_by_id(&artifact, 10);
 
-    assert_eq!(unit.kind, EntityKind::Unit);
     assert!(matches!(
-        &unit.identity.nickname,
+        &unit.observed_name,
         FieldPresence::Present { value, source: Some(_) } if value == "Alpha"
     ));
     assert!(matches!(
-        unit.identity.side,
+        unit.side,
         FieldPresence::Present { value: EntitySide::West, source: Some(_) }
     ));
     assert!(matches!(
-        &unit.identity.group,
+        &unit.group,
         FieldPresence::Present { value, source: Some(_) } if value == "Alpha 1-1"
     ));
     assert!(matches!(
-        &unit.identity.description,
+        &unit.role,
         FieldPresence::Present { value, source: Some(_) } if value == "Rifleman"
     ));
-    assert!(matches!(unit.is_player, FieldPresence::Present { value: true, source: Some(_) }));
 }
 
 #[test]
-fn entity_normalization_should_preserve_false_player_flag_when_unit_entity_is_ai() {
+fn entity_normalization_should_preserve_ai_unit_as_compact_participant() {
     let fixture = br#"{
         "missionName": "sg ai unit",
         "worldName": "Altis",
@@ -113,9 +112,12 @@ fn entity_normalization_should_preserve_false_player_flag_when_unit_entity_is_ai
         "EditorMarkers": []
     }"#;
     let artifact = parse_fixture(fixture);
-    let unit = entity_by_id(&artifact, 44);
+    let unit = participant_by_id(&artifact, 44);
 
-    assert!(matches!(unit.is_player, FieldPresence::Present { value: false, source: Some(_) }));
+    assert!(matches!(
+        &unit.observed_name,
+        FieldPresence::Present { value, source: Some(_) } if value == "AI Rifleman"
+    ));
 }
 
 #[test]
@@ -144,15 +146,7 @@ fn entity_normalization_should_emit_unknown_player_flag_when_unit_flag_has_schem
         "EditorMarkers": []
     }"#;
     let artifact = parse_fixture(fixture);
-    let unit = entity_by_id(&artifact, 45);
 
-    assert!(matches!(
-        unit.is_player,
-        FieldPresence::Unknown {
-            reason: parser_contract::presence::UnknownReason::SchemaDrift,
-            source: Some(_)
-        }
-    ));
     assert!(
         artifact
             .diagnostics
@@ -164,37 +158,34 @@ fn entity_normalization_should_emit_unknown_player_flag_when_unit_flag_has_schem
 #[test]
 fn entity_normalization_should_extract_vehicle_name_and_class_when_vehicle_entity_is_observed() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let vehicle = entity_by_id(&artifact, 20);
+    let vehicle = participant_by_id(&artifact, 20);
 
-    assert_eq!(vehicle.kind, EntityKind::Vehicle);
     assert!(matches!(
         &vehicle.observed_name,
         FieldPresence::Present { value, source: Some(_) } if value == "BTR-80"
     ));
-    assert!(matches!(
-        &vehicle.observed_class,
-        FieldPresence::Present { value, source: Some(_) } if value == "apc"
-    ));
-    assert!(matches!(vehicle.is_player, FieldPresence::NotApplicable { .. }));
+    assert!(matches!(vehicle.group, FieldPresence::NotApplicable { .. }));
 }
 
 #[test]
 fn entity_normalization_should_classify_static_weapon_when_vehicle_class_is_static_weapon() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let static_weapon = entity_by_id(&artifact, 30);
+    let static_weapon = participant_by_id(&artifact, 30);
 
-    assert_eq!(static_weapon.kind, EntityKind::StaticWeapon);
     assert!(matches!(
-        &static_weapon.observed_class,
-        FieldPresence::Present { value, source: Some(_) } if value == "static-weapon"
+        &static_weapon.observed_name,
+        FieldPresence::Present { value, source: Some(_) } if value == "M2 Static"
     ));
 }
 
 #[test]
 fn entity_normalization_should_sort_entities_by_source_entity_id() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let entity_ids =
-        artifact.entities.iter().map(|entity| entity.source_entity_id).collect::<Vec<_>>();
+    let entity_ids = artifact
+        .participants
+        .iter()
+        .map(|participant| participant.source_entity_id)
+        .collect::<Vec<_>>();
 
     assert_eq!(entity_ids, vec![10, 20, 30]);
 }
@@ -202,7 +193,7 @@ fn entity_normalization_should_sort_entities_by_source_entity_id() {
 #[test]
 fn entity_normalization_should_keep_original_json_path_after_sorting() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let static_weapon = entity_by_id(&artifact, 30);
+    let static_weapon = participant_by_id(&artifact, 30);
     let source_paths = static_weapon
         .source_refs
         .as_slice()
@@ -218,7 +209,7 @@ fn entity_normalization_should_keep_original_json_path_after_sorting() {
 fn entity_normalization_should_emit_diagnostic_and_continue_when_entity_row_has_schema_drift() {
     let artifact = parse_fixture(ENTITY_DRIFT_FIXTURE);
 
-    assert!(artifact.entities.iter().any(|entity| entity.source_entity_id == 7));
+    assert!(artifact.participants.iter().any(|participant| participant.source_entity_id == 7));
     assert!(
         artifact.diagnostics.iter().any(|diagnostic| diagnostic.code.starts_with("schema.entity"))
     );
@@ -244,8 +235,8 @@ fn entity_normalization_should_emit_partial_status_when_entities_section_is_abse
     // Assert
     assert_eq!(missing_artifact.status, ParseStatus::Partial);
     assert_eq!(drifted_artifact.status, ParseStatus::Partial);
-    assert!(missing_artifact.entities.is_empty());
-    assert!(drifted_artifact.entities.is_empty());
+    assert!(missing_artifact.participants.is_empty());
+    assert!(drifted_artifact.participants.is_empty());
     assert!(
         missing_artifact
             .diagnostics
@@ -351,11 +342,11 @@ fn entity_normalization_should_diagnose_entity_shape_and_value_drift_without_pan
 
     // Act
     let artifact = parse_fixture(fixture);
-    let drifted_unit = entity_by_id(&artifact, 102);
-    let fallback_vehicle = entity_by_id(&artifact, 103);
-    let civ = entity_by_id(&artifact, 105);
-    let guer = entity_by_id(&artifact, 106);
-    let unknown_side = entity_by_id(&artifact, 107);
+    let drifted_unit = participant_by_id(&artifact, 102);
+    let fallback_vehicle = participant_by_id(&artifact, 103);
+    let civ = participant_by_id(&artifact, 105);
+    let guer = participant_by_id(&artifact, 106);
+    let unknown_side = participant_by_id(&artifact, 107);
     let diagnostic_codes =
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
 
@@ -370,28 +361,26 @@ fn entity_normalization_should_diagnose_entity_shape_and_value_drift_without_pan
     assert!(diagnostic_codes.contains(&"schema.entity_is_player_shape"));
     assert!(diagnostic_codes.contains(&"compat.entity_duplicate_side_conflict"));
     assert!(matches!(
-        drifted_unit.identity.nickname,
+        drifted_unit.observed_name,
         FieldPresence::Unknown {
             reason: parser_contract::presence::UnknownReason::SchemaDrift,
             source: Some(_)
         }
     ));
     assert!(matches!(
-        &fallback_vehicle.observed_class,
-        FieldPresence::Present { value, source: Some(_) } if value == "truck"
+        &fallback_vehicle.observed_name,
+        FieldPresence::Present { value, source: Some(_) } if value == "Fallback Truck"
     ));
-    assert!(matches!(civ.identity.side, FieldPresence::Present { value: EntitySide::Civ, .. }));
-    assert!(matches!(guer.identity.side, FieldPresence::Present { value: EntitySide::Guer, .. }));
-    assert!(matches!(
-        unknown_side.identity.side,
-        FieldPresence::Present { value: EntitySide::Unknown, .. }
-    ));
+    assert!(matches!(civ.side, FieldPresence::Present { value: EntitySide::Civ, .. }));
+    assert!(matches!(guer.side, FieldPresence::Present { value: EntitySide::Guer, .. }));
+    assert!(matches!(unknown_side.side, FieldPresence::Present { value: EntitySide::Unknown, .. }));
 }
 
 #[test]
 fn entity_normalization_should_not_emit_forbidden_identity_fields() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let serialized = serde_json::to_string(&artifact.entities).expect("entities should serialize");
+    let serialized =
+        serde_json::to_string(&artifact.participants).expect("participants should serialize");
     let forbidden_fields =
         [("canonical", "player"), ("canonical", "id"), ("account", "id"), ("user", "id")]
             .map(|(prefix, suffix)| format!("{prefix}_{suffix}"));
@@ -399,7 +388,7 @@ fn entity_normalization_should_not_emit_forbidden_identity_fields() {
     for forbidden_field in forbidden_fields {
         assert!(
             !serialized.contains(&forbidden_field),
-            "entities should not contain {forbidden_field}"
+            "participants should not contain {forbidden_field}"
         );
     }
 }

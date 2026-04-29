@@ -10,10 +10,8 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    events::{
-        BountyEligibilityState, BountyExclusionReason, CombatEventAttributes, CombatSemantic,
-        NormalizedEvent, NormalizedEventKind,
-    },
+    compact::CombatFact,
+    events::{BountyEligibilityState, BountyExclusionReason, CombatSemantic},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
@@ -98,28 +96,26 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
 }
 
-fn event_by_id<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a NormalizedEvent {
+fn event_by_id<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a CombatFact {
     artifact
-        .events
+        .facts
+        .combat
         .iter()
-        .find(|event| event.event_id == event_id)
-        .expect("combat event should be normalized")
+        .find(|event| event.fact_id == event_id)
+        .expect("combat fact should be normalized")
 }
 
-fn combat(event: &NormalizedEvent) -> &CombatEventAttributes {
-    event.combat.as_ref().expect("combat event should include combat attributes")
-}
-
-fn has_exclusion(combat: &CombatEventAttributes, exclusion: BountyExclusionReason) -> bool {
+fn has_exclusion(combat: &CombatFact, exclusion: BountyExclusionReason) -> bool {
     combat.bounty.exclusion_reasons.contains(&exclusion)
 }
 
 #[test]
 fn combat_event_semantics_should_emit_one_event_per_source_killed_tuple() {
     let artifact = combat_artifact();
-    let event_ids = artifact.events.iter().map(|event| event.event_id.as_str()).collect::<Vec<_>>();
+    let event_ids =
+        artifact.facts.combat.iter().map(|event| event.fact_id.as_str()).collect::<Vec<_>>();
 
-    assert_eq!(artifact.events.len(), 6);
+    assert_eq!(artifact.facts.combat.len(), 6);
     assert!(event_ids.contains(&"event.killed.0"));
 }
 
@@ -127,20 +123,18 @@ fn combat_event_semantics_should_emit_one_event_per_source_killed_tuple() {
 fn combat_event_semantics_should_classify_enemy_kill_as_bounty_eligible() {
     let artifact = combat_artifact();
     let enemy_kill = event_by_id(&artifact, "event.killed.0");
-    let combat = combat(enemy_kill);
 
-    assert_eq!(enemy_kill.kind, NormalizedEventKind::Kill);
-    assert_eq!(combat.semantic, CombatSemantic::EnemyKill);
-    assert_eq!(combat.bounty.state, BountyEligibilityState::Eligible);
-    assert!(combat.bounty.exclusion_reasons.is_empty());
+    assert_eq!(enemy_kill.semantic, CombatSemantic::EnemyKill);
+    assert_eq!(enemy_kill.bounty.state, BountyEligibilityState::Eligible);
+    assert!(enemy_kill.bounty.exclusion_reasons.is_empty());
 }
 
 #[test]
 fn combat_event_semantics_should_classify_teamkill_suicide_and_null_killer_as_bounty_excluded() {
     let artifact = combat_artifact();
-    let teamkill = combat(event_by_id(&artifact, "event.killed.1"));
-    let suicide = combat(event_by_id(&artifact, "event.killed.2"));
-    let null_killer = combat(event_by_id(&artifact, "event.killed.3"));
+    let teamkill = event_by_id(&artifact, "event.killed.1");
+    let suicide = event_by_id(&artifact, "event.killed.2");
+    let null_killer = event_by_id(&artifact, "event.killed.3");
 
     assert_eq!(teamkill.semantic, CombatSemantic::Teamkill);
     assert_eq!(teamkill.bounty.state, BountyEligibilityState::Excluded);
@@ -159,27 +153,23 @@ fn combat_event_semantics_should_classify_teamkill_suicide_and_null_killer_as_bo
 fn combat_event_semantics_should_classify_vehicle_destroyed_event() {
     let artifact = combat_artifact();
     let vehicle_destroyed_event = event_by_id(&artifact, "event.killed.4");
-    let combat = combat(vehicle_destroyed_event);
 
-    assert_eq!(vehicle_destroyed_event.kind, NormalizedEventKind::VehicleKilled);
-    assert_eq!(combat.semantic, CombatSemantic::VehicleDestroyed);
-    assert_eq!(combat.bounty.state, BountyEligibilityState::Excluded);
-    assert!(has_exclusion(combat, BountyExclusionReason::VehicleVictim));
+    assert_eq!(vehicle_destroyed_event.semantic, CombatSemantic::VehicleDestroyed);
+    assert_eq!(vehicle_destroyed_event.bounty.state, BountyEligibilityState::Excluded);
+    assert!(has_exclusion(vehicle_destroyed_event, BountyExclusionReason::VehicleVictim));
 }
 
 #[test]
 fn combat_event_semantics_should_emit_unknown_event_and_partial_status_for_missing_actor() {
     let artifact = combat_artifact();
     let unknown_event = event_by_id(&artifact, "event.killed.5");
-    let combat = combat(unknown_event);
     let diagnostic_codes =
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(unknown_event.kind, NormalizedEventKind::Unknown);
-    assert_eq!(combat.semantic, CombatSemantic::Unknown);
-    assert!(has_exclusion(combat, BountyExclusionReason::UnknownActor));
-    assert!(combat.legacy_counter_effects.is_empty());
+    assert_eq!(unknown_event.semantic, CombatSemantic::Unknown);
+    assert!(has_exclusion(unknown_event, BountyExclusionReason::UnknownActor));
+    assert!(unknown_event.legacy_counter_effects.is_empty());
     assert!(diagnostic_codes.contains(&"event.killed_actor_unknown"));
 }
 
@@ -192,8 +182,7 @@ fn combat_event_semantics_should_emit_unknown_events_and_diagnostics_for_malform
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(malformed_frame.kind, NormalizedEventKind::Unknown);
-    assert_eq!(combat(malformed_frame).semantic, CombatSemantic::Unknown);
+    assert_eq!(malformed_frame.semantic, CombatSemantic::Unknown);
     assert!(matches!(
         malformed_frame.frame,
         FieldPresence::Unknown {
@@ -201,8 +190,7 @@ fn combat_event_semantics_should_emit_unknown_events_and_diagnostics_for_malform
             source: Some(_)
         }
     ));
-    assert_eq!(malformed_kill_info.kind, NormalizedEventKind::Unknown);
-    assert_eq!(combat(malformed_kill_info).semantic, CombatSemantic::Unknown);
+    assert_eq!(malformed_kill_info.semantic, CombatSemantic::Unknown);
     assert_eq!(
         diagnostic_codes.iter().filter(|code| **code == "event.killed_shape_unknown").count(),
         2
@@ -214,7 +202,7 @@ fn combat_event_semantics_should_include_source_refs_with_event_coordinates() {
     let artifact = combat_artifact();
     let enemy_kill = event_by_id(&artifact, "event.killed.0");
     let source_ref =
-        enemy_kill.source_refs.as_slice().first().expect("combat event should include source ref");
+        enemy_kill.source_refs.as_slice().first().expect("combat fact should include source ref");
 
     assert_eq!(source_ref.frame, Some(10));
     assert_eq!(source_ref.event_index, Some(0));
@@ -273,11 +261,11 @@ fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_audita
 
     // Act
     let artifact = parse_fixture(fixture);
-    let missing_victim = combat(event_by_id(&artifact, "event.killed.0"));
-    let null_non_player_victim = combat(event_by_id(&artifact, "event.killed.1"));
-    let incomplete_side = combat(event_by_id(&artifact, "event.killed.2"));
-    let vehicle_destroyed = combat(event_by_id(&artifact, "event.killed.3"));
-    let non_player_killer = combat(event_by_id(&artifact, "event.killed.4"));
+    let missing_victim = event_by_id(&artifact, "event.killed.0");
+    let null_non_player_victim = event_by_id(&artifact, "event.killed.1");
+    let incomplete_side = event_by_id(&artifact, "event.killed.2");
+    let vehicle_destroyed = event_by_id(&artifact, "event.killed.3");
+    let non_player_killer = event_by_id(&artifact, "event.killed.4");
     let diagnostic_messages = artifact
         .diagnostics
         .iter()

@@ -12,16 +12,15 @@ use parser_contract::{
 use parser_core::{
     artifact::SourceContext,
     raw::{KilledEventKillInfo, KilledEventObservation, RawReplay, killed_events},
+    raw_compact::decode_compact_root,
 };
-use serde_json::Value;
 
 const KILLED_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/killed-events.ocap.json");
 
 fn killed_observations() -> Vec<KilledEventObservation> {
-    let value = serde_json::from_slice::<Value>(KILLED_EVENTS_FIXTURE)
-        .expect("killed events fixture should be valid JSON");
-    let root = value.as_object().expect("killed events fixture should be a root object");
-    let raw = RawReplay::new(root);
+    let root = decode_compact_root(KILLED_EVENTS_FIXTURE)
+        .expect("killed events fixture should be a root object");
+    let raw = RawReplay::new(&root);
 
     killed_events(raw)
 }

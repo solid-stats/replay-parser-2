@@ -15,15 +15,14 @@ use parser_contract::{
     presence::{Confidence, FieldPresence, UnknownReason},
     source_ref::{RuleId, SourceRef, SourceRefs},
 };
-use serde_json::Value;
 
 use crate::{
     artifact::SourceContext,
     diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
     raw::{
-        ConnectedEventObservation, RawField, RawReplay, connected_events, entity_class,
-        entity_description, entity_group, entity_has_positions, entity_id, entity_is_player,
-        entity_name, entity_side, entity_type,
+        ConnectedEventObservation, RawEntityObservation, RawField, RawReplay, connected_events,
+        entity_class, entity_description, entity_group, entity_has_positions, entity_id,
+        entity_is_player, entity_name, entity_side, entity_type,
     },
 };
 
@@ -41,7 +40,7 @@ pub fn normalize_entities(
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) -> Vec<ObservedEntity> {
-    let RawField::Present { value: entities, json_path: _ } = raw.array_field("entities") else {
+    let RawField::Present { value: entities, json_path: _ } = raw.entities_field() else {
         push_entities_section_diagnostic(*raw, context, diagnostics);
         return Vec::new();
     };
@@ -377,7 +376,7 @@ fn push_entities_section_diagnostic(
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) {
-    match raw.array_field("entities") {
+    match raw.entities_field() {
         RawField::Absent { json_path } => push_diagnostic(
             diagnostics,
             EntityDiagnostic {
@@ -411,7 +410,7 @@ fn push_entities_section_diagnostic(
 }
 
 fn normalize_entity(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
@@ -499,7 +498,7 @@ fn required_entity_id(
 }
 
 fn classify_entity(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     source_entity_id: i64,
     context: &SourceContext,
@@ -572,7 +571,7 @@ fn classify_entity(
 }
 
 fn observed_class(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     source_entity_id: i64,
     kind: EntityKind,
@@ -589,7 +588,7 @@ fn observed_class(
 }
 
 fn observed_identity(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     source_entity_id: i64,
     kind: EntityKind,
@@ -858,7 +857,7 @@ fn player_flag_presence(
 }
 
 fn entity_source_refs(
-    entity: &Value,
+    entity: &RawEntityObservation<'_>,
     index: usize,
     source_entity_id: i64,
     context: &SourceContext,
@@ -998,11 +997,11 @@ mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 
     use super::*;
+    use crate::raw_compact::{compact_entities, decode_compact_root};
     use parser_contract::{
         presence::NullReason,
         source_ref::{ReplaySource, SourceChecksum},
     };
-    use serde_json::json;
 
     fn context() -> SourceContext {
         SourceContext::new(&ReplaySource {
@@ -1136,10 +1135,13 @@ mod tests {
         // Arrange
         let context = context();
         let mut diagnostics = DiagnosticAccumulator::new(16);
-        let entity_without_type = json!({ "id": 10 });
+        let root =
+            decode_compact_root(br#"{"entities":[{"id":10}]}"#).expect("test root should decode");
+        let compact_entities = compact_entities(&root);
+        let entity_without_type = &compact_entities[0];
 
         // Act
-        let kind = classify_entity(&entity_without_type, 0, 10, &context, &mut diagnostics);
+        let kind = classify_entity(entity_without_type, 0, 10, &context, &mut diagnostics);
         let player_flag = player_flag_presence(
             RawField::Absent { json_path: "$.entities[0].isPlayer".to_owned() },
             10,
@@ -1213,10 +1215,13 @@ mod tests {
     #[test]
     fn connected_backfill_should_update_nickname_even_when_name_is_already_observed() {
         // Arrange
-        let root = json!({
-            "events": [[1, "connected", "Connected Alpha", 10]]
-        });
-        let raw = RawReplay::new(root.as_object().expect("test root should be an object"));
+        let root = decode_compact_root(
+            br#"{
+                "events": [[1, "connected", "Connected Alpha", 10]]
+            }"#,
+        )
+        .expect("test root should decode");
+        let raw = RawReplay::new(&root);
         let context = context();
         let mut entities = vec![entity(
             10,
@@ -1249,8 +1254,8 @@ mod tests {
     #[test]
     fn entities_section_diagnostic_should_ignore_present_arrays() {
         // Arrange
-        let root = json!({ "entities": [] });
-        let raw = RawReplay::new(root.as_object().expect("test root should be an object"));
+        let root = decode_compact_root(br#"{"entities":[]}"#).expect("test root should decode");
+        let raw = RawReplay::new(&root);
         let context = context();
         let mut diagnostics = DiagnosticAccumulator::new(8);
 
