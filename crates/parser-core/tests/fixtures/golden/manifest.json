@@ -6,7 +6,7 @@
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
       "source_file": "2026_04_25__00_52_18__1_ocap.json",
-      "notes": "Compact focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.1 compact default assertions target participants, facts, summaries, source refs, and absence of top-level entities/events."
+      "notes": "Focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.2 minimal default assertions target players, player_stats, kills, destroyed_vehicles, and absence of default debug sidecar detail."
     },
     "requirements": [
       "TEST-01",
@@ -25,16 +25,16 @@
       "metadata_present",
       "deterministic_serialization",
       "winner_unknown_when_absent",
-      "compact_participants",
-      "compact_facts",
-      "compact_summaries",
-      "source_refs_present",
+      "players",
+      "player_stats",
+      "kills",
+      "destroyed_vehicles",
       "no_top_level_entities",
       "no_top_level_events"
     ],
     "cross_app_impact": {
-      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields while using compact participants, facts, summaries, and source refs instead of full top-level entities/events.",
-      "server_2": "Provides a compact success artifact shape server-2 can later persist or compare through its own tables.",
+      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields while using minimal players, player_stats, kills, and destroyed_vehicles instead of full top-level entities/events.",
+      "server_2": "Provides a minimal success artifact shape server-2 can later persist or compare through its own tables.",
       "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs."
     }
   },
@@ -61,9 +61,10 @@
     "expected_features": [
       "structured_failure",
       "json_decode_failure",
-      "compact_participants",
-      "compact_facts",
-      "compact_summaries"
+      "empty_players",
+      "empty_player_stats",
+      "empty_kills",
+      "empty_destroyed_vehicles"
     ],
     "cross_app_impact": {
       "parser_artifact": "Malformed bytes produce a structured failed ParseArtifact instead of ordinary stats.",
@@ -148,21 +149,21 @@
     }
   },
   {
-    "fixture": "tests/fixtures/vehicle-score.ocap.json",
+    "fixture": "tests/fixtures/vehicle-context.ocap.json",
     "fixture_strategy": "linked_existing_focused_fixture",
     "category": "vehicle_kill",
     "source": {
       "artifact": ".planning/phases/04-event-semantics-and-aggregates/04-04-SUMMARY.md",
-      "source_file": "tests/fixtures/vehicle-score.ocap.json",
-      "notes": "Focused Phase 4 vehicle score fixture covering issue #13 award and penalty inputs."
+      "source_file": "tests/fixtures/vehicle-context.ocap.json",
+      "notes": "Focused Phase 4 vehicle-context fixture now covering ordinary vehicle kills, kills from vehicle, and destroyed vehicle rows."
     },
     "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
     "decisions": ["D-08", "D-13"],
     "expected_status": "success",
-    "expected_features": ["vehicle_score.inputs", "vehicle_score.denominator_inputs"],
+    "expected_features": ["destroyed_vehicles", "vehicleKills", "killsFromVehicle"],
     "cross_app_impact": {
-      "parser_artifact": "Provides auditable issue #13 vehicle score input rows and source refs.",
-      "server_2": "Final cross-replay vehicle score remains server or harness responsibility.",
+      "parser_artifact": "Provides ordinary destroyed vehicle rows plus vehicleKills and killsFromVehicle counters without retired score weights.",
+      "server_2": "Any future cross-replay score remains a separate server or harness responsibility.",
       "web": "No direct UI behavior."
     }
   },

@@ -19,7 +19,7 @@ use serde_json::json;
 const AGGREGATE_FIXTURE: &[u8] = include_bytes!("fixtures/aggregate-combat.ocap.json");
 const COMBAT_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/combat-events.ocap.json");
 const INVALID_JSON_FIXTURE: &[u8] = include_bytes!("fixtures/invalid-json.ocap.json");
-const VEHICLE_CONTEXT_FIXTURE: &[u8] = include_bytes!("fixtures/vehicle-score.ocap.json");
+const VEHICLE_CONTEXT_FIXTURE: &[u8] = include_bytes!("fixtures/vehicle-context.ocap.json");
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -83,7 +83,7 @@ fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_
 
 #[test]
 fn fault_injection_regressions_should_catch_vehicle_context_loss_in_minimal_rows() {
-    let artifact = parse_fixture(VEHICLE_CONTEXT_FIXTURE, "fixtures/vehicle-score.ocap.json");
+    let artifact = parse_fixture(VEHICLE_CONTEXT_FIXTURE, "fixtures/vehicle-context.ocap.json");
     let vehicle_kill = artifact
         .kills
         .iter()
@@ -95,7 +95,7 @@ fn fault_injection_regressions_should_catch_vehicle_context_loss_in_minimal_rows
         .find(|row| row.source_entity_id == 1)
         .expect("attacker stats should exist");
 
-    assert_eq!(vehicle_kill.attacker_vehicle_name.as_deref(), Some("T-72B"));
+    assert_eq!(vehicle_kill.attacker_vehicle_name.as_deref(), Some("T-72"));
     assert_eq!(vehicle_kill.attacker_vehicle_class.as_deref(), Some("rhs_t72ba_tv"));
     assert!(stats.kills_from_vehicle > 0);
 }

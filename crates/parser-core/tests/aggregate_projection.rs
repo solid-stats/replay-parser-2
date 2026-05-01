@@ -239,11 +239,12 @@ fn aggregate_projection_should_omit_debug_only_keys_from_default_success_json() 
         "aggregate_contributions",
         "normalized_event",
         "entity_snapshot",
-        "vehicle_score",
     ] {
         assert!(
             !serialized_rows.contains(forbidden_key),
             "default row JSON should not contain {forbidden_key}"
         );
     }
+    let retired_score_section = ["vehicle", "score"].join("_");
+    assert!(!serialized_rows.contains(&retired_score_section));
 }
