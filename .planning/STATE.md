@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05.2-00-PLAN.md
-last_updated: "2026-05-01T02:04:56.660Z"
+stopped_at: Completed 05.2-01-PLAN.md
+last_updated: "2026-05-01T02:21:31.931Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 45
-  completed_plans: 39
-  percent: 87
+  completed_plans: 40
+  percent: 89
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-05-01
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Progress: [█████████░] 87%
 | Phase 05 P04 | 14min | 3 tasks | 7 files |
 | Phase 05 P05 | 34min | 4 tasks | 8 files |
 | Phase 05.2 P00 | 1m | 2 tasks | 2 files |
+| Phase 05.2 P01 | 10 min | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,9 @@ Recent decisions affecting current work:
 - [Phase 05.2]: Discussion locked performance and issue #13 decisions. — Remove issue #13 vehicle score implementation from v1; use automatic large selected replay for x3; use sequential `WORKER_COUNT=1` old baseline and sequential new artifact writing for all-raw x10; require zero failed/skipped full-corpus artifacts unless an explicit allowlist is later approved.
 - [Phase 05.2]: Planning produced 7 execution plans. — Wave 1 records minimal artifact server compatibility acceptance; Wave 2 replaces the public contract with v3 minimal flat tables and removes vehicle-score contract surfaces; Wave 3 updates parser-core minimal rows and debug sidecar; Wave 4 updates CLI/schema/README command behavior; Wave 5 derives old-vs-new parity from minimal tables; Wave 6 implements selected x3, all-raw x10, zero-failure, and artifact-size benchmark gates; Wave 7 runs final quality gates and handoff docs.
 - [Phase 05.2]: Plan 00 recorded product-owner approval for minimal flat artifact implementation. — Brief-level downstream evidence is sufficient after explicit approval; server-2 will adapt later.
+- [Phase 05.2]: Plan 01 cuts the parser contract to v3.0.0 minimal flat tables: players, player_stats, kills, destroyed_vehicles, and diagnostics. — Matches Phase 5.2 minimal artifact direction before parser-core construction.
+- [Phase 05.2]: Issue 13 vehicle score contract types, schema helpers, projection keys, and tests are no longer active v1 parser-contract surfaces. — Ordinary vehicleKills, killsFromVehicle, weapon, and attacker vehicle context remain for current stats and future raw replay reprocessing.
+- [Phase 05.2]: side_facts remains in ParseArtifact but is defaultable for minimal v3 examples. — This preserves the retained contract field while keeping success examples free of rule/source provenance fields.
 
 ### Roadmap Evolution
 
@@ -201,8 +205,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T02:04:56.655Z
-Stopped at: Completed 05.2-00-PLAN.md
+Last session: 2026-05-01T02:21:31.927Z
+Stopped at: Completed 05.2-01-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25

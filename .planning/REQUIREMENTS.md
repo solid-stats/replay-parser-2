@@ -45,10 +45,10 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **OUT-06**: Parser contract includes JSON Schema generation or equivalent machine-readable schema validation for `server-2` integration.
 - [x] **OUT-07**: Parser contract includes structured `ParseFailure` output with job/replay/file identifiers, stage, error code, message, retryability, and source cause.
 - [x] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
-- [ ] **OUT-09**: Default parser output for `server-2` is a compact artifact that excludes full normalized event/entity dumps and includes only replay/source metadata, observed participant references, aggregate/stat contribution inputs, bounty inputs, ordinary vehicle kill/destruction facts, diagnostics, and schema/version data needed for ingestion and recalculation.
-- [ ] **OUT-10**: Heavy audit, debug, parity, source-reference, rule-ID, normalized event/entity, or future-analytics detail is optional sidecar/debug output or raw-replay reprocessing material; it is not required for ordinary worker ingestion and must not be sent as the default `parse.completed` artifact.
-- [ ] **OUT-11**: Default v1 success artifacts use minimal flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`.
-- [ ] **OUT-12**: Default `kills[]` and `destroyed_vehicles[]` rows include identity and context needed for current statistics and bounty inputs, but detailed event indexes, source references, rule IDs, entity snapshots, and normalized event/entity evidence are debug-sidecar-only.
+- [x] **OUT-09**: Default parser output for `server-2` is a compact artifact that excludes full normalized event/entity dumps and includes only replay/source metadata, observed participant references, aggregate/stat contribution inputs, bounty inputs, ordinary vehicle kill/destruction facts, diagnostics, and schema/version data needed for ingestion and recalculation.
+- [x] **OUT-10**: Heavy audit, debug, parity, source-reference, rule-ID, normalized event/entity, or future-analytics detail is optional sidecar/debug output or raw-replay reprocessing material; it is not required for ordinary worker ingestion and must not be sent as the default `parse.completed` artifact.
+- [x] **OUT-11**: Default v1 success artifacts use minimal flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`.
+- [x] **OUT-12**: Default `kills[]` and `destroyed_vehicles[]` rows include identity and context needed for current statistics and bounty inputs, but detailed event indexes, source references, rule IDs, entity snapshots, and normalized event/entity evidence are debug-sidecar-only.
 
 ### Parser Core
 
@@ -78,7 +78,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **AGG-09**: Parser computes vehicle score by subtracting weighted teamkill penalties from weighted vehicle-kill score and dividing by the count of games where the player had at least one kill from a vehicle.
 - [x] **AGG-10**: Parser clamps vehicle score teamkill penalty multipliers below 1 up to 1, even when the normal matrix value for that attacker/killed type is lower.
 - [x] **AGG-11**: Parser exposes source references for every vehicle score contribution so the score can be audited and recalculated by `server-2` if needed.
-- [ ] **AGG-12**: GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 parser contract, schema, examples, tests, docs, default artifact, and planning acceptance criteria.
+- [x] **AGG-12**: GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 parser contract, schema, examples, tests, docs, default artifact, and planning acceptance criteria.
 
 ### CLI and Validation
 
@@ -177,10 +177,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-06 | Phase 2 | Complete |
 | OUT-07 | Phase 2 | Complete |
 | OUT-08 | Phase 3 | Complete |
-| OUT-09 | Phase 5.2 | Pending |
-| OUT-10 | Phase 5.2 | Pending |
-| OUT-11 | Phase 5.2 | Pending |
-| OUT-12 | Phase 5.2 | Pending |
+| OUT-09 | Phase 5.2 | Complete |
+| OUT-10 | Phase 5.2 | Complete |
+| OUT-11 | Phase 5.2 | Complete |
+| OUT-12 | Phase 5.2 | Complete |
 | PARS-01 | Phase 3 | Complete |
 | PARS-02 | Phase 3 | Complete |
 | PARS-03 | Phase 3 | Complete |
@@ -204,7 +204,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGG-09 | Phase 4 | Complete |
 | AGG-10 | Phase 4 | Complete |
 | AGG-11 | Phase 4 | Complete |
-| AGG-12 | Phase 5.2 | Pending |
+| AGG-12 | Phase 5.2 | Complete |
 | CLI-01 | Phase 5 | Complete |
 | CLI-02 | Phase 5 | Complete |
 | CLI-03 | Phase 5 | Complete |
