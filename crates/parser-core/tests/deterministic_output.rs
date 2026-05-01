@@ -70,15 +70,12 @@ fn deterministic_output_should_serialize_identically_when_same_input_is_parsed_t
 }
 
 #[test]
-fn deterministic_output_should_keep_entities_ordered_after_input_entities_are_unsorted() {
+fn deterministic_output_should_keep_players_ordered_after_input_entities_are_unsorted() {
     let artifact = parse_fixture(MIXED_UNSORTED_FIXTURE);
-    let entity_ids = artifact
-        .participants
-        .iter()
-        .map(|participant| participant.source_entity_id)
-        .collect::<Vec<_>>();
+    let entity_ids =
+        artifact.players.iter().map(|player| player.source_entity_id).collect::<Vec<_>>();
 
-    assert_eq!(entity_ids, vec![10, 20, 30]);
+    assert_eq!(entity_ids, vec![10]);
 }
 
 #[test]
@@ -89,75 +86,48 @@ fn deterministic_output_should_not_include_parser_core_timestamp() {
 }
 
 #[test]
-fn deterministic_output_should_serialize_compact_artifact_identically() {
-    // Arrange
+fn deterministic_output_should_serialize_minimal_artifact_identically() {
     let first_artifact = parse_aggregate_fixture();
     let second_artifact = parse_aggregate_fixture();
 
-    // Act
     let first_serialized =
         serde_json::to_string(&first_artifact).expect("first artifact should serialize");
     let second_serialized =
         serde_json::to_string(&second_artifact).expect("second artifact should serialize");
 
-    // Assert
     assert_eq!(first_serialized, second_serialized);
-    assert!(!first_artifact.participants.is_empty());
-    assert!(!first_artifact.facts.combat.is_empty());
-    assert!(!first_artifact.facts.aggregate_contributions.is_empty());
-    assert!(!first_artifact.summaries.projections.is_empty());
+    assert!(!first_artifact.players.is_empty());
+    assert!(!first_artifact.player_stats.is_empty());
+    assert!(!first_artifact.kills.is_empty());
+    assert!(!first_artifact.destroyed_vehicles.is_empty());
     assert!(first_artifact.produced_at.is_none());
 }
 
 #[test]
-fn deterministic_output_should_keep_compact_contributions_sorted_by_id() {
-    // Arrange
+fn deterministic_output_should_keep_player_stats_sorted_by_source_entity_id() {
     let artifact = parse_aggregate_fixture();
+    let stat_ids =
+        artifact.player_stats.iter().map(|stats| stats.source_entity_id).collect::<Vec<_>>();
+    let mut sorted_stat_ids = stat_ids.clone();
+    sorted_stat_ids.sort_unstable();
 
-    // Act
-    let contribution_ids = artifact
-        .facts
-        .aggregate_contributions
-        .iter()
-        .map(|contribution| contribution.contribution_id.as_str())
-        .collect::<Vec<_>>();
-    let mut sorted_contribution_ids = contribution_ids.clone();
-    sorted_contribution_ids.sort_unstable();
-
-    // Assert
-    assert!(!contribution_ids.is_empty());
-    assert_eq!(contribution_ids, sorted_contribution_ids);
+    assert!(!stat_ids.is_empty());
+    assert_eq!(stat_ids, sorted_stat_ids);
 }
 
 #[test]
-fn deterministic_output_should_keep_projection_keys_sorted() {
-    // Arrange
+fn deterministic_output_should_omit_full_detail_and_old_compact_sections() {
     let artifact = parse_aggregate_fixture();
-
-    // Act
-    let projection_keys =
-        artifact.summaries.projections.keys().map(String::as_str).collect::<Vec<_>>();
-    let mut sorted_projection_keys = projection_keys.clone();
-    sorted_projection_keys.sort_unstable();
-
-    // Assert
-    assert!(!projection_keys.is_empty());
-    assert_eq!(projection_keys, sorted_projection_keys);
-}
-
-#[test]
-fn deterministic_output_should_omit_full_entity_and_event_dumps() {
-    // Arrange
-    let artifact = parse_aggregate_fixture();
-
-    // Act
     let serialized = serde_json::to_value(&artifact).expect("artifact should serialize");
     let root = serialized.as_object().expect("artifact should serialize as an object");
 
-    // Assert
-    assert!(root.contains_key("participants"));
-    assert!(root.contains_key("facts"));
-    assert!(root.contains_key("summaries"));
+    assert!(root.contains_key("players"));
+    assert!(root.contains_key("player_stats"));
+    assert!(root.contains_key("kills"));
+    assert!(root.contains_key("destroyed_vehicles"));
+    assert!(!root.contains_key("participants"));
+    assert!(!root.contains_key("facts"));
+    assert!(!root.contains_key("summaries"));
     assert!(!root.contains_key("entities"));
     assert!(!root.contains_key("events"));
 }

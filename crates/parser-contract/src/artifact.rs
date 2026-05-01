@@ -60,7 +60,7 @@ pub struct ParseArtifact {
     #[serde(default)]
     pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
     /// Replay-side commander and outcome facts.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "ReplaySideFacts::is_default")]
     pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.
     pub failure: Option<ParseFailure>,

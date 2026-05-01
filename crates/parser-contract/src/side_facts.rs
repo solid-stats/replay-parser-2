@@ -23,6 +23,14 @@ impl Default for ReplaySideFacts {
     }
 }
 
+impl ReplaySideFacts {
+    /// Returns true when no replay-side evidence is present.
+    #[must_use]
+    pub fn is_default(value: &Self) -> bool {
+        value == &Self::default()
+    }
+}
+
 /// Commander fact evidence kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]

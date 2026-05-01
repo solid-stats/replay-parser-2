@@ -7,13 +7,13 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    compact::ObservedParticipantRef,
+    minimal::MinimalPlayerRow,
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay};
-use serde_json::{Value, json};
+use serde_json::json;
 
 const CONNECTED_BACKFILL_FIXTURE: &[u8] = include_bytes!("fixtures/connected-backfill.ocap.json");
 const DUPLICATE_SLOT_SAME_NAME_FIXTURE: &[u8] =
@@ -62,36 +62,21 @@ fn duplicate_artifact() -> ParseArtifact {
     parse_fixture(DUPLICATE_SLOT_SAME_NAME_FIXTURE, "fixtures/duplicate-slot-same-name.ocap.json")
 }
 
-fn participant_by_id(artifact: &ParseArtifact, source_entity_id: i64) -> &ObservedParticipantRef {
+fn player_by_id(artifact: &ParseArtifact, source_entity_id: i64) -> &MinimalPlayerRow {
     artifact
-        .participants
+        .players
         .iter()
-        .find(|participant| participant.source_entity_id == source_entity_id)
-        .expect("participant should be normalized")
-}
-
-fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value> {
-    artifact
-        .summaries
-        .projections
-        .get(key)
-        .and_then(Value::as_array)
-        .expect("projection should be an array")
+        .find(|player| player.source_entity_id == source_entity_id)
+        .expect("player should be normalized")
 }
 
 #[test]
 fn legacy_entity_compatibility_should_infer_player_name_from_connected_event_when_entity_name_is_missing()
  {
     let artifact = connected_artifact();
-    let player = participant_by_id(&artifact, 11);
+    let player = player_by_id(&artifact, 11);
 
-    assert!(matches!(
-        &player.observed_name,
-        FieldPresence::Inferred { value, reason, rule_id, .. }
-            if value == "BackfilledName"
-                && reason == "legacy connected event player backfill"
-                && rule_id.as_str() == "entity.connected_player_backfill"
-    ));
+    assert_eq!(player.observed_name.as_deref(), Some("BackfilledName"));
 }
 
 #[test]
@@ -123,57 +108,40 @@ fn legacy_entity_compatibility_should_use_last_connected_name_for_player_nicknam
         "EditorMarkers": []
     }"#;
     let artifact = parse_fixture(fixture, "fixtures/connected-overwrite.ocap.json");
-    let player = participant_by_id(&artifact, 12);
+    let player = player_by_id(&artifact, 12);
 
-    assert!(matches!(
-        &player.observed_name,
-        FieldPresence::Inferred { value, rule_id, .. }
-            if value == "LastConnectedName"
-                && rule_id.as_str() == "entity.connected_player_backfill"
-    ));
+    assert_eq!(player.observed_name.as_deref(), Some("LastConnectedName"));
 }
 
 #[test]
 fn legacy_entity_compatibility_should_skip_connected_backfill_for_vehicle_entities() {
     let artifact = connected_artifact();
-    let vehicle = participant_by_id(&artifact, 99);
 
-    assert!(matches!(
-        &vehicle.observed_name,
-        FieldPresence::Present { value, .. } if value == "OriginalVehicle"
-    ));
+    assert!(!artifact.players.iter().any(|player| player.source_entity_id == 99));
 }
 
 #[test]
-fn legacy_entity_compatibility_should_attach_connected_backfill_hint_with_event_and_entity_source_refs()
- {
+fn legacy_entity_compatibility_should_not_serialize_source_refs_in_default_players() {
     let artifact = connected_artifact();
-    let player = participant_by_id(&artifact, 11);
-    let has_entity_source_path = player
-        .source_refs
-        .as_slice()
-        .iter()
-        .filter_map(|source_ref| source_ref.json_path.as_deref())
-        .any(|json_path| json_path == "$.entities[0]");
+    let serialized = serde_json::to_string(&artifact.players).expect("players should serialize");
 
-    assert!(has_entity_source_path);
-    assert!(matches!(
-        &player.observed_name,
-        FieldPresence::Inferred { source: Some(source_ref), .. }
-            if source_ref.frame == Some(4) && source_ref.event_index == Some(0)
-    ));
+    assert!(!serialized.contains("source_refs"));
+    assert!(!serialized.contains("rule_id"));
 }
 
 #[test]
-fn legacy_entity_compatibility_should_add_duplicate_slot_hint_without_merging_same_name_entities() {
+fn legacy_entity_compatibility_should_add_duplicate_slot_key_without_merging_same_name_entities() {
     let artifact = duplicate_artifact();
-    let duplicate_row = projection_array(&artifact, "legacy.player_game_results")
+    let duplicate_players = artifact
+        .players
         .iter()
-        .find(|row| row["compatibility_key"] == "legacy_name:SameName")
-        .expect("duplicate same-name row should exist");
+        .filter(|player| player.compatibility_key == "legacy_name:SameName")
+        .collect::<Vec<_>>();
 
-    assert_eq!(artifact.participants.len(), 3);
-    assert_eq!(duplicate_row["observed_entity_ids"], json!([21, 22]));
+    assert_eq!(artifact.players.len(), 3);
+    assert_eq!(duplicate_players.len(), 2);
+    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 21));
+    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 22));
 }
 
 #[test]

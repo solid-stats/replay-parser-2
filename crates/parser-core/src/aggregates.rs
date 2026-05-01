@@ -1,876 +1,307 @@
-//! Aggregate contribution derivation from normalized combat events.
+//! Minimal artifact row derivation from normalized combat events.
 // coverage-exclusion: reviewed Phase 05 defensive aggregate projection branches are allowlisted by exact source line.
 
-#![allow(
-    clippy::missing_const_for_fn,
-    reason = "private aggregate builders favor uniform helper signatures over const qualification"
-)]
-
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use parser_contract::{
-    aggregates::{
-        AggregateContributionKind, AggregateContributionRef, AggregateSection,
-        BountyInputContributionValue, LegacyCounterContributionValue,
-        RelationshipContributionValue, VehicleScoreInputValue, VehicleScoreSign,
-    },
     events::{
-        BountyEligibilityState, CombatEventAttributes, CombatSemantic, EventActorRef,
-        LegacyCounterEffect, NormalizedEvent, VehicleScoreCategory,
+        BountyEligibilityState, BountyExclusionReason, CombatEventAttributes, CombatSemantic,
+        CombatVictimKind, EventActorRef, NormalizedEvent, VehicleContext,
     },
-    identity::{EntityCompatibilityHintKind, EntitySide, ObservedEntity},
-    metadata::ReplayMetadata,
+    identity::{EntityCompatibilityHintKind, EntityKind, EntitySide, ObservedEntity},
+    minimal::{
+        DestroyedVehicleClassification, KillClassification, MinimalDestroyedVehicleRow,
+        MinimalKillRow, MinimalPlayerRow, MinimalPlayerStatsRow,
+    },
     presence::FieldPresence,
-    source_ref::{RuleId, SourceRef, SourceRefs},
-};
-use serde_json::{Value, json};
-
-use crate::{
-    artifact::SourceContext,
-    legacy_player::is_legacy_player_entity,
-    vehicle_score::{teamkill_penalty_weight, vehicle_score_weight},
 };
 
-const LEGACY_PLAYER_RESULTS_KEY: &str = "legacy.player_game_results";
-const LEGACY_RELATIONSHIPS_KEY: &str = "legacy.relationships";
-const BOUNTY_INPUTS_KEY: &str = "bounty.inputs";
-const VEHICLE_SCORE_INPUTS_KEY: &str = "vehicle_score.inputs";
-const VEHICLE_SCORE_DENOMINATOR_INPUTS_KEY: &str = "vehicle_score.denominator_inputs";
+use crate::legacy_player::is_legacy_player_entity;
 
-const AGGREGATE_LEGACY_RULE_ID: &str = "aggregate.legacy.counter";
-const AGGREGATE_RELATIONSHIP_RULE_ID: &str = "aggregate.relationship.counter";
-const AGGREGATE_BOUNTY_RULE_ID: &str = "aggregate.bounty.input";
-const AGGREGATE_VEHICLE_SCORE_AWARD_RULE_ID: &str = "aggregate.vehicle_score.award";
-const AGGREGATE_VEHICLE_SCORE_PENALTY_RULE_ID: &str = "aggregate.vehicle_score.penalty";
+/// Minimal v3 table rows emitted by the default parser artifact.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MinimalTables {
+    /// Observed legacy-compatible players.
+    pub players: Vec<MinimalPlayerRow>,
+    /// Replay-local player counters.
+    pub player_stats: Vec<MinimalPlayerStatsRow>,
+    /// Player death rows.
+    pub kills: Vec<MinimalKillRow>,
+    /// Vehicle/static weapon destruction rows.
+    pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
+}
 
-const RELATIONSHIP_FIELDS: &[&str] = &["killed", "killers", "teamkilled", "teamkillers"];
-
-/// Derives per-replay aggregate contributions and projections from normalized events.
+/// Derives minimal default artifact rows from normalized entities and combat events.
 #[must_use]
-pub fn derive_aggregate_section(
-    replay: &ReplayMetadata,
+pub fn derive_minimal_tables(
     entities: &[ObservedEntity],
     events: &[NormalizedEvent],
-    _context: &SourceContext,
-) -> AggregateSection {
-    let players = player_projection_identities(entities);
-    let mut contributions = aggregate_contributions(events, &players, entities);
-    contributions.sort_by(|left, right| left.contribution_id.cmp(&right.contribution_id));
-    let projections = aggregate_projections(replay, &players, &contributions);
-
-    AggregateSection { contributions, projections }
-}
-
-fn aggregate_projections(
-    replay: &ReplayMetadata,
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-    contributions: &[AggregateContributionRef],
-) -> BTreeMap<String, Value> {
-    let groups = player_projection_groups(players);
-    let mut projections = BTreeMap::new();
-
-    drop(projections.insert(
-        LEGACY_PLAYER_RESULTS_KEY.to_string(),
-        legacy_player_game_results(&groups, contributions),
-    ));
-    drop(projections.insert(
-        LEGACY_RELATIONSHIPS_KEY.to_string(),
-        legacy_relationships(&groups, contributions),
-    ));
-    drop(projections.insert(
-        "legacy.game_type_compatibility".to_string(),
-        legacy_game_type_compatibility(replay),
-    ));
-    drop(projections.insert("legacy.squad_inputs".to_string(), legacy_squad_inputs(&groups)));
-    drop(projections.insert(
-        "legacy.rotation_inputs".to_string(),
-        json!({
-            "requires_downstream_replay_date": true,
-            "parser_action": "server_or_parity_harness_groups_by_replay_date",
-        }),
-    ));
-    drop(projections.insert(BOUNTY_INPUTS_KEY.to_string(), bounty_inputs(&groups, contributions)));
-    drop(projections.insert(
-        VEHICLE_SCORE_INPUTS_KEY.to_string(),
-        vehicle_score_inputs(&groups, contributions),
-    ));
-    drop(projections.insert(
-        VEHICLE_SCORE_DENOMINATOR_INPUTS_KEY.to_string(),
-        vehicle_score_denominator_inputs(&groups, contributions),
-    ));
-
-    projections
-}
-
-fn aggregate_contributions(
-    events: &[NormalizedEvent],
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-    entities: &[ObservedEntity],
-) -> Vec<AggregateContributionRef> {
-    let mut contributions = Vec::new();
-    let raw_target_classes = entity_observed_classes(entities);
+) -> MinimalTables {
+    let entity_index =
+        entities.iter().map(|entity| (entity.source_entity_id, entity)).collect::<BTreeMap<_, _>>();
+    let players = minimal_players(entities);
+    let mut stats = players
+        .iter()
+        .map(|player| (player.source_entity_id, PlayerStatsAccumulator::new(player)))
+        .collect::<BTreeMap<_, _>>();
+    let mut kills = Vec::new();
+    let mut destroyed_vehicles = Vec::new();
 
     for event in events {
         let Some(combat) = &event.combat else {
             continue;
         };
 
-        for effect in &combat.legacy_counter_effects {
-            if is_relationship_effect(effect) {
-                if let Some(contribution) = relationship_contribution(event, effect, players) {
-                    contributions.push(contribution);
+        match combat.semantic {
+            CombatSemantic::EnemyKill => {
+                if victim_is_or_may_be_player(combat, &entity_index) {
+                    kills.push(minimal_kill_row(combat, KillClassification::EnemyKill));
+                    increment_killer(&mut stats, combat, |stats| stats.kills += 1);
+                    increment_victim(&mut stats, combat, |stats| stats.deaths += 1);
+
+                    if combat.vehicle_context.is_kill_from_vehicle {
+                        increment_killer(&mut stats, combat, |stats| {
+                            stats.kills_from_vehicle += 1;
+                        });
+                    }
                 }
-                continue;
             }
-
-            if let Some(contribution) = legacy_counter_contribution(event, effect, players) {
-                contributions.push(contribution);
+            CombatSemantic::Teamkill => {
+                if victim_is_or_may_be_player(combat, &entity_index) {
+                    kills.push(minimal_kill_row(combat, KillClassification::Teamkill));
+                    increment_killer(&mut stats, combat, |stats| stats.teamkills += 1);
+                    increment_victim(&mut stats, combat, |stats| stats.deaths += 1);
+                }
+            }
+            CombatSemantic::Suicide => {
+                if victim_is_or_may_be_player(combat, &entity_index) {
+                    kills.push(minimal_kill_row(combat, KillClassification::Suicide));
+                    increment_victim(&mut stats, combat, |stats| {
+                        stats.deaths += 1;
+                        stats.suicides += 1;
+                    });
+                }
+            }
+            CombatSemantic::NullKillerDeath => {
+                if victim_is_or_may_be_player(combat, &entity_index) {
+                    kills.push(minimal_kill_row(combat, KillClassification::NullKiller));
+                    increment_victim(&mut stats, combat, |stats| {
+                        stats.deaths += 1;
+                        stats.null_killer_deaths += 1;
+                    });
+                }
+            }
+            CombatSemantic::Unknown => {
+                if victim_is_or_may_be_player(combat, &entity_index) {
+                    kills.push(minimal_kill_row(combat, KillClassification::Unknown));
+                    increment_victim(&mut stats, combat, |stats| {
+                        stats.deaths += 1;
+                        stats.unknown_deaths += 1;
+                    });
+                }
+            }
+            CombatSemantic::VehicleDestroyed => {
+                if vehicle_or_static_victim(combat, &entity_index) {
+                    destroyed_vehicles.push(minimal_destroyed_vehicle_row(combat, &entity_index));
+                    increment_killer(&mut stats, combat, |stats| stats.vehicle_kills += 1);
+                }
             }
         }
-
-        if let Some(contribution) = kills_from_vehicle_contribution(event, combat, players) {
-            contributions.push(contribution);
-        }
-
-        if let Some(contribution) = bounty_input_contribution(event, combat) {
-            contributions.push(contribution);
-        }
-
-        if let Some(contribution) =
-            vehicle_score_contribution(event, combat, players, &raw_target_classes)
-        {
-            contributions.push(contribution);
-        }
     }
 
-    contributions
-}
-
-fn legacy_counter_contribution(
-    event: &NormalizedEvent,
-    effect: &LegacyCounterEffect,
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-) -> Option<AggregateContributionRef> {
-    let player = players.get(&effect.player_entity_id)?;
-    let value = LegacyCounterContributionValue {
-        projection_key: LEGACY_PLAYER_RESULTS_KEY.to_string(),
-        player_entity_id: effect.player_entity_id,
-        compatibility_key: player.compatibility_key.clone(),
-        field: effect.field.clone(),
-        delta: effect.delta,
-        event_id: event.event_id.clone(),
-    };
-
-    contribution_ref(
-        format!("aggregate.legacy.{}.{}.{}", event.event_id, effect.field, effect.player_entity_id),
-        AggregateContributionKind::LegacyCounter,
-        event,
-        AGGREGATE_LEGACY_RULE_ID,
-        serde_json::to_value(value).ok()?,
-    )
-}
-
-fn kills_from_vehicle_contribution(
-    event: &NormalizedEvent,
-    combat: &CombatEventAttributes,
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-) -> Option<AggregateContributionRef> {
-    if combat.semantic != CombatSemantic::EnemyKill || !combat.vehicle_context.is_kill_from_vehicle
-    {
-        return None;
+    MinimalTables {
+        players,
+        player_stats: stats.into_values().map(PlayerStatsAccumulator::into_row).collect(),
+        kills,
+        destroyed_vehicles,
     }
-
-    let killer_entity_id = actor_entity_id(&combat.killer)?;
-    let player = players.get(&killer_entity_id)?;
-    let value = LegacyCounterContributionValue {
-        projection_key: LEGACY_PLAYER_RESULTS_KEY.to_string(),
-        player_entity_id: killer_entity_id,
-        compatibility_key: player.compatibility_key.clone(),
-        field: "killsFromVehicle".to_string(),
-        delta: 1,
-        event_id: event.event_id.clone(),
-    };
-
-    contribution_ref(
-        format!("aggregate.legacy.{}.killsFromVehicle.{}", event.event_id, killer_entity_id),
-        AggregateContributionKind::LegacyCounter,
-        event,
-        AGGREGATE_LEGACY_RULE_ID,
-        serde_json::to_value(value).ok()?,
-    )
 }
 
-fn relationship_contribution(
-    event: &NormalizedEvent,
-    effect: &LegacyCounterEffect,
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-) -> Option<AggregateContributionRef> {
-    let target_entity_id = effect.relationship_target_entity_id?;
-    let source_player = players.get(&effect.player_entity_id)?;
-    let target_player = players.get(&target_entity_id)?;
-    let value = RelationshipContributionValue {
-        projection_key: LEGACY_RELATIONSHIPS_KEY.to_string(),
-        source_player_entity_id: effect.player_entity_id,
-        target_player_entity_id: target_entity_id,
-        relationship: effect.field.clone(),
-        compatibility_source_key: source_player.compatibility_key.clone(),
-        compatibility_target_key: target_player.compatibility_key.clone(),
-        count_delta: effect.delta,
-    };
-
-    contribution_ref(
-        format!(
-            "aggregate.relationship.{}.{}.{}.{}",
-            event.event_id, effect.field, effect.player_entity_id, target_entity_id
-        ),
-        AggregateContributionKind::Relationship,
-        event,
-        AGGREGATE_RELATIONSHIP_RULE_ID,
-        serde_json::to_value(value).ok()?,
-    )
-}
-
-fn bounty_input_contribution(
-    event: &NormalizedEvent,
-    combat: &CombatEventAttributes,
-) -> Option<AggregateContributionRef> {
-    if combat.bounty.state != BountyEligibilityState::Eligible
-        || combat.semantic != CombatSemantic::EnemyKill
-    {
-        return None;
-    }
-
-    let killer = present_actor(&combat.killer)?;
-    let victim = present_actor(&combat.victim)?;
-    let value = BountyInputContributionValue {
-        killer_entity_id: actor_source_entity_id(killer)?,
-        victim_entity_id: actor_source_entity_id(victim)?,
-        killer_side: actor_side_name(killer)?.to_string(),
-        victim_side: actor_side_name(victim)?.to_string(),
-        frame: present_u64(&event.frame),
-        event_id: event.event_id.clone(),
-        eligible: true,
-        exclusion_reasons: Vec::new(),
-    };
-
-    contribution_ref(
-        format!("aggregate.bounty.{}", event.event_id),
-        AggregateContributionKind::BountyInput,
-        event,
-        AGGREGATE_BOUNTY_RULE_ID,
-        serde_json::to_value(value).ok()?,
-    )
-}
-
-fn vehicle_score_contribution(
-    event: &NormalizedEvent,
-    combat: &CombatEventAttributes,
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-    raw_target_classes: &BTreeMap<i64, Option<String>>,
-) -> Option<AggregateContributionRef> {
-    if !combat.vehicle_context.is_kill_from_vehicle {
-        return None;
-    }
-
-    let sign = match combat.semantic {
-        CombatSemantic::EnemyKill | CombatSemantic::VehicleDestroyed => VehicleScoreSign::Award,
-        CombatSemantic::Teamkill => VehicleScoreSign::Penalty,
-        CombatSemantic::Suicide | CombatSemantic::NullKillerDeath | CombatSemantic::Unknown => {
-            return None;
-        }
-    };
-
-    let player_entity_id = actor_entity_id(&combat.killer)?;
-    let _player = players.get(&player_entity_id)?;
-    let attacker_category =
-        present_vehicle_score_category(&combat.vehicle_context.attacker_vehicle_category)?;
-    let target_category = present_vehicle_score_category(&combat.vehicle_context.target_category)?;
-    let matrix_weight = vehicle_score_weight(attacker_category, target_category)?;
-    let applied_weight = match sign {
-        VehicleScoreSign::Award => matrix_weight,
-        VehicleScoreSign::Penalty => teamkill_penalty_weight(matrix_weight),
-    };
-    let teamkill_penalty_clamped =
-        sign == VehicleScoreSign::Penalty && applied_weight > matrix_weight;
-    let raw_target_class = actor_entity_id(&combat.victim)
-        .and_then(|entity_id| raw_target_classes.get(&entity_id))
-        .cloned()
-        .flatten();
-
-    let value = VehicleScoreInputValue {
-        player_entity_id,
-        event_id: event.event_id.clone(),
-        sign,
-        attacker_category,
-        target_category,
-        raw_attacker_vehicle_name: observed_string(&combat.vehicle_context.attacker_vehicle_name)
-            .map(ToOwned::to_owned),
-        raw_attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
-            .map(ToOwned::to_owned),
-        raw_target_class,
-        matrix_weight,
-        applied_weight,
-        teamkill_penalty_clamped,
-        denominator_eligible: sign == VehicleScoreSign::Award,
-    };
-    let rule_id = match sign {
-        VehicleScoreSign::Award => AGGREGATE_VEHICLE_SCORE_AWARD_RULE_ID,
-        VehicleScoreSign::Penalty => AGGREGATE_VEHICLE_SCORE_PENALTY_RULE_ID,
-    };
-
-    vehicle_score_contribution_ref(
-        format!("aggregate.vehicle_score.{}", event.event_id),
-        AggregateContributionKind::VehicleScoreInput,
-        event,
-        &combat.vehicle_context,
-        rule_id,
-        serde_json::to_value(value).ok()?,
-    )
-}
-
-fn contribution_ref(
-    contribution_id: String,
-    kind: AggregateContributionKind,
-    event: &NormalizedEvent,
-    rule_id: &str,
-    value: Value,
-) -> Option<AggregateContributionRef> {
-    Some(AggregateContributionRef {
-        contribution_id,
-        kind,
-        event_id: Some(event.event_id.clone()),
-        source_refs: SourceRefs::new(event.source_refs.as_slice().to_vec()).ok()?,
-        rule_id: RuleId::new(rule_id).ok()?,
-        value,
-    })
-}
-
-fn vehicle_score_contribution_ref(
-    contribution_id: String,
-    kind: AggregateContributionKind,
-    event: &NormalizedEvent,
-    vehicle_context: &parser_contract::events::VehicleContext,
-    rule_id: &str,
-    value: Value,
-) -> Option<AggregateContributionRef> {
-    Some(AggregateContributionRef {
-        contribution_id,
-        kind,
-        event_id: Some(event.event_id.clone()),
-        source_refs: vehicle_score_source_refs(event, vehicle_context)?,
-        rule_id: RuleId::new(rule_id).ok()?,
-        value,
-    })
-}
-
-fn vehicle_score_source_refs(
-    event: &NormalizedEvent,
-    vehicle_context: &parser_contract::events::VehicleContext,
-) -> Option<SourceRefs> {
-    let mut source_refs = event.source_refs.as_slice().to_vec();
-    for source_ref in [
-        field_source_ref(&vehicle_context.raw_weapon),
-        field_source_ref(&vehicle_context.attacker_vehicle_entity_id),
-        field_source_ref(&vehicle_context.attacker_vehicle_name),
-        field_source_ref(&vehicle_context.attacker_vehicle_class),
-        field_source_ref(&vehicle_context.attacker_vehicle_category),
-        field_source_ref(&vehicle_context.target_category),
-    ]
-    .into_iter()
-    .flatten()
-    {
-        if !source_refs.contains(source_ref) {
-            source_refs.push(source_ref.clone());
-        }
-    }
-
-    SourceRefs::new(source_refs).ok()
-}
-
-fn is_relationship_effect(effect: &LegacyCounterEffect) -> bool {
-    effect.relationship_target_entity_id.is_some()
-        && RELATIONSHIP_FIELDS.contains(&effect.field.as_str())
-}
-
-#[derive(Debug, Clone)]
-struct PlayerProjectionIdentity {
-    source_entity_id: i64,
-    compatibility_key: String,
-    observed_name: Option<String>,
-    side: Option<&'static str>,
-    source_refs: Vec<SourceRef>,
-}
-
-fn player_projection_identities(
-    entities: &[ObservedEntity],
-) -> BTreeMap<i64, PlayerProjectionIdentity> {
+fn minimal_players(entities: &[ObservedEntity]) -> Vec<MinimalPlayerRow> {
     entities
         .iter()
         .filter(|entity| is_legacy_player_entity(entity))
-        .map(|entity| {
-            (
-                entity.source_entity_id,
-                PlayerProjectionIdentity {
-                    source_entity_id: entity.source_entity_id,
-                    compatibility_key: compatibility_key(entity),
-                    observed_name: observed_string(&entity.observed_name).map(ToOwned::to_owned),
-                    side: present_side_name(&entity.identity.side),
-                    source_refs: entity.source_refs.as_slice().to_vec(),
-                },
-            )
+        .map(|entity| MinimalPlayerRow {
+            player_id: player_id(entity.source_entity_id),
+            source_entity_id: entity.source_entity_id,
+            observed_name: player_name(entity),
+            side: present_side(&entity.identity.side),
+            group: player_group(entity),
+            role: player_role(entity),
+            steam_id: observed_string(&entity.identity.steam_id).map(ToOwned::to_owned),
+            compatibility_key: compatibility_key(entity),
         })
         .collect()
 }
 
-#[derive(Debug, Clone)]
-struct PlayerProjectionGroup {
-    compatibility_key: String,
-    observed_entity_ids: Vec<i64>,
-    observed_name: Option<String>,
-    side: Option<&'static str>,
-    source_refs: Vec<SourceRef>,
-}
-
-fn player_projection_groups(
-    players: &BTreeMap<i64, PlayerProjectionIdentity>,
-) -> BTreeMap<String, PlayerProjectionGroup> {
-    let mut groups = BTreeMap::<String, PlayerProjectionGroup>::new();
-
-    for player in players.values() {
-        let group = groups.entry(player.compatibility_key.clone()).or_insert_with(|| {
-            PlayerProjectionGroup {
-                compatibility_key: player.compatibility_key.clone(),
-                observed_entity_ids: Vec::new(),
-                observed_name: player.observed_name.clone(),
-                side: player.side,
-                source_refs: Vec::new(),
-            }
-        });
-        group.observed_entity_ids.push(player.source_entity_id);
-        group.source_refs.extend(player.source_refs.iter().cloned());
-
-        if group.observed_name.is_none() {
-            group.observed_name.clone_from(&player.observed_name);
-        }
-        if group.side.is_none() {
-            group.side = player.side;
-        }
+fn minimal_kill_row(
+    combat: &CombatEventAttributes,
+    classification: KillClassification,
+) -> MinimalKillRow {
+    MinimalKillRow {
+        killer_player_id: actor_entity_id(&combat.killer).map(player_id),
+        killer_source_entity_id: actor_entity_id(&combat.killer),
+        killer_name: actor_name(&combat.killer),
+        killer_side: actor_side(&combat.killer),
+        victim_player_id: actor_entity_id(&combat.victim).map(player_id),
+        victim_source_entity_id: actor_entity_id(&combat.victim),
+        victim_name: actor_name(&combat.victim),
+        victim_side: actor_side(&combat.victim),
+        classification,
+        weapon: observed_string(&combat.weapon).map(ToOwned::to_owned),
+        attacker_vehicle_entity_id: present_i64(&combat.vehicle_context.attacker_vehicle_entity_id),
+        attacker_vehicle_name: observed_string(&combat.vehicle_context.attacker_vehicle_name)
+            .map(ToOwned::to_owned),
+        attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
+            .map(ToOwned::to_owned),
+        bounty_eligible: combat.bounty.state == BountyEligibilityState::Eligible,
+        bounty_exclusion_reasons: combat
+            .bounty
+            .exclusion_reasons
+            .iter()
+            .map(|reason| bounty_exclusion_reason_name(*reason).to_owned())
+            .collect(),
     }
+}
 
-    for group in groups.values_mut() {
-        group.observed_entity_ids.sort_unstable();
-        group.observed_entity_ids.dedup();
+fn minimal_destroyed_vehicle_row(
+    combat: &CombatEventAttributes,
+    entity_index: &BTreeMap<i64, &ObservedEntity>,
+) -> MinimalDestroyedVehicleRow {
+    let destroyed_entity =
+        actor_entity_id(&combat.victim).and_then(|entity_id| entity_index.get(&entity_id).copied());
+
+    MinimalDestroyedVehicleRow {
+        attacker_player_id: actor_entity_id(&combat.killer).map(player_id),
+        attacker_source_entity_id: actor_entity_id(&combat.killer),
+        attacker_name: actor_name(&combat.killer),
+        attacker_side: actor_side(&combat.killer),
+        classification: destroyed_vehicle_classification(combat),
+        weapon: observed_string(&combat.weapon).map(ToOwned::to_owned),
+        attacker_vehicle_entity_id: present_i64(&combat.vehicle_context.attacker_vehicle_entity_id),
+        attacker_vehicle_name: observed_string(&combat.vehicle_context.attacker_vehicle_name)
+            .map(ToOwned::to_owned),
+        attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
+            .map(ToOwned::to_owned),
+        destroyed_entity_id: destroyed_entity.map(|entity| entity.source_entity_id),
+        destroyed_entity_type: destroyed_entity.map(entity_kind_name).map(ToOwned::to_owned),
+        destroyed_name: destroyed_entity
+            .and_then(|entity| observed_string(&entity.observed_name))
+            .map(ToOwned::to_owned),
+        destroyed_class: destroyed_entity
+            .and_then(|entity| observed_string(&entity.observed_class))
+            .map(ToOwned::to_owned),
+        destroyed_side: destroyed_entity.and_then(|entity| present_side(&entity.identity.side)),
     }
-
-    groups
 }
 
 #[derive(Debug, Clone)]
-struct PlayerResultAccumulator {
-    group: PlayerProjectionGroup,
-    kills: i64,
-    kills_from_vehicle: i64,
-    vehicle_kills: i64,
-    teamkills: i64,
-    is_dead: bool,
-    is_dead_by_teamkill: bool,
-    source_contribution_ids: BTreeSet<String>,
+struct PlayerStatsAccumulator {
+    player_id: String,
+    source_entity_id: i64,
+    kills: u64,
+    deaths: u64,
+    teamkills: u64,
+    suicides: u64,
+    null_killer_deaths: u64,
+    unknown_deaths: u64,
+    vehicle_kills: u64,
+    kills_from_vehicle: u64,
 }
 
-impl PlayerResultAccumulator {
-    fn new(group: PlayerProjectionGroup) -> Self {
+impl PlayerStatsAccumulator {
+    fn new(player: &MinimalPlayerRow) -> Self {
         Self {
-            group,
+            player_id: player.player_id.clone(),
+            source_entity_id: player.source_entity_id,
             kills: 0,
-            kills_from_vehicle: 0,
-            vehicle_kills: 0,
+            deaths: 0,
             teamkills: 0,
-            is_dead: false,
-            is_dead_by_teamkill: false,
-            source_contribution_ids: BTreeSet::new(),
+            suicides: 0,
+            null_killer_deaths: 0,
+            unknown_deaths: 0,
+            vehicle_kills: 0,
+            kills_from_vehicle: 0,
         }
     }
 
-    fn apply(&mut self, contribution_id: &str, value: &LegacyCounterContributionValue) {
-        match value.field.as_str() {
-            "kills" => self.kills += value.delta,
-            "killsFromVehicle" => self.kills_from_vehicle += value.delta,
-            "vehicleKills" => self.vehicle_kills += value.delta,
-            "teamkills" => self.teamkills += value.delta,
-            "isDead" => self.is_dead |= value.delta > 0,
-            "isDeadByTeamkill" => self.is_dead_by_teamkill |= value.delta > 0,
-            _ => return,
+    fn into_row(self) -> MinimalPlayerStatsRow {
+        MinimalPlayerStatsRow {
+            player_id: self.player_id,
+            source_entity_id: self.source_entity_id,
+            kills: self.kills,
+            deaths: self.deaths,
+            teamkills: self.teamkills,
+            suicides: self.suicides,
+            null_killer_deaths: self.null_killer_deaths,
+            unknown_deaths: self.unknown_deaths,
+            vehicle_kills: self.vehicle_kills,
+            kills_from_vehicle: self.kills_from_vehicle,
         }
-
-        let _ = self.source_contribution_ids.insert(contribution_id.to_string());
-    }
-
-    fn to_value(&self) -> Value {
-        let deaths_total = i64::from(self.is_dead);
-        let deaths_by_teamkills = i64::from(self.is_dead_by_teamkill);
-        let contribution_ids =
-            self.source_contribution_ids.iter().cloned().collect::<Vec<String>>();
-
-        json!({
-            "compatibility_key": self.group.compatibility_key,
-            "observed_entity_ids": self.group.observed_entity_ids,
-            "observed_name": self.group.observed_name,
-            "side": self.group.side,
-            "kills": self.kills,
-            "killsFromVehicle": self.kills_from_vehicle,
-            "vehicleKills": self.vehicle_kills,
-            "teamkills": self.teamkills,
-            "isDead": self.is_dead,
-            "isDeadByTeamkill": self.is_dead_by_teamkill,
-            "deaths": {
-                "total": deaths_total,
-                "byTeamkills": deaths_by_teamkills,
-            },
-            "kdRatio": kd_ratio(self.kills, self.teamkills, deaths_total, deaths_by_teamkills),
-            "killsFromVehicleCoef": kills_from_vehicle_coef(self.kills, self.kills_from_vehicle),
-            "score": score(1, self.kills, self.teamkills, deaths_by_teamkills),
-            "totalPlayedGames": 1,
-            "source_contribution_ids": contribution_ids,
-        })
     }
 }
 
-fn legacy_player_game_results(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contributions: &[AggregateContributionRef],
-) -> Value {
-    let mut rows = groups
-        .iter()
-        .map(|(key, group)| (key.clone(), PlayerResultAccumulator::new(group.clone())))
-        .collect::<BTreeMap<_, _>>();
-
-    for contribution in contributions {
-        if contribution.kind != AggregateContributionKind::LegacyCounter {
-            continue;
-        }
-
-        let Some(value) = legacy_counter_value(contribution) else {
-            continue;
-        };
-        if let Some(row) = rows.get_mut(&value.compatibility_key) {
-            row.apply(&contribution.contribution_id, &value);
-        }
-    }
-
-    Value::Array(rows.values().map(PlayerResultAccumulator::to_value).collect())
-}
-
-#[derive(Debug, Clone)]
-struct RelationshipAccumulator {
-    relationship: String,
-    source_group: PlayerProjectionGroup,
-    target_group: PlayerProjectionGroup,
-    count: i64,
-    event_ids: BTreeSet<String>,
-    source_contribution_ids: BTreeSet<String>,
-}
-
-impl RelationshipAccumulator {
-    fn new(
-        relationship: String,
-        source_group: PlayerProjectionGroup,
-        target_group: PlayerProjectionGroup,
-    ) -> Self {
-        Self {
-            relationship,
-            source_group,
-            target_group,
-            count: 0,
-            event_ids: BTreeSet::new(),
-            source_contribution_ids: BTreeSet::new(),
-        }
-    }
-
-    fn apply(
-        &mut self,
-        contribution: &AggregateContributionRef,
-        value: &RelationshipContributionValue,
-    ) {
-        self.count += value.count_delta;
-        if let Some(event_id) = &contribution.event_id {
-            let _ = self.event_ids.insert(event_id.clone());
-        }
-        let _ = self.source_contribution_ids.insert(contribution.contribution_id.clone());
-    }
-
-    fn to_value(&self) -> Value {
-        json!({
-            "relationship": self.relationship,
-            "source_compatibility_key": self.source_group.compatibility_key,
-            "source_observed_entity_ids": self.source_group.observed_entity_ids,
-            "source_observed_name": self.source_group.observed_name,
-            "target_compatibility_key": self.target_group.compatibility_key,
-            "target_observed_entity_ids": self.target_group.observed_entity_ids,
-            "target_observed_name": self.target_group.observed_name,
-            "count": self.count,
-            "event_ids": self.event_ids.iter().cloned().collect::<Vec<String>>(),
-            "source_contribution_ids": self.source_contribution_ids.iter().cloned().collect::<Vec<String>>(),
-        })
+fn increment_killer(
+    stats: &mut BTreeMap<i64, PlayerStatsAccumulator>,
+    combat: &CombatEventAttributes,
+    update: impl FnOnce(&mut PlayerStatsAccumulator),
+) {
+    if let Some(killer) =
+        actor_entity_id(&combat.killer).and_then(|entity_id| stats.get_mut(&entity_id))
+    {
+        update(killer);
     }
 }
 
-fn legacy_relationships(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contributions: &[AggregateContributionRef],
-) -> Value {
-    let mut rows_by_relationship =
-        BTreeMap::<String, BTreeMap<String, RelationshipAccumulator>>::new();
-
-    for relationship in RELATIONSHIP_FIELDS {
-        drop(rows_by_relationship.insert((*relationship).to_string(), BTreeMap::new()));
+fn increment_victim(
+    stats: &mut BTreeMap<i64, PlayerStatsAccumulator>,
+    combat: &CombatEventAttributes,
+    update: impl FnOnce(&mut PlayerStatsAccumulator),
+) {
+    if let Some(victim) =
+        actor_entity_id(&combat.victim).and_then(|entity_id| stats.get_mut(&entity_id))
+    {
+        update(victim);
     }
+}
 
-    for contribution in contributions {
-        if contribution.kind != AggregateContributionKind::Relationship {
-            continue;
-        }
+fn victim_is_or_may_be_player(
+    combat: &CombatEventAttributes,
+    entity_index: &BTreeMap<i64, &ObservedEntity>,
+) -> bool {
+    match combat.victim_kind {
+        CombatVictimKind::Player => true,
+        CombatVictimKind::Unknown => actor_entity_id(&combat.victim)
+            .and_then(|entity_id| entity_index.get(&entity_id))
+            .is_none_or(|entity| {
+                !matches!(entity.kind, EntityKind::Vehicle | EntityKind::StaticWeapon)
+            }),
+        CombatVictimKind::Vehicle | CombatVictimKind::StaticWeapon => false,
+    }
+}
 
-        let Some(value) = relationship_value(contribution) else {
-            continue;
-        };
-        let Some(source_group) = groups.get(&value.compatibility_source_key).cloned() else {
-            continue;
-        };
-        let Some(target_group) = groups.get(&value.compatibility_target_key).cloned() else {
-            continue;
-        };
-
-        let row_key = format!(
-            "{}|{}|{}",
-            value.relationship, value.compatibility_source_key, value.compatibility_target_key
-        );
-        rows_by_relationship
-            .entry(value.relationship.clone())
-            .or_default()
-            .entry(row_key)
-            .or_insert_with(|| {
-                RelationshipAccumulator::new(value.relationship.clone(), source_group, target_group)
+fn vehicle_or_static_victim(
+    combat: &CombatEventAttributes,
+    entity_index: &BTreeMap<i64, &ObservedEntity>,
+) -> bool {
+    matches!(combat.victim_kind, CombatVictimKind::Vehicle | CombatVictimKind::StaticWeapon)
+        || actor_entity_id(&combat.victim)
+            .and_then(|entity_id| entity_index.get(&entity_id))
+            .is_some_and(|entity| {
+                matches!(entity.kind, EntityKind::Vehicle | EntityKind::StaticWeapon)
             })
-            .apply(contribution, &value);
-    }
-
-    let mut value = serde_json::Map::new();
-    for relationship in RELATIONSHIP_FIELDS {
-        let rows = rows_by_relationship
-            .remove(*relationship)
-            .unwrap_or_default()
-            .into_values()
-            .map(|row| row.to_value())
-            .collect::<Vec<_>>();
-        drop(value.insert((*relationship).to_string(), Value::Array(rows)));
-    }
-
-    Value::Object(value)
 }
 
-fn legacy_game_type_compatibility(replay: &ReplayMetadata) -> Value {
-    let mission_name = observed_string(&replay.mission_name).map(ToOwned::to_owned);
-    let prefix_bucket = mission_name.as_deref().map_or("other", mission_prefix_bucket);
-    let source_refs = field_source_ref(&replay.mission_name).map_or_else(
-        || Value::Array(Vec::new()),
-        |source_ref| source_refs_value(std::slice::from_ref(source_ref)),
-    );
-
-    json!({
-        "mission_name": mission_name,
-        "prefix_bucket": prefix_bucket,
-        "parser_action": "emit_filter_metadata_only",
-        "source_refs": source_refs,
-    })
-}
-
-fn mission_prefix_bucket(mission_name: &str) -> &'static str {
-    let trimmed = mission_name.trim().to_ascii_lowercase();
-
-    if trimmed.starts_with("sgs") {
-        return "sgs";
-    }
-    if trimmed.starts_with("mace") {
-        return "mace";
-    }
-    if trimmed.starts_with("sm") {
-        return "sm";
-    }
-    if trimmed.starts_with("sg") {
-        return "sg";
-    }
-
-    "other"
-}
-
-fn legacy_squad_inputs(groups: &BTreeMap<String, PlayerProjectionGroup>) -> Value {
-    Value::Array(
-        groups
-            .values()
-            .map(|group| {
-                json!({
-                    "compatibility_key": group.compatibility_key,
-                    "observed_name": group.observed_name,
-                    "squad_prefix": group.observed_name.as_deref().and_then(bracket_squad_prefix),
-                    "source_entity_ids": group.observed_entity_ids,
-                    "source_refs": source_refs_value(&group.source_refs),
-                })
-            })
-            .collect(),
-    )
-}
-
-fn bracket_squad_prefix(observed_name: &str) -> Option<String> {
-    let trimmed = observed_name.trim();
-    let start = trimmed.find('[')?;
-    let end = trimmed[start..].find(']')? + start;
-
-    if end <= start + 1 {
-        return None;
-    }
-
-    Some(trimmed[start..=end].to_string())
-}
-
-fn bounty_inputs(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contributions: &[AggregateContributionRef],
-) -> Value {
-    Value::Array(
-        contributions
-            .iter()
-            .filter(|contribution| contribution.kind == AggregateContributionKind::BountyInput)
-            .filter_map(|contribution| bounty_input_row(groups, contribution))
-            .collect(),
-    )
-}
-
-fn bounty_input_row(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contribution: &AggregateContributionRef,
-) -> Option<Value> {
-    let value = bounty_input_value(contribution)?;
-    let killer_group = group_by_entity_id(groups, value.killer_entity_id)?;
-    let victim_group = group_by_entity_id(groups, value.victim_entity_id)?;
-
-    Some(json!({
-        "event_id": value.event_id,
-        "source_contribution_id": contribution.contribution_id,
-        "killer_entity_id": value.killer_entity_id,
-        "killer_compatibility_key": killer_group.compatibility_key,
-        "killer_observed_name": killer_group.observed_name,
-        "killer_side": value.killer_side,
-        "victim_entity_id": value.victim_entity_id,
-        "victim_compatibility_key": victim_group.compatibility_key,
-        "victim_observed_name": victim_group.observed_name,
-        "victim_side": value.victim_side,
-        "frame": value.frame,
-        "eligible": value.eligible,
-        "exclusion_reasons": value.exclusion_reasons,
-        "source_refs": source_refs_value(contribution.source_refs.as_slice()),
-    }))
-}
-
-fn vehicle_score_inputs(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contributions: &[AggregateContributionRef],
-) -> Value {
-    Value::Array(
-        contributions
-            .iter()
-            .filter(|contribution| {
-                contribution.kind == AggregateContributionKind::VehicleScoreInput
-            })
-            .filter_map(|contribution| vehicle_score_input_row(groups, contribution))
-            .collect(),
-    )
-}
-
-fn vehicle_score_input_row(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contribution: &AggregateContributionRef,
-) -> Option<Value> {
-    let value = vehicle_score_value(contribution)?;
-    let player_group = group_by_entity_id(groups, value.player_entity_id)?;
-
-    Some(json!({
-        "source_contribution_id": contribution.contribution_id,
-        "event_id": value.event_id,
-        "player_entity_id": value.player_entity_id,
-        "compatibility_key": player_group.compatibility_key,
-        "observed_entity_ids": player_group.observed_entity_ids,
-        "sign": value.sign,
-        "attacker_category": value.attacker_category,
-        "target_category": value.target_category,
-        "raw_attacker_vehicle_name": value.raw_attacker_vehicle_name,
-        "raw_attacker_vehicle_class": value.raw_attacker_vehicle_class,
-        "raw_target_class": value.raw_target_class,
-        "matrix_weight": value.matrix_weight,
-        "applied_weight": value.applied_weight,
-        "teamkill_penalty_clamped": value.teamkill_penalty_clamped,
-        "denominator_eligible": value.denominator_eligible,
-        "rule_id": contribution.rule_id.as_str(),
-        "source_refs": source_refs_value(contribution.source_refs.as_slice()),
-    }))
-}
-
-fn vehicle_score_denominator_inputs(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    contributions: &[AggregateContributionRef],
-) -> Value {
-    let mut rows = BTreeMap::<String, (PlayerProjectionGroup, BTreeSet<String>)>::new();
-
-    for contribution in contributions {
-        if contribution.kind != AggregateContributionKind::VehicleScoreInput {
-            continue;
+fn destroyed_vehicle_classification(
+    combat: &CombatEventAttributes,
+) -> DestroyedVehicleClassification {
+    match (actor_side(&combat.killer), actor_side(&combat.victim)) {
+        (Some(killer_side), Some(victim_side)) if killer_side == victim_side => {
+            DestroyedVehicleClassification::Friendly
         }
-
-        let Some(value) = vehicle_score_value(contribution) else {
-            continue;
-        };
-        if value.sign != VehicleScoreSign::Award || !value.denominator_eligible {
-            continue;
-        }
-        let Some(group) = group_by_entity_id(groups, value.player_entity_id).cloned() else {
-            continue;
-        };
-
-        let (_, contribution_ids) =
-            rows.entry(group.compatibility_key.clone()).or_insert_with(|| (group, BTreeSet::new()));
-        let _ = contribution_ids.insert(contribution.contribution_id.clone());
+        (Some(_), Some(_)) => DestroyedVehicleClassification::Enemy,
+        _ => DestroyedVehicleClassification::UnknownSide,
     }
-
-    Value::Array(
-        rows.into_values()
-            .map(|(group, contribution_ids)| {
-                json!({
-                    "compatibility_key": group.compatibility_key,
-                    "observed_entity_ids": group.observed_entity_ids,
-                    "has_vehicle_kill": true,
-                    "source_contribution_ids": contribution_ids.into_iter().collect::<Vec<_>>(),
-                })
-            })
-            .collect(),
-    )
-}
-
-fn group_by_entity_id(
-    groups: &BTreeMap<String, PlayerProjectionGroup>,
-    entity_id: i64,
-) -> Option<&PlayerProjectionGroup> {
-    groups.values().find(|group| group.observed_entity_ids.binary_search(&entity_id).is_ok())
-}
-
-fn entity_observed_classes(entities: &[ObservedEntity]) -> BTreeMap<i64, Option<String>> {
-    entities
-        .iter()
-        .map(|entity| {
-            (
-                entity.source_entity_id,
-                observed_string(&entity.observed_class).map(ToOwned::to_owned),
-            )
-        })
-        .collect()
 }
 
 fn compatibility_key(entity: &ObservedEntity) -> String {
@@ -879,13 +310,32 @@ fn compatibility_key(entity: &ObservedEntity) -> String {
         .iter()
         .find(|hint| hint.kind == EntityCompatibilityHintKind::DuplicateSlotSameName)
         .and_then(|hint| observed_string(&hint.observed_name))
-        .map_or_else(
-            || format!("entity:{}", entity.source_entity_id),
-            |name| format!("legacy_name:{name}"),
-        )
+        .map_or_else(|| player_id(entity.source_entity_id), |name| format!("legacy_name:{name}"))
 }
 
-fn present_actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef> {
+fn player_id(source_entity_id: i64) -> String {
+    format!("entity:{source_entity_id}")
+}
+
+fn player_name(entity: &ObservedEntity) -> Option<String> {
+    observed_string(&entity.identity.nickname)
+        .or_else(|| observed_string(&entity.observed_name))
+        .map(ToOwned::to_owned)
+}
+
+fn player_group(entity: &ObservedEntity) -> Option<String> {
+    observed_string(&entity.identity.squad)
+        .or_else(|| observed_string(&entity.identity.group))
+        .map(ToOwned::to_owned)
+}
+
+fn player_role(entity: &ObservedEntity) -> Option<String> {
+    observed_string(&entity.identity.role)
+        .or_else(|| observed_string(&entity.identity.description))
+        .map(ToOwned::to_owned)
+}
+
+fn actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(value),
         FieldPresence::ExplicitNull { .. }
@@ -896,15 +346,15 @@ fn present_actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef>
 }
 
 fn actor_entity_id(field: &FieldPresence<EventActorRef>) -> Option<i64> {
-    present_actor(field).and_then(actor_source_entity_id)
+    actor(field).and_then(|actor| present_i64(&actor.source_entity_id))
 }
 
-fn actor_source_entity_id(actor: &EventActorRef) -> Option<i64> {
-    present_i64(&actor.source_entity_id)
+fn actor_name(field: &FieldPresence<EventActorRef>) -> Option<String> {
+    actor(field).and_then(|actor| observed_string(&actor.observed_name)).map(ToOwned::to_owned)
 }
 
-fn actor_side_name(actor: &EventActorRef) -> Option<&'static str> {
-    present_side_name(&actor.side)
+fn actor_side(field: &FieldPresence<EventActorRef>) -> Option<EntitySide> {
+    actor(field).and_then(|actor| present_side(&actor.side))
 }
 
 fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
@@ -917,126 +367,12 @@ fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
     }
 }
 
-fn present_u64(field: &FieldPresence<u64>) -> Option<u64> {
+fn present_side(field: &FieldPresence<EntitySide>) -> Option<EntitySide> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(*value),
         FieldPresence::ExplicitNull { .. }
         | FieldPresence::Unknown { .. }
         | FieldPresence::Inferred { .. }
-        | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
-fn present_side_name(field: &FieldPresence<EntitySide>) -> Option<&'static str> {
-    match field {
-        FieldPresence::Present { value, source: _ } => Some(match value {
-            EntitySide::East => "east",
-            EntitySide::West => "west",
-            EntitySide::Guer => "guer",
-            EntitySide::Civ => "civ",
-            EntitySide::Unknown => "unknown",
-        }),
-        FieldPresence::ExplicitNull { .. }
-        | FieldPresence::Unknown { .. }
-        | FieldPresence::Inferred { .. }
-        | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
-fn legacy_counter_value(
-    contribution: &AggregateContributionRef,
-) -> Option<LegacyCounterContributionValue> {
-    serde_json::from_value(contribution.value.clone()).ok()
-}
-
-fn relationship_value(
-    contribution: &AggregateContributionRef,
-) -> Option<RelationshipContributionValue> {
-    serde_json::from_value(contribution.value.clone()).ok()
-}
-
-fn bounty_input_value(
-    contribution: &AggregateContributionRef,
-) -> Option<BountyInputContributionValue> {
-    serde_json::from_value(contribution.value.clone()).ok()
-}
-
-fn vehicle_score_value(contribution: &AggregateContributionRef) -> Option<VehicleScoreInputValue> {
-    serde_json::from_value(contribution.value.clone()).ok()
-}
-
-fn present_vehicle_score_category(
-    field: &FieldPresence<VehicleScoreCategory>,
-) -> Option<VehicleScoreCategory> {
-    match field {
-        FieldPresence::Present { value, source: _ } if *value != VehicleScoreCategory::Unknown => {
-            Some(*value)
-        }
-        FieldPresence::Present { .. }
-        | FieldPresence::ExplicitNull { .. }
-        | FieldPresence::Unknown { .. }
-        | FieldPresence::Inferred { .. }
-        | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
-fn kd_ratio(kills: i64, teamkills: i64, deaths_total: i64, deaths_by_teamkills: i64) -> f64 {
-    let deaths_without_teamkills = (deaths_total - deaths_by_teamkills).abs();
-    let total = kills - teamkills;
-
-    if deaths_without_teamkills == 0 {
-        return legacy_count_to_f64(total);
-    }
-
-    round_2(legacy_count_to_f64(total) / legacy_count_to_f64(deaths_without_teamkills))
-}
-
-fn score(total_played_games: i64, kills: i64, teamkills: i64, deaths_by_teamkills: i64) -> f64 {
-    let total_score = kills - teamkills;
-    let games_count = total_played_games - deaths_by_teamkills;
-
-    if games_count <= 0 {
-        return legacy_count_to_f64(total_score);
-    }
-
-    round_2(legacy_count_to_f64(total_score) / legacy_count_to_f64(games_count))
-}
-
-fn kills_from_vehicle_coef(kills: i64, kills_from_vehicle: i64) -> f64 {
-    if kills == 0 || kills_from_vehicle == 0 {
-        return 0.0;
-    }
-
-    round_2(legacy_count_to_f64(kills_from_vehicle) / legacy_count_to_f64(kills))
-}
-
-fn round_2(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
-}
-
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_precision_loss,
-    reason = "legacy aggregate formulas are defined as f64 projections from replay-local counters"
-)]
-fn legacy_count_to_f64(value: i64) -> f64 {
-    value as f64
-}
-
-fn source_refs_value(source_refs: &[SourceRef]) -> Value {
-    serde_json::to_value(source_refs).unwrap_or_else(|_| Value::Array(Vec::new()))
-}
-
-fn field_source_ref<T>(field: &FieldPresence<T>) -> Option<&SourceRef> {
-    match field {
-        FieldPresence::Present { source: Some(source), .. }
-        | FieldPresence::ExplicitNull { source: Some(source), .. }
-        | FieldPresence::Unknown { source: Some(source), .. }
-        | FieldPresence::Inferred { source: Some(source), .. } => Some(source),
-        FieldPresence::Present { source: None, .. }
-        | FieldPresence::ExplicitNull { source: None, .. }
-        | FieldPresence::Unknown { source: None, .. }
-        | FieldPresence::Inferred { source: None, .. }
         | FieldPresence::NotApplicable { .. } => None,
     }
 }
@@ -1052,447 +388,26 @@ fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
     }
 }
 
-#[cfg(all(test, not(coverage)))]
-mod tests {
-    #![allow(
-        clippy::expect_used,
-        clippy::too_many_lines,
-        reason = "unit tests use local builders to cover private aggregate defensive branches"
-    )]
-
-    use super::*;
-    use parser_contract::{
-        events::{BountyEligibility, CombatVictimKind, NormalizedEventKind},
-        identity::{EntityKind, ObservedIdentity},
-        presence::{Confidence, NullReason, UnknownReason},
-        source_ref::{ReplaySource, SourceChecksum},
-    };
-
-    fn source_ref(path: &str) -> SourceRef {
-        SourceContext::new(&ReplaySource {
-            replay_id: Some("aggregate-unit-test".to_owned()),
-            source_file: "aggregate-unit-test.ocap.json".to_owned(),
-            checksum: FieldPresence::Present {
-                value: SourceChecksum::sha256(
-                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                )
-                .expect("test checksum should be valid"),
-                source: None,
-            },
-        })
-        .source_ref(path, RuleId::new("aggregate.unit_test").ok())
-    }
-
-    fn source_refs(path: &str) -> SourceRefs {
-        SourceRefs::new(vec![source_ref(path)]).expect("test source refs should be non-empty")
-    }
-
-    fn present<T>(value: T, path: &str) -> FieldPresence<T> {
-        FieldPresence::Present { value, source: Some(source_ref(path)) }
-    }
-
-    fn actor(entity_id: i64, side: EntitySide) -> FieldPresence<EventActorRef> {
-        FieldPresence::Present {
-            value: EventActorRef {
-                source_entity_id: present(entity_id, "$.events[0][3][0]"),
-                observed_name: present(format!("Player {entity_id}"), "$.entities[0].name"),
-                side: present(side, "$.entities[0].side"),
-            },
-            source: Some(source_ref("$.events[0][3]")),
-        }
-    }
-
-    fn player(source_entity_id: i64, name: Option<&str>, side: EntitySide) -> ObservedEntity {
-        let observed_name = name.map_or_else(
-            || FieldPresence::Unknown {
-                reason: UnknownReason::SourceFieldAbsent,
-                source: Some(source_ref("$.entities[0].name")),
-            },
-            |name| present(name.to_owned(), "$.entities[0].name"),
-        );
-
-        ObservedEntity {
-            source_entity_id,
-            kind: EntityKind::Unit,
-            observed_name: observed_name.clone(),
-            observed_class: FieldPresence::Unknown {
-                reason: UnknownReason::SourceFieldAbsent,
-                source: Some(source_ref("$.entities[0].class")),
-            },
-            is_player: present(true, "$.entities[0].isPlayer"),
-            identity: ObservedIdentity {
-                nickname: observed_name,
-                steam_id: FieldPresence::Unknown {
-                    reason: UnknownReason::SourceFieldAbsent,
-                    source: Some(source_ref("$.entities[0].steam")),
-                },
-                side: present(side, "$.entities[0].side"),
-                faction: FieldPresence::NotApplicable {
-                    reason: "unit test faction omitted".to_owned(),
-                },
-                group: FieldPresence::NotApplicable {
-                    reason: "unit test group omitted".to_owned(),
-                },
-                squad: FieldPresence::NotApplicable {
-                    reason: "unit test squad omitted".to_owned(),
-                },
-                role: FieldPresence::NotApplicable { reason: "unit test role omitted".to_owned() },
-                description: present("Rifleman".to_owned(), "$.entities[0].description"),
-            },
-            compatibility_hints: Vec::new(),
-            source_refs: source_refs("$.entities[0]"),
-        }
-    }
-
-    fn event(event_id: &str, combat: Option<CombatEventAttributes>) -> NormalizedEvent {
-        NormalizedEvent {
-            event_id: event_id.to_owned(),
-            kind: NormalizedEventKind::Kill,
-            frame: present(1, "$.events[0][0]"),
-            event_index: present(0, "$.events[0]"),
-            actors: Vec::new(),
-            source_refs: source_refs("$.events[0]"),
-            rule_id: RuleId::new("event.unit_test").expect("rule id should be valid"),
-            combat,
-            attributes: BTreeMap::new(),
-        }
-    }
-
-    fn vehicle_context(
-        attacker_category: FieldPresence<VehicleScoreCategory>,
-        target_category: FieldPresence<VehicleScoreCategory>,
-    ) -> parser_contract::events::VehicleContext {
-        parser_contract::events::VehicleContext {
-            is_kill_from_vehicle: true,
-            raw_weapon: present("Hunter".to_owned(), "$.events[0][3][1]"),
-            attacker_vehicle_entity_id: present(50, "$.entities[2].id"),
-            attacker_vehicle_name: present("Hunter".to_owned(), "$.entities[2].name"),
-            attacker_vehicle_class: present("car".to_owned(), "$.entities[2].class"),
-            attacker_vehicle_category: attacker_category,
-            target_category,
-        }
-    }
-
-    fn combat(semantic: CombatSemantic) -> CombatEventAttributes {
-        CombatEventAttributes {
-            semantic,
-            killer: actor(1, EntitySide::West),
-            victim: actor(2, EntitySide::East),
-            victim_kind: CombatVictimKind::Player,
-            weapon: present("Hunter".to_owned(), "$.events[0][3][1]"),
-            distance_meters: present(10.0, "$.events[0][4]"),
-            vehicle_context: vehicle_context(
-                present(VehicleScoreCategory::Car, "$.entities[2].class"),
-                present(VehicleScoreCategory::Player, "$.entities[1].type"),
-            ),
-            bounty: BountyEligibility {
-                state: BountyEligibilityState::Eligible,
-                exclusion_reasons: Vec::new(),
-            },
-            legacy_counter_effects: Vec::new(),
-        }
-    }
-
-    fn contribution(
-        kind: AggregateContributionKind,
-        contribution_id: &str,
-        value: Value,
-    ) -> AggregateContributionRef {
-        AggregateContributionRef {
-            contribution_id: contribution_id.to_owned(),
-            kind,
-            event_id: Some("event.killed.0".to_owned()),
-            source_refs: source_refs("$.events[0]"),
-            rule_id: RuleId::new("aggregate.unit_test").expect("rule id should be valid"),
-            value,
-        }
-    }
-
-    #[test]
-    fn aggregate_contributions_should_skip_non_combat_and_unscored_vehicle_semantics() {
-        // Arrange
-        let players = [player(1, Some("Alpha"), EntitySide::West)];
-        let player_index = player_projection_identities(&players);
-        let non_combat = event("event.none", None);
-        let unscored = event("event.unknown", Some(combat(CombatSemantic::Unknown)));
-        let scored = event("event.scored", Some(combat(CombatSemantic::EnemyKill)));
-
-        // Act
-        let skipped = aggregate_contributions(&[non_combat, unscored], &player_index, &players);
-        let contributions = aggregate_contributions(&[scored], &player_index, &players);
-
-        // Assert
-        assert!(skipped.is_empty());
-        assert!(
-            contributions
-                .iter()
-                .any(|contribution| contribution.kind
-                    == AggregateContributionKind::VehicleScoreInput)
-        );
-    }
-
-    #[test]
-    fn aggregate_projection_helpers_should_ignore_malformed_or_orphan_contributions() {
-        // Arrange
-        let mut groups = BTreeMap::new();
-        drop(groups.insert(
-            "entity:1".to_owned(),
-            PlayerProjectionGroup {
-                compatibility_key: "entity:1".to_owned(),
-                observed_entity_ids: vec![1],
-                observed_name: Some("Alpha".to_owned()),
-                side: Some("west"),
-                source_refs: vec![source_ref("$.entities[0]")],
-            },
-        ));
-        let malformed_legacy = contribution(
-            AggregateContributionKind::LegacyCounter,
-            "bad.legacy",
-            json!({ "bad": true }),
-        );
-        let malformed_relationship = contribution(
-            AggregateContributionKind::Relationship,
-            "bad.relationship",
-            json!({ "bad": true }),
-        );
-        let orphan_source_relationship = contribution(
-            AggregateContributionKind::Relationship,
-            "orphan.source",
-            serde_json::to_value(RelationshipContributionValue {
-                projection_key: "legacy.relationships".to_owned(),
-                source_player_entity_id: 9,
-                target_player_entity_id: 1,
-                relationship: "killed".to_owned(),
-                compatibility_source_key: "entity:9".to_owned(),
-                compatibility_target_key: "entity:1".to_owned(),
-                count_delta: 1,
-            })
-            .expect("relationship value should serialize"),
-        );
-        let orphan_target_relationship = contribution(
-            AggregateContributionKind::Relationship,
-            "orphan.target",
-            serde_json::to_value(RelationshipContributionValue {
-                projection_key: "legacy.relationships".to_owned(),
-                source_player_entity_id: 1,
-                target_player_entity_id: 9,
-                relationship: "killed".to_owned(),
-                compatibility_source_key: "entity:1".to_owned(),
-                compatibility_target_key: "entity:9".to_owned(),
-                count_delta: 1,
-            })
-            .expect("relationship value should serialize"),
-        );
-        let malformed_vehicle = contribution(
-            AggregateContributionKind::VehicleScoreInput,
-            "bad.vehicle",
-            json!({ "bad": true }),
-        );
-        let orphan_vehicle = contribution(
-            AggregateContributionKind::VehicleScoreInput,
-            "orphan.vehicle",
-            serde_json::to_value(VehicleScoreInputValue {
-                player_entity_id: 9,
-                event_id: "event.killed.0".to_owned(),
-                sign: VehicleScoreSign::Award,
-                attacker_category: VehicleScoreCategory::Car,
-                target_category: VehicleScoreCategory::Player,
-                raw_attacker_vehicle_name: None,
-                raw_attacker_vehicle_class: None,
-                raw_target_class: None,
-                matrix_weight: 2.0,
-                applied_weight: 2.0,
-                teamkill_penalty_clamped: false,
-                denominator_eligible: true,
-            })
-            .expect("vehicle score value should serialize"),
-        );
-
-        // Act
-        let player_rows = legacy_player_game_results(&groups, &[malformed_legacy]);
-        let relationship_rows = legacy_relationships(
-            &groups,
-            &[malformed_relationship, orphan_source_relationship, orphan_target_relationship],
-        );
-        let vehicle_rows =
-            vehicle_score_denominator_inputs(&groups, &[malformed_vehicle, orphan_vehicle]);
-        let mut accumulator = PlayerResultAccumulator::new(
-            groups.get("entity:1").expect("group should exist").clone(),
-        );
-        accumulator.apply(
-            "unknown.contribution",
-            &LegacyCounterContributionValue {
-                projection_key: "legacy.player_game_results".to_owned(),
-                player_entity_id: 1,
-                compatibility_key: "entity:1".to_owned(),
-                field: "unknownField".to_owned(),
-                delta: 1,
-                event_id: "event.killed.0".to_owned(),
-            },
-        );
-
-        // Assert
-        assert_eq!(player_rows.as_array().map(Vec::len), Some(1));
-        assert!(
-            relationship_rows
-                .as_object()
-                .expect("relationships should be an object")
-                .values()
-                .all(|rows| rows.as_array().is_some_and(Vec::is_empty))
-        );
-        assert!(vehicle_rows.as_array().is_some_and(Vec::is_empty));
-        assert!(accumulator.source_contribution_ids.is_empty());
-    }
-
-    #[test]
-    fn aggregate_presence_helpers_should_cover_projection_buckets_and_defensive_states() {
-        // Arrange
-        let nameless_player = player(3, None, EntitySide::East);
-        let mut players = BTreeMap::new();
-        drop(players.insert(
-            1,
-            PlayerProjectionIdentity {
-                source_entity_id: 1,
-                compatibility_key: "legacy_name:Echo".to_owned(),
-                observed_name: None,
-                side: None,
-                source_refs: vec![source_ref("$.entities[0]")],
-            },
-        ));
-        drop(players.insert(
-            2,
-            PlayerProjectionIdentity {
-                source_entity_id: 2,
-                compatibility_key: "legacy_name:Echo".to_owned(),
-                observed_name: Some("Echo".to_owned()),
-                side: Some("guer"),
-                source_refs: vec![source_ref("$.entities[1]")],
-            },
-        ));
-        let explicit_null = FieldPresence::<String>::ExplicitNull {
-            reason: NullReason::SourceNull,
-            source: Some(source_ref("$.field")),
-        };
-        let inferred = FieldPresence::Inferred {
-            value: "Echo".to_owned(),
-            reason: "unit test".to_owned(),
-            confidence: Confidence::new(1.0).ok(),
-            source: Some(source_ref("$.field")),
-            rule_id: RuleId::new("aggregate.inferred.test").expect("rule id should be valid"),
-        };
-        let non_player_entities = [ObservedEntity {
-            source_entity_id: 50,
-            kind: EntityKind::Vehicle,
-            observed_name: present("Truck".to_owned(), "$.entities[0].name"),
-            observed_class: present("truck".to_owned(), "$.entities[0].class"),
-            is_player: FieldPresence::NotApplicable {
-                reason: "vehicle has no player flag".to_owned(),
-            },
-            identity: ObservedIdentity {
-                nickname: FieldPresence::NotApplicable {
-                    reason: "vehicle has no nickname".to_owned(),
-                },
-                steam_id: FieldPresence::NotApplicable {
-                    reason: "vehicle has no steam id".to_owned(),
-                },
-                side: FieldPresence::NotApplicable { reason: "vehicle has no side".to_owned() },
-                faction: FieldPresence::NotApplicable {
-                    reason: "vehicle has no faction".to_owned(),
-                },
-                group: FieldPresence::NotApplicable { reason: "vehicle has no group".to_owned() },
-                squad: FieldPresence::NotApplicable { reason: "vehicle has no squad".to_owned() },
-                role: FieldPresence::NotApplicable { reason: "vehicle has no role".to_owned() },
-                description: FieldPresence::NotApplicable {
-                    reason: "vehicle has no description".to_owned(),
-                },
-            },
-            compatibility_hints: Vec::new(),
-            source_refs: source_refs("$.entities[0]"),
-        }];
-        let unknown_mission = ReplayMetadata {
-            mission_name: FieldPresence::Unknown {
-                reason: UnknownReason::SourceFieldAbsent,
-                source: None,
-            },
-            world_name: FieldPresence::NotApplicable {
-                reason: "unit test world omitted".to_owned(),
-            },
-            mission_author: FieldPresence::NotApplicable {
-                reason: "unit test author omitted".to_owned(),
-            },
-            players_count: FieldPresence::NotApplicable {
-                reason: "unit test player count omitted".to_owned(),
-            },
-            capture_delay: FieldPresence::NotApplicable {
-                reason: "unit test capture delay omitted".to_owned(),
-            },
-            end_frame: FieldPresence::NotApplicable {
-                reason: "unit test end frame omitted".to_owned(),
-            },
-            time_bounds: FieldPresence::NotApplicable {
-                reason: "unit test time bounds omitted".to_owned(),
-            },
-            frame_bounds: FieldPresence::NotApplicable {
-                reason: "unit test frame bounds omitted".to_owned(),
-            },
-        };
-
-        // Act
-        let groups = player_projection_groups(&players);
-        let unknown_game_type = legacy_game_type_compatibility(&unknown_mission);
-
-        // Assert
-        assert!(matches!(nameless_player.observed_name, FieldPresence::Unknown { .. }));
-        assert_eq!(
-            groups.get("legacy_name:Echo").and_then(|group| group.observed_name.as_deref()),
-            Some("Echo")
-        );
-        assert_eq!(unknown_game_type["source_refs"], json!([]));
-        assert!(player_projection_identities(&non_player_entities).is_empty());
-        assert_eq!(mission_prefix_bucket("sgs operation"), "sgs");
-        assert_eq!(mission_prefix_bucket("mace operation"), "mace");
-        assert_eq!(mission_prefix_bucket("sm operation"), "sm");
-        assert_eq!(mission_prefix_bucket("sg operation"), "sg");
-        assert_eq!(bracket_squad_prefix("[] Echo"), None);
-        assert_eq!(
-            present_actor(&FieldPresence::NotApplicable { reason: "test".to_owned() }),
-            None
-        );
-        assert_eq!(present_i64(&FieldPresence::NotApplicable { reason: "test".to_owned() }), None);
-        assert_eq!(present_u64(&FieldPresence::NotApplicable { reason: "test".to_owned() }), None);
-        for (side, expected) in [
-            (EntitySide::Guer, Some("guer")),
-            (EntitySide::Civ, Some("civ")),
-            (EntitySide::Unknown, Some("unknown")),
-        ] {
-            assert_eq!(
-                present_side_name(&FieldPresence::Present {
-                    value: side,
-                    source: Some(source_ref("$.entities[0].side")),
-                }),
-                expected
-            );
-        }
-        assert_eq!(
-            present_vehicle_score_category(&FieldPresence::Present {
-                value: VehicleScoreCategory::Unknown,
-                source: Some(source_ref("$.entities[0].class")),
-            }),
-            None
-        );
-        assert_eq!(
-            present_vehicle_score_category(&FieldPresence::NotApplicable {
-                reason: "unit test".to_owned()
-            }),
-            None
-        );
-        assert!(field_source_ref(&explicit_null).is_some());
-        assert!(field_source_ref(&inferred).is_some());
-        assert!(
-            field_source_ref(&FieldPresence::<String>::NotApplicable {
-                reason: "unit test".to_owned()
-            })
-            .is_none()
-        );
+const fn entity_kind_name(entity: &ObservedEntity) -> &'static str {
+    match entity.kind {
+        EntityKind::Unit => "unit",
+        EntityKind::Vehicle => "vehicle",
+        EntityKind::StaticWeapon => "static_weapon",
+        EntityKind::Unknown => "unknown",
     }
 }
+
+const fn bounty_exclusion_reason_name(reason: BountyExclusionReason) -> &'static str {
+    match reason {
+        BountyExclusionReason::Teamkill => "teamkill",
+        BountyExclusionReason::Suicide => "suicide",
+        BountyExclusionReason::NullKiller => "null_killer",
+        BountyExclusionReason::VehicleVictim => "vehicle_victim",
+        BountyExclusionReason::UnknownActor => "unknown_actor",
+        BountyExclusionReason::UnknownSide => "unknown_side",
+        BountyExclusionReason::NotEnemyKill => "not_enemy_kill",
+    }
+}
+
+#[allow(dead_code, reason = "keeps the vehicle context import exercised in docs and type checks")]
+const fn _vehicle_context_type_marker(_: &VehicleContext) {}

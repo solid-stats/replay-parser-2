@@ -2,27 +2,24 @@
 
 #![allow(
     clippy::expect_used,
-    clippy::float_cmp,
     reason = "integration tests use expect messages as assertion context"
 )]
 
-use std::collections::BTreeSet;
-
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    events::{BountyEligibilityState, BountyExclusionReason, CombatSemantic},
     failure::ParseStage,
+    minimal::{DestroyedVehicleClassification, KillClassification},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay};
-use serde_json::{Value, json};
+use serde_json::json;
 
 const AGGREGATE_FIXTURE: &[u8] = include_bytes!("fixtures/aggregate-combat.ocap.json");
 const COMBAT_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/combat-events.ocap.json");
 const INVALID_JSON_FIXTURE: &[u8] = include_bytes!("fixtures/invalid-json.ocap.json");
-const VEHICLE_SCORE_FIXTURE: &[u8] = include_bytes!("fixtures/vehicle-score.ocap.json");
+const VEHICLE_CONTEXT_FIXTURE: &[u8] = include_bytes!("fixtures/vehicle-score.ocap.json");
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -55,125 +52,70 @@ fn parse_fixture(bytes: &[u8], source_file: &str) -> ParseArtifact {
     })
 }
 
-fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value> {
-    artifact
-        .summaries
-        .projections
-        .get(key)
-        .and_then(Value::as_array)
-        .expect("projection should be an array")
-}
-
-fn vehicle_score_input_row<'a>(artifact: &'a ParseArtifact, event_id: &str) -> &'a Value {
-    projection_array(artifact, "vehicle_score.inputs")
-        .iter()
-        .find(|row| row["event_id"] == event_id)
-        .expect("vehicle score row should exist")
-}
-
-#[test]
-fn fault_injection_regressions_should_catch_teamkill_penalty_clamp_using_raw_weight_below_one() {
-    // Arrange
-    // This fault class guards the teamkill penalty clamp when the matrix weight is below 1.
-    let artifact = parse_fixture(VEHICLE_SCORE_FIXTURE, "fixtures/vehicle-score.ocap.json");
-
-    // Act
-    let friendly_static_teamkill = vehicle_score_input_row(&artifact, "event.killed.4");
-
-    // Assert
-    assert_eq!(friendly_static_teamkill["sign"], "penalty");
-    assert_eq!(friendly_static_teamkill["matrix_weight"].as_f64(), Some(0.25));
-    assert_eq!(friendly_static_teamkill["applied_weight"].as_f64(), Some(1.0));
-    assert_eq!(friendly_static_teamkill["teamkill_penalty_clamped"], true);
-}
-
-#[test]
-fn fault_injection_regressions_should_catch_vehicle_score_attacker_and_target_category_swaps() {
-    // Arrange
-    let artifact = parse_fixture(VEHICLE_SCORE_FIXTURE, "fixtures/vehicle-score.ocap.json");
-
-    // Act
-    let static_weapon_kill = vehicle_score_input_row(&artifact, "event.killed.1");
-
-    // Assert
-    assert_eq!(static_weapon_kill["sign"], "award");
-    assert_eq!(static_weapon_kill["attacker_category"], "tank");
-    assert_eq!(static_weapon_kill["target_category"], "static_weapon");
-    assert_eq!(static_weapon_kill["matrix_weight"].as_f64(), Some(0.25));
-    assert_eq!(static_weapon_kill["raw_attacker_vehicle_class"], "rhs_t72ba_tv");
-    assert_eq!(static_weapon_kill["raw_target_class"], "static-weapon");
-}
-
 #[test]
 fn fault_injection_regressions_should_catch_same_side_kills_counted_as_enemy_kills() {
-    // Arrange
     let artifact = parse_fixture(COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json");
-
-    // Act
-    let teamkill_event = artifact
-        .facts
-        .combat
+    let teamkill = artifact
+        .kills
         .iter()
-        .find(|event| event.fact_id == "event.killed.1")
-        .expect("same-side event should exist");
+        .find(|row| row.classification == KillClassification::Teamkill)
+        .expect("same-side teamkill row should exist");
 
-    // Assert
-    assert_eq!(teamkill_event.semantic, CombatSemantic::Teamkill);
-    assert_eq!(teamkill_event.bounty.state, BountyEligibilityState::Excluded);
-    assert!(teamkill_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::Teamkill));
+    assert_eq!(teamkill.killer_source_entity_id, Some(1));
+    assert_eq!(teamkill.victim_source_entity_id, Some(3));
+    assert!(!teamkill.bounty_eligible);
+    assert_eq!(teamkill.bounty_exclusion_reasons, vec!["teamkill"]);
 }
 
 #[test]
-fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_inputs() {
-    // Arrange
+fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_awards() {
     let artifact = parse_fixture(COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json");
-
-    // Act
-    let null_killer_event = artifact
-        .facts
-        .combat
+    let null_killer = artifact
+        .kills
         .iter()
-        .find(|event| event.fact_id == "event.killed.3")
-        .expect("null-killer event should exist");
-    let bounty_event_ids = projection_array(&artifact, "bounty.inputs")
-        .iter()
-        .filter_map(|row| row["event_id"].as_str())
-        .collect::<BTreeSet<_>>();
+        .find(|row| row.classification == KillClassification::NullKiller)
+        .expect("null-killer row should exist");
 
-    // Assert
-    assert_eq!(null_killer_event.semantic, CombatSemantic::NullKillerDeath);
-    assert_eq!(null_killer_event.bounty.state, BountyEligibilityState::Excluded);
-    assert!(
-        null_killer_event.bounty.exclusion_reasons.contains(&BountyExclusionReason::NullKiller)
-    );
-    assert!(!bounty_event_ids.contains("event.killed.3"));
+    assert_eq!(null_killer.victim_source_entity_id, Some(5));
+    assert!(!null_killer.bounty_eligible);
+    assert_eq!(null_killer.bounty_exclusion_reasons, vec!["null_killer"]);
 }
 
 #[test]
-fn fault_injection_regressions_should_catch_aggregate_contributions_without_source_refs() {
-    // Arrange
+fn fault_injection_regressions_should_catch_vehicle_context_loss_in_minimal_rows() {
+    let artifact = parse_fixture(VEHICLE_CONTEXT_FIXTURE, "fixtures/vehicle-score.ocap.json");
+    let vehicle_kill = artifact
+        .kills
+        .iter()
+        .find(|row| row.classification == KillClassification::EnemyKill)
+        .expect("enemy kill from vehicle should exist");
+    let stats = artifact
+        .player_stats
+        .iter()
+        .find(|row| row.source_entity_id == 1)
+        .expect("attacker stats should exist");
+
+    assert_eq!(vehicle_kill.attacker_vehicle_name.as_deref(), Some("T-72B"));
+    assert_eq!(vehicle_kill.attacker_vehicle_class.as_deref(), Some("rhs_t72ba_tv"));
+    assert!(stats.kills_from_vehicle > 0);
+}
+
+#[test]
+fn fault_injection_regressions_should_catch_destroyed_vehicle_rows_dropped_from_default_output() {
     let artifact = parse_fixture(AGGREGATE_FIXTURE, "fixtures/aggregate-combat.ocap.json");
+    let destroyed =
+        artifact.destroyed_vehicles.first().expect("destroyed vehicle row should exist");
 
-    // Act
-    let every_contribution_has_source_refs = artifact
-        .facts
-        .aggregate_contributions
-        .iter()
-        .all(|contribution| !contribution.source_refs.as_slice().is_empty());
-
-    // Assert
-    assert!(every_contribution_has_source_refs, "aggregate contributions must keep source refs");
+    assert_eq!(destroyed.classification, DestroyedVehicleClassification::Enemy);
+    assert_eq!(destroyed.attacker_source_entity_id, Some(1));
+    assert_eq!(destroyed.destroyed_entity_id, Some(20));
 }
 
 #[test]
 fn fault_injection_regressions_should_catch_invalid_json_returning_success_or_partial() {
-    // Arrange
     let artifact = parse_fixture(INVALID_JSON_FIXTURE, "fixtures/invalid-json.ocap.json");
-
-    // Act
     let failure = artifact.failure.as_ref().expect("invalid JSON should include failure");
 
-    // Assert
     assert_eq!(artifact.status, ParseStatus::Failed);
     assert_ne!(artifact.status, ParseStatus::Success);
     assert_ne!(artifact.status, ParseStatus::Partial);

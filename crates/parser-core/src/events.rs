@@ -13,7 +13,7 @@ use parser_contract::{
     events::{
         BountyEligibility, BountyEligibilityState, BountyExclusionReason, CombatEventAttributes,
         CombatSemantic, CombatVictimKind, EventActorRef, LegacyCounterEffect, NormalizedEvent,
-        NormalizedEventKind, VehicleContext, VehicleScoreCategory,
+        NormalizedEventKind, VehicleContext,
     },
     identity::{EntityKind, EntitySide, ObservedEntity},
     presence::{FieldPresence, NullReason, UnknownReason},
@@ -25,7 +25,6 @@ use crate::{
     diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
     legacy_player::is_legacy_player_entity,
     raw::{KilledEventKillInfo, KilledEventObservation, RawReplay, killed_events},
-    vehicle_score::category_from_vehicle_class,
 };
 
 const ENEMY_KILL_RULE_ID: &str = "event.killed.enemy";
@@ -319,7 +318,7 @@ fn build_teamkill_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID);
+    let source_ref = event_source_ref(context, observation, VEHICLE_DESTROYED_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
@@ -443,9 +442,9 @@ fn build_friendly_vehicle_destroyed_event(
     build_event(CombatEventBuild {
         observation,
         source_ref: source_ref.clone(),
-        rule_id: TEAMKILL_RULE_ID,
+        rule_id: VEHICLE_DESTROYED_RULE_ID,
         kind: NormalizedEventKind::VehicleKilled,
-        semantic: CombatSemantic::Teamkill,
+        semantic: CombatSemantic::VehicleDestroyed,
         killer: FieldPresence::Present {
             value: killer_actor.clone(),
             source: Some(source_ref.clone()),
@@ -463,7 +462,12 @@ fn build_friendly_vehicle_destroyed_event(
             BountyExclusionReason::Teamkill,
             BountyExclusionReason::VehicleVictim,
         ]),
-        legacy_counter_effects: Vec::new(),
+        legacy_counter_effects: vec![legacy_effect(
+            killer.source_entity_id,
+            "vehicleKills",
+            1,
+            None,
+        )],
     })
 }
 
@@ -658,7 +662,7 @@ const fn victim_kind(entity: &ObservedEntity) -> CombatVictimKind {
 
 fn vehicle_context(
     weapon: Option<&str>,
-    victim: Option<&ObservedEntity>,
+    _victim: Option<&ObservedEntity>,
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     source_ref: &SourceRef,
 ) -> VehicleContext {
@@ -688,25 +692,6 @@ fn vehicle_context(
             },
             |entity| entity.observed_class.clone(),
         ),
-        attacker_vehicle_category: attacker_vehicle.map_or_else(
-            || FieldPresence::NotApplicable {
-                reason: "source weapon did not match a vehicle entity".to_owned(),
-            },
-            |entity| FieldPresence::Present {
-                value: vehicle_score_category(entity),
-                source: entity.source_refs.as_slice().first().cloned(),
-            },
-        ),
-        target_category: victim.map_or_else(
-            || FieldPresence::Unknown {
-                reason: UnknownReason::SourceFieldAbsent,
-                source: Some(source_ref.clone()),
-            },
-            |entity| FieldPresence::Present {
-                value: vehicle_score_category(entity),
-                source: entity.source_refs.as_slice().first().cloned(),
-            },
-        ),
     }
 }
 
@@ -727,16 +712,6 @@ fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
         FieldPresence::ExplicitNull { .. }
         | FieldPresence::Unknown { .. }
         | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
-fn vehicle_score_category(entity: &ObservedEntity) -> VehicleScoreCategory {
-    match entity.kind {
-        EntityKind::Unit => VehicleScoreCategory::Player,
-        EntityKind::StaticWeapon => VehicleScoreCategory::StaticWeapon,
-        EntityKind::Vehicle | EntityKind::Unknown => {
-            category_from_vehicle_class(observed_string(&entity.observed_class))
-        }
     }
 }
 
@@ -942,9 +917,6 @@ mod tests {
         // Assert
         assert!(!context.is_kill_from_vehicle);
         assert!(matches!(context.attacker_vehicle_entity_id, FieldPresence::NotApplicable { .. }));
-        assert!(matches!(
-            context.target_category,
-            FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: Some(_) }
-        ));
+        assert!(matches!(context.raw_weapon, FieldPresence::Unknown { .. }));
     }
 }

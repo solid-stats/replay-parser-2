@@ -15,7 +15,6 @@ pub mod metadata;
 pub mod raw;
 pub mod raw_compact;
 pub mod side_facts;
-pub mod vehicle_score;
 
 pub use input::{ParserInput, ParserOptions};
 

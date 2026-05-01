@@ -1,4 +1,4 @@
-//! Parser-core aggregate projection behavior tests.
+//! Parser-core minimal aggregate row behavior tests.
 
 #![allow(
     clippy::expect_used,
@@ -6,17 +6,15 @@
     reason = "integration tests use expect messages as assertion context"
 )]
 
-use std::collections::BTreeSet;
-
 use parser_contract::{
-    aggregates::AggregateContributionKind,
     artifact::{ParseArtifact, ParseStatus},
+    minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerStatsRow},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay};
-use serde_json::{Value, json};
+use serde_json::json;
 
 const AGGREGATE_FIXTURE: &[u8] = include_bytes!("fixtures/aggregate-combat.ocap.json");
 const LEGACY_PLAYER_ELIGIBILITY_FIXTURE: &[u8] = br#"{
@@ -58,10 +56,7 @@ const LEGACY_PLAYER_ELIGIBILITY_FIXTURE: &[u8] = br#"{
       "positions": []
     }
   ],
-  "events": [
-    [10, "killed", 2, [1, "AK-74"], 100],
-    [20, "killed", 1, [2, "AK-74"], 100]
-  ],
+  "events": [],
   "Markers": [],
   "EditorMarkers": []
 }"#;
@@ -105,290 +100,150 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
 }
 
-fn projection<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Value {
-    artifact
-        .summaries
-        .projections
-        .get(key)
-        .unwrap_or_else(|| panic!("projection {key} should exist"))
-}
-
-fn projection_array<'a>(artifact: &'a ParseArtifact, key: &str) -> &'a Vec<Value> {
-    projection(artifact, key)
-        .as_array()
-        .unwrap_or_else(|| panic!("projection {key} should be an array"))
-}
-
-fn projection_object<'a>(
+fn player_stats<'a>(
     artifact: &'a ParseArtifact,
-    key: &str,
-) -> &'a serde_json::Map<String, Value> {
-    projection(artifact, key)
-        .as_object()
-        .unwrap_or_else(|| panic!("projection {key} should be an object"))
-}
-
-fn player_row<'a>(artifact: &'a ParseArtifact, compatibility_key: &str) -> &'a Value {
-    projection_array(artifact, "legacy.player_game_results")
-        .iter()
-        .find(|row| row["compatibility_key"] == compatibility_key)
-        .unwrap_or_else(|| panic!("player row {compatibility_key} should exist"))
-}
-
-fn source_contribution_ids(row: &Value) -> BTreeSet<String> {
-    row["source_contribution_ids"]
-        .as_array()
-        .expect("row should contain source_contribution_ids")
-        .iter()
-        .map(|value| value.as_str().expect("contribution ID should be a string").to_owned())
-        .collect()
-}
-
-fn aggregate_contribution_ids(artifact: &ParseArtifact) -> BTreeSet<String> {
+    source_entity_id: i64,
+) -> &'a MinimalPlayerStatsRow {
     artifact
-        .facts
-        .aggregate_contributions
+        .player_stats
         .iter()
-        .map(|contribution| contribution.contribution_id.clone())
-        .collect()
+        .find(|row| row.source_entity_id == source_entity_id)
+        .unwrap_or_else(|| panic!("player stats row {source_entity_id} should exist"))
 }
 
 #[test]
-fn aggregate_projection_should_emit_namespaced_legacy_and_bounty_projection_keys() {
+fn aggregate_projection_should_emit_minimal_players_and_zero_counter_rows() {
     let artifact = aggregate_artifact();
-
-    let projection_keys =
-        artifact.summaries.projections.keys().map(String::as_str).collect::<Vec<_>>();
+    let player_ids =
+        artifact.players.iter().map(|player| player.source_entity_id).collect::<Vec<_>>();
+    let stats_ids =
+        artifact.player_stats.iter().map(|stats| stats.source_entity_id).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Success);
-    for expected_key in [
-        "legacy.player_game_results",
-        "legacy.relationships",
-        "legacy.game_type_compatibility",
-        "legacy.squad_inputs",
-        "legacy.rotation_inputs",
-        "bounty.inputs",
-        "vehicle_score.inputs",
-        "vehicle_score.denominator_inputs",
-    ] {
-        assert!(
-            projection_keys.contains(&expected_key),
-            "projection should contain {expected_key}"
-        );
-    }
+    assert_eq!(player_ids, vec![1, 2, 4, 5, 6]);
+    assert_eq!(stats_ids, player_ids);
+    assert!(artifact.players.iter().all(|player| player.player_id.starts_with("entity:")));
 }
 
 #[test]
-fn aggregate_projection_should_emit_all_compact_contribution_families() {
+fn aggregate_projection_should_derive_replay_local_player_counters() {
     let artifact = aggregate_artifact();
-    let contribution_kinds = artifact
-        .facts
-        .aggregate_contributions
+    let alpha = player_stats(&artifact, 1);
+    let bravo = player_stats(&artifact, 2);
+    let delta = player_stats(&artifact, 4);
+    let echo_killer = player_stats(&artifact, 5);
+    let echo_victim = player_stats(&artifact, 6);
+
+    assert_eq!(alpha.kills, 1);
+    assert_eq!(alpha.deaths, 0);
+    assert_eq!(alpha.teamkills, 0);
+    assert_eq!(alpha.vehicle_kills, 1);
+    assert_eq!(alpha.kills_from_vehicle, 1);
+    let alpha_json = serde_json::to_value(alpha).expect("stats row should serialize");
+    assert_eq!(alpha_json["vehicleKills"], 1);
+    assert_eq!(alpha_json["killsFromVehicle"], 1);
+
+    assert_eq!(bravo.deaths, 1);
+    assert_eq!(delta.deaths, 1);
+    assert_eq!(delta.null_killer_deaths, 1);
+    assert_eq!(echo_killer.teamkills, 1);
+    assert_eq!(echo_victim.deaths, 1);
+}
+
+#[test]
+fn aggregate_projection_should_emit_minimal_kill_rows_without_vehicle_victims() {
+    let artifact = aggregate_artifact();
+    let classifications = artifact.kills.iter().map(|row| row.classification).collect::<Vec<_>>();
+
+    assert_eq!(
+        classifications,
+        vec![
+            KillClassification::EnemyKill,
+            KillClassification::Teamkill,
+            KillClassification::NullKiller,
+        ]
+    );
+    assert!(artifact.kills.iter().all(|row| row.victim_source_entity_id != Some(20)));
+    assert!(artifact.kills.iter().any(|row| {
+        row.classification == KillClassification::EnemyKill
+            && row.killer_source_entity_id == Some(1)
+            && row.victim_source_entity_id == Some(2)
+            && row.bounty_eligible
+            && row.attacker_vehicle_name.as_deref() == Some("Offroad HMG")
+    }));
+}
+
+#[test]
+fn aggregate_projection_should_emit_minimal_destroyed_vehicle_rows() {
+    let artifact = aggregate_artifact();
+    let destroyed =
+        artifact.destroyed_vehicles.first().expect("destroyed vehicle row should exist");
+
+    assert_eq!(artifact.destroyed_vehicles.len(), 1);
+    assert_eq!(destroyed.classification, DestroyedVehicleClassification::Enemy);
+    assert_eq!(destroyed.attacker_source_entity_id, Some(1));
+    assert_eq!(destroyed.weapon.as_deref(), Some("RPG-7"));
+    assert_eq!(destroyed.destroyed_entity_id, Some(20));
+    assert_eq!(destroyed.destroyed_entity_type.as_deref(), Some("vehicle"));
+    assert_eq!(destroyed.destroyed_class.as_deref(), Some("apc"));
+}
+
+#[test]
+fn aggregate_projection_should_preserve_duplicate_slot_players_without_merging_rows() {
+    let artifact = aggregate_artifact();
+    let duplicate_players = artifact
+        .players
         .iter()
-        .map(|contribution| contribution.kind)
+        .filter(|player| player.compatibility_key == "legacy_name:Echo")
         .collect::<Vec<_>>();
 
-    assert!(contribution_kinds.contains(&AggregateContributionKind::LegacyCounter));
-    assert!(contribution_kinds.contains(&AggregateContributionKind::Relationship));
-    assert!(contribution_kinds.contains(&AggregateContributionKind::BountyInput));
-    assert!(contribution_kinds.contains(&AggregateContributionKind::VehicleScoreInput));
-}
-
-#[test]
-fn aggregate_projection_should_derive_legacy_counters_from_contributions() {
-    let artifact = aggregate_artifact();
-
-    let alpha = player_row(&artifact, "entity:1");
-    let echo = player_row(&artifact, "legacy_name:Echo");
-
-    assert_eq!(alpha["kills"], 1);
-    assert_eq!(alpha["killsFromVehicle"], 1);
-    assert_eq!(alpha["vehicleKills"], 1);
-    assert_eq!(alpha["teamkills"], 0);
-    assert_eq!(alpha["deaths"], json!({ "total": 0, "byTeamkills": 0 }));
-    assert_eq!(alpha["kdRatio"].as_f64(), Some(1.0));
-    assert_eq!(alpha["killsFromVehicleCoef"].as_f64(), Some(1.0));
-    assert_eq!(alpha["score"].as_f64(), Some(1.0));
-    assert_eq!(alpha["totalPlayedGames"], 1);
-    assert!(!source_contribution_ids(alpha).is_empty());
-
-    assert_eq!(echo["teamkills"], 1);
-    assert_eq!(echo["isDead"], true);
-    assert_eq!(echo["isDeadByTeamkill"], true);
-    assert_eq!(echo["observed_entity_ids"], json!([5, 6]));
-    assert!(!source_contribution_ids(echo).is_empty());
-}
-
-#[test]
-fn aggregate_projection_should_emit_relationship_summaries() {
-    let artifact = aggregate_artifact();
-    let relationships = projection_object(&artifact, "legacy.relationships");
-    let killed = relationships["killed"].as_array().expect("killed rows should be an array");
-    let teamkilled =
-        relationships["teamkilled"].as_array().expect("teamkilled rows should be an array");
-
-    let enemy_row = killed
-        .iter()
-        .find(|row| {
-            row["source_compatibility_key"] == "entity:1"
-                && row["target_compatibility_key"] == "entity:2"
-        })
-        .expect("enemy kill relationship should exist");
-    let teamkill_row = teamkilled
-        .iter()
-        .find(|row| {
-            row["source_compatibility_key"] == "legacy_name:Echo"
-                && row["target_compatibility_key"] == "legacy_name:Echo"
-        })
-        .expect("same-name teamkill relationship should exist");
-
-    assert_eq!(enemy_row["count"], 1);
-    assert_eq!(enemy_row["event_ids"], json!(["event.killed.0"]));
-    assert!(!source_contribution_ids(enemy_row).is_empty());
-
-    assert_eq!(teamkill_row["count"], 1);
-    assert_eq!(teamkill_row["event_ids"], json!(["event.killed.1"]));
-    assert!(!source_contribution_ids(teamkill_row).is_empty());
-}
-
-#[test]
-fn aggregate_projection_should_exclude_teamkill_suicide_null_and_vehicle_events_from_bounty_inputs()
-{
-    let artifact = aggregate_artifact();
-    let bounty_inputs = projection_array(&artifact, "bounty.inputs");
-    let bounty_event_ids =
-        bounty_inputs.iter().map(|row| row["event_id"].as_str()).collect::<Vec<_>>();
-
-    assert_eq!(bounty_inputs.len(), 1);
-    assert_eq!(bounty_inputs[0]["event_id"], "event.killed.0");
-    assert_eq!(bounty_inputs[0]["eligible"], true);
-    assert!(!bounty_event_ids.contains(&Some("event.killed.1")));
-    assert!(!bounty_event_ids.contains(&Some("event.killed.2")));
-    assert!(!bounty_event_ids.contains(&Some("event.killed.3")));
-}
-
-#[test]
-fn aggregate_projection_should_emit_bounty_inputs_without_final_bounty_points() {
-    let artifact = aggregate_artifact();
-    let bounty_inputs = projection_array(&artifact, "bounty.inputs");
-
-    assert!(!artifact.summaries.projections.contains_key("bounty.points"));
-    assert!(!artifact.summaries.projections.contains_key("bounty.final_points"));
-    assert!(bounty_inputs.iter().all(|row| row.get("points").is_none()));
-    assert!(bounty_inputs.iter().all(|row| row.get("final_points").is_none()));
-}
-
-#[test]
-fn aggregate_projection_should_emit_game_type_squad_and_rotation_inputs_without_filtering_replay() {
-    let artifact = aggregate_artifact();
-    let game_type = projection_object(&artifact, "legacy.game_type_compatibility");
-    let squad_inputs = projection_array(&artifact, "legacy.squad_inputs");
-    let rotation = projection_object(&artifact, "legacy.rotation_inputs");
-
-    let alpha_squad = squad_inputs
-        .iter()
-        .find(|row| row["compatibility_key"] == "entity:1")
-        .expect("alpha squad input should exist");
-
-    assert_eq!(artifact.status, ParseStatus::Success);
-    assert_eq!(game_type["mission_name"], "sg aggregate projection");
-    assert_eq!(game_type["prefix_bucket"], "sg");
-    assert_eq!(game_type["parser_action"], "emit_filter_metadata_only");
-    assert_eq!(alpha_squad["squad_prefix"], "[A]");
-    assert_eq!(alpha_squad["source_entity_ids"], json!([1]));
-    assert_eq!(rotation["requires_downstream_replay_date"], true);
-    assert_eq!(rotation["parser_action"], "server_or_parity_harness_groups_by_replay_date");
-}
-
-#[test]
-fn aggregate_projection_should_group_duplicate_same_name_projection_without_merging_entities() {
-    let artifact = aggregate_artifact();
-    let duplicate_entities = artifact
-        .participants
-        .iter()
-        .filter(|participant| {
-            participant.source_entity_id == 5 || participant.source_entity_id == 6
-        })
-        .count();
-    let duplicate_rows = projection_array(&artifact, "legacy.player_game_results")
-        .iter()
-        .filter(|row| row["compatibility_key"] == "legacy_name:Echo")
-        .count();
-    let duplicate_row = player_row(&artifact, "legacy_name:Echo");
-
-    assert_eq!(duplicate_entities, 2);
-    assert_eq!(duplicate_rows, 1);
-    assert_eq!(duplicate_row["observed_entity_ids"], json!([5, 6]));
-    assert_eq!(duplicate_row["observed_name"], "Echo");
+    assert_eq!(duplicate_players.len(), 2);
+    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 5));
+    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 6));
 }
 
 #[test]
 fn aggregate_projection_should_emit_zero_counter_rows_for_eligible_players_without_contributions() {
     let artifact = parse_fixture(LEGACY_PLAYER_ELIGIBILITY_FIXTURE);
-    let eligible = player_row(&artifact, "entity:1");
+    let eligible = player_stats(&artifact, 1);
 
-    assert_eq!(eligible["kills"], 0);
-    assert_eq!(eligible["killsFromVehicle"], 0);
-    assert_eq!(eligible["vehicleKills"], 0);
-    assert_eq!(eligible["teamkills"], 0);
-    assert_eq!(eligible["totalPlayedGames"], 1);
-    assert_eq!(eligible["source_contribution_ids"], json!([]));
+    assert_eq!(artifact.players.len(), 1);
+    assert_eq!(eligible.kills, 0);
+    assert_eq!(eligible.deaths, 0);
+    assert_eq!(eligible.teamkills, 0);
+    assert_eq!(eligible.vehicle_kills, 0);
+    assert_eq!(eligible.kills_from_vehicle, 0);
 }
 
 #[test]
-fn aggregate_projection_should_exclude_non_player_units_from_legacy_and_bounty_rows() {
-    let artifact = parse_fixture(LEGACY_PLAYER_ELIGIBILITY_FIXTURE);
-    let player_rows = projection_array(&artifact, "legacy.player_game_results");
-    let compatibility_keys =
-        player_rows.iter().map(|row| row["compatibility_key"].as_str()).collect::<Vec<_>>();
-    let bounty_inputs = projection_array(&artifact, "bounty.inputs");
-
-    assert_eq!(compatibility_keys, vec![Some("entity:1")]);
-    assert!(bounty_inputs.is_empty());
-    assert!(artifact.facts.aggregate_contributions.is_empty());
-}
-
-#[test]
-fn aggregate_projection_should_keep_every_counter_traceable_to_source_refs() {
+fn aggregate_projection_should_omit_debug_only_keys_from_default_success_json() {
     let artifact = aggregate_artifact();
-    let contribution_ids = aggregate_contribution_ids(&artifact);
+    let default_rows = json!({
+        "players": artifact.players,
+        "player_stats": artifact.player_stats,
+        "kills": artifact.kills,
+        "destroyed_vehicles": artifact.destroyed_vehicles,
+    });
+    let serialized_rows =
+        serde_json::to_string(&default_rows).expect("default rows should serialize");
+    let serialized_artifact = serde_json::to_string(&artifact).expect("artifact should serialize");
 
-    for contribution in &artifact.facts.aggregate_contributions {
+    assert!(!serialized_artifact.contains("source_refs"));
+
+    for forbidden_key in [
+        "source_refs",
+        "rule_id",
+        "event_index",
+        "event_id",
+        "json_path",
+        "aggregate_contributions",
+        "normalized_event",
+        "entity_snapshot",
+        "vehicle_score",
+    ] {
         assert!(
-            !contribution.source_refs.as_slice().is_empty(),
-            "contribution {} should have source refs",
-            contribution.contribution_id
+            !serialized_rows.contains(forbidden_key),
+            "default row JSON should not contain {forbidden_key}"
         );
-        assert!(!contribution.rule_id.as_str().is_empty());
-        assert!(contribution.event_id.is_some());
-    }
-
-    for row in projection_array(&artifact, "legacy.player_game_results") {
-        let row_contribution_ids = source_contribution_ids(row);
-
-        assert!(!row_contribution_ids.is_empty());
-        assert!(row_contribution_ids.iter().all(|id| contribution_ids.contains(id)));
-    }
-
-    let relationships = projection_object(&artifact, "legacy.relationships");
-    for relationship_rows in relationships.values().filter_map(Value::as_array) {
-        for row in relationship_rows {
-            let row_contribution_ids = source_contribution_ids(row);
-
-            assert!(!row_contribution_ids.is_empty());
-            assert!(row_contribution_ids.iter().all(|id| contribution_ids.contains(id)));
-        }
-    }
-
-    for bounty_row in projection_array(&artifact, "bounty.inputs") {
-        let contribution_id = bounty_row["source_contribution_id"]
-            .as_str()
-            .expect("bounty row should carry contribution ID");
-
-        assert!(contribution_ids.contains(contribution_id));
-        assert!(artifact.facts.aggregate_contributions.iter().any(|contribution| {
-            contribution.contribution_id == contribution_id
-                && contribution.kind == AggregateContributionKind::BountyInput
-        }));
     }
 }
