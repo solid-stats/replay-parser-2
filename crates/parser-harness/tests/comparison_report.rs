@@ -185,7 +185,7 @@ fn comparison_report_compare_artifacts_should_emit_compatible_findings_when_sele
 
     // Assert
     assert!(report.findings.iter().any(|finding| finding.category == MismatchCategory::Compatible));
-    assert_eq!(report.summary.by_category["compatible"], 12);
+    assert_eq!(report.summary.by_category["compatible"], 5);
 }
 
 #[test]
@@ -279,6 +279,28 @@ fn comparison_report_markdown_summary_should_include_required_review_sections() 
 }
 
 #[test]
+fn comparison_report_markdown_summary_should_surface_derived_legacy_top_diffs() {
+    // Arrange
+    let old_json = legacy_surface_artifact_json("success");
+    let mut new_value: Value = serde_json::from_slice(&minimal_artifact_json("success"))
+        .expect("minimal artifact fixture should deserialize");
+    new_value["player_stats"][0]["kills"] = json!(2);
+    let new_json =
+        serde_json::to_vec(&new_value).expect("modified minimal fixture should serialize");
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("different derived legacy surfaces should produce a report");
+
+    // Act
+    let markdown = render_markdown_summary(&report);
+
+    // Assert
+    assert!(markdown.contains("- `compatible`: 4"));
+    assert!(markdown.contains("- `human_review`: 1"));
+    assert!(markdown.contains("`legacy.player_game_results`: `human_review`"));
+}
+
+#[test]
 fn comparison_report_review_summary_should_record_human_review_next_action() {
     // Arrange
     let old_json = selected_artifact_json("success");
@@ -320,19 +342,6 @@ fn selected_artifact_json(status: &str) -> Vec<u8> {
         "status": status,
         "replay": {
             "mission_name": "SolidGames"
-        },
-        "participants": [],
-        "facts": {
-            "combat": [],
-            "aggregate_contributions": []
-        },
-        "summaries": {
-            "projections": {
-                "legacy.player_game_results": [],
-                "legacy.relationships": [],
-                "bounty.inputs": [],
-                "vehicle_score.inputs": []
-            }
         },
         "legacy": {
             "player_game_results": [],

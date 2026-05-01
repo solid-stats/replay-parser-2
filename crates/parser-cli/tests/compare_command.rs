@@ -57,18 +57,17 @@ fn write_selected_artifact(path: &Path, status: &str) {
         "replay": {
             "mission_name": "SolidGames"
         },
-        "participants": [],
-        "facts": {
-            "combat": [],
-            "aggregate_contributions": []
-        },
-        "summaries": {
-            "projections": {
-                "legacy.player_game_results": [],
-                "legacy.relationships": [],
-                "bounty.inputs": [],
-                "vehicle_score.inputs": []
+        "legacy": {
+            "player_game_results": [],
+            "relationships": {
+                "killed": [],
+                "killers": [],
+                "teamkilled": [],
+                "teamkillers": []
             }
+        },
+        "bounty": {
+            "inputs": []
         }
     });
     let bytes = serde_json::to_vec_pretty(&artifact).expect("test artifact should serialize");
@@ -102,6 +101,7 @@ fn compare_command_should_write_compatible_report_when_saved_artifacts_match() {
     // Assert
     assert!(command_output.status.success());
     assert!(report.starts_with("# Comparison Summary"));
+    assert!(!report.contains("\"findings\""));
     assert!(report.contains("## Counts by Category"));
     assert!(report.contains("## Counts by Impact"));
     assert!(report.contains("## Top Diffs"));
@@ -162,7 +162,11 @@ fn compare_command_should_write_json_detail_when_markdown_output_requests_detail
     // Assert
     assert!(command_output.status.success());
     assert!(report.starts_with("# Comparison Summary"));
+    assert!(!report.contains("\"findings\""));
     assert!(detail.contains("\"findings\""));
+    let detail_json: serde_json::Value =
+        serde_json::from_str(&detail).expect("detail output should be structured JSON");
+    assert!(detail_json["findings"].is_array());
 }
 
 #[test]

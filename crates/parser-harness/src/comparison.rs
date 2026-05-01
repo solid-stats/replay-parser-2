@@ -490,32 +490,10 @@ fn round_2(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
 }
 
-const fn selected_surfaces() -> [SelectedSurface; 12] {
+const fn selected_surfaces() -> [SelectedSurface; 5] {
     [
         SelectedSurface::new("status", &["status"]),
         SelectedSurface::new("replay", &["replay"]),
-        SelectedSurface::new("participants", &["participants"]),
-        SelectedSurface::new("facts.combat", &["facts", "combat"]),
-        SelectedSurface::new(
-            "facts.aggregate_contributions",
-            &["facts", "aggregate_contributions"],
-        ),
-        SelectedSurface::new(
-            "summaries.projections.legacy.player_game_results",
-            &["summaries", "projections", "legacy.player_game_results"],
-        ),
-        SelectedSurface::new(
-            "summaries.projections.legacy.relationships",
-            &["summaries", "projections", "legacy.relationships"],
-        ),
-        SelectedSurface::new(
-            "summaries.projections.bounty.inputs",
-            &["summaries", "projections", "bounty.inputs"],
-        ),
-        SelectedSurface::new(
-            "summaries.projections.vehicle_score.inputs",
-            &["summaries", "projections", "vehicle_score.inputs"],
-        ),
         SelectedSurface::new("legacy.player_game_results", &["legacy", "player_game_results"]),
         SelectedSurface::new("legacy.relationships", &["legacy", "relationships"]),
         SelectedSurface::new("bounty.inputs", &["bounty", "inputs"]),
