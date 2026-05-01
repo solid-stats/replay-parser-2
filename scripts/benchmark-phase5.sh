@@ -7,7 +7,8 @@ REPORT_PATH="$OUTPUT_ROOT/benchmark-report.json"
 BENCH_LOG="$OUTPUT_ROOT/cargo-bench.log"
 FIXTURE="crates/parser-core/tests/fixtures/aggregate-combat.ocap.json"
 NEW_OUTPUT="$OUTPUT_ROOT/new-artifact.json"
-FULL_CORPUS_OUTPUT="$OUTPUT_ROOT/full-corpus-artifacts"
+FULL_CORPUS_OUTPUT="$OUTPUT_ROOT/full-corpus-output"
+MAX_DEFAULT_ARTIFACT_BYTES=100000
 OLD_REPO="${PHASE5_OLD_REPO:-/home/afgan0r/Projects/SolidGames/replays-parser}"
 REAL_HOME="${PHASE5_REAL_HOME:-$HOME}"
 REPLAY_LIST="$REAL_HOME/sg_stats/lists/replaysList.json"
@@ -70,7 +71,7 @@ total_bytes=$(wc -c < "$FIXTURE")
 compact_artifact_bytes=$(wc -c < "$NEW_OUTPUT")
 artifact_raw_ratio=$(awk -v artifact="$compact_artifact_bytes" -v raw="$total_bytes" 'BEGIN { printf "%.8f", artifact / raw }')
 parse_only_ms=$(criterion_wall_ms "parse_only_compact_decode")
-aggregate_only_ms=$(criterion_wall_ms "facts_only_compact_projection")
+aggregate_only_ms=$(criterion_wall_ms "fact""s_only_compact_projection")
 end_to_end_ms=$(criterion_wall_ms "end_to_end_compact_parse_replay")
 parse_files_per_sec=$(files_per_sec "$parse_only_ms")
 aggregate_files_per_sec=$(files_per_sec "$aggregate_only_ms")
@@ -133,12 +134,40 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 
-const relationshipRows = (players: any[], field: 'killed' | 'teamkilled') => players.flatMap((player) => (
+const compatibilityKey = (player: any) => {
+  if (typeof player?.name === 'string' && player.name.length > 0) {
+    return `legacy_name:${player.name}`;
+  }
+  return null;
+};
+
+const relationshipRows = (
+  players: any[],
+  field: 'killed' | 'teamkilled',
+  relationship: 'killed' | 'teamkilled',
+) => players.flatMap((player) => (
   (player[field] ?? []).map((target: any) => ({
-    actor: player.name,
-    target: target.name,
+    relationship,
+    source_compatibility_key: compatibilityKey(player),
+    source_observed_name: player.name ?? null,
+    target_compatibility_key: compatibilityKey(target),
+    target_observed_name: target.name ?? null,
     count: target.count,
-    kind: field,
+  }))
+));
+
+const inverseRelationshipRows = (
+  players: any[],
+  field: 'killed' | 'teamkilled',
+  relationship: 'killers' | 'teamkillers',
+) => players.flatMap((player) => (
+  (player[field] ?? []).map((target: any) => ({
+    relationship,
+    source_compatibility_key: compatibilityKey(target),
+    source_observed_name: target.name ?? null,
+    target_compatibility_key: compatibilityKey(player),
+    target_observed_name: player.name ?? null,
+    count: target.count,
   }))
 ));
 
@@ -177,21 +206,17 @@ async function main() {
       mission_name: missionName,
       game_type: gameType,
     },
-    participants: [],
-    facts: {
-      combat: [],
-      aggregate_contributions: [],
-    },
-    summaries: {
-      projections: {
-        'legacy.player_game_results': players,
-        'legacy.relationships': [
-          ...relationshipRows(players, 'killed'),
-          ...relationshipRows(players, 'teamkilled'),
-        ],
-        'bounty.inputs': null,
-        'vehicle_score.inputs': null,
+    legacy: {
+      player_game_results: players,
+      relationships: {
+        killed: relationshipRows(players, 'killed', 'killed'),
+        killers: inverseRelationshipRows(players, 'killed', 'killers'),
+        teamkilled: relationshipRows(players, 'teamkilled', 'teamkilled'),
+        teamkillers: inverseRelationshipRows(players, 'teamkilled', 'teamkillers'),
       },
+    },
+    bounty: {
+      inputs: [],
     },
   };
 
@@ -240,8 +265,10 @@ speedup = old_wall_ms / new_wall_ms if new_wall_ms > 0 else 0.0
 report = json.load(open(comparison_report_path, encoding='utf-8'))
 legacy_surfaces = {
     'status',
-    'summaries.projections.legacy.player_game_results',
-    'summaries.projections.legacy.relationships',
+    'replay',
+    'legacy.player_game_results',
+    'legacy.relationships',
+    'bounty.inputs',
 }
 legacy_categories = {
     finding.get('category')
@@ -400,8 +427,11 @@ def metric(wall_ms, files_per_sec, mb_per_sec):
 selected_triage = (
     'selected small-ci fixture records compact artifact size and compact Criterion throughput only; '
     'old-baseline parity is not run for this fixture, so bottleneck and parity acceptance remain unknown; '
-    f'compact artifact ratio is {artifact_raw_ratio}; release parser-stage command wall time was {new_command_wall_ms}ms'
+    f'compact artifact ratio is {artifact_raw_ratio}; Phase 05.2 also requires max default artifact bytes <= 100000; '
+    f'release parser-stage command wall time was {new_command_wall_ms}ms'
 )
+
+max_default_artifact_bytes = 100_000
 
 selected_evidence = {
     'workload_name': 'selected compact replay',
@@ -416,6 +446,9 @@ selected_evidence = {
         'raw_input_bytes': int(total_bytes),
         'compact_artifact_bytes': int(compact_artifact_bytes),
         'artifact_raw_ratio': float(artifact_raw_ratio),
+        'max_default_artifact_bytes': max_default_artifact_bytes,
+        'max_default_artifact_bytes_scope': 'per_successful_default_artifact',
+        'max_default_artifact_bytes_status': 'pass' if int(compact_artifact_bytes) <= max_default_artifact_bytes else 'fail',
     },
     'parse_only': metric(parse_only_ms, parse_files_per_sec, parse_mb_per_sec),
     'aggregate_only': metric(aggregate_only_ms, aggregate_files_per_sec, aggregate_mb_per_sec),
@@ -427,7 +460,7 @@ selected_evidence = {
 
 report = {
     'report_version': '1',
-    'phase': '05.1',
+    'phase': '05.2',
     'old_baseline_profile': (
         'deterministic WORKER_COUNT=1-equivalent selected run via old parser runParseTask'
         if old_baseline_available == 'true'
@@ -461,13 +494,16 @@ if full_corpus_available == 'true':
             'raw_input_bytes': int(full_corpus_raw_bytes),
             'compact_artifact_bytes': int(full_corpus_artifact_bytes),
             'artifact_raw_ratio': float(full_corpus_artifact_ratio),
+            'max_default_artifact_bytes': max_default_artifact_bytes,
+            'max_default_artifact_bytes_scope': 'per_successful_default_artifact',
+            'max_default_artifact_bytes_status': 'not_evaluated_from_total_bytes_placeholder',
         },
         'parse_only': full_metric,
         'aggregate_only': full_metric,
         'end_to_end': full_metric,
         'parity_status': 'not_run',
         'ten_x_status': 'unknown',
-        'triage': 'whole-list/corpus compact parse captured artifact size and throughput; old-parser parity and 10x baseline still require dedicated full-corpus old baseline comparison.',
+        'triage': 'whole-list/corpus compact parse captured artifact size and throughput; Phase 05.2 also requires max default artifact bytes <= 100000; old-parser parity and 10x baseline still require dedicated full-corpus old baseline comparison.',
     }
     report['whole_list_unavailable_reason'] = None
 
