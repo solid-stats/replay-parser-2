@@ -35,12 +35,21 @@ fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {
 }
 
 fn run_parse(input: &PathBuf, output: &PathBuf) -> Output {
+    run_parse_with_args(input, output, [])
+}
+
+fn run_parse_with_args<const N: usize>(
+    input: &PathBuf,
+    output: &PathBuf,
+    extra_args: [&str; N],
+) -> Output {
     Command::cargo_bin("replay-parser-2")
         .expect("replay-parser-2 binary should build")
         .arg("parse")
         .arg(input)
         .arg("--output")
         .arg(output)
+        .args(extra_args)
         .output()
         .expect("parse command should run")
 }
@@ -50,18 +59,36 @@ fn read_json(path: &PathBuf) -> Value {
     serde_json::from_str(&text).expect("output artifact should be valid JSON")
 }
 
-fn assert_compact_artifact_root(artifact: &Value) {
-    for expected_field in ["participants", "facts", "summaries", "side_facts", "failure"] {
+fn assert_minimal_artifact_root(artifact: &Value) {
+    for expected_field in ["players", "player_stats", "kills", "destroyed_vehicles", "failure"] {
         assert!(artifact.get(expected_field).is_some(), "artifact should contain {expected_field}");
     }
 
-    let removed_fields =
-        [["entit", "ies"].concat(), ["ev", "ents"].concat(), ["aggre", "gates"].concat()];
-    for removed_field in removed_fields {
+    for removed_field in ["participants", "facts", "summaries"] {
         assert!(
-            artifact.get(&removed_field).is_none(),
+            artifact.get(removed_field).is_none(),
             "artifact should not contain removed top-level field {removed_field}"
         );
+    }
+}
+
+fn assert_no_key_recursive(value: &Value, forbidden_key: &str) {
+    match value {
+        Value::Object(map) => {
+            assert!(
+                !map.contains_key(forbidden_key),
+                "artifact should not contain {forbidden_key}"
+            );
+            for nested in map.values() {
+                assert_no_key_recursive(nested, forbidden_key);
+            }
+        }
+        Value::Array(items) => {
+            for nested in items {
+                assert_no_key_recursive(nested, forbidden_key);
+            }
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
 }
 
@@ -81,12 +108,65 @@ fn parse_command_should_write_success_artifact_when_input_is_valid() {
     assert_eq!(artifact["source"]["source_file"], input.display().to_string());
     assert!(artifact["source"].get("checksum").is_some());
     assert!(artifact.get("replay").is_some());
-    assert_compact_artifact_root(&artifact);
-    assert!(artifact["participants"].is_array());
-    assert!(artifact["facts"].is_object());
-    assert!(artifact["summaries"].is_object());
-    assert!(artifact["side_facts"].is_object());
+    assert_minimal_artifact_root(&artifact);
+    assert!(artifact["players"].is_array());
+    assert!(artifact["player_stats"].is_array());
+    assert!(artifact["kills"].is_array());
+    assert!(artifact["destroyed_vehicles"].is_array());
     assert!(artifact["failure"].is_null());
+}
+
+#[test]
+fn parse_command_should_write_minified_minimal_json_by_default() {
+    // Arrange
+    let input = parser_core_fixture("valid-minimal.ocap.json");
+    let output_path = temp_output_path("minified", "artifact.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+    let artifact_text =
+        fs::read_to_string(&output_path).expect("output artifact should be readable");
+    let artifact: Value =
+        serde_json::from_str(&artifact_text).expect("output artifact should be valid JSON");
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(artifact_text.ends_with('\n'));
+    assert!(artifact_text.trim_end().lines().count() == 1);
+    assert_minimal_artifact_root(&artifact);
+    for forbidden_key in [
+        "participants",
+        "facts",
+        "summaries",
+        "source_refs",
+        "rule_id",
+        "frame",
+        "event_index",
+        "json_path",
+        "vehicle_score",
+    ] {
+        assert_no_key_recursive(&artifact, forbidden_key);
+    }
+}
+
+#[test]
+fn parse_command_should_write_pretty_minimal_json_when_requested() {
+    // Arrange
+    let input = parser_core_fixture("valid-minimal.ocap.json");
+    let output_path = temp_output_path("pretty", "artifact.json");
+
+    // Act
+    let command_output = run_parse_with_args(&input, &output_path, ["--pretty"]);
+    let artifact_text =
+        fs::read_to_string(&output_path).expect("output artifact should be readable");
+    let artifact: Value =
+        serde_json::from_str(&artifact_text).expect("output artifact should be valid JSON");
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(artifact_text.ends_with('\n'));
+    assert!(artifact_text.trim_end().lines().count() > 1);
+    assert_minimal_artifact_root(&artifact);
 }
 
 #[test]
@@ -105,11 +185,11 @@ fn parse_command_should_write_compact_failure_artifact_and_stderr_summary_when_i
     assert!(!command_output.status.success());
     assert_eq!(artifact["status"], "failed");
     assert!(artifact.get("failure").is_some());
-    assert_compact_artifact_root(&artifact);
-    assert!(artifact["participants"].is_array());
-    assert!(artifact["facts"].is_object());
-    assert!(artifact["summaries"].is_object());
-    assert!(artifact["side_facts"].is_object());
+    assert_minimal_artifact_root(&artifact);
+    assert!(artifact["players"].is_array());
+    assert!(artifact["player_stats"].is_array());
+    assert!(artifact["kills"].is_array());
+    assert!(artifact["destroyed_vehicles"].is_array());
     assert!(artifact["failure"].is_object());
     assert!(stderr.contains("parse failed:"));
 }

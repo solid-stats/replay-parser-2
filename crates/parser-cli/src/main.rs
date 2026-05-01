@@ -13,6 +13,7 @@ use std::{
 use clap::{Parser, Subcommand, ValueEnum};
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
+    metadata::ReplayMetadata,
     presence::FieldPresence,
     schema::parse_artifact_schema,
     source_ref::{ReplaySource, SourceChecksum},
@@ -43,6 +44,12 @@ enum Commands {
         /// Output compact parse artifact JSON path.
         #[arg(long)]
         output: PathBuf,
+        /// Write human-readable JSON instead of the default minified artifact.
+        #[arg(long)]
+        pretty: bool,
+        /// Optional internal full-detail debug artifact JSON path.
+        #[arg(long)]
+        debug_artifact: Option<PathBuf>,
         /// Optional replay identifier to embed in source metadata.
         #[arg(long)]
         replay_id: Option<String>,
@@ -165,7 +172,9 @@ fn main() -> ExitCode {
 
 fn run() -> Result<ExitCode, CliError> {
     match Cli::parse().command {
-        Commands::Parse { input, output, replay_id } => parse_command(&input, &output, replay_id),
+        Commands::Parse { input, output, pretty, debug_artifact: _, replay_id } => {
+            parse_command(&input, &output, replay_id, pretty)
+        }
         Commands::Schema { output } => schema_command(output),
         Commands::Compare { replay, new_artifact, old_artifact, output, detail_output, format } => {
             compare_command(
@@ -184,10 +193,15 @@ fn parse_command(
     input: &Path,
     output: &Path,
     replay_id: Option<String>,
+    pretty: bool,
 ) -> Result<ExitCode, CliError> {
-    let artifact = parse_artifact_from_input(input, replay_id)?;
-    let artifact_bytes = serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?;
-    write_pretty_json_file(output, artifact_bytes)?;
+    let artifact = public_parse_artifact(parse_artifact_from_input(input, replay_id)?);
+    let artifact_bytes = if pretty {
+        serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?
+    } else {
+        serde_json::to_vec(&artifact).map_err(CliError::Serialize)?
+    };
+    write_json_file(output, artifact_bytes)?;
 
     if let Some(summary) = parse_failure_summary(&artifact) {
         write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
@@ -232,11 +246,39 @@ fn parse_artifact_from_input(
     Ok(artifact)
 }
 
+fn public_parse_artifact(mut artifact: ParseArtifact) -> ParseArtifact {
+    if let Some(replay) = artifact.replay.as_mut() {
+        strip_replay_metadata_sources(replay);
+    }
+    artifact
+}
+
+fn strip_replay_metadata_sources(replay: &mut ReplayMetadata) {
+    strip_field_presence_source(&mut replay.mission_name);
+    strip_field_presence_source(&mut replay.world_name);
+    strip_field_presence_source(&mut replay.mission_author);
+    strip_field_presence_source(&mut replay.players_count);
+    strip_field_presence_source(&mut replay.capture_delay);
+    strip_field_presence_source(&mut replay.end_frame);
+    strip_field_presence_source(&mut replay.time_bounds);
+    strip_field_presence_source(&mut replay.frame_bounds);
+}
+
+fn strip_field_presence_source<T>(presence: &mut FieldPresence<T>) {
+    match presence {
+        FieldPresence::Present { source, .. }
+        | FieldPresence::ExplicitNull { source, .. }
+        | FieldPresence::Unknown { source, .. }
+        | FieldPresence::Inferred { source, .. } => *source = None,
+        FieldPresence::NotApplicable { .. } => {}
+    }
+}
+
 fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
     let schema = parse_artifact_schema();
     if let Some(path) = output {
         let schema_bytes = serde_json::to_vec_pretty(&schema).map_err(CliError::Serialize)?;
-        write_pretty_json_file(&path, schema_bytes)?;
+        write_json_file(&path, schema_bytes)?;
     } else {
         let mut stdout = io::stdout().lock();
         serde_json::to_writer_pretty(&mut stdout, &schema).map_err(CliError::Serialize)?;
@@ -279,12 +321,12 @@ fn compare_command(
             if let Some(path) = detail_output {
                 let report_bytes =
                     serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
-                write_pretty_json_file(path, report_bytes)?;
+                write_json_file(path, report_bytes)?;
             }
         }
         CompareFormat::Json => {
             let report_bytes = serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
-            write_pretty_json_file(output, report_bytes)?;
+            write_json_file(output, report_bytes)?;
         }
     }
 
@@ -309,7 +351,7 @@ fn parser_info() -> Result<ParserInfo, CliError> {
     .map_err(CliError::ParserInfo)
 }
 
-fn write_pretty_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliError> {
+fn write_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliError> {
     output.push(b'\n');
     fs::write(path, output)
         .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
