@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: blocked
 stopped_at: Completed 05.2-06-PLAN.md; Phase 6 blocked by benchmark acceptance
-last_updated: "2026-05-01T04:01:04Z"
+last_updated: "2026-05-01T04:07:16.304Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 45
-  completed_plans: 44
-  percent: 98
+  completed_plans: 45
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 7 of 7
 Status: Phase 6 blocked by benchmark acceptance
 Last activity: 2026-05-01
 
-Progress: [██████████] 98%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -89,6 +89,7 @@ Progress: [██████████] 98%
 | Phase 05.2 P03 | 9m22s | 3 tasks | 5 files |
 | Phase 05.2 P04 | 14m18s | 3 tasks | 4 files |
 | Phase 05.2 P05 | 15m | 3 tasks | 6 files |
+| Phase 05.2 P06 | 14m48s | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -162,6 +163,8 @@ Recent decisions affecting current work:
 - [Phase 05.2]: The default artifact hard limit is exactly 100000 bytes; selected size passes only with artifact_bytes <= 100000.
 - [Phase 05.2]: All-raw size passes only with median artifact/raw ratio <= 0.05, p95 <= 0.10, max_artifact_bytes <= 100000, and oversized_artifact_count == 0.
 - [Phase 05.2]: scripts/benchmark-phase5.sh --ci emits structurally valid smoke reports with unknown statuses when full prerequisites are absent; full acceptance still requires pass statuses.
+- [Phase 05.2]: Plan 06 final gates passed structurally, but Phase 6 remains blocked because selected artifact_bytes=203683 exceeds the hard 100000-byte limit and full-corpus gates are unknown.
+- [Phase 05.2]: Fault report gates now target parser-core::minimal_artifact and the stale active v2 vehicle-score schema was removed from maintained schema surfaces.
 
 ### Roadmap Evolution
 
@@ -198,6 +201,8 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
+- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact_bytes=203683 > 100000, selected x3_status=unknown, selected parity_status=not_run, all-raw x10/size/zero-failure statuses=unknown.
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Status | Directory |
@@ -225,7 +230,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T04:01:04Z
+Last session: 2026-05-01T04:07:16.300Z
 Stopped at: Completed 05.2-06-PLAN.md; Phase 6 blocked by benchmark acceptance
 Resume file: None
 
