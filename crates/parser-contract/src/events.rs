@@ -96,30 +96,6 @@ pub enum BountyExclusionReason {
     NotEnemyKill,
 }
 
-/// Vehicle score taxonomy category from the issue #13 matrix.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum VehicleScoreCategory {
-    /// Static weapon category.
-    StaticWeapon,
-    /// Car category.
-    Car,
-    /// Truck category.
-    Truck,
-    /// APC category.
-    Apc,
-    /// Tank category.
-    Tank,
-    /// Helicopter category.
-    Heli,
-    /// Plane category.
-    Plane,
-    /// Infantry player category.
-    Player,
-    /// Category could not be mapped.
-    Unknown,
-}
-
 /// Vehicle-related evidence attached to a combat event.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct VehicleContext {
@@ -133,10 +109,6 @@ pub struct VehicleContext {
     pub attacker_vehicle_name: FieldPresence<String>,
     /// Raw attacker vehicle observed class.
     pub attacker_vehicle_class: FieldPresence<String>,
-    /// Issue #13 attacker vehicle category.
-    pub attacker_vehicle_category: FieldPresence<VehicleScoreCategory>,
-    /// Issue #13 target category.
-    pub target_category: FieldPresence<VehicleScoreCategory>,
 }
 
 /// Bounty eligibility payload attached to a combat event.

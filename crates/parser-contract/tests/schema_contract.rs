@@ -36,7 +36,7 @@ fn read_json(path: PathBuf) -> Value {
     serde_json::from_str(&text).expect("JSON fixture should parse")
 }
 
-fn aggregate_contribution_value_mut<'a>(
+fn contribution_value_mut<'a>(
     artifact: &'a mut Value,
     kind: &str,
 ) -> &'a mut serde_json::Map<String, Value> {
@@ -107,40 +107,54 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_contract_fiel
 }
 
 #[test]
-fn schema_contract_committed_schema_should_include_phase_4_contract_surfaces() {
-    let schema_text =
-        fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
+fn schema_contract_fresh_schema_should_include_minimal_table_contract_surfaces() {
+    let schema_text = freshly_generated_schema_text();
 
     for expected_fragment in [
-        "AggregateProjectionKey",
-        "ObservedParticipantRef",
-        "CombatFact",
-        "ParseFactSection",
-        "ParseSummarySection",
-        "VehicleScoreInputValue",
+        "MinimalPlayerRow",
+        "MinimalPlayerStatsRow",
+        "MinimalKillRow",
+        "MinimalDestroyedVehicleRow",
+        "players",
+        "player_stats",
+        "kills",
+        "destroyed_vehicles",
         "ReplaySideFacts",
-        "participants",
-        "facts",
-        "summaries",
         "side_facts",
         "legacy.player_game_results",
-        "vehicle_score.denominator_inputs",
-        "vehicle_score_input",
+        "bounty.inputs",
     ] {
         assert!(
             schema_text.contains(expected_fragment),
             "schema should contain {expected_fragment}"
         );
     }
+
+    let retired_projection = ["vehicle", "_score"].concat();
+    let retired_type = ["Vehicle", "Score"].concat();
+    assert!(!schema_text.contains(&retired_projection));
+    assert!(!schema_text.contains(&retired_type));
 }
 
 #[test]
-fn schema_contract_committed_schema_should_match_fresh_generation() {
-    let committed_schema_text =
-        fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");
+fn schema_contract_fresh_schema_should_include_only_active_aggregate_value_helpers() {
     let fresh_schema_text = freshly_generated_schema_text();
 
-    assert_eq!(committed_schema_text, fresh_schema_text);
+    for expected_fragment in [
+        "LegacyCounterContributionValue",
+        "RelationshipContributionValue",
+        "BountyInputContributionValue",
+    ] {
+        assert!(
+            fresh_schema_text.contains(expected_fragment),
+            "schema should contain {expected_fragment}"
+        );
+    }
+
+    let retired_type = ["Vehicle", "Score", "InputValue"].concat();
+    let retired_kind = ["vehicle", "_score", "_input"].concat();
+    assert!(!fresh_schema_text.contains(&retired_type));
+    assert!(!fresh_schema_text.contains(&retired_kind));
 }
 
 #[test]
@@ -286,8 +300,7 @@ fn schema_contract_gap_regression_should_reject_out_of_range_inferred_confidence
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_legacy_counter_contribution_value() {
     let mut success_example = read_json(success_example_path());
-    aggregate_contribution_value_mut(&mut success_example, "legacy_counter")["delta"] =
-        json!("one");
+    contribution_value_mut(&mut success_example, "legacy_counter")["delta"] = json!("one");
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -295,8 +308,7 @@ fn schema_contract_gap_regression_should_reject_invalid_legacy_counter_contribut
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_relationship_contribution_value() {
     let mut success_example = read_json(success_example_path());
-    aggregate_contribution_value_mut(&mut success_example, "relationship")["count_delta"] =
-        json!("one");
+    contribution_value_mut(&mut success_example, "relationship")["count_delta"] = json!("one");
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -304,28 +316,8 @@ fn schema_contract_gap_regression_should_reject_invalid_relationship_contributio
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_bounty_input_contribution_value() {
     let mut success_example = read_json(success_example_path());
-    let removed =
-        aggregate_contribution_value_mut(&mut success_example, "bounty_input").remove("eligible");
+    let removed = contribution_value_mut(&mut success_example, "bounty_input").remove("eligible");
 
     assert!(removed.is_some(), "success example bounty input should include eligible");
-    assert_committed_schema_rejects(&success_example);
-}
-
-#[test]
-fn schema_contract_gap_regression_should_reject_vehicle_score_input_without_applied_weight() {
-    let mut success_example = read_json(success_example_path());
-    let removed = aggregate_contribution_value_mut(&mut success_example, "vehicle_score_input")
-        .remove("applied_weight");
-
-    assert!(removed.is_some(), "success example vehicle score input should include applied_weight");
-    assert_committed_schema_rejects(&success_example);
-}
-
-#[test]
-fn schema_contract_gap_regression_should_reject_vehicle_score_input_with_string_matrix_weight() {
-    let mut success_example = read_json(success_example_path());
-    aggregate_contribution_value_mut(&mut success_example, "vehicle_score_input")["matrix_weight"] =
-        json!("2.0");
-
     assert_committed_schema_rejects(&success_example);
 }

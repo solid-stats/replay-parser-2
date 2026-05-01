@@ -11,7 +11,7 @@ use parser_contract::{
     events::{
         BountyEligibility, BountyEligibilityState, CombatEventAttributes, CombatSemantic,
         CombatVictimKind, EventActorRef, LegacyCounterEffect, NormalizedEvent, NormalizedEventKind,
-        VehicleContext, VehicleScoreCategory,
+        VehicleContext,
     },
     identity::EntitySide,
     presence::{FieldPresence, UnknownReason},
@@ -66,8 +66,6 @@ fn enemy_kill_combat() -> CombatEventAttributes {
             attacker_vehicle_entity_id: present(501),
             attacker_vehicle_name: present("Tank 1".to_string()),
             attacker_vehicle_class: present("rhs_t72ba_tv".to_string()),
-            attacker_vehicle_category: present(VehicleScoreCategory::Tank),
-            target_category: present(VehicleScoreCategory::Player),
         },
         bounty: BountyEligibility {
             state: BountyEligibilityState::Eligible,
@@ -118,9 +116,12 @@ fn combat_event_contract_should_serialize_enemy_kill_combat_payload_when_event_h
     assert_eq!(serialized["combat"]["semantic"], "enemy_kill");
     assert_eq!(serialized["combat"]["bounty"]["state"], "eligible");
     assert_eq!(serialized["combat"]["vehicle_context"]["is_kill_from_vehicle"], true);
+    assert_eq!(serialized["combat"]["vehicle_context"]["raw_weapon"]["value"], "rhs_t72");
+    assert_eq!(serialized["combat"]["vehicle_context"]["attacker_vehicle_entity_id"]["value"], 501);
+    assert_eq!(serialized["combat"]["vehicle_context"]["attacker_vehicle_name"]["value"], "Tank 1");
     assert_eq!(
-        serialized["combat"]["vehicle_context"]["attacker_vehicle_category"]["value"],
-        "tank"
+        serialized["combat"]["vehicle_context"]["attacker_vehicle_class"]["value"],
+        "rhs_t72ba_tv"
     );
     assert_eq!(serialized["combat"]["legacy_counter_effects"][0]["field"], "kills");
     for expected_fragment in [
@@ -128,7 +129,9 @@ fn combat_event_contract_should_serialize_enemy_kill_combat_payload_when_event_h
         "\"enemy_kill\"",
         "\"eligible\"",
         "\"is_kill_from_vehicle\"",
-        "\"attacker_vehicle_category\"",
+        "\"attacker_vehicle_entity_id\"",
+        "\"attacker_vehicle_name\"",
+        "\"attacker_vehicle_class\"",
         "\"legacy_counter_effects\"",
     ] {
         assert!(
@@ -147,8 +150,8 @@ fn combat_event_contract_should_serialize_kill_kind_as_snake_case_when_kind_is_k
 }
 
 #[test]
-fn combat_event_contract_should_preserve_unknown_vehicle_score_category_when_vehicle_evidence_is_missing()
- {
+fn combat_event_contract_should_preserve_unknown_vehicle_context_when_vehicle_evidence_is_missing()
+{
     let combat = CombatEventAttributes {
         semantic: CombatSemantic::Unknown,
         killer: unknown(UnknownReason::SourceFieldAbsent),
@@ -162,8 +165,6 @@ fn combat_event_contract_should_preserve_unknown_vehicle_score_category_when_veh
             attacker_vehicle_entity_id: unknown(UnknownReason::SourceFieldAbsent),
             attacker_vehicle_name: unknown(UnknownReason::SourceFieldAbsent),
             attacker_vehicle_class: unknown(UnknownReason::SourceFieldAbsent),
-            attacker_vehicle_category: present(VehicleScoreCategory::Unknown),
-            target_category: present(VehicleScoreCategory::Unknown),
         },
         bounty: BountyEligibility {
             state: BountyEligibilityState::Excluded,
@@ -174,6 +175,17 @@ fn combat_event_contract_should_preserve_unknown_vehicle_score_category_when_veh
 
     let serialized = serde_json::to_value(combat).expect("combat payload should serialize");
 
-    assert_eq!(serialized["vehicle_context"]["attacker_vehicle_category"]["value"], "unknown");
-    assert_eq!(serialized["vehicle_context"]["target_category"]["value"], "unknown");
+    assert_eq!(serialized["vehicle_context"]["raw_weapon"]["reason"], "source_field_absent");
+    assert_eq!(
+        serialized["vehicle_context"]["attacker_vehicle_entity_id"]["reason"],
+        "source_field_absent"
+    );
+    assert_eq!(
+        serialized["vehicle_context"]["attacker_vehicle_name"]["reason"],
+        "source_field_absent"
+    );
+    assert_eq!(
+        serialized["vehicle_context"]["attacker_vehicle_class"]["reason"],
+        "source_field_absent"
+    );
 }

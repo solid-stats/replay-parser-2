@@ -4,8 +4,7 @@ use serde_json::{Value, json};
 
 use crate::{
     aggregates::{
-        BountyInputContributionValue, LegacyCounterContributionValue,
-        RelationshipContributionValue, VehicleScoreInputValue,
+        BountyInputContributionValue, LegacyCounterContributionValue, RelationshipContributionValue,
     },
     artifact::ParseArtifact,
 };
@@ -28,7 +27,6 @@ fn add_aggregate_value_helper_definitions(schema: &mut Schema) {
     );
     add_schema_definition::<RelationshipContributionValue>(schema, "RelationshipContributionValue");
     add_schema_definition::<BountyInputContributionValue>(schema, "BountyInputContributionValue");
-    add_schema_definition::<VehicleScoreInputValue>(schema, "VehicleScoreInputValue");
     add_aggregate_projection_key_definition(schema);
     constrain_aggregate_contribution_values(schema);
 }
@@ -67,9 +65,7 @@ fn add_aggregate_projection_key_definition(schema: &mut Schema) {
                 "legacy.game_type_compatibility",
                 "legacy.squad_inputs",
                 "legacy.rotation_inputs",
-                "bounty.inputs",
-                "vehicle_score.inputs",
-                "vehicle_score.denominator_inputs"
+                "bounty.inputs"
             ]
         }),
     ));
@@ -88,8 +84,7 @@ fn constrain_aggregate_contribution_values(schema: &mut Schema) {
         json!([
             aggregate_value_condition("legacy_counter", "LegacyCounterContributionValue"),
             aggregate_value_condition("relationship", "RelationshipContributionValue"),
-            aggregate_value_condition("bounty_input", "BountyInputContributionValue"),
-            aggregate_value_condition("vehicle_score_input", "VehicleScoreInputValue")
+            aggregate_value_condition("bounty_input", "BountyInputContributionValue")
         ]),
     ));
 }

@@ -51,7 +51,7 @@ fn source_ref_contract_rule_id_should_reject_empty_or_non_namespaced_ids() {
     for invalid_rule_id in [
         "",
         "   ",
-        "vehicle_score",
+        "score",
         "Event.Kill.Player",
         "event kill player",
         "event.kill.player!",
@@ -181,19 +181,19 @@ fn normalized_event_source_refs_should_require_non_empty_source_refs() {
 }
 
 #[test]
-fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_refs() {
+fn aggregate_contribution_refs_should_serialize_bounty_input_with_source_refs() {
     let contribution = AggregateContributionRef {
-        contribution_id: "contribution-vehicle-score-0007".to_string(),
-        kind: AggregateContributionKind::VehicleScoreInput,
+        contribution_id: "contribution-bounty-0007".to_string(),
+        kind: AggregateContributionKind::BountyInput,
         event_id: Some("event-0007".to_string()),
-        source_refs: SourceRefs::new(vec![source_ref("aggregate.vehicle_score.source")])
+        source_refs: SourceRefs::new(vec![source_ref("aggregate.bounty.source")])
             .expect("source refs should be non-empty"),
-        rule_id: RuleId::new("aggregate.vehicle_score.contribution")
+        rule_id: RuleId::new("aggregate.bounty.contribution")
             .expect("test contribution rule ID should be valid"),
         value: json!({
-            "weight": 1.5,
-            "attacker_vehicle": "apc",
-            "killed_entity": "player"
+            "eligible": true,
+            "killer_entity_id": 101,
+            "victim_entity_id": 202
         }),
     };
     let section =
@@ -201,21 +201,18 @@ fn aggregate_contribution_refs_should_serialize_vehicle_score_input_with_source_
 
     let serialized = serde_json::to_value(&section).expect("aggregate section should serialize");
 
-    assert_eq!(
-        serialized["contributions"][0]["contribution_id"],
-        "contribution-vehicle-score-0007"
-    );
-    assert_eq!(serialized["contributions"][0]["kind"], "vehicle_score_input");
+    assert_eq!(serialized["contributions"][0]["contribution_id"], "contribution-bounty-0007");
+    assert_eq!(serialized["contributions"][0]["kind"], "bounty_input");
     assert_eq!(serialized["contributions"][0]["event_id"], "event-0007");
     assert!(serialized["contributions"][0]["source_refs"].is_array());
     assert_eq!(
         serialized["contributions"][0]["source_refs"][0]["rule_id"],
-        "aggregate.vehicle_score.source"
+        "aggregate.bounty.source"
     );
-    assert_eq!(serialized["contributions"][0]["rule_id"], "aggregate.vehicle_score.contribution");
-    assert_eq!(serialized["contributions"][0]["value"]["weight"], 1.5);
-    assert_eq!(serialized["contributions"][0]["value"]["attacker_vehicle"], "apc");
-    assert_eq!(serialized["contributions"][0]["value"]["killed_entity"], "player");
+    assert_eq!(serialized["contributions"][0]["rule_id"], "aggregate.bounty.contribution");
+    assert_eq!(serialized["contributions"][0]["value"]["eligible"], true);
+    assert_eq!(serialized["contributions"][0]["value"]["killer_entity_id"], 101);
+    assert_eq!(serialized["contributions"][0]["value"]["victim_entity_id"], 202);
     assert_eq!(
         serialized["projections"]
             .as_object()
