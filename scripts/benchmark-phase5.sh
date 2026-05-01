@@ -86,14 +86,19 @@ with open(output_path, "w", encoding="utf-8") as handle:
     handle.write("\n")
 PY
 
-read -r selected_path selected_raw_bytes selected_sha selected_source < <(
+mapfile -d '' -t selected_fields < <(
   python3 - "$SELECTED_INFO" <<'PY'
 import json
 import sys
 info = json.load(open(sys.argv[1], encoding="utf-8"))
-print(info["path"], info["raw_bytes"], info["sha256"], info["source"])
+for key in ("path", "raw_bytes", "sha256", "source"):
+    sys.stdout.write(str(info[key]) + "\0")
 PY
 )
+selected_path=${selected_fields[0]}
+selected_raw_bytes=${selected_fields[1]}
+selected_sha=${selected_fields[2]}
+selected_source=${selected_fields[3]}
 
 selected_start_ns=$(date +%s%N)
 target/release/replay-parser-2 parse "$selected_path" --output "$SELECTED_ARTIFACT" \
@@ -144,18 +149,26 @@ with open(output_path, "w", encoding="utf-8") as handle:
     handle.write("\n")
 PY
 
-read -r metadata_available selected_filename selected_date selected_mission selected_game_type < <(
+mapfile -d '' -t metadata_fields < <(
   python3 - "$SELECTED_METADATA" <<'PY'
 import json
 import sys
 
 metadata = json.load(open(sys.argv[1], encoding="utf-8")).get("metadata")
 if metadata and all(metadata.get(key) for key in ("filename", "date", "mission_name", "game_type")):
-    print("true", metadata["filename"], metadata["date"], metadata["mission_name"], metadata["game_type"])
+    values = ("true", metadata["filename"], metadata["date"], metadata["mission_name"], metadata["game_type"])
 else:
-    print("false", "", "", "", "")
+    values = ("false", "", "", "", "")
+
+for value in values:
+    sys.stdout.write(str(value) + "\0")
 PY
 )
+metadata_available=${metadata_fields[0]}
+selected_filename=${metadata_fields[1]}
+selected_date=${metadata_fields[2]}
+selected_mission=${metadata_fields[3]}
+selected_game_type=${metadata_fields[4]}
 
 old_selected_available=false
 old_selected_attempted=false
