@@ -63,7 +63,7 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **PARS-09**: Parser extracts vehicle kill context sufficient to distinguish `killsFromVehicle`, `vehicleKills`, infantry kills, and vehicle/entity type contributions.
 - [x] **PARS-10**: Parser extracts commander-side data when present, including replay identifier, side identifier/name, commander observed identity fields, source, and confidence metadata.
 - [x] **PARS-11**: Parser extracts winner/outcome data when present and emits unknown/inferred states when older replay data does not contain reliable winner data.
-- [ ] **PARS-12**: Parser provides a selective extraction path for v1 statistics that reads only required OCAP metadata, entity facts, and relevant events where practical, and avoids unnecessary full JSON DOM cloning or full JSON-to-JSON reserialization on the default path.
+- [x] **PARS-12**: Parser provides a selective extraction path for v1 statistics that reads only required OCAP metadata, entity facts, and relevant events where practical, and avoids unnecessary full JSON DOM cloning or full JSON-to-JSON reserialization on the default path.
 
 ### Aggregates
 
@@ -192,7 +192,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-09 | Phase 4 | Complete |
 | PARS-10 | Phase 4 | Complete |
 | PARS-11 | Phase 4 | Complete |
-| PARS-12 | Phase 5.1 | Pending |
+| PARS-12 | Phase 5.1 | Complete |
 | AGG-01 | Phase 4 | Complete |
 | AGG-02 | Phase 4 | Complete |
 | AGG-03 | Phase 4 | Complete |

@@ -207,7 +207,7 @@ Cross-cutting constraints:
 Plans:
 - [x] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
 - [x] 05.2-01-PLAN.md - Contract v3 minimal flat tables, schema/examples, and vehicle-score contract removal.
-- [ ] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
+- [x] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
 - [ ] 05.2-03-PLAN.md - CLI minified default output, explicit pretty/debug flags, schema command, and README command updates.
 - [ ] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
 - [ ] 05.2-05-PLAN.md - Selected large replay x3, all-raw x10, zero-failure, and artifact-size benchmark gates.

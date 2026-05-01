@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05.2-01-PLAN.md
-last_updated: "2026-05-01T02:21:31.931Z"
+stopped_at: Completed 05.2-02-PLAN.md
+last_updated: "2026-05-01T02:50:12.520Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 45
-  completed_plans: 40
-  percent: 89
+  completed_plans: 41
+  percent: 91
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-05-01
 
-Progress: [█████████░] 89%
+Progress: [█████████░] 91%
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Progress: [█████████░] 89%
 | Phase 05 P05 | 34min | 4 tasks | 8 files |
 | Phase 05.2 P00 | 1m | 2 tasks | 2 files |
 | Phase 05.2 P01 | 10 min | 3 tasks | 18 files |
+| Phase 05.2 P02 | 22m04s | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,9 @@ Recent decisions affecting current work:
 - [Phase 05.2]: Plan 01 cuts the parser contract to v3.0.0 minimal flat tables: players, player_stats, kills, destroyed_vehicles, and diagnostics. — Matches Phase 5.2 minimal artifact direction before parser-core construction.
 - [Phase 05.2]: Issue 13 vehicle score contract types, schema helpers, projection keys, and tests are no longer active v1 parser-contract surfaces. — Ordinary vehicleKills, killsFromVehicle, weapon, and attacker vehicle context remain for current stats and future raw replay reprocessing.
 - [Phase 05.2]: side_facts remains in ParseArtifact but is defaultable for minimal v3 examples. — This preserves the retained contract field while keeping success examples free of rule/source provenance fields.
+- [Phase 05.2]: parser-core parse_replay now emits v3 minimal players, player_stats, kills, and destroyed_vehicles by default.
+- [Phase 05.2]: Issue 13 vehicle score parser-core implementation was removed while ordinary vehicleKills, killsFromVehicle, attacker vehicle context, and destroyed_vehicles remain covered.
+- [Phase 05.2]: Full normalized entities, events, source refs, rule IDs, side facts, and diagnostics are available only through parser-core parse_replay_debug.
 
 ### Roadmap Evolution
 
@@ -205,8 +209,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T02:21:31.927Z
-Stopped at: Completed 05.2-01-PLAN.md
+Last session: 2026-05-01T02:50:12.516Z
+Stopped at: Completed 05.2-02-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
