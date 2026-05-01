@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 5.2 context gathered; ready to plan
-last_updated: "2026-05-01T08:16:10+07:00"
-last_activity: 2026-05-01
+status: executing
+stopped_at: Phase 5.2 planned; ready to execute
+last_updated: "2026-05-01T01:41:24.828Z"
+last_activity: 2026-05-01 -- Phase 05.2 planning complete
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 38
+  total_plans: 45
   completed_plans: 38
-  percent: 100
+  percent: 84
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 05.2 (minimal-artifact-and-performance-acceptance) — CONTEXT GATHERED, READY TO PLAN
-Plan: 0 of TBD
-Status: Phase 05.2 discussion complete; context gathered; ready to plan
-Last activity: 2026-05-01
+Phase: 05.2 (minimal-artifact-and-performance-acceptance) — PLANNED, READY TO EXECUTE
+Plan: 0 of 7
+Status: Ready to execute
+Last activity: 2026-05-01 -- Phase 05.2 planning complete
 
-Progress: [██████████] 100%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
@@ -138,6 +138,7 @@ Recent decisions affecting current work:
 - [Phase 05.1]: Benchmark reports now require raw input bytes, compact artifact bytes, artifact/raw ratio, selected evidence, and whole-list/corpus evidence or a concrete unavailable reason. — The latest CI report is valid but records selected `ten_x_status=unknown`, selected `parity_status=not_run`, `whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and artifact/raw ratio `59.97366881`; Phase 6 remains blocked pending acceptance or remediation.
 - [Phase 05.2]: Discussion locked minimal default artifact decisions. — Default v1 output should be minified flat `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; no frame/time/source refs/rule IDs/event indexes/entity snapshots in default rows; full normalized detail belongs only behind an internal `--debug-artifact`-style sidecar.
 - [Phase 05.2]: Discussion locked performance and issue #13 decisions. — Remove issue #13 vehicle score implementation from v1; use automatic large selected replay for x3; use sequential `WORKER_COUNT=1` old baseline and sequential new artifact writing for all-raw x10; require zero failed/skipped full-corpus artifacts unless an explicit allowlist is later approved.
+- [Phase 05.2]: Planning produced 7 execution plans. — Wave 1 records minimal artifact server compatibility acceptance; Wave 2 replaces the public contract with v3 minimal flat tables and removes vehicle-score contract surfaces; Wave 3 updates parser-core minimal rows and debug sidecar; Wave 4 updates CLI/schema/README command behavior; Wave 5 derives old-vs-new parity from minimal tables; Wave 6 implements selected x3, all-raw x10, zero-failure, and artifact-size benchmark gates; Wave 7 runs final quality gates and handoff docs.
 
 ### Roadmap Evolution
 
@@ -198,12 +199,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T08:16:10+07:00
-Stopped at: Phase 5.2 context gathered; ready to plan
-Resume file: .planning/phases/05.2-minimal-artifact-and-performance-acceptance/05.2-CONTEXT.md
+Last session: 2026-05-01
+Stopped at: Phase 5.2 planned; ready to execute
+Resume file: .planning/phases/05.2-minimal-artifact-and-performance-acceptance/05.2-00-PLAN.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Plan Phase 05.2: `$gsd-plan-phase 05.2`
+**Next Step:** Execute Phase 05.2: `$gsd-execute-phase 05.2`

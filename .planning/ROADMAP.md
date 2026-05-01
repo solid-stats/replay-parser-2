@@ -185,7 +185,7 @@ Execution outcome:
 **Goal**: The default parser output is reduced to a minimal flat v1 statistics artifact, issue #13 vehicle score is removed from v1, and performance acceptance is proven before worker integration.
 **Depends on**: Phase 5.1
 **Requirements**: OUT-09, OUT-10, OUT-11, OUT-12, PARS-12, AGG-12, TEST-06, TEST-13, TEST-14, TEST-15
-**Status**: Inserted, ready to plan.
+**Status**: Planned, ready to execute.
 **Success Criteria** (what must be TRUE):
   1. The default artifact uses flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; it does not include full normalized event/entity dumps, source-ref dumps, or vehicle-score sections.
   2. `kills[]` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: killer/victim observed player references, enemy/teamkill/suicide/null-killer/unknown classification, weapon, attacker vehicle, and destroyed vehicle/entity type.
@@ -195,10 +195,23 @@ Execution outcome:
   6. The all-raw corpus gate attempts every file in `~/sg_stats/raw_replays`, requires zero failed/skipped artifacts unless an explicit allowlist is approved, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
   7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5% and p95 artifact/raw ratio is <= 10%; tiny fixtures may be reported separately but do not define acceptance.
   8. Product-owner compatibility acceptance is recorded: `server-2` will adapt later to the minimal flat artifact, while parser still does not own canonical identity, PostgreSQL persistence, public APIs, UI behavior, or bounty payout calculation.
-**Plans**: TBD
+**Plans**: 7 plans
+**Execution waves**: Wave 1 runs `05.2-00-PLAN.md`; Wave 2 runs `05.2-01-PLAN.md`; Wave 3 runs `05.2-02-PLAN.md`; Wave 4 runs `05.2-03-PLAN.md`; Wave 5 runs `05.2-04-PLAN.md`; Wave 6 runs `05.2-05-PLAN.md`; Wave 7 runs `05.2-06-PLAN.md`.
+Cross-cutting constraints:
+- Parser contract changes require `05.2-SERVER-COMPATIBILITY.md` acceptance before implementation changes the default artifact shape.
+- The default artifact must use `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; debug-only source refs, rule IDs, frame/time, event indexes, entity snapshots, and normalized event snapshots are not default output.
+- GitHub issue #13 vehicle score is removed from active v1 contract, parser-core, schema, examples, tests, docs, and benchmark/comparison surfaces while ordinary `vehicleKills`, `killsFromVehicle`, weapon, attacker vehicle, and destroyed-vehicle facts remain.
+- Debug sidecar output is explicit internal tooling through `--debug-artifact <path>` and must not contaminate default parser performance or server-facing contract guarantees.
+- Phase 6 remains blocked unless Phase 5.2 records compatibility acceptance plus selected x3, all-raw x10, zero-failure, and artifact-size acceptance.
 
 Plans:
-- [ ] TBD (run `$gsd-plan-phase 05.2` to break down)
+- [ ] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
+- [ ] 05.2-01-PLAN.md - Contract v3 minimal flat tables, schema/examples, and vehicle-score contract removal.
+- [ ] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
+- [ ] 05.2-03-PLAN.md - CLI minified default output, explicit pretty/debug flags, schema command, and README command updates.
+- [ ] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
+- [ ] 05.2-05-PLAN.md - Selected large replay x3, all-raw x10, zero-failure, and artifact-size benchmark gates.
+- [ ] 05.2-06-PLAN.md - Fault target retune, final quality gates, README/ROADMAP/STATE handoff, and Phase 6 blocker status.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
@@ -235,6 +248,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
-| 5.2. Minimal Artifact and Performance Acceptance | 0/TBD | Inserted; ready to plan | - |
+| 5.2. Minimal Artifact and Performance Acceptance | 0/7 | Planned; ready to execute | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
