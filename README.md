@@ -52,6 +52,18 @@ scripts/fault-report-gate.sh
 scripts/benchmark-phase5.sh --ci
 ```
 
+## Benchmark Acceptance
+
+Phase 5.2 benchmark acceptance is not defined by tiny fixtures. Tiny fixtures are smoke evidence only and do not define acceptance.
+
+Full acceptance requires `scripts/benchmark-phase5.sh --ci` to write `.planning/generated/phase-05/benchmarks/benchmark-report.json` with these gates:
+
+- Selected large replay x3 gate: the script automatically selects the largest raw replay under `~/sg_stats/raw_replays` by byte size, tie-breaking by lexicographic path, then records selected path, raw bytes, SHA-256, old/new wall times, old-vs-new parity, default artifact bytes, and `x3_status`.
+- All-raw x10 gate: every `*.json` file in `~/sg_stats/raw_replays` is attempted sequentially, the old baseline must use `HOME=<generated-fake-home> WORKER_COUNT=1`, and the new parser writes default artifacts sequentially.
+- Full-corpus evidence requires zero failed/skipped artifacts unless an explicit user-approved allowlist exists.
+- Size acceptance requires median artifact/raw ratio <= 5%, p95 <= 10%, and every successful default artifact <= 100 KB (100,000 bytes).
+- The hard default artifact limit is `artifact_size_limit_bytes: 100000`; selected evidence passes size only when `artifact_bytes <= 100000`, and all-raw evidence passes size only when `max_artifact_bytes <= 100000` and `oversized_artifact_count == 0`.
+
 Short cargo aliases are also available:
 
 ```bash

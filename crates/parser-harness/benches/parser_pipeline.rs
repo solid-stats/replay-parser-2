@@ -1,4 +1,4 @@
-//! Parser-stage benchmark entrypoints for Phase 05.1 compact artifacts.
+//! Parser-stage benchmark entrypoints for Phase 05.2 minimal artifacts.
 
 #![allow(
     missing_docs,
@@ -54,10 +54,10 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
 }
 
 fn parse_only(criterion: &mut Criterion) {
-    criterion.bench_function("parse_only_compact_decode", |bencher| {
+    criterion.bench_function("parse_only_minimal_decode", |bencher| {
         bencher.iter(|| {
             decode_compact_root(black_box(AGGREGATE_FIXTURE))
-                .expect("benchmark fixture should decode through compact root")
+                .expect("benchmark fixture should decode through selective minimal root")
         });
     });
 }
@@ -65,19 +65,20 @@ fn parse_only(criterion: &mut Criterion) {
 fn aggregate_only(criterion: &mut Criterion) {
     let artifact = parse_replay(parser_input(AGGREGATE_FIXTURE));
 
-    criterion.bench_function("facts_only_compact_projection", |bencher| {
+    criterion.bench_function("facts_only_minimal_projection", |bencher| {
         bencher.iter(|| {
-            let projections = black_box(&artifact.summaries.projections);
-            projections
-                .get("legacy.player_game_results")
-                .expect("aggregate fixture should include player projection")
-                .clone()
+            black_box((
+                artifact.players.clone(),
+                artifact.player_stats.clone(),
+                artifact.kills.clone(),
+                artifact.destroyed_vehicles.clone(),
+            ))
         });
     });
 }
 
 fn end_to_end(criterion: &mut Criterion) {
-    criterion.bench_function("end_to_end_compact_parse_replay", |bencher| {
+    criterion.bench_function("end_to_end_minimal_parse_replay", |bencher| {
         bencher.iter(|| parse_replay(parser_input(black_box(AGGREGATE_FIXTURE))));
     });
 }
