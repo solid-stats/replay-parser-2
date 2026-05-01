@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05.2-02-PLAN.md
-last_updated: "2026-05-01T02:50:12.520Z"
+stopped_at: Completed 05.2-03-PLAN.md
+last_updated: "2026-05-01T03:04:02.428Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 45
-  completed_plans: 41
-  percent: 91
+  completed_plans: 42
+  percent: 93
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-05-01
 
-Progress: [█████████░] 91%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Progress: [█████████░] 91%
 | Phase 05.2 P00 | 1m | 2 tasks | 2 files |
 | Phase 05.2 P01 | 10 min | 3 tasks | 18 files |
 | Phase 05.2 P02 | 22m04s | 3 tasks | 21 files |
+| Phase 05.2 P03 | 9m22s | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -149,6 +150,9 @@ Recent decisions affecting current work:
 - [Phase 05.2]: parser-core parse_replay now emits v3 minimal players, player_stats, kills, and destroyed_vehicles by default.
 - [Phase 05.2]: Issue 13 vehicle score parser-core implementation was removed while ordinary vehicleKills, killsFromVehicle, attacker vehicle context, and destroyed_vehicles remain covered.
 - [Phase 05.2]: Full normalized entities, events, source refs, rule IDs, side facts, and diagnostics are available only through parser-core parse_replay_debug.
+- [Phase 05.2]: CLI parse now writes minified v3 minimal JSON by default; human-readable JSON requires --pretty.
+- [Phase 05.2]: CLI debug sidecar output is explicit internal tooling through --debug-artifact <path> and uses parser-core parse_replay_debug only when requested.
+- [Phase 05.2]: Public schema and README references now use schemas/parse-artifact-v3.schema.json and v3 example artifacts.
 
 ### Roadmap Evolution
 
@@ -209,8 +213,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T02:50:12.516Z
-Stopped at: Completed 05.2-02-PLAN.md
+Last session: 2026-05-01T03:04:02.424Z
+Stopped at: Completed 05.2-03-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
