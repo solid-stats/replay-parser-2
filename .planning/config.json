@@ -166,9 +166,9 @@
       ".agents/skills/coverage-analysis"
     ]
   },
-  "sub_repos": [],
   "planning": {
     "commit_docs": true,
-    "search_gitignored": false
+    "search_gitignored": false,
+    "sub_repos": []
   }
 }

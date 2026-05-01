@@ -205,7 +205,7 @@ Cross-cutting constraints:
 - Phase 6 remains blocked unless Phase 5.2 records compatibility acceptance plus selected x3, all-raw x10, zero-failure, and artifact-size acceptance.
 
 Plans:
-- [ ] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
+- [x] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
 - [ ] 05.2-01-PLAN.md - Contract v3 minimal flat tables, schema/examples, and vehicle-score contract removal.
 - [ ] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
 - [ ] 05.2-03-PLAN.md - CLI minified default output, explicit pretty/debug flags, schema command, and README command updates.
