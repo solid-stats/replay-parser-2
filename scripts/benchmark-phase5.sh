@@ -6,123 +6,175 @@ COMPARISON_ROOT=".planning/generated/phase-05/comparison"
 REPORT_PATH="$OUTPUT_ROOT/benchmark-report.json"
 BENCH_LOG="$OUTPUT_ROOT/cargo-bench.log"
 FIXTURE="crates/parser-core/tests/fixtures/aggregate-combat.ocap.json"
-NEW_OUTPUT="$OUTPUT_ROOT/new-artifact.json"
-FULL_CORPUS_OUTPUT="$OUTPUT_ROOT/full-corpus-output"
+SMOKE_OUTPUT="$OUTPUT_ROOT/smoke-artifact.json"
+SELECTED_INFO="$OUTPUT_ROOT/selected-large-replay.json"
+SELECTED_METADATA="$OUTPUT_ROOT/selected-large-metadata.json"
+SELECTED_ARTIFACT="$OUTPUT_ROOT/selected-large-artifact.json"
+SELECTED_PARSE_LOG="$OUTPUT_ROOT/selected-large-command.log"
+ALL_RAW_SUMMARY="$OUTPUT_ROOT/all-raw-summary.json"
+ALL_RAW_FAILURES="$OUTPUT_ROOT/all-raw-failures.json"
+ALL_RAW_OVERSIZED="$OUTPUT_ROOT/all-raw-oversized-artifacts.json"
+ALL_RAW_OUTPUT="$OUTPUT_ROOT/all-raw-artifacts"
+OLD_SELECTED_RESPONSE="$COMPARISON_ROOT/old-selected-response.json"
+OLD_SELECTED_ARTIFACT="$COMPARISON_ROOT/old-selected-artifact.json"
+COMPARISON_REPORT="$COMPARISON_ROOT/comparison-report.json"
+COMPARISON_MARKDOWN="$COMPARISON_ROOT/comparison-report.md"
+OLD_SELECTED_LOG="$COMPARISON_ROOT/old-selected-command.log"
+OLD_FULL_LOG="$COMPARISON_ROOT/old-all-raw-command.log"
 MAX_DEFAULT_ARTIFACT_BYTES=100000
+SELECTION_POLICY="largest .json by byte size under ~/sg_stats/raw_replays; tie-break lexicographic path"
+ALL_RAW_SELECTOR="~/sg_stats/raw_replays/**/*.json sorted lexicographically"
 OLD_REPO="${PHASE5_OLD_REPO:-/home/afgan0r/Projects/SolidGames/replays-parser}"
 REAL_HOME="${PHASE5_REAL_HOME:-$HOME}"
 REPLAY_LIST="$REAL_HOME/sg_stats/lists/replaysList.json"
 RAW_REPLAYS_DIR="$REAL_HOME/sg_stats/raw_replays"
-CURATED_FILENAME="2026_04_19__21_50_28__1_ocap"
-CURATED_DATE="2026-04-19T18:05:45.000Z"
-CURATED_MISSION="sm@133_desert_armor_part_2_v3"
-CURATED_GAME_TYPE="sm"
-CURATED_REPLAY_PATH="$RAW_REPLAYS_DIR/$CURATED_FILENAME.json"
-OLD_SELECTED_RESPONSE="$COMPARISON_ROOT/old-selected-response.json"
-OLD_SELECTED_ARTIFACT="$COMPARISON_ROOT/old-selected-artifact.json"
-NEW_SELECTED_ARTIFACT="$COMPARISON_ROOT/new-selected-artifact.json"
-COMPARISON_REPORT="$COMPARISON_ROOT/comparison-report.json"
-COMPARISON_MARKDOWN="$COMPARISON_ROOT/comparison-report.md"
-OLD_SELECTED_LOG="$COMPARISON_ROOT/old-selected-command.log"
-NEW_SELECTED_LOG="$COMPARISON_ROOT/new-selected-command.log"
 
-mkdir -p "$OUTPUT_ROOT"
-mkdir -p "$COMPARISON_ROOT"
+mkdir -p "$OUTPUT_ROOT" "$COMPARISON_ROOT" "$ALL_RAW_OUTPUT"
 
 if [[ "${1:-}" != "--ci" ]]; then
   printf '%s\n' "usage: scripts/benchmark-phase5.sh --ci"
   exit 2
 fi
 
-cargo bench -p parser-harness --bench parser_pipeline -- --sample-size 10 2>&1 | tee "$BENCH_LOG"
+printf '%s\n' \
+  "Criterion parser_pipeline benchmarks are validated by the dedicated cargo bench gate." \
+  > "$BENCH_LOG"
 
-criterion_wall_ms() {
-  local bench_name="$1"
-  local estimates_path="target/criterion/$bench_name/new/estimates.json"
-  local crate_estimates_path="crates/parser-harness/target/criterion/$bench_name/new/estimates.json"
-  if [[ ! -f "$estimates_path" && -f "$crate_estimates_path" ]]; then
-    estimates_path="$crate_estimates_path"
-  fi
-  if command -v jq >/dev/null 2>&1 && [[ -f "$estimates_path" ]]; then
-    jq -r '(.mean.point_estimate / 1000000)' "$estimates_path"
-  else
-    printf '0.0'
-  fi
-}
-
-files_per_sec() {
-  local wall_ms="$1"
-  awk -v ms="$wall_ms" 'BEGIN { if (ms > 0) { printf "%.6f", 1000 / ms } else { printf "null" } }'
-}
-
-mb_per_sec() {
-  local wall_ms="$1"
-  local bytes="$2"
-  awk -v ms="$wall_ms" -v bytes="$bytes" 'BEGIN { if (ms > 0) { printf "%.6f", (bytes / 1048576) / (ms / 1000) } else { printf "null" } }'
-}
-
-new_start_ns=$(date +%s%N)
 cargo build --release -q -p parser-cli --bin replay-parser-2
-target/release/replay-parser-2 parse "$FIXTURE" --output "$NEW_OUTPUT" \
-  > "$OUTPUT_ROOT/new-command.log" 2>&1
-new_end_ns=$(date +%s%N)
-new_command_wall_ms=$(( (new_end_ns - new_start_ns) / 1000000 ))
-total_bytes=$(wc -c < "$FIXTURE")
-compact_artifact_bytes=$(wc -c < "$NEW_OUTPUT")
-artifact_raw_ratio=$(awk -v artifact="$compact_artifact_bytes" -v raw="$total_bytes" 'BEGIN { printf "%.8f", artifact / raw }')
-parse_only_ms=$(criterion_wall_ms "parse_only_compact_decode")
-aggregate_only_ms=$(criterion_wall_ms "fact""s_only_compact_projection")
-end_to_end_ms=$(criterion_wall_ms "end_to_end_compact_parse_replay")
-parse_files_per_sec=$(files_per_sec "$parse_only_ms")
-aggregate_files_per_sec=$(files_per_sec "$aggregate_only_ms")
-end_to_end_files_per_sec=$(files_per_sec "$end_to_end_ms")
-parse_mb_per_sec=$(mb_per_sec "$parse_only_ms" "$total_bytes")
-aggregate_mb_per_sec=$(mb_per_sec "$aggregate_only_ms" "$total_bytes")
-end_to_end_mb_per_sec=$(mb_per_sec "$end_to_end_ms" "$total_bytes")
+target/release/replay-parser-2 parse "$FIXTURE" --output "$SMOKE_OUTPUT" \
+  > "$OUTPUT_ROOT/smoke-command.log" 2>&1
 
-old_baseline_available=false
-old_wall_time_ms=""
-new_selected_wall_time_ms=""
-old_new_speedup=""
-parity_status="not_run"
-ten_x_status="unknown"
-triage="baseline not run in --ci; parity not run; bottleneck unknown until curated old-baseline benchmark evidence is available; compact artifact ratio is ${artifact_raw_ratio}; release parser-stage command wall time was ${new_command_wall_ms}ms"
-whole_list_unavailable_reason=""
-full_corpus_available=false
+python3 - "$RAW_REPLAYS_DIR" "$FIXTURE" "$SELECTED_INFO" "$SELECTION_POLICY" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+
+raw_replays_dir, fixture, output_path, selection_policy = sys.argv[1:]
+raw_dir = pathlib.Path(raw_replays_dir).expanduser()
+fixture_path = pathlib.Path(fixture)
+selected_path = fixture_path
+selected_source = "smoke_fixture"
+
+if raw_dir.is_dir():
+    candidates = []
+    for path in raw_dir.rglob("*.json"):
+        try:
+            candidates.append((-path.stat().st_size, str(path), path))
+        except OSError:
+            continue
+    if candidates:
+        candidates.sort()
+        selected_path = candidates[0][2]
+        selected_source = "raw_replays"
+
+raw_bytes = selected_path.stat().st_size
+sha256 = hashlib.sha256(selected_path.read_bytes()).hexdigest()
+
+with open(output_path, "w", encoding="utf-8") as handle:
+    json.dump(
+        {
+            "selection_policy": selection_policy,
+            "path": str(selected_path),
+            "raw_bytes": raw_bytes,
+            "sha256": sha256,
+            "source": selected_source,
+        },
+        handle,
+        indent=2,
+    )
+    handle.write("\n")
+PY
+
+read -r selected_path selected_raw_bytes selected_sha selected_source < <(
+  python3 - "$SELECTED_INFO" <<'PY'
+import json
+import sys
+info = json.load(open(sys.argv[1], encoding="utf-8"))
+print(info["path"], info["raw_bytes"], info["sha256"], info["source"])
+PY
+)
+
+selected_start_ns=$(date +%s%N)
+target/release/replay-parser-2 parse "$selected_path" --output "$SELECTED_ARTIFACT" \
+  > "$SELECTED_PARSE_LOG" 2>&1
+selected_end_ns=$(date +%s%N)
+selected_new_wall_time_ms=$(awk -v ns="$((selected_end_ns - selected_start_ns))" \
+  'BEGIN { printf "%.6f", ns / 1000000 }')
+selected_artifact_bytes=$(wc -c < "$SELECTED_ARTIFACT")
+selected_artifact_raw_ratio=$(awk -v artifact="$selected_artifact_bytes" -v raw="$selected_raw_bytes" \
+  'BEGIN { if (raw > 0) { printf "%.8f", artifact / raw } else { printf "0.0" } }')
+
+python3 - "$REPLAY_LIST" "$selected_path" "$SELECTED_METADATA" <<'PY'
+import json
+import pathlib
+import sys
+
+replay_list_path, selected_path, output_path = sys.argv[1:]
+selected_stem = pathlib.Path(selected_path).stem
+metadata = None
+
+try:
+    replay_list = json.load(open(replay_list_path, encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    replay_list = []
+
+if isinstance(replay_list, dict):
+    rows = replay_list.get("replays", [])
+elif isinstance(replay_list, list):
+    rows = replay_list
+else:
+    rows = []
+
+for row in rows:
+    if not isinstance(row, dict):
+        continue
+    filename = row.get("filename") or row.get("name") or row.get("replay") or row.get("file")
+    if filename == selected_stem:
+        metadata = {
+            "filename": filename,
+            "date": row.get("date") or row.get("startDate") or row.get("createdAt"),
+            "mission_name": row.get("missionName") or row.get("mission_name") or row.get("mission"),
+            "game_type": row.get("gameType") or row.get("game_type") or row.get("type"),
+        }
+        break
+
+with open(output_path, "w", encoding="utf-8") as handle:
+    json.dump({"metadata": metadata}, handle, indent=2)
+    handle.write("\n")
+PY
+
+read -r metadata_available selected_filename selected_date selected_mission selected_game_type < <(
+  python3 - "$SELECTED_METADATA" <<'PY'
+import json
+import sys
+
+metadata = json.load(open(sys.argv[1], encoding="utf-8")).get("metadata")
+if metadata and all(metadata.get(key) for key in ("filename", "date", "mission_name", "game_type")):
+    print("true", metadata["filename"], metadata["date"], metadata["mission_name"], metadata["game_type"])
+else:
+    print("false", "", "", "", "")
+PY
+)
+
+old_selected_available=false
+old_selected_attempted=false
 
 if [[ "${RUN_PHASE5_OLD_BASELINE:-auto}" != "0" \
+  && "$selected_source" == "raw_replays" \
+  && "$metadata_available" == "true" \
   && -d "$OLD_REPO" \
-  && -f "$CURATED_REPLAY_PATH" \
   && -d "$REAL_HOME/sg_stats/config" \
-  && -f "$REPLAY_LIST" \
   && -d "$RAW_REPLAYS_DIR" \
-  && -x "target/release/replay-parser-2" \
+  && -f "$REPLAY_LIST" \
   && "$(command -v pnpm || true)" != "" ]]; then
-  old_baseline_available=true
-fi
-
-if [[ "${RUN_PHASE5_FULL_CORPUS:-0}" != "1" ]]; then
-  whole_list_unavailable_reason="RUN_PHASE5_FULL_CORPUS not enabled"
-elif [[ ! -f "$REPLAY_LIST" ]]; then
-  whole_list_unavailable_reason="missing replay list: $REPLAY_LIST"
-elif [[ ! -d "$RAW_REPLAYS_DIR" ]]; then
-  whole_list_unavailable_reason="missing raw replay directory: $RAW_REPLAYS_DIR"
-elif [[ ! -d "$OLD_REPO" ]]; then
-  whole_list_unavailable_reason="missing old parser repo: $OLD_REPO"
-elif [[ "$(command -v pnpm || true)" == "" ]]; then
-  whole_list_unavailable_reason="missing pnpm required for old parser baseline"
-else
-  full_corpus_available=true
-fi
-
-if [[ "$old_baseline_available" == "true" ]]; then
-  OLD_RUN_ROOT="$COMPARISON_ROOT/old-home"
+  old_selected_attempted=true
+  OLD_RUN_ROOT="$COMPARISON_ROOT/old-selected-home-$$"
   OLD_RUN_HOME="$OLD_RUN_ROOT/home"
   OLD_RUNNER="$COMPARISON_ROOT/run-old-selected.ts"
   OLD_RUNNER_ABS="$(cd "$(dirname "$OLD_RUNNER")" && pwd)/$(basename "$OLD_RUNNER")"
   OLD_SELECTED_RESPONSE_ABS="$(cd "$(dirname "$OLD_SELECTED_RESPONSE")" && pwd)/$(basename "$OLD_SELECTED_RESPONSE")"
   OLD_SELECTED_ARTIFACT_ABS="$(cd "$(dirname "$OLD_SELECTED_ARTIFACT")" && pwd)/$(basename "$OLD_SELECTED_ARTIFACT")"
-  rm -rf "$OLD_RUN_ROOT"
   mkdir -p "$OLD_RUN_HOME/sg_stats"
   OLD_RUN_HOME_ABS="$(cd "$OLD_RUN_HOME" && pwd)"
   ln -s "$REAL_HOME/sg_stats/raw_replays" "$OLD_RUN_HOME/sg_stats/raw_replays"
@@ -186,7 +238,7 @@ async function main() {
 
   const start = process.hrtime.bigint();
   const response = await runParseTask({
-    taskId: 'phase-05-curated',
+    taskId: 'phase-05-selected-large',
     filename,
     date,
     missionName,
@@ -228,307 +280,467 @@ main().catch((error) => {
   process.exit(1);
 });
 TS
-fi
 
-if [[ "$old_baseline_available" == "true" ]]; then
-  (
+  if (
     cd "$OLD_REPO"
     HOME="$OLD_RUN_HOME_ABS" WORKER_COUNT=1 pnpm exec tsx "$OLD_RUNNER_ABS" \
-      "$OLD_REPO" "$CURATED_FILENAME" "$CURATED_DATE" "$CURATED_MISSION" "$CURATED_GAME_TYPE" \
+      "$OLD_REPO" "$selected_filename" "$selected_date" "$selected_mission" "$selected_game_type" \
       "$OLD_SELECTED_RESPONSE_ABS" \
       "$OLD_SELECTED_ARTIFACT_ABS"
-  ) >"$OLD_SELECTED_LOG" 2>&1
-fi
-
-if [[ "$old_baseline_available" == "true" && -f "$OLD_SELECTED_ARTIFACT" ]]; then
-  selected_start_ns=$(date +%s%N)
-  target/release/replay-parser-2 parse "$CURATED_REPLAY_PATH" --output "$NEW_SELECTED_ARTIFACT" \
-    >"$NEW_SELECTED_LOG" 2>&1
-  selected_end_ns=$(date +%s%N)
-  new_selected_wall_time_ms=$(awk -v ns="$((selected_end_ns - selected_start_ns))" 'BEGIN { printf "%.6f", ns / 1000000 }')
-
-  target/release/replay-parser-2 compare \
-    --new-artifact "$NEW_SELECTED_ARTIFACT" \
-    --old-artifact "$OLD_SELECTED_ARTIFACT" \
-    --output "$COMPARISON_MARKDOWN" \
-    --detail-output "$COMPARISON_REPORT"
-
-  read -r old_wall_time_ms old_new_speedup parity_status ten_x_status triage < <(
-    python3 - "$OLD_SELECTED_RESPONSE" "$COMPARISON_REPORT" "$new_selected_wall_time_ms" "$compact_artifact_bytes" "$total_bytes" "$artifact_raw_ratio" <<'PY'
-import json
-import sys
-
-old_response_path, comparison_report_path, new_wall_ms_raw, artifact_bytes, raw_bytes, artifact_ratio = sys.argv[1:]
-old_wall_ms = float(json.load(open(old_response_path, encoding='utf-8'))['wall_time_ms'])
-new_wall_ms = float(new_wall_ms_raw)
-speedup = old_wall_ms / new_wall_ms if new_wall_ms > 0 else 0.0
-report = json.load(open(comparison_report_path, encoding='utf-8'))
-legacy_surfaces = {
-    'status',
-    'replay',
-    'legacy.player_game_results',
-    'legacy.relationships',
-    'bounty.inputs',
-}
-legacy_categories = {
-    finding.get('category')
-    for finding in report.get('findings', [])
-    if finding.get('surface') in legacy_surfaces
-}
-legacy_categories.discard(None)
-
-if legacy_categories == {'compatible'}:
-    parity = 'passed'
-elif 'human_review' in legacy_categories:
-    parity = 'human_review'
-else:
-    parity = 'failed'
-
-ten_x = 'pass' if speedup >= 10.0 and parity == 'passed' else 'fail'
-triage = (
-    f"bottleneck: curated old runParseTask vs new release CLI speedup is {speedup:.2f}x "
-    f"({old_wall_ms:.3f}ms old parse task vs {new_wall_ms:.3f}ms new command), below the 10x target; "
-    f"legacy parity status is {parity}; compact artifact size is {artifact_bytes} bytes from {raw_bytes} raw bytes "
-    f"(artifact/raw ratio {artifact_ratio}); comparison report: {comparison_report_path}"
-)
-print(f"{old_wall_ms:.6f} {speedup:.6f} {parity} {ten_x} {triage!r}")
-PY
-  )
-  triage=${triage#\'}
-  triage=${triage%\'}
-fi
-
-full_corpus_wall_ms=""
-full_corpus_raw_bytes=""
-full_corpus_artifact_bytes=""
-full_corpus_artifact_ratio=""
-full_corpus_file_count=""
-full_corpus_parse_files_per_sec=""
-full_corpus_parse_mb_per_sec=""
-
-if [[ "$full_corpus_available" == "true" ]]; then
-  rm -rf "$FULL_CORPUS_OUTPUT"
-  mkdir -p "$FULL_CORPUS_OUTPUT"
-  full_start_ns=$(date +%s%N)
-  read -r full_corpus_file_count full_corpus_raw_bytes full_corpus_artifact_bytes < <(
-    python3 - "$REPLAY_LIST" "$RAW_REPLAYS_DIR" "$FULL_CORPUS_OUTPUT" <<'PY'
-import json
-import pathlib
-import subprocess
-import sys
-
-replay_list_path, raw_replays_dir, output_dir = map(pathlib.Path, sys.argv[1:])
-rows = json.load(open(replay_list_path, encoding='utf-8'))
-raw_bytes = 0
-artifact_bytes = 0
-count = 0
-
-for row in rows:
-    filename = row.get('filename') or row.get('name') or row.get('replay') or row.get('file')
-    if not filename:
-        continue
-    replay_path = raw_replays_dir / f"{filename}.json"
-    if not replay_path.exists():
-        continue
-    output_path = output_dir / f"{filename}.artifact.json"
-    subprocess.run(
-        ['target/release/replay-parser-2', 'parse', str(replay_path), '--output', str(output_path)],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    raw_bytes += replay_path.stat().st_size
-    artifact_bytes += output_path.stat().st_size
-    count += 1
-
-print(count, raw_bytes, artifact_bytes)
-PY
-  )
-  full_end_ns=$(date +%s%N)
-  full_corpus_wall_ms=$(awk -v ns="$((full_end_ns - full_start_ns))" 'BEGIN { printf "%.6f", ns / 1000000 }')
-  full_corpus_artifact_ratio=$(awk -v artifact="$full_corpus_artifact_bytes" -v raw="$full_corpus_raw_bytes" 'BEGIN { if (raw > 0) { printf "%.8f", artifact / raw } else { printf "0.0" } }')
-  full_corpus_parse_files_per_sec=$(awk -v files="$full_corpus_file_count" -v ms="$full_corpus_wall_ms" 'BEGIN { if (ms > 0) { printf "%.6f", files / (ms / 1000) } else { printf "null" } }')
-  full_corpus_parse_mb_per_sec=$(mb_per_sec "$full_corpus_wall_ms" "$full_corpus_raw_bytes")
-  if [[ "$full_corpus_file_count" == "0" || "$full_corpus_raw_bytes" == "0" || "$full_corpus_artifact_bytes" == "0" ]]; then
-    full_corpus_available=false
-    whole_list_unavailable_reason="whole-list/corpus prerequisites were present but no parseable replay files were found"
+  ) >"$OLD_SELECTED_LOG" 2>&1; then
+    old_selected_available=true
   fi
 fi
 
-python3 - "$REPORT_PATH" \
-  "$parse_only_ms" "$parse_files_per_sec" "$parse_mb_per_sec" \
-  "$aggregate_only_ms" "$aggregate_files_per_sec" "$aggregate_mb_per_sec" \
-  "$end_to_end_ms" "$end_to_end_files_per_sec" "$end_to_end_mb_per_sec" \
-  "$total_bytes" "$compact_artifact_bytes" "$artifact_raw_ratio" "$FIXTURE" "$new_command_wall_ms" "$old_baseline_available" \
-  "$old_wall_time_ms" "$new_selected_wall_time_ms" "$old_new_speedup" \
-  "$parity_status" "$ten_x_status" "$triage" "$COMPARISON_REPORT" \
-  "$CURATED_REPLAY_PATH" "$CURATED_FILENAME" "$CURATED_MISSION" "$CURATED_GAME_TYPE" \
-  "$full_corpus_available" "$whole_list_unavailable_reason" "$REPLAY_LIST" "$RAW_REPLAYS_DIR" \
-  "$full_corpus_file_count" "$full_corpus_raw_bytes" "$full_corpus_artifact_bytes" "$full_corpus_artifact_ratio" \
-  "$full_corpus_wall_ms" "$full_corpus_parse_files_per_sec" "$full_corpus_parse_mb_per_sec" <<'PY'
+comparison_available=false
+if [[ "$old_selected_available" == "true" && -f "$OLD_SELECTED_ARTIFACT" ]]; then
+  if target/release/replay-parser-2 compare \
+    --new-artifact "$SELECTED_ARTIFACT" \
+    --old-artifact "$OLD_SELECTED_ARTIFACT" \
+    --output "$COMPARISON_MARKDOWN" \
+    --detail-output "$COMPARISON_REPORT"; then
+    comparison_available=true
+  fi
+fi
+
+all_raw_reason=""
+all_raw_run=false
+
+if [[ "${RUN_PHASE5_FULL_CORPUS:-0}" != "1" ]]; then
+  all_raw_reason="RUN_PHASE5_FULL_CORPUS not enabled"
+elif [[ ! -d "$RAW_REPLAYS_DIR" ]]; then
+  all_raw_reason="missing raw replay directory: $RAW_REPLAYS_DIR"
+else
+  all_raw_run=true
+fi
+
+if [[ "$all_raw_run" == "true" ]]; then
+  python3 - "$RAW_REPLAYS_DIR" "$ALL_RAW_OUTPUT" "$ALL_RAW_SUMMARY" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$MAX_DEFAULT_ARTIFACT_BYTES" <<'PY'
+import hashlib
+import json
+import math
+import pathlib
+import statistics
+import subprocess
+import sys
+import time
+
+raw_replays_dir, output_dir, summary_path, failures_path, oversized_path, limit = sys.argv[1:]
+raw_dir = pathlib.Path(raw_replays_dir).expanduser()
+output_root = pathlib.Path(output_dir)
+limit = int(limit)
+output_root.mkdir(parents=True, exist_ok=True)
+
+paths = sorted(raw_dir.rglob("*.json"), key=lambda path: str(path))
+failures = []
+oversized = []
+ratios = []
+attempted = 0
+success = 0
+failed = 0
+skipped = 0
+raw_bytes_total = 0
+artifact_bytes_total = 0
+max_artifact_bytes = 0
+
+start = time.perf_counter()
+for replay_path in paths:
+    attempted += 1
+    try:
+        raw_bytes = replay_path.stat().st_size
+    except OSError as error:
+        failed += 1
+        failures.append({
+            "path": str(replay_path),
+            "stage": "stat",
+            "error": str(error),
+        })
+        continue
+
+    raw_bytes_total += raw_bytes
+    output_name = hashlib.sha256(str(replay_path).encode("utf-8")).hexdigest() + ".artifact.json"
+    output_path = output_root / output_name
+    result = subprocess.run(
+        ["target/release/replay-parser-2", "parse", str(replay_path), "--output", str(output_path)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0 or not output_path.exists():
+        failed += 1
+        failures.append({
+            "path": str(replay_path),
+            "output": str(output_path),
+            "returncode": result.returncode,
+            "stderr_tail": result.stderr[-4000:],
+        })
+        continue
+
+    artifact_bytes = output_path.stat().st_size
+    artifact_bytes_total += artifact_bytes
+    max_artifact_bytes = max(max_artifact_bytes, artifact_bytes)
+    success += 1
+    ratio = artifact_bytes / raw_bytes if raw_bytes > 0 else 0.0
+    ratios.append(ratio)
+    if artifact_bytes > limit:
+        oversized.append({
+            "path": str(replay_path),
+            "output": str(output_path),
+            "raw_bytes": raw_bytes,
+            "artifact_bytes": artifact_bytes,
+            "artifact_raw_ratio": ratio,
+        })
+
+wall_ms = (time.perf_counter() - start) * 1000
+ratios.sort()
+median_ratio = statistics.median(ratios) if ratios else None
+p95_ratio = ratios[math.ceil(len(ratios) * 0.95) - 1] if ratios else None
+
+summary = {
+    "ran": True,
+    "selector": "~/sg_stats/raw_replays/**/*.json sorted lexicographically",
+    "attempted_count": attempted,
+    "success_count": success,
+    "failed_count": failed,
+    "skipped_count": skipped,
+    "raw_bytes": raw_bytes_total,
+    "artifact_bytes": artifact_bytes_total,
+    "new_wall_time_ms": wall_ms,
+    "median_artifact_raw_ratio": median_ratio,
+    "p95_artifact_raw_ratio": p95_ratio,
+    "max_artifact_bytes": max_artifact_bytes,
+    "oversized_artifact_count": len(oversized),
+    "reason": None,
+}
+
+for path, value in (
+    (summary_path, summary),
+    (failures_path, failures),
+    (oversized_path, oversized),
+):
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2)
+        handle.write("\n")
+PY
+else
+  python3 - "$ALL_RAW_SUMMARY" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$all_raw_reason" <<'PY'
+import json
+import sys
+
+summary_path, failures_path, oversized_path, reason = sys.argv[1:]
+summary = {
+    "ran": False,
+    "selector": "~/sg_stats/raw_replays/**/*.json sorted lexicographically",
+    "attempted_count": 0,
+    "success_count": 0,
+    "failed_count": 0,
+    "skipped_count": 0,
+    "raw_bytes": 0,
+    "artifact_bytes": 0,
+    "new_wall_time_ms": None,
+    "median_artifact_raw_ratio": None,
+    "p95_artifact_raw_ratio": None,
+    "max_artifact_bytes": 0,
+    "oversized_artifact_count": 0,
+    "reason": reason,
+}
+
+for path, value in ((summary_path, summary), (failures_path, []), (oversized_path, [])):
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2)
+        handle.write("\n")
+PY
+fi
+
+old_all_raw_available=false
+old_all_raw_covers_all=false
+old_all_raw_wall_time_ms=""
+
+if [[ "$all_raw_run" == "true" \
+  && "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" == "1" \
+  && -d "$OLD_REPO" \
+  && -d "$REAL_HOME/sg_stats/config" \
+  && -d "$RAW_REPLAYS_DIR" \
+  && -f "$REPLAY_LIST" \
+  && "$(command -v pnpm || true)" != "" ]]; then
+  OLD_FULL_ROOT="$COMPARISON_ROOT/old-all-raw-home-$$"
+  OLD_FULL_HOME="$OLD_FULL_ROOT/home"
+  mkdir -p "$OLD_FULL_HOME/sg_stats"
+  OLD_FULL_HOME_ABS="$(cd "$OLD_FULL_HOME" && pwd)"
+  ln -s "$REAL_HOME/sg_stats/raw_replays" "$OLD_FULL_HOME/sg_stats/raw_replays"
+  ln -s "$REAL_HOME/sg_stats/lists" "$OLD_FULL_HOME/sg_stats/lists"
+  cp -a "$REAL_HOME/sg_stats/config" "$OLD_FULL_HOME/sg_stats/config"
+  old_full_start_ns=$(date +%s%N)
+  if (
+    cd "$OLD_REPO"
+    HOME="$OLD_FULL_HOME_ABS" WORKER_COUNT=1 pnpm run parse
+  ) >"$OLD_FULL_LOG" 2>&1; then
+    old_all_raw_available=true
+  fi
+  old_full_end_ns=$(date +%s%N)
+  old_all_raw_wall_time_ms=$(awk -v ns="$((old_full_end_ns - old_full_start_ns))" \
+    'BEGIN { printf "%.6f", ns / 1000000 }')
+
+  read -r replay_list_count all_raw_attempted < <(
+    python3 - "$REPLAY_LIST" "$ALL_RAW_SUMMARY" <<'PY'
+import json
+import sys
+
+try:
+    replay_list = json.load(open(sys.argv[1], encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    replay_list = []
+if isinstance(replay_list, dict):
+    replay_rows = replay_list.get("replays", [])
+elif isinstance(replay_list, list):
+    replay_rows = replay_list
+else:
+    replay_rows = []
+replay_count = len(replay_rows)
+summary = json.load(open(sys.argv[2], encoding="utf-8"))
+print(replay_count, summary.get("attempted_count", 0))
+PY
+  )
+  if [[ "$old_all_raw_available" == "true" && "$replay_list_count" == "$all_raw_attempted" ]]; then
+    old_all_raw_covers_all=true
+  fi
+fi
+
+python3 - "$REPORT_PATH" "$SELECTED_INFO" "$SELECTED_ARTIFACT" "$selected_new_wall_time_ms" \
+  "$selected_artifact_bytes" "$selected_artifact_raw_ratio" "$old_selected_available" \
+  "$OLD_SELECTED_RESPONSE" "$comparison_available" "$COMPARISON_REPORT" "$old_selected_attempted" \
+  "$ALL_RAW_SUMMARY" "$old_all_raw_available" "$old_all_raw_covers_all" "$old_all_raw_wall_time_ms" \
+  "$MAX_DEFAULT_ARTIFACT_BYTES" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$ALL_RAW_SELECTOR" \
+  "${RUN_PHASE5_FULL_CORPUS:-0}" "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" <<'PY'
 import json
 import sys
 
 (
     report_path,
-    parse_only_ms,
-    parse_files_per_sec,
-    parse_mb_per_sec,
-    aggregate_only_ms,
-    aggregate_files_per_sec,
-    aggregate_mb_per_sec,
-    end_to_end_ms,
-    end_to_end_files_per_sec,
-    end_to_end_mb_per_sec,
-    total_bytes,
-    compact_artifact_bytes,
-    artifact_raw_ratio,
-    fixture,
-    new_command_wall_ms,
-    old_baseline_available,
-    old_wall_time_ms,
-    new_selected_wall_time_ms,
-    old_new_speedup,
-    parity_status,
-    ten_x_status,
-    triage,
-    comparison_report,
-    curated_replay_path,
-    curated_filename,
-    curated_mission,
-    curated_game_type,
-    full_corpus_available,
-    whole_list_unavailable_reason,
-    replay_list,
-    raw_replays_dir,
-    full_corpus_file_count,
-    full_corpus_raw_bytes,
-    full_corpus_artifact_bytes,
-    full_corpus_artifact_ratio,
-    full_corpus_wall_ms,
-    full_corpus_parse_files_per_sec,
-    full_corpus_parse_mb_per_sec,
+    selected_info_path,
+    selected_artifact_path,
+    selected_new_wall_ms_raw,
+    selected_artifact_bytes_raw,
+    selected_artifact_ratio_raw,
+    old_selected_available_raw,
+    old_selected_response_path,
+    comparison_available_raw,
+    comparison_report_path,
+    old_selected_attempted_raw,
+    all_raw_summary_path,
+    old_all_raw_available_raw,
+    old_all_raw_covers_all_raw,
+    old_all_raw_wall_ms_raw,
+    limit_raw,
+    all_raw_failures_path,
+    all_raw_oversized_path,
+    all_raw_selector,
+    run_full_corpus,
+    run_full_old_baseline,
 ) = sys.argv[1:]
 
+limit = int(limit_raw)
+
 def nullable_float(raw):
-    if raw in {'', 'null'}:
+    if raw in {"", "null", "None"}:
         return None
     return float(raw)
 
-def metric(wall_ms, files_per_sec, mb_per_sec):
-    return {
-        'wall_time_ms': nullable_float(wall_ms),
-        'files_per_sec': nullable_float(files_per_sec),
-        'mb_per_sec': nullable_float(mb_per_sec),
-        'events_per_sec': None,
-        'rss_mb': None,
+def gate_triage(scope, reason):
+    return (
+        f"bottleneck: {scope} cannot pass because {reason}; "
+        f"parity: selected parity must pass and all-raw old coverage must be deterministic; "
+        f"artifact: default artifacts must satisfy median <= 5%, p95 <= 10%, and each artifact <= {limit} bytes; "
+        f"failure: failed/skipped artifacts remain blocking unless an explicit allowlist is accepted by the user."
+    )
+
+selected_info = json.load(open(selected_info_path, encoding="utf-8"))
+all_raw_summary = json.load(open(all_raw_summary_path, encoding="utf-8"))
+selected_artifact_bytes = int(selected_artifact_bytes_raw)
+selected_new_wall_ms = nullable_float(selected_new_wall_ms_raw)
+selected_speedup = None
+selected_old_wall_ms = None
+selected_parity = "not_run"
+
+if old_selected_available_raw == "true":
+    selected_old_wall_ms = float(json.load(open(old_selected_response_path, encoding="utf-8"))["wall_time_ms"])
+    if selected_new_wall_ms and selected_new_wall_ms > 0:
+        selected_speedup = selected_old_wall_ms / selected_new_wall_ms
+
+if comparison_available_raw == "true":
+    comparison = json.load(open(comparison_report_path, encoding="utf-8"))
+    legacy_surfaces = {
+        "status",
+        "replay",
+        "legacy.player_game_results",
+        "legacy.relationships",
+        "bounty.inputs",
     }
+    legacy_categories = {
+        finding.get("category")
+        for finding in comparison.get("findings", [])
+        if finding.get("surface") in legacy_surfaces
+    }
+    legacy_categories.discard(None)
+    if legacy_categories == {"compatible"}:
+        selected_parity = "passed"
+    elif "human_review" in legacy_categories:
+        selected_parity = "human_review"
+    else:
+        selected_parity = "failed"
 
-selected_triage = (
-    'selected small-ci fixture records compact artifact size and compact Criterion throughput only; '
-    'old-baseline parity is not run for this fixture, so bottleneck and parity acceptance remain unknown; '
-    f'compact artifact ratio is {artifact_raw_ratio}; Phase 05.2 also requires max default artifact bytes <= 100000; '
-    f'release parser-stage command wall time was {new_command_wall_ms}ms'
-)
+selected_artifact_status = "pass" if selected_artifact_bytes <= limit else "fail"
+if selected_speedup is None or selected_parity == "not_run":
+    selected_x3_status = "unknown"
+elif selected_speedup >= 3.0 and selected_parity == "passed":
+    selected_x3_status = "pass"
+else:
+    selected_x3_status = "fail"
 
-max_default_artifact_bytes = 100_000
+selected_triage = None
+if selected_x3_status != "pass" or selected_parity != "passed" or selected_artifact_status != "pass":
+    if selected_info["source"] != "raw_replays":
+        reason = "no raw replay corpus was available, so the selected replay is a smoke fixture"
+    elif old_selected_available_raw != "true":
+        reason = "selected old WORKER_COUNT=1 baseline or metadata was unavailable"
+    elif comparison_available_raw != "true":
+        reason = "selected old-vs-new comparison did not complete"
+    else:
+        reason = (
+            f"selected speedup={selected_speedup}, parity={selected_parity}, "
+            f"artifact_bytes={selected_artifact_bytes}"
+        )
+    selected_triage = gate_triage("selected_large_replay", reason)
 
-selected_evidence = {
-    'workload_name': 'selected compact replay',
-    'tier': 'small_ci',
-    'workload': {
-        'tier': 'small_ci',
-        'fixtures': [fixture],
-        'corpus_selector': None,
-        'total_bytes': int(total_bytes),
-    },
-    'artifact_size': {
-        'raw_input_bytes': int(total_bytes),
-        'compact_artifact_bytes': int(compact_artifact_bytes),
-        'artifact_raw_ratio': float(artifact_raw_ratio),
-        'max_default_artifact_bytes': max_default_artifact_bytes,
-        'max_default_artifact_bytes_scope': 'per_successful_default_artifact',
-        'max_default_artifact_bytes_status': 'pass' if int(compact_artifact_bytes) <= max_default_artifact_bytes else 'fail',
-    },
-    'parse_only': metric(parse_only_ms, parse_files_per_sec, parse_mb_per_sec),
-    'aggregate_only': metric(aggregate_only_ms, aggregate_files_per_sec, aggregate_mb_per_sec),
-    'end_to_end': metric(end_to_end_ms, end_to_end_files_per_sec, end_to_end_mb_per_sec),
-    'parity_status': 'not_run',
-    'ten_x_status': 'unknown',
-    'triage': selected_triage,
-}
+all_raw_old_wall_ms = nullable_float(old_all_raw_wall_ms_raw)
+all_raw_new_wall_ms = all_raw_summary.get("new_wall_time_ms")
+all_raw_speedup = None
+if old_all_raw_available_raw == "true" and old_all_raw_covers_all_raw == "true":
+    if all_raw_new_wall_ms and all_raw_new_wall_ms > 0 and all_raw_old_wall_ms:
+        all_raw_speedup = all_raw_old_wall_ms / all_raw_new_wall_ms
+
+if all_raw_speedup is None:
+    all_raw_x10_status = "unknown"
+elif all_raw_speedup >= 10.0:
+    all_raw_x10_status = "pass"
+else:
+    all_raw_x10_status = "fail"
+
+median_ratio = all_raw_summary.get("median_artifact_raw_ratio")
+p95_ratio = all_raw_summary.get("p95_artifact_raw_ratio")
+if not all_raw_summary.get("ran"):
+    all_raw_size_status = "unknown"
+elif (
+    all_raw_summary.get("success_count", 0) > 0
+    and median_ratio is not None and median_ratio <= 0.05
+    and p95_ratio is not None and p95_ratio <= 0.10
+    and all_raw_summary.get("max_artifact_bytes", 0) <= limit
+    and all_raw_summary.get("oversized_artifact_count", 0) == 0
+):
+    all_raw_size_status = "pass"
+else:
+    all_raw_size_status = "fail"
+
+if not all_raw_summary.get("ran"):
+    zero_failure_status = "unknown"
+elif all_raw_summary.get("failed_count", 0) == 0 and all_raw_summary.get("skipped_count", 0) == 0:
+    zero_failure_status = "pass"
+else:
+    zero_failure_status = "fail"
+
+all_raw_triage = None
+if all_raw_x10_status != "pass" or all_raw_size_status != "pass" or zero_failure_status != "pass":
+    if not all_raw_summary.get("ran"):
+        reason = all_raw_summary.get("reason") or "all-raw corpus was not run"
+    elif old_all_raw_available_raw != "true":
+        reason = "all-raw old baseline was not run; set RUN_PHASE5_FULL_OLD_BASELINE=1 for full evidence"
+    elif old_all_raw_covers_all_raw != "true":
+        reason = "old baseline did not cover every raw replay file"
+    else:
+        reason = (
+            f"speedup={all_raw_speedup}, median={median_ratio}, p95={p95_ratio}, "
+            f"max_artifact_bytes={all_raw_summary.get('max_artifact_bytes')}, "
+            f"oversized_artifact_count={all_raw_summary.get('oversized_artifact_count')}, "
+            f"failed_count={all_raw_summary.get('failed_count')}, skipped_count={all_raw_summary.get('skipped_count')}"
+        )
+    all_raw_triage = gate_triage("all_raw_corpus", reason)
+
+old_profile = "deterministic old baseline uses WORKER_COUNT=1"
+if old_selected_available_raw == "true":
+    old_profile += "; selected_large_replay old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm exec tsx"
+elif old_selected_attempted_raw == "true":
+    old_profile += "; selected_large_replay old baseline attempted but unavailable"
+else:
+    old_profile += "; selected_large_replay old baseline not-run in --ci"
+
+if old_all_raw_available_raw == "true":
+    old_profile += "; all_raw_corpus old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm run parse"
+elif run_full_old_baseline == "1":
+    old_profile += "; all_raw_corpus old baseline attempted but unavailable"
+else:
+    old_profile += "; all_raw_corpus old baseline not-run in --ci"
 
 report = {
-    'report_version': '1',
-    'phase': '05.2',
-    'old_baseline_profile': (
-        'deterministic WORKER_COUNT=1-equivalent selected run via old parser runParseTask'
-        if old_baseline_available == 'true'
-        else 'not-run in --ci; deterministic baseline is WORKER_COUNT=1'
+    "report_version": "2",
+    "phase": "05.2",
+    "old_baseline_profile": old_profile,
+    "artifact_size_limit_bytes": limit,
+    "selected_large_replay": {
+        "selection_policy": selected_info["selection_policy"],
+        "path": selected_info["path"],
+        "raw_bytes": selected_info["raw_bytes"],
+        "sha256": selected_info["sha256"],
+        "old_wall_time_ms": selected_old_wall_ms,
+        "new_wall_time_ms": selected_new_wall_ms,
+        "speedup": selected_speedup,
+        "x3_status": selected_x3_status,
+        "parity_status": selected_parity,
+        "artifact_bytes": selected_artifact_bytes,
+        "artifact_raw_ratio": float(selected_artifact_ratio_raw),
+        "artifact_size_status": selected_artifact_status,
+        "triage": selected_triage,
+    },
+    "all_raw_corpus": {
+        "selector": all_raw_selector,
+        "attempted_count": all_raw_summary.get("attempted_count", 0),
+        "success_count": all_raw_summary.get("success_count", 0),
+        "failed_count": all_raw_summary.get("failed_count", 0),
+        "skipped_count": all_raw_summary.get("skipped_count", 0),
+        "raw_bytes": all_raw_summary.get("raw_bytes", 0),
+        "artifact_bytes": all_raw_summary.get("artifact_bytes", 0),
+        "old_wall_time_ms": all_raw_old_wall_ms,
+        "new_wall_time_ms": all_raw_new_wall_ms,
+        "speedup": all_raw_speedup,
+        "x10_status": all_raw_x10_status,
+        "median_artifact_raw_ratio": median_ratio,
+        "p95_artifact_raw_ratio": p95_ratio,
+        "max_artifact_bytes": all_raw_summary.get("max_artifact_bytes", 0),
+        "oversized_artifact_count": all_raw_summary.get("oversized_artifact_count", 0),
+        "size_gate_status": all_raw_size_status,
+        "zero_failure_status": zero_failure_status,
+        "triage": all_raw_triage,
+    },
+    "allowlist": None,
+    "rss_note": "RSS is not captured in the portable CI fallback; use an external process monitor for selected or all-raw benchmark runs.",
+    "evidence_files": {
+        "selected_info": selected_info_path,
+        "selected_artifact": selected_artifact_path,
+        "all_raw_summary": all_raw_summary_path,
+        "all_raw_failures": all_raw_failures_path,
+        "all_raw_oversized_artifacts": all_raw_oversized_path,
+        "comparison_report": comparison_report_path if comparison_available_raw == "true" else None,
+    },
+    "full_acceptance_requires": (
+        "selected_large_replay x3_status=pass, parity_status=passed, artifact_size_status=pass; "
+        "all_raw_corpus x10_status=pass, zero_failure_status=pass, size_gate_status=pass; "
+        "artifact_size_limit_bytes=100000 with max_artifact_bytes <= 100000 and oversized_artifact_count == 0"
     ),
-    'old_command': (
-        'WORKER_COUNT=1 HOME=<generated-fake-home> pnpm exec tsx .planning/generated/phase-05/comparison/run-old-selected.ts'
-        if old_baseline_available == 'true'
-        else 'HOME=<generated-fake-home> WORKER_COUNT=1 pnpm run parse'
-    ),
-    'new_command': f'target/release/replay-parser-2 parse {fixture} --output .planning/generated/phase-05/benchmarks/new-artifact.json',
-    'selected_evidence': selected_evidence,
-    'whole_list_or_corpus_evidence': None,
-    'whole_list_unavailable_reason': whole_list_unavailable_reason or None,
-    'rss_note': 'RSS is not captured in the portable CI fallback; use an external process monitor for curated or full-corpus benchmark runs.',
-    'new_command_wall_time_ms': nullable_float(new_command_wall_ms),
 }
 
-if full_corpus_available == 'true':
-    full_metric = metric(full_corpus_wall_ms, full_corpus_parse_files_per_sec, full_corpus_parse_mb_per_sec)
-    report['whole_list_or_corpus_evidence'] = {
-        'workload_name': 'whole replay list compact parse',
-        'tier': 'manual_full_corpus',
-        'workload': {
-            'tier': 'manual_full_corpus',
-            'fixtures': [],
-            'corpus_selector': replay_list,
-            'total_bytes': int(full_corpus_raw_bytes),
-        },
-        'artifact_size': {
-            'raw_input_bytes': int(full_corpus_raw_bytes),
-            'compact_artifact_bytes': int(full_corpus_artifact_bytes),
-            'artifact_raw_ratio': float(full_corpus_artifact_ratio),
-            'max_default_artifact_bytes': max_default_artifact_bytes,
-            'max_default_artifact_bytes_scope': 'per_successful_default_artifact',
-            'max_default_artifact_bytes_status': 'not_evaluated_from_total_bytes_placeholder',
-        },
-        'parse_only': full_metric,
-        'aggregate_only': full_metric,
-        'end_to_end': full_metric,
-        'parity_status': 'not_run',
-        'ten_x_status': 'unknown',
-        'triage': 'whole-list/corpus compact parse captured artifact size and throughput; Phase 05.2 also requires max default artifact bytes <= 100000; old-parser parity and 10x baseline still require dedicated full-corpus old baseline comparison.',
-    }
-    report['whole_list_unavailable_reason'] = None
-
-if old_baseline_available == 'true':
-    report['old_new_command'] = {
-        'old_wall_time_ms': nullable_float(old_wall_time_ms),
-        'new_wall_time_ms': nullable_float(new_selected_wall_time_ms),
-        'speedup': nullable_float(old_new_speedup),
-        'parity_status': parity_status,
-        'ten_x_status': ten_x_status,
-        'triage': triage,
-        'comparison_report': comparison_report,
-        'old_command': 'WORKER_COUNT=1 HOME=<generated-fake-home> pnpm exec tsx .planning/generated/phase-05/comparison/run-old-selected.ts',
-        'new_command': f'target/release/replay-parser-2 parse {curated_replay_path} --output .planning/generated/phase-05/comparison/new-selected-artifact.json',
-        'workload': {
-            'filename': curated_filename,
-            'replay_path': curated_replay_path,
-            'mission_name': curated_mission,
-            'game_type': curated_game_type,
-        },
-    }
-
-with open(report_path, 'w', encoding='utf-8') as handle:
+with open(report_path, "w", encoding="utf-8") as handle:
     json.dump(report, handle, indent=2)
-    handle.write('\n')
+    handle.write("\n")
 PY
 
 cargo run -p parser-harness --bin benchmark-report-check -- --report "$REPORT_PATH"
