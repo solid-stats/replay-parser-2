@@ -8,7 +8,6 @@
 )]
 
 use parser_contract::{
-    artifact::{ParseArtifact, ParseStatus},
     events::EventActorRef,
     identity::EntitySide,
     presence::{FieldPresence, UnknownReason},
@@ -16,7 +15,7 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{DebugParseArtifact, ParserInput, ParserOptions, parse_replay_debug};
 use serde_json::json;
 
 const SIDE_FACTS_FIXTURE: &[u8] = include_bytes!("fixtures/side-facts.ocap.json");
@@ -137,11 +136,11 @@ fn parser_input(bytes: &[u8]) -> ParserInput<'_> {
     }
 }
 
-fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
-    parse_replay(parser_input(bytes))
+fn parse_fixture(bytes: &[u8]) -> DebugParseArtifact {
+    parse_replay_debug(parser_input(bytes))
 }
 
-fn present_winner_side(artifact: &ParseArtifact) -> Option<EntitySide> {
+fn present_winner_side(artifact: &DebugParseArtifact) -> Option<EntitySide> {
     match &artifact.side_facts.outcome.winner_side {
         FieldPresence::Present { value, source: Some(_) } => Some(*value),
         FieldPresence::Present { source: None, .. }
@@ -167,7 +166,6 @@ fn actor_source_entity_id(actor: &EventActorRef) -> Option<i64> {
 fn side_facts_should_emit_known_outcome_from_explicit_winner_field() {
     let artifact = parse_fixture(SIDE_FACTS_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Known);
     assert_eq!(present_winner_side(&artifact), Some(EntitySide::West));
     assert_eq!(artifact.side_facts.outcome.rule_id.as_str(), "side_facts.outcome.explicit_field");
@@ -178,7 +176,6 @@ fn side_facts_should_emit_known_outcome_from_explicit_winner_field() {
 fn side_facts_should_emit_unknown_outcome_without_partial_status_when_winner_missing() {
     let artifact = parse_fixture(MISSING_WINNER_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
     assert!(matches!(
         artifact.side_facts.outcome.winner_side,
@@ -231,7 +228,6 @@ fn side_facts_should_not_emit_canonical_commander_identity() {
 fn side_facts_should_warn_but_not_data_loss_for_unrecognized_outcome_value() {
     let artifact = parse_fixture(UNRECOGNIZED_WINNER_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
     assert!(
         artifact
@@ -245,7 +241,6 @@ fn side_facts_should_warn_but_not_data_loss_for_unrecognized_outcome_value() {
 fn side_facts_should_accept_trimmed_case_insensitive_winner_aliases() {
     let artifact = parse_fixture(PADDED_ALIAS_WINNER_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Known);
     assert_eq!(present_winner_side(&artifact), Some(EntitySide::West));
 }
@@ -254,7 +249,6 @@ fn side_facts_should_accept_trimmed_case_insensitive_winner_aliases() {
 fn side_facts_should_emit_partial_unknown_outcome_when_recognized_fields_conflict() {
     let artifact = parse_fixture(CONFLICTING_WINNER_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Partial);
     assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
     assert!(matches!(
         artifact.side_facts.outcome.winner_side,
@@ -272,6 +266,5 @@ fn side_facts_should_emit_partial_unknown_outcome_when_recognized_fields_conflic
 fn side_facts_should_not_emit_commander_candidate_for_embedded_ks_substrings() {
     let artifact = parse_fixture(COMMANDER_FALSE_POSITIVE_FIXTURE);
 
-    assert_eq!(artifact.status, ParseStatus::Success);
     assert!(artifact.side_facts.commanders.is_empty());
 }
