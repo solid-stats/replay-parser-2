@@ -60,6 +60,7 @@ pub struct ParseArtifact {
     #[serde(default)]
     pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
     /// Replay-side commander and outcome facts.
+    #[serde(default)]
     pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.
     pub failure: Option<ParseFailure>,

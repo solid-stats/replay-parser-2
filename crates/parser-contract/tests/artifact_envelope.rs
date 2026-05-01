@@ -18,7 +18,7 @@ use parser_contract::{
 use semver::Version;
 use serde_json::{Value, json};
 
-const SUCCESS_EXAMPLE: &str = include_str!("../examples/parse_artifact_success.v2.json");
+const SUCCESS_EXAMPLE: &str = include_str!("../examples/parse_artifact_success.v3.json");
 
 fn parser_info() -> ParserInfo {
     ParserInfo {
@@ -174,7 +174,7 @@ fn parse_artifact_success_example_should_round_trip_stable_envelope_fields() {
 
     let output_value = serde_json::to_value(&artifact).expect("example should reserialize");
 
-    assert_eq!(input_value["contract_version"], "2.0.0");
+    assert_eq!(input_value["contract_version"], "3.0.0");
     assert_eq!(output_value["contract_version"], input_value["contract_version"]);
     assert_eq!(output_value["status"], input_value["status"]);
     assert_eq!(output_value["source"]["source_file"], input_value["source"]["source_file"]);
