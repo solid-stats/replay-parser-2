@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05.2-04-PLAN.md
-last_updated: "2026-05-01T03:23:08.200Z"
+stopped_at: Completed 05.2-05-PLAN.md
+last_updated: "2026-05-01T03:48:04.798Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 45
-  completed_plans: 43
-  percent: 96
+  completed_plans: 44
+  percent: 98
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-05-01
 
-Progress: [██████████] 96%
+Progress: [██████████] 98%
 
 ## Performance Metrics
 
@@ -88,6 +88,7 @@ Progress: [██████████] 96%
 | Phase 05.2 P02 | 22m04s | 3 tasks | 21 files |
 | Phase 05.2 P03 | 9m22s | 3 tasks | 5 files |
 | Phase 05.2 P04 | 14m18s | 3 tasks | 4 files |
+| Phase 05.2 P05 | 15m | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -157,6 +158,10 @@ Recent decisions affecting current work:
 - [Phase 05.2]: Old-vs-new parity compares a derived legacy view from v3 minimal tables. — This preserves Phase 5.2 minimal default artifacts while keeping v1 human-review parity meaningful.
 - [Phase 05.2]: Selected comparison surfaces exclude vehicle_score, compact facts, aggregate contributions, participants, and summary projections. — Final selected parity is limited to status, replay, legacy player rows, legacy relationships, and bounty inputs.
 - [Phase 05.2]: Phase 05.2 benchmark acceptance must enforce max default artifact bytes <= 100_000 per successful artifact. — The benchmark report now carries explicit size evidence placeholders while Wave 6 owns the hard gate.
+- [Phase 05.2]: Phase 05.2 benchmark reports use report_version 2 with selected_large_replay, all_raw_corpus, allowlist, rss_note, and artifact_size_limit_bytes.
+- [Phase 05.2]: The default artifact hard limit is exactly 100000 bytes; selected size passes only with artifact_bytes <= 100000.
+- [Phase 05.2]: All-raw size passes only with median artifact/raw ratio <= 0.05, p95 <= 0.10, max_artifact_bytes <= 100000, and oversized_artifact_count == 0.
+- [Phase 05.2]: scripts/benchmark-phase5.sh --ci emits structurally valid smoke reports with unknown statuses when full prerequisites are absent; full acceptance still requires pass statuses.
 
 ### Roadmap Evolution
 
@@ -217,8 +222,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T03:23:08.195Z
-Stopped at: Completed 05.2-04-PLAN.md
+Last session: 2026-05-01T03:48:04.793Z
+Stopped at: Completed 05.2-05-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
