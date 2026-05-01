@@ -19,6 +19,8 @@ pub mod failure;
 pub mod identity;
 /// Replay metadata contract types.
 pub mod metadata;
+/// Minimal flat table contract types for default v3 parser artifacts.
+pub mod minimal;
 /// Explicit present, null, unknown, inferred, and not-applicable field states.
 pub mod presence;
 /// JSON Schema generation for parser artifacts.

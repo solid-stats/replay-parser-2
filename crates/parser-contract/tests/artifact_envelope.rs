@@ -9,7 +9,6 @@ use std::collections::BTreeMap;
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    compact::{ParseFactSection, ParseSummarySection},
     diagnostic::{Diagnostic, DiagnosticSeverity},
     presence::FieldPresence,
     side_facts::ReplaySideFacts,
@@ -57,9 +56,10 @@ fn success_artifact() -> ParseArtifact {
         produced_at: None,
         diagnostics: Vec::new(),
         replay: None,
-        participants: Vec::new(),
-        facts: ParseFactSection::default(),
-        summaries: ParseSummarySection::default(),
+        players: Vec::new(),
+        player_stats: Vec::new(),
+        kills: Vec::new(),
+        destroyed_vehicles: Vec::new(),
         side_facts: ReplaySideFacts::default(),
         failure: None,
         extensions: BTreeMap::new(),
@@ -86,7 +86,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
 
     let serialized = serde_json::to_value(&artifact).expect("artifact should serialize");
 
-    assert_eq!(serialized["contract_version"], "2.0.0");
+    assert_eq!(serialized["contract_version"], "3.0.0");
     assert_eq!(serialized["parser"]["name"], "replay-parser-2");
     assert_eq!(serialized["source"]["source_file"], "2025_04_05__23_27_21__1_ocap.json");
     assert_eq!(serialized["source"]["checksum"]["value"]["algorithm"], "sha256");
@@ -94,9 +94,13 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert!(serialized.get("produced_at").is_some());
     assert!(serialized.get("diagnostics").is_some());
     assert!(serialized.get("replay").is_some());
-    assert!(serialized.get("participants").is_some());
-    assert!(serialized.get("facts").is_some());
-    assert!(serialized.get("summaries").is_some());
+    assert!(serialized.get("players").is_some());
+    assert!(serialized.get("player_stats").is_some());
+    assert!(serialized.get("kills").is_some());
+    assert!(serialized.get("destroyed_vehicles").is_some());
+    assert!(serialized.get("participants").is_none());
+    assert!(serialized.get("facts").is_none());
+    assert!(serialized.get("summaries").is_none());
     assert!(serialized.get("entities").is_none());
     assert!(serialized.get("events").is_none());
     assert!(serialized.get("aggregates").is_none());

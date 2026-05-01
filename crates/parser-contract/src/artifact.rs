@@ -5,10 +5,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
-    compact::{ObservedParticipantRef, ParseFactSection, ParseSummarySection},
     diagnostic::Diagnostic,
     failure::ParseFailure,
     metadata::ReplayMetadata,
+    minimal::{
+        MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalPlayerStatsRow,
+    },
     side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
     version::{ContractVersion, ParserInfo},
@@ -45,15 +47,18 @@ pub struct ParseArtifact {
     pub diagnostics: Vec<Diagnostic>,
     /// Normalized replay metadata when it could be extracted.
     pub replay: Option<ReplayMetadata>,
-    /// Compact observed participant references from the replay.
+    /// Minimal observed player rows from the replay.
     #[serde(default)]
-    pub participants: Vec<ObservedParticipantRef>,
-    /// Compact facts and auditable contribution references.
+    pub players: Vec<MinimalPlayerRow>,
+    /// Minimal replay-local player counter rows.
     #[serde(default)]
-    pub facts: ParseFactSection,
-    /// Compact summary projections for review and ingestion sanity checks.
+    pub player_stats: Vec<MinimalPlayerStatsRow>,
+    /// Minimal player death rows.
     #[serde(default)]
-    pub summaries: ParseSummarySection,
+    pub kills: Vec<MinimalKillRow>,
+    /// Minimal vehicle and static weapon destruction rows.
+    #[serde(default)]
+    pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
     /// Replay-side commander and outcome facts.
     pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.

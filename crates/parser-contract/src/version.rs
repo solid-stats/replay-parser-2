@@ -3,7 +3,7 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 
 /// Current parser artifact contract version.
-pub const CURRENT_CONTRACT_VERSION: &str = "2.0.0";
+pub const CURRENT_CONTRACT_VERSION: &str = "3.0.0";
 
 /// Semantic parser artifact contract version.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -17,7 +17,7 @@ impl ContractVersion {
     /// Returns the current parser artifact contract version.
     #[must_use]
     pub const fn current() -> Self {
-        Self { semver: Version::new(2, 0, 0) }
+        Self { semver: Version::new(3, 0, 0) }
     }
 
     /// Parses a parser artifact contract version.
