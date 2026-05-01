@@ -17,7 +17,33 @@ pub fn parse_artifact_schema() -> Schema {
     enforce_status_failure_invariants(&mut schema);
     enforce_source_ref_evidence_invariants(&mut schema);
     add_aggregate_value_helper_definitions(&mut schema);
+    close_default_artifact_schema(&mut schema);
     schema
+}
+
+fn close_default_artifact_schema(schema: &mut Schema) {
+    drop(schema.insert("unevaluatedProperties".to_string(), json!(false)));
+
+    for definition_name in [
+        "MinimalDestroyedVehicleRow",
+        "MinimalDiagnosticRow",
+        "MinimalKillRow",
+        "MinimalPlayerRow",
+        "MinimalPlayerStatsRow",
+    ] {
+        close_schema_definition(schema, definition_name);
+    }
+}
+
+fn close_schema_definition(schema: &mut Schema, definition_name: &str) {
+    let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
+        return;
+    };
+    let Some(Value::Object(definition)) = defs.get_mut(definition_name) else {
+        return;
+    };
+
+    drop(definition.insert("additionalProperties".to_string(), json!(false)));
 }
 
 fn add_aggregate_value_helper_definitions(schema: &mut Schema) {
@@ -208,6 +234,7 @@ mod tests {
         add_aggregate_projection_key_definition(&mut schema);
         constrain_aggregate_contribution_values(&mut schema);
         enforce_source_ref_evidence_invariants(&mut schema);
+        close_default_artifact_schema(&mut schema);
 
         // Assert
         assert!(schema.get("$defs").is_none());
@@ -223,10 +250,12 @@ mod tests {
             .expect("parse artifact schema should include definitions");
         drop(defs.remove("AggregateContributionRef"));
         drop(defs.remove("SourceRef"));
+        drop(defs.remove("MinimalDiagnosticRow"));
 
         // Act
         constrain_aggregate_contribution_values(&mut schema);
         enforce_source_ref_evidence_invariants(&mut schema);
+        close_schema_definition(&mut schema, "MinimalDiagnosticRow");
 
         // Assert
         let defs = schema
@@ -235,5 +264,6 @@ mod tests {
             .expect("definitions should remain present");
         assert!(!defs.contains_key("AggregateContributionRef"));
         assert!(!defs.contains_key("SourceRef"));
+        assert!(!defs.contains_key("MinimalDiagnosticRow"));
     }
 }

@@ -153,6 +153,7 @@
     "diagnostics",
     "extensions"
   ],
+  "unevaluatedProperties": false,
   "$defs": {
     "AggregateProjectionKey": {
       "description": "Known namespaced aggregate projection keys emitted by parser-core v1 artifacts.",
@@ -2234,6 +2235,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "required": [
         "classification"
       ]
@@ -2259,6 +2261,7 @@
           "$ref": "#/$defs/DiagnosticSeverity"
         }
       },
+      "additionalProperties": false,
       "required": [
         "code",
         "severity",
@@ -2381,6 +2384,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "required": [
         "classification",
         "bounty_eligible",
@@ -2444,6 +2448,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "required": [
         "player_id",
         "source_entity_id",
@@ -2512,6 +2517,7 @@
           "minimum": 0
         }
       },
+      "additionalProperties": false,
       "required": [
         "player_id",
         "source_entity_id",

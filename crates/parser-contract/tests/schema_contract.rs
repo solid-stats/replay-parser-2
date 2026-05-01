@@ -272,3 +272,22 @@ fn schema_contract_gap_regression_should_reject_invalid_destroyed_vehicle_classi
 
     assert_committed_schema_rejects(&success_example);
 }
+
+#[test]
+fn schema_contract_gap_regression_should_reject_removed_top_level_fields() {
+    for removed_field in ["vehicle_score", "entities", "events", "source_refs"] {
+        let mut success_example = read_json(success_example_path());
+        success_example[removed_field] = json!({});
+
+        assert_committed_schema_rejects(&success_example);
+    }
+}
+
+#[test]
+fn schema_contract_gap_regression_should_reject_debug_fields_in_minimal_rows() {
+    let mut success_example = read_json(success_example_path());
+    success_example["kills"][0]["source_refs"] = json!([]);
+    success_example["kills"][0]["rule_id"] = json!("event.killed.enemy");
+
+    assert_committed_schema_rejects(&success_example);
+}
