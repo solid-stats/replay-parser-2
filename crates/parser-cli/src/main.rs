@@ -19,7 +19,7 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{ParserInput, ParserOptions, parse_replay, parse_replay_debug};
 use parser_harness::{
     comparison::{ComparisonError, compare_artifacts},
     summary_report::render_markdown_summary,
@@ -172,8 +172,8 @@ fn main() -> ExitCode {
 
 fn run() -> Result<ExitCode, CliError> {
     match Cli::parse().command {
-        Commands::Parse { input, output, pretty, debug_artifact: _, replay_id } => {
-            parse_command(&input, &output, replay_id, pretty)
+        Commands::Parse { input, output, pretty, debug_artifact, replay_id } => {
+            parse_command(&input, &output, replay_id, pretty, debug_artifact.as_deref())
         }
         Commands::Schema { output } => schema_command(output),
         Commands::Compare { replay, new_artifact, old_artifact, output, detail_output, format } => {
@@ -194,14 +194,23 @@ fn parse_command(
     output: &Path,
     replay_id: Option<String>,
     pretty: bool,
+    debug_artifact: Option<&Path>,
 ) -> Result<ExitCode, CliError> {
-    let artifact = public_parse_artifact(parse_artifact_from_input(input, replay_id)?);
+    let input_data = read_parser_input(input, replay_id)?;
+    let artifact = public_parse_artifact(parse_replay(input_data.parser_input()));
     let artifact_bytes = if pretty {
         serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?
     } else {
         serde_json::to_vec(&artifact).map_err(CliError::Serialize)?
     };
     write_json_file(output, artifact_bytes)?;
+
+    if let Some(path) = debug_artifact {
+        let debug_artifact = parse_replay_debug(input_data.parser_input());
+        let debug_bytes =
+            serde_json::to_vec_pretty(&debug_artifact).map_err(CliError::Serialize)?;
+        write_json_file(path, debug_bytes)?;
+    }
 
     if let Some(summary) = parse_failure_summary(&artifact) {
         write_stderr_line(&summary).map_err(CliError::WriteStderr)?;
@@ -224,6 +233,28 @@ fn parse_artifact_from_input(
     input: &Path,
     replay_id: Option<String>,
 ) -> Result<ParseArtifact, CliError> {
+    let input_data = read_parser_input(input, replay_id)?;
+    Ok(parse_replay(input_data.parser_input()))
+}
+
+struct ReadParserInput {
+    bytes: Vec<u8>,
+    source: ReplaySource,
+    parser: ParserInfo,
+}
+
+impl ReadParserInput {
+    fn parser_input(&self) -> ParserInput<'_> {
+        ParserInput {
+            bytes: &self.bytes,
+            source: self.source.clone(),
+            parser: self.parser.clone(),
+            options: ParserOptions::default(),
+        }
+    }
+}
+
+fn read_parser_input(input: &Path, replay_id: Option<String>) -> Result<ReadParserInput, CliError> {
     let bytes = fs::read(input)
         .map_err(|source| CliError::ReadInput { path: input.to_path_buf(), source })?;
     let checksum_hex = sha256_hex(&bytes);
@@ -236,14 +267,7 @@ fn parse_artifact_from_input(
         },
     };
     let parser = parser_info()?;
-    let artifact = parse_replay(ParserInput {
-        bytes: &bytes,
-        source,
-        parser,
-        options: ParserOptions::default(),
-    });
-
-    Ok(artifact)
+    Ok(ReadParserInput { bytes, source, parser })
 }
 
 fn public_parse_artifact(mut artifact: ParseArtifact) -> ParseArtifact {

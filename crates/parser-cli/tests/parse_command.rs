@@ -170,6 +170,53 @@ fn parse_command_should_write_pretty_minimal_json_when_requested() {
 }
 
 #[test]
+fn parse_command_should_write_debug_artifact_sidecar_when_requested() {
+    // Arrange
+    let input = parser_core_fixture("aggregate-combat.ocap.json");
+    let output_path = temp_output_path("debug-sidecar", "artifact.json");
+    let debug_path = temp_output_path("debug-sidecar", "debug.json");
+    let debug_arg = debug_path.to_str().expect("debug artifact temp path should be valid UTF-8");
+
+    // Act
+    let command_output = run_parse_with_args(&input, &output_path, ["--debug-artifact", debug_arg]);
+    let artifact_text =
+        fs::read_to_string(&output_path).expect("output artifact should be readable");
+    let debug_text = fs::read_to_string(&debug_path).expect("debug artifact should be readable");
+    let artifact: Value =
+        serde_json::from_str(&artifact_text).expect("output artifact should be valid JSON");
+    let debug_artifact: Value =
+        serde_json::from_str(&debug_text).expect("debug artifact should be valid JSON");
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(output_path.is_file());
+    assert!(debug_path.is_file());
+    assert_no_key_recursive(&artifact, "source_refs");
+    assert!(debug_text.contains("\"source_refs\""));
+    assert!(debug_text.contains("\"rule_id\""));
+    assert!(debug_text.contains("\"frame\""));
+    assert!(debug_text.contains("\"event_index\""));
+    assert!(debug_artifact.get("entities").is_some());
+    assert!(debug_artifact.get("events").is_some());
+}
+
+#[test]
+fn parse_command_should_not_create_debug_artifact_without_explicit_flag() {
+    // Arrange
+    let input = parser_core_fixture("aggregate-combat.ocap.json");
+    let output_path = temp_output_path("debug-not-requested", "artifact.json");
+    let debug_path = output_path.with_file_name("debug.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(output_path.is_file());
+    assert!(!debug_path.exists());
+}
+
+#[test]
 fn parse_command_should_write_compact_failure_artifact_and_stderr_summary_when_input_is_invalid() {
     // Arrange
     let input = parser_core_fixture("invalid-json.ocap.json");
