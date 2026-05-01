@@ -16,7 +16,9 @@ Parse OCAP JSON replays quickly and deterministically into compact server-facing
 
 Phase 5 execution produced the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation, but UAT rejected the current parser direction as a product-fit gap. The current parser mostly reserializes a large normalized artifact instead of reducing replay information for `server-2`; the curated old/new benchmark records only a small speedup, `ten_x_status=fail`, and `parity_status=human_review`; and the generated comparison surface is too large for practical human review.
 
-Phase 5.1 has been inserted before worker integration to redesign the default artifact as a compact server-facing result, move full event/entity detail out of the default contract, and implement a selective parser path that reads only the OCAP fields required for v1 statistics and audit contributions.
+Phase 5.1 redesigned the default artifact as a compact server-facing result, moved full event/entity detail out of the default contract, and added a selective parser boundary, but its acceptance evidence is still not sufficient for worker integration.
+
+Phase 5.2 has been inserted before worker integration to make the default artifact minimal rather than merely compact, record the product decision to remove GitHub issue #13 vehicle score from v1, put detailed evidence behind an explicit debug sidecar, and prove the new performance gates: x3 on one large representative replay and x10 across all files in `~/sg_stats/raw_replays`.
 
 ## Requirements
 
@@ -34,13 +36,16 @@ Phase 5.1 has been inserted before worker integration to redesign the default ar
 
 - [x] Provide a CLI that parses a local OCAP JSON file and writes parser output JSON.
 - [ ] Redesign the default parser output as a compact server-facing artifact rather than a full normalized event/entity dump.
+- [ ] Replace the current compact artifact with a minimal flat v1 statistics artifact containing `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`.
 - [ ] Move heavy audit/parity/debug detail out of the default worker artifact; optional sidecars must not be required for ordinary `server-2` ingestion.
+- [ ] Emit detailed event/entity/source-reference evidence only through an explicit debug sidecar mode, not through ordinary parser output.
+- [ ] Remove GitHub issue #13 vehicle score and `vehicle_score` output from the v1 contract, schema, examples, tests, docs, and plans.
 - [ ] Implement a selective parser path that avoids full JSON-to-JSON roundtrips and reads only the OCAP metadata, entities, and events required for v1 statistics.
 - [ ] Replace unreadable large comparison output with summary-first parity reports plus machine-readable detailed evidence.
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Include a benchmark harness that establishes the current parser baseline and targets roughly 10x faster parsing with artifact-size reporting. Curated selected evidence exists but currently fails the 10x target and needs parser redesign.
+- [ ] Include benchmark evidence that establishes the current parser baseline, proves x3 end-to-end CLI speedup on one large representative replay, proves x10 end-to-end throughput across all raw files in `~/sg_stats/raw_replays`, and reports artifact-size percentiles.
 
 ### Out of Scope
 
@@ -112,31 +117,16 @@ In this domain, "KS" means commander of a side. The parser should detect command
 
 Bounty points are calculated by `server-2`, but parser output must support the required inputs. For each valid kill event, the parser should output killer and victim observed identity, enemy-kill/teamkill classification, kill timestamp/frame, relevant vehicle/infantry context, replay context, and side context. Only valid enemy kills award bounty points in v1; teamkills do not.
 
-GitHub issue #13 adds a required vehicle score statistic: https://github.com/solid-stats/sg-replay-parser/issues/13. The score counts kills from vehicles only, divides by the count of games where the player had at least one kill from a vehicle, and uses a weight matrix where the attacker vehicle type is the row and killed entity type is the column.
-
-Vehicle score weight matrix:
-
-| Attacker vehicle | Static weapon | Car | Truck | APC | Tank | Heli | Plane | Player |
-|------------------|---------------|-----|-------|-----|------|------|-------|--------|
-| Static weapon | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
-| Car | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
-| Truck | 1 | 1 | 1 | 1 | 1.5 | 2 | 2 | 2 |
-| APC | 0.5 | 1 | 1 | 1 | 1 | 2 | 2 | 2 |
-| Tank | 0.25 | 0.5 | 0.5 | 0.5 | 1 | 1.5 | 2 | 2 |
-| Heli | 0.5 | 0.5 | 1 | 1 | 1.5 | 1.5 | 2 | 2 |
-| Plane | 0.25 | 0.5 | 0.5 | 0.5 | 1 | 1.5 | 2 | 2 |
-
-For teamkills, the penalty multiplier must not be below 1 even if the normal matrix value is lower. The parser output must expose enough source references to audit each contribution to this score.
+GitHub issue #13 vehicle score was implemented as Phase 4 evidence, but it is no longer a v1 product target. Phase 5.2 must remove `vehicle_score` from the v1 contract, schema, examples, tests, docs, and default artifact. V1 still keeps ordinary `killsFromVehicle`, `vehicleKills`, weapon/vehicle context, and destroyed-vehicle facts so future work can reprocess raw OCAP files if vehicle score is revisited.
 
 Open implementation details for later phases:
 
 - Exact README sections and command examples once the Rust workspace, CLI, worker, validation, and benchmark commands exist.
 - Exact old parser command used for baseline benchmark.
 - Exact old/new comparison tolerances.
-- Final compact artifact field set, JSON schema names, field types, and artifact-size target.
-- Optional sidecar/debug artifact policy for parity review and future analytics.
+- Final minimal flat artifact field names, JSON schema names, field types, and artifact-size target.
+- Exact debug sidecar CLI flag/output policy for detailed event/entity/source-reference evidence.
 - Selective parser implementation strategy and acceptance thresholds for parse-only, aggregate-only, and end-to-end throughput.
-- Final contract field name for vehicle score and whether `server-2` stores the derived score or recalculates it from parser-provided vehicle score inputs.
 - Exact deterministic artifact key format under S3 `artifacts/`.
 - Exact RabbitMQ exchange and routing key naming.
 - Exact `replays-fetcher`/`server-2` staging schema and raw S3 object key format are adjacent-app contracts; parser worker only relies on the `object_key` and `checksum` in parse jobs.
@@ -147,7 +137,7 @@ Open implementation details for later phases:
 - **Language**: Rust - chosen for deterministic parsing, performance, and deployable CLI/worker binaries.
 - **Replay format**: OCAP JSON only - supporting other formats is outside v1 scope.
 - **Validation data**: `~/sg_stats` - historical data is the golden/test baseline, not a production import source.
-- **Performance**: Roughly 10x faster than the current parser on equivalent workloads, with raw-input size, output-artifact size, parse-only time, aggregate-only time, end-to-end time, and parity status reported before any performance claim.
+- **Performance**: At least x3 faster than the current parser for end-to-end CLI parsing on one large representative replay and at least x10 faster across all raw replay files in `~/sg_stats/raw_replays`, with raw-input size, output-artifact size, artifact-size percentiles, wall time, throughput, skip/failure counts, and parity/triage status reported before any performance claim.
 - **Runtime modes**: CLI plus worker/container mode - local reproducibility and server integration are both required.
 - **Queue integration**: RabbitMQ - worker mode consumes parse requests and publishes parse results/failures.
 - **File input**: S3-compatible object storage - parser worker reads replay content by object key/checksum.
@@ -181,7 +171,7 @@ Open implementation details for later phases:
 | Reprocess raw files for annual/yearly statistics instead of adding a large v1 side artifact | Yearly nominations are deferred to v2, and raw OCAP files plus legacy yearly outputs remain the reference when that product surface is revisited. | - Pending |
 | Use selective parsing before worker integration | Worker mode should not be built on a parser hot path that performs an expensive full JSON-to-JSON translation. | - Pending |
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
-| Include vehicle score from issue #13 | Explicit user-requested statistic that depends on correct vehicle kill context and teamkill penalty semantics. | - Pending |
+| Retire vehicle score from issue #13 from v1 | Product decision on 2026-05-01: v1 should stay focused on minimal current statistics and can reprocess raw replays later if this statistic returns. | - Pending |
 | Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
 | Maintain README as current public project context | README is the first repository-facing contract for scope, status, commands, and workflow; it must clearly state that development happens only through AI + GSD. | - Pending |
 | Require clean git tree after completed work | Clean status makes handoff and review reliable; intended results should be committed, while ambiguous or user-owned changes require explicit user direction. | - Pending |
@@ -210,4 +200,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-29 after Phase 5 UAT parser redesign decision*
+*Last updated: 2026-05-01 after Phase 5.2 insertion for minimal artifact and performance acceptance*

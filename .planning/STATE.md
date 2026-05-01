@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase-05.1-executed-with-acceptance-gap
-stopped_at: Phase 5.1 benchmark/parity acceptance gap
-last_updated: "2026-04-29T16:03:40+07:00"
+status: planning
+stopped_at: Phase 5.1 executed with benchmark/parity acceptance gap
+last_updated: "2026-05-01T01:03:36.785Z"
 last_activity: 2026-04-29
 progress:
-  total_phases: 8
-  completed_phases: 4
+  total_phases: 9
+  completed_phases: 6
   total_plans: 38
   completed_plans: 38
   percent: 100
@@ -18,19 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-28)
+See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 05.1 — compact-artifact-and-selective-parser-redesign
+**Current focus:** Phase 05.2 — Minimal Artifact and Performance Acceptance
 
 ## Current Position
 
-Phase: 05.1 (compact-artifact-and-selective-parser-redesign) — EXECUTION COMPLETE, ACCEPTANCE GAP OPEN
-Plan: 8 of 8
-Status: Phase 5.1 executed all 8 plans. The compact artifact contract, selective parser boundary, compact core semantics, CLI/schema updates, summary-first comparison reports, benchmark report schema, final gates, and handoff docs are implemented. Final code gates passed, but the generated benchmark report is not an accepted performance/parity pass: selected `ten_x_status=unknown`, selected `parity_status=not_run`, whole-list/corpus evidence is unavailable because `RUN_PHASE5_FULL_CORPUS` was not enabled, and selected artifact/raw ratio is `59.97366881` on the tiny CI fixture. Phase 6 worker integration remains blocked until full-corpus benchmark/parity evidence passes or the gap is explicitly accepted.
+Phase: 05.2 (minimal-artifact-and-performance-acceptance) — INSERTED, READY TO PLAN
+Plan: 0 of TBD
+Status: Phase 05.2 inserted; ready to plan
 Last activity: 2026-04-29
 
-Progress: [██████████] 100% of planned Phase 5.1 execution, with acceptance gap
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -142,6 +142,7 @@ Recent decisions affecting current work:
 - Phase 5.1 inserted after Phase 5 (URGENT): Compact Artifact and Selective Parser Redesign. Reason: Phase 5 UAT found that the current parser artifact is too large, benchmark speedup is too weak, and comparison output is not reviewable; Phase 6 worker integration must wait for a compact artifact and selective parser direction.
 - Phase 5.1 planned with 8 plans and 7 execution waves on 2026-04-29.
 - Phase 5.1 executed all 8 plans on 2026-04-29; Phase 6 remains blocked by benchmark/parity acceptance evidence.
+- Phase 05.2 inserted after Phase 5: Minimal Artifact and Performance Acceptance (URGENT)
 
 ### Pending Todos
 
@@ -202,4 +203,4 @@ Resume file: .planning/phases/05.1-compact-artifact-and-selective-parser-redesig
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Resolve Phase 5.1 acceptance before Phase 6: run `RUN_PHASE5_FULL_CORPUS=1 scripts/benchmark-phase5.sh --ci` with old-parser prerequisites and parity evidence, remediate the compactness/performance gap, or record explicit user acceptance of the benchmark/parity gap.
+**Next Step:** Plan Phase 05.2: `$gsd-plan-phase 05.2`

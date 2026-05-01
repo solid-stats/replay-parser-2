@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap escalated into Phase 5.1 redesign)
 - [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target. (execution complete 2026-04-29; benchmark/parity acceptance gap blocks Phase 6)
+- [ ] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal flat v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and prove x3 selected-replay plus x10 all-raw corpus performance gates before worker integration.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -180,9 +181,28 @@ Execution outcome:
 - The generated benchmark report is valid but not a 10x/parity acceptance pass: selected `ten_x_status=unknown`, selected `parity_status=not_run`, whole-list/corpus evidence is unavailable because `RUN_PHASE5_FULL_CORPUS` was not enabled, and selected artifact/raw ratio is `59.97366881` on the tiny CI fixture.
 - Phase 6 remains blocked until whole-list/corpus benchmark and parity evidence pass, or the benchmark/parity gap is explicitly accepted.
 
+### Phase 5.2: Minimal Artifact and Performance Acceptance (INSERTED)
+**Goal**: The default parser output is reduced to a minimal flat v1 statistics artifact, issue #13 vehicle score is removed from v1, and performance acceptance is proven before worker integration.
+**Depends on**: Phase 5.1
+**Requirements**: OUT-09, OUT-10, OUT-11, OUT-12, PARS-12, AGG-12, TEST-06, TEST-13, TEST-14, TEST-15
+**Status**: Inserted, ready to plan.
+**Success Criteria** (what must be TRUE):
+  1. The default artifact uses flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; it does not include full normalized event/entity dumps, source-ref dumps, or vehicle-score sections.
+  2. `kills[]` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: frame/time, killer/victim observed player references, enemy/teamkill/suicide/null-killer classification, weapon, attacker vehicle, and destroyed vehicle/entity type.
+  3. Detailed event indexes, entity snapshots, source references, rule IDs, and normalized event/entity evidence are emitted only through an explicit debug sidecar mode such as `--debug-artifact <path>`, not through ordinary ingestion output.
+  4. GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 contract, schema, examples, tests, docs, and planning requirements; v1 still preserves kills-from-vehicle, vehicle-kill, weapon/vehicle context, and destroyed-vehicle facts needed by current stats and future raw replay reprocessing.
+  5. Benchmark reports first capture the current old/new baseline on the chosen workloads, then prove the new end-to-end CLI is at least 3x faster than the old parser on one large representative replay and at least 10x faster across all files in `~/sg_stats/raw_replays`.
+  6. The all-raw corpus gate counts every raw file as an attempted result, including success, skipped, unsupported, and failed files, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
+  7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5% and p95 artifact/raw ratio is <= 10%; tiny fixtures may be reported separately but do not define acceptance.
+  8. Product-owner compatibility acceptance is recorded: `server-2` will adapt later to the minimal flat artifact, while parser still does not own canonical identity, PostgreSQL persistence, public APIs, UI behavior, or bounty payout calculation.
+**Plans**: TBD
+
+Plans:
+- [ ] TBD (run `$gsd-plan-phase 05.2` to break down)
+
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
-**Depends on**: Phase 5.1
+**Depends on**: Phase 5.2
 **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05, WORK-06, WORK-07
 **Success Criteria** (what must be TRUE):
   1. Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
@@ -205,7 +225,7 @@ Execution outcome:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -215,5 +235,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 6 -> 7
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
+| 5.2. Minimal Artifact and Performance Acceptance | 0/TBD | Inserted; ready to plan | - |
 | 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |

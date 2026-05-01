@@ -8,13 +8,13 @@ The default v1 output must reduce replay data for `server-2`. A 10-15 MB OCAP re
 
 ## Current Status
 
-Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 implementation is now executed: the default artifact is compact, full event/entity detail is out of ordinary ingestion, comparison reports are summary-first, and the parser uses a selective OCAP extraction boundary instead of the old full-DOM normal path. Parser-core preserves deterministic output ordering, records connected-player backfill plus duplicate-slot same-name compatibility as auditable observed facts/hints, and emits compact `participants`, `facts`, `summaries`, `side_facts`, `diagnostics`, and `failure` sections.
+Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 implementation is now executed: the default artifact is compact, full event/entity detail is out of ordinary ingestion, comparison reports are summary-first, and the parser uses a selective OCAP extraction boundary instead of the old full-DOM normal path. Phase 5.2 is inserted before worker integration to reduce the default artifact further into minimal flat v1 statistics tables, move detailed evidence behind an explicit debug sidecar, remove GitHub issue #13 vehicle score from v1, and prove the new x3 selected-replay plus x10 all-raw corpus performance gates.
 
-The CLI can parse a local OCAP JSON file into the compact server-facing artifact, export the compact parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Default parse output no longer includes top-level full `entities`, `events`, or `aggregates`; compact aggregate projections live under `summaries.projections`, with source-backed combat and contribution evidence under `facts`. `scripts/benchmark-phase5.sh --ci` validates Phase 5.1 benchmark reports that include raw input bytes, compact artifact bytes, artifact/raw ratio, selected workload identity, whole-list/corpus evidence or unavailable rationale, parity status, and 10x status. The latest CI report is structurally valid but not accepted as a performance pass: selected `ten_x_status` is `unknown`, selected `parity_status` is `not_run`, whole-list/corpus evidence is unavailable because `RUN_PHASE5_FULL_CORPUS` was not enabled, and the tiny selected fixture produced artifact/raw ratio `59.97366881`. Phase 6 remains blocked pending full-corpus evidence plus parity/10x acceptance or explicit user acceptance of this gap. RabbitMQ/S3 worker mode, full-corpus comparison automation, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into the current compact server-facing artifact, export the compact parser contract schema, and compare selected old/new artifacts or a selected replay against a saved old artifact. Phase 5.2 will replace this current compact shape with flat default tables (`players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, `diagnostics[]`) and keep source refs, rule IDs, entity snapshots, and normalized event/entity evidence out of ordinary ingestion unless a debug sidecar is explicitly requested. Phase 6 remains blocked until Phase 5.2 is planned and executed, including current baseline capture, x3 end-to-end CLI speedup on one large representative replay, x10 end-to-end speedup across all files in `~/sg_stats/raw_replays`, and artifact-size acceptance of median <= 5% raw size plus p95 <= 10% raw size for successful artifacts. RabbitMQ/S3 worker mode, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5.1, `Compact Artifact and Selective Parser Redesign` (executed with benchmark/parity acceptance gap).
-- Roadmap: 8 phases.
-- v1 requirements: 76 mapped requirements.
+- Current phase: Phase 5.2, `Minimal Artifact and Performance Acceptance` (inserted, ready to plan).
+- Roadmap: 9 phases.
+- v1 requirements: 80 mapped requirements.
 - Contract crate: `crates/parser-contract`.
 - Current artifact contract version: `2.0.0`.
 - Parser-core crate: `crates/parser-core`.
@@ -26,6 +26,7 @@ The CLI can parse a local OCAP JSON file into the compact server-facing artifact
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
 - Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (executed, awaiting benchmark/parity acceptance or remediation).
+- Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (inserted, ready to plan).
 
 The implemented developer validation commands are:
 
@@ -61,7 +62,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until the Phase 5.1 benchmark/parity acceptance gap is resolved or explicitly accepted.
+Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until Phase 5.2 resolves the minimal artifact and performance acceptance gates.
 
 ## Product Context
 
@@ -87,9 +88,9 @@ The first release should provide:
 - Optional debug/parity sidecars only when they are useful and explicitly requested.
 - Explicit unknown/null states for missing winner, SteamID, killer, commander, or source fields.
 - Legacy-compatible aggregate projections for current SolidGames statistics.
-- Vehicle score support from GitHub issue #13.
+- No v1 vehicle score support from GitHub issue #13; v1 keeps ordinary vehicle kill/destruction facts and can reprocess raw replays if that statistic is revisited later.
 - Golden corpus comparisons against `~/sg_stats`.
-- Benchmarks against the pinned legacy parser baseline, targeting roughly 10x faster parsing on comparable workloads, with raw input bytes, compact artifact bytes, artifact/raw ratio, selected replay evidence, and whole-list/corpus parsing evidence before the 10x claim can pass.
+- Benchmarks against the pinned legacy parser baseline, targeting at least x3 faster end-to-end CLI parsing on one large representative replay and x10 faster end-to-end parsing across all raw replay files, with artifact-size percentiles before the performance claim can pass.
 - 100% reachable-code statement, branch, function, and line coverage as a release gate, with behavior-focused tests.
 
 ## Out of Scope
@@ -226,4 +227,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-04-29 after Phase 5.1 execution gates and benchmark/parity handoff.
+Last updated: 2026-05-01 after Phase 5.2 insertion for minimal artifact and performance acceptance.
