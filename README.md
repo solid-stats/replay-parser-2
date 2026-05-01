@@ -12,7 +12,7 @@ Phase 5 execution is complete, but UAT rejected the previous parser direction as
 
 The CLI can parse a local OCAP JSON file into minified minimal JSON by default, export the v3 parser contract schema, compare selected old/new artifacts or a selected replay against a saved old artifact, and write an internal full-detail debug sidecar only when `--debug-artifact <path>` is requested. The ordinary default tables are `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; source refs, rule IDs, entity snapshots, and normalized event/entity evidence stay out of ordinary ingestion unless the debug sidecar is explicitly requested. Phase 6 remains blocked until Phase 5.2 records current baseline capture, x3 end-to-end CLI speedup on one large representative replay, x10 end-to-end speedup across all files in `~/sg_stats/raw_replays`, and artifact-size acceptance of median <= 5% raw size, p95 <= 10% raw size, and every successful default artifact <= 100 KB (100,000 bytes). RabbitMQ/S3 worker mode, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5.2, `Minimal Artifact and Performance Acceptance` (inserted, executing).
+- Current phase: Phase 5.2, `Minimal Artifact and Performance Acceptance` (execution complete; benchmark acceptance gap blocks Phase 6).
 - Roadmap: 9 phases.
 - v1 requirements: 80 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -26,7 +26,7 @@ The CLI can parse a local OCAP JSON file into minified minimal JSON by default, 
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
 - Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (executed, awaiting benchmark/parity acceptance or remediation).
-- Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (inserted, ready to plan).
+- Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (executed; Phase 6 blocked by benchmark acceptance).
 
 The implemented developer validation commands are:
 
@@ -247,4 +247,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-05-01 after Phase 5.2 insertion for minimal artifact and performance acceptance.
+Last updated: 2026-05-01 after Phase 5.2 final gates confirmed the benchmark acceptance blocker.

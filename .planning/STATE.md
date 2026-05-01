@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05.2-05-PLAN.md
-last_updated: "2026-05-01T03:48:04.798Z"
+status: blocked
+stopped_at: Completed 05.2-06-PLAN.md; Phase 6 blocked by benchmark acceptance
+last_updated: "2026-05-01T04:01:04Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
+Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTION COMPLETE; BLOCKED
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase 6 blocked by benchmark acceptance
 Last activity: 2026-05-01
 
 Progress: [██████████] 98%
@@ -225,12 +225,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T03:48:04.793Z
-Stopped at: Completed 05.2-05-PLAN.md
+Last session: 2026-05-01T04:01:04Z
+Stopped at: Completed 05.2-06-PLAN.md; Phase 6 blocked by benchmark acceptance
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Execute Phase 05.2: `$gsd-execute-phase 05.2`
+**Next Step:** Resolve Phase 05.2 benchmark acceptance: selected artifact must be <= 100000 bytes, selected x3/parity must pass, and all-raw x10/zero-failure/size gates must pass or receive explicit user acceptance before Phase 6.
