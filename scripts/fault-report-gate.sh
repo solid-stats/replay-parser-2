@@ -15,21 +15,21 @@ write_deterministic_report() {
   "generated_at": "2026-04-28",
   "cases": [
     {
-      "id": "vehicle-score.teamkill-penalty-clamp",
-      "target": "parser-core::vehicle_score",
-      "description": "teamkill penalty clamp keeps applied weight at least one when raw matrix weight is below one",
+      "id": "events.enemy-teamkill-suicide-classification",
+      "target": "parser-core::events",
+      "description": "enemy, teamkill, suicide, null-killer, and unknown player deaths keep distinct minimal classifications",
       "risk": "high",
       "outcome": "caught",
-      "evidence": ["cargo test -p parser-core fault_injection_regressions::fault_injection_regressions_should_catch_teamkill_penalty_clamp_using_raw_weight_below_one"],
+      "evidence": ["cargo test -p parser-core combat_event_semantics_should_partition_player_deaths_and_destroyed_vehicles"],
       "accepted_non_applicable_reason": null
     },
     {
-      "id": "vehicle-score.category-direction",
-      "target": "parser-core::vehicle_score",
-      "description": "attacker and target vehicle score categories must not be swapped",
+      "id": "events.null-killer-bounty",
+      "target": "parser-core::events",
+      "description": "null-killer deaths do not produce bounty awards",
       "risk": "high",
       "outcome": "caught",
-      "evidence": ["cargo test -p parser-core fault_injection_regressions::fault_injection_regressions_should_catch_vehicle_score_attacker_and_target_category_swaps"],
+      "evidence": ["cargo test -p parser-core fault_injection_regressions::fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_awards"],
       "accepted_non_applicable_reason": null
     },
     {
@@ -42,21 +42,30 @@ write_deterministic_report() {
       "accepted_non_applicable_reason": null
     },
     {
-      "id": "events.null-killer-bounty",
-      "target": "parser-core::events",
-      "description": "null-killer deaths do not produce bounty inputs",
+      "id": "aggregates.vehicle-counters",
+      "target": "parser-core::aggregates",
+      "description": "replay-local aggregate rows preserve vehicleKills and killsFromVehicle counters",
       "risk": "high",
       "outcome": "caught",
-      "evidence": ["cargo test -p parser-core fault_injection_regressions::fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_inputs"],
+      "evidence": ["cargo test -p parser-core aggregate_projection_should_derive_replay_local_player_counters"],
       "accepted_non_applicable_reason": null
     },
     {
-      "id": "aggregates.source-refs",
-      "target": "parser-core::aggregates",
-      "description": "aggregate contributions retain source refs",
+      "id": "minimal-artifact.debug-key-absence",
+      "target": "parser-core::minimal_artifact",
+      "description": "default artifacts omit debug-only keys including source refs, rule IDs, frame, event index, and JSON path",
       "risk": "high",
       "outcome": "caught",
-      "evidence": ["cargo test -p parser-core fault_injection_regressions::fault_injection_regressions_should_catch_aggregate_contributions_without_source_refs"],
+      "evidence": ["cargo test -p parser-core aggregate_projection_should_omit_debug_only_keys_from_default_success_json"],
+      "accepted_non_applicable_reason": null
+    },
+    {
+      "id": "minimal-artifact.debug-sidecar-provenance",
+      "target": "parser-core::minimal_artifact",
+      "description": "debug sidecar preserves source refs, rule IDs, frame, and event index only when explicitly requested",
+      "risk": "high",
+      "outcome": "caught",
+      "evidence": ["cargo test -p parser-core debug_artifact_should_serialize_full_provenance_and_rule_context"],
       "accepted_non_applicable_reason": null
     },
     {
@@ -70,9 +79,9 @@ write_deterministic_report() {
     }
   ],
   "summary": {
-    "total_cases": 6,
+    "total_cases": 7,
     "by_outcome": {
-      "caught": 6
+      "caught": 7
     },
     "high_risk_missed": 0
   }
@@ -82,6 +91,10 @@ JSON
 
 run_deterministic_fallback() {
   cargo test -p parser-core fault_injection_regressions
+  cargo test -p parser-core combat_event_semantics_should_partition_player_deaths_and_destroyed_vehicles
+  cargo test -p parser-core aggregate_projection_should_derive_replay_local_player_counters
+  cargo test -p parser-core aggregate_projection_should_omit_debug_only_keys_from_default_success_json
+  cargo test -p parser-core debug_artifact_should_serialize_full_provenance_and_rule_context
   write_deterministic_report
 }
 

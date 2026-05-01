@@ -78,7 +78,7 @@ fn fault_report_gate_should_reject_reports_without_required_target_coverage() {
 
     // Act
     let error = FaultReport::new("deterministic-fault-injection", "2026-04-28", cases)
-        .expect_err("missing aggregate and vehicle score target coverage should fail");
+        .expect_err("missing aggregate and minimal artifact target coverage should fail");
 
     // Assert
     assert_eq!(
@@ -125,20 +125,20 @@ fn required_target_cases(outcome: FaultOutcome, risk: FaultRisk) -> Vec<FaultCas
             vec!["cargo test -p parser-core fault_injection_regressions".to_owned()],
         ),
         FaultCase::new(
-            "aggregates.source-refs",
+            "aggregates.replay-local-counters",
             "parser-core::aggregates",
-            "aggregate contributions should keep source refs",
+            "aggregate counters should preserve vehicleKills and killsFromVehicle",
             risk,
             outcome,
             vec!["cargo test -p parser-core fault_injection_regressions".to_owned()],
         ),
         FaultCase::new(
-            "vehicle-score.penalty-clamp",
-            "parser-core::vehicle_score",
-            "vehicle score teamkill penalty clamp should preserve minimum weight",
+            "minimal-artifact.debug-only-fields",
+            "parser-core::minimal_artifact",
+            "default artifacts should omit debug-only keys while debug sidecar keeps provenance",
             risk,
             outcome,
-            vec!["cargo test -p parser-core fault_injection_regressions".to_owned()],
+            vec!["cargo test -p parser-core debug_artifact".to_owned()],
         ),
     ]
 }

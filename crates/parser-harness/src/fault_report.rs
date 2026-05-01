@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 pub const FAULT_REPORT_VERSION: &str = "1";
 
 const REQUIRED_TARGETS: [&str; 3] =
-    ["parser-core::events", "parser-core::aggregates", "parser-core::vehicle_score"];
+    ["parser-core::events", "parser-core::aggregates", "parser-core::minimal_artifact"];
 
 /// Fault execution outcome.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
