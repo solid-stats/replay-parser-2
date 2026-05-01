@@ -26,7 +26,7 @@ fn workspace_root() -> PathBuf {
 }
 
 fn committed_schema_path() -> PathBuf {
-    workspace_root().join("schemas/parse-artifact-v2.schema.json")
+    workspace_root().join("schemas/parse-artifact-v3.schema.json")
 }
 
 fn temp_output_path(test_name: &str, file_name: &str) -> PathBuf {
@@ -43,15 +43,16 @@ fn run_schema(args: &[&str]) -> Output {
     command.arg("schema").args(args).output().expect("schema command should run")
 }
 
-fn assert_schema_contains_compact_contract_symbols(schema_text: &str) {
+fn assert_schema_contains_minimal_contract_symbols(schema_text: &str) {
     for expected_fragment in [
-        "ObservedParticipantRef",
-        "CombatFact",
-        "ParseFactSection",
-        "ParseSummarySection",
-        "participants",
-        "facts",
-        "summaries",
+        "MinimalPlayerRow",
+        "MinimalPlayerStatsRow",
+        "MinimalKillRow",
+        "MinimalDestroyedVehicleRow",
+        "players",
+        "player_stats",
+        "kills",
+        "destroyed_vehicles",
     ] {
         assert!(
             schema_text.contains(expected_fragment),
@@ -71,8 +72,7 @@ fn schema_command_should_write_current_schema_to_stdout_when_output_is_absent() 
     assert!(command_output.status.success());
     assert!(stdout.contains("ParseArtifact"));
     assert!(stdout.contains("ReplaySideFacts"));
-    assert!(stdout.contains("vehicle_score.denominator_inputs"));
-    assert_schema_contains_compact_contract_symbols(&stdout);
+    assert_schema_contains_minimal_contract_symbols(&stdout);
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn schema_command_should_write_current_schema_to_file_when_output_is_present() {
     assert!(command_output.status.success());
     assert!(command_output.stdout.is_empty());
     assert!(file_text.contains("ParseArtifact"));
-    assert_schema_contains_compact_contract_symbols(&file_text);
+    assert_schema_contains_minimal_contract_symbols(&file_text);
 }
 
 #[test]

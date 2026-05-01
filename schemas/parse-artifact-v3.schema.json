@@ -87,26 +87,7 @@
     },
     "side_facts": {
       "description": "Replay-side commander and outcome facts.",
-      "$ref": "#/$defs/ReplaySideFacts",
-      "default": {
-        "commanders": [],
-        "outcome": {
-          "confidence": null,
-          "rule_id": "side_facts.outcome.unknown",
-          "source_label": {
-            "reason": "missing_winner",
-            "source": null,
-            "state": "unknown"
-          },
-          "source_refs": null,
-          "status": "unknown",
-          "winner_side": {
-            "reason": "missing_winner",
-            "source": null,
-            "state": "unknown"
-          }
-        }
-      }
+      "$ref": "#/$defs/ReplaySideFacts"
     },
     "source": {
       "description": "Replay source identity and checksum metadata.",
