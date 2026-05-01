@@ -235,8 +235,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-09 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 76 total
-- Mapped to phases: 76
+- v1 requirements: 80 total
+- Mapped to phases: 80
 - Unmapped: 0
 
 ---

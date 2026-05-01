@@ -188,11 +188,11 @@ Execution outcome:
 **Status**: Inserted, ready to plan.
 **Success Criteria** (what must be TRUE):
   1. The default artifact uses flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; it does not include full normalized event/entity dumps, source-ref dumps, or vehicle-score sections.
-  2. `kills[]` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: frame/time, killer/victim observed player references, enemy/teamkill/suicide/null-killer classification, weapon, attacker vehicle, and destroyed vehicle/entity type.
-  3. Detailed event indexes, entity snapshots, source references, rule IDs, and normalized event/entity evidence are emitted only through an explicit debug sidecar mode such as `--debug-artifact <path>`, not through ordinary ingestion output.
+  2. `kills[]` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: killer/victim observed player references, enemy/teamkill/suicide/null-killer/unknown classification, weapon, attacker vehicle, and destroyed vehicle/entity type.
+  3. Frame/time, event indexes, entity snapshots, source references, rule IDs, and normalized event/entity evidence are emitted only through an explicit debug sidecar mode such as `--debug-artifact <path>`, not through ordinary ingestion output.
   4. GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 contract, schema, examples, tests, docs, and planning requirements; v1 still preserves kills-from-vehicle, vehicle-kill, weapon/vehicle context, and destroyed-vehicle facts needed by current stats and future raw replay reprocessing.
   5. Benchmark reports first capture the current old/new baseline on the chosen workloads, then prove the new end-to-end CLI is at least 3x faster than the old parser on one large representative replay and at least 10x faster across all files in `~/sg_stats/raw_replays`.
-  6. The all-raw corpus gate counts every raw file as an attempted result, including success, skipped, unsupported, and failed files, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
+  6. The all-raw corpus gate attempts every file in `~/sg_stats/raw_replays`, requires zero failed/skipped artifacts unless an explicit allowlist is approved, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
   7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5% and p95 artifact/raw ratio is <= 10%; tiny fixtures may be reported separately but do not define acceptance.
   8. Product-owner compatibility acceptance is recorded: `server-2` will adapt later to the minimal flat artifact, while parser still does not own canonical identity, PostgreSQL persistence, public APIs, UI behavior, or bounty payout calculation.
 **Plans**: TBD

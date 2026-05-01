@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 5.1 executed with benchmark/parity acceptance gap
-last_updated: "2026-05-01T01:03:36.785Z"
-last_activity: 2026-04-29
+stopped_at: Phase 5.2 context gathered; ready to plan
+last_updated: "2026-05-01T08:16:10+07:00"
+last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 05.2 (minimal-artifact-and-performance-acceptance) — INSERTED, READY TO PLAN
+Phase: 05.2 (minimal-artifact-and-performance-acceptance) — CONTEXT GATHERED, READY TO PLAN
 Plan: 0 of TBD
-Status: Phase 05.2 inserted; ready to plan
-Last activity: 2026-04-29
+Status: Phase 05.2 discussion complete; context gathered; ready to plan
+Last activity: 2026-05-01
 
 Progress: [██████████] 100%
 
@@ -136,6 +136,8 @@ Recent decisions affecting current work:
 - [Phase 05.1]: Parser-core normal input now passes through a selective root boundary instead of `serde_json::Value` full-DOM decode in the checked hot-path files. — Internal normalized semantics are still used before compact mapping where needed for behavior preservation.
 - [Phase 05.1]: Comparison output is summary-first Markdown by default with explicit JSON details through `--detail-output` or `--format json`. — Compact surfaces replace old top-level event/entity comparison surfaces.
 - [Phase 05.1]: Benchmark reports now require raw input bytes, compact artifact bytes, artifact/raw ratio, selected evidence, and whole-list/corpus evidence or a concrete unavailable reason. — The latest CI report is valid but records selected `ten_x_status=unknown`, selected `parity_status=not_run`, `whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and artifact/raw ratio `59.97366881`; Phase 6 remains blocked pending acceptance or remediation.
+- [Phase 05.2]: Discussion locked minimal default artifact decisions. — Default v1 output should be minified flat `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; no frame/time/source refs/rule IDs/event indexes/entity snapshots in default rows; full normalized detail belongs only behind an internal `--debug-artifact`-style sidecar.
+- [Phase 05.2]: Discussion locked performance and issue #13 decisions. — Remove issue #13 vehicle score implementation from v1; use automatic large selected replay for x3; use sequential `WORKER_COUNT=1` old baseline and sequential new artifact writing for all-raw x10; require zero failed/skipped full-corpus artifacts unless an explicit allowlist is later approved.
 
 ### Roadmap Evolution
 
@@ -143,6 +145,7 @@ Recent decisions affecting current work:
 - Phase 5.1 planned with 8 plans and 7 execution waves on 2026-04-29.
 - Phase 5.1 executed all 8 plans on 2026-04-29; Phase 6 remains blocked by benchmark/parity acceptance evidence.
 - Phase 05.2 inserted after Phase 5: Minimal Artifact and Performance Acceptance (URGENT)
+- Phase 05.2 discussed on 2026-05-01; context written to `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/05.2-CONTEXT.md`.
 
 ### Pending Todos
 
@@ -195,9 +198,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-29T16:03:40+07:00
-Stopped at: Phase 5.1 executed with benchmark/parity acceptance gap
-Resume file: .planning/phases/05.1-compact-artifact-and-selective-parser-redesign/05.1-CONTEXT.md
+Last session: 2026-05-01T08:16:10+07:00
+Stopped at: Phase 5.2 context gathered; ready to plan
+Resume file: .planning/phases/05.2-minimal-artifact-and-performance-acceptance/05.2-CONTEXT.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
