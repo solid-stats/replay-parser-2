@@ -221,6 +221,24 @@ fn parse_command_should_write_debug_artifact_sidecar_when_requested() {
 }
 
 #[test]
+fn parse_command_should_reject_debug_artifact_path_that_matches_output_path() {
+    // Arrange
+    let input = parser_core_fixture("aggregate-combat.ocap.json");
+    let output_path = temp_output_path("debug-conflict", "artifact.json");
+    let debug_arg = output_path.to_str().expect("output temp path should be valid UTF-8");
+
+    // Act
+    let command_output = run_parse_with_args(&input, &output_path, ["--debug-artifact", debug_arg]);
+    let stderr =
+        String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
+
+    // Assert
+    assert!(!command_output.status.success());
+    assert!(stderr.contains("parse --debug-artifact must not be the same path as --output"));
+    assert!(!output_path.exists());
+}
+
+#[test]
 fn parse_command_should_not_create_debug_artifact_without_explicit_flag() {
     // Arrange
     let input = parser_core_fixture("aggregate-combat.ocap.json");

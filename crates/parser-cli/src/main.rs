@@ -102,6 +102,7 @@ enum CliError {
     CompareRequiresInput,
     CompareConflictingInput,
     CompareJsonDetailOutput,
+    DebugArtifactConflictsWithOutput,
 }
 
 impl Display for CliError {
@@ -142,6 +143,9 @@ impl Display for CliError {
                     "compare --format json cannot be combined with --detail-output because --output is already detailed JSON",
                 )
             }
+            Self::DebugArtifactConflictsWithOutput => {
+                formatter.write_str("parse --debug-artifact must not be the same path as --output")
+            }
         }
     }
 }
@@ -158,7 +162,8 @@ impl Error for CliError {
             Self::Compare(source) => Some(source),
             Self::CompareRequiresInput
             | Self::CompareConflictingInput
-            | Self::CompareJsonDetailOutput => None,
+            | Self::CompareJsonDetailOutput
+            | Self::DebugArtifactConflictsWithOutput => None,
         }
     }
 }
@@ -196,6 +201,10 @@ fn parse_command(
     pretty: bool,
     debug_artifact: Option<&Path>,
 ) -> Result<ExitCode, CliError> {
+    if debug_artifact.is_some_and(|path| path == output) {
+        return Err(CliError::DebugArtifactConflictsWithOutput);
+    }
+
     let input_data = read_parser_input(input, replay_id)?;
     let artifact = public_parse_artifact(parse_replay(input_data.parser_input()));
     let artifact_bytes = if pretty {
