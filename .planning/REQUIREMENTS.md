@@ -98,9 +98,9 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
 - [x] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
 - [x] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
-- [ ] **TEST-13**: Benchmark reports include raw input size, default artifact size, artifact-size percentiles, parse-only throughput, aggregate-only throughput where meaningful, end-to-end throughput, memory/RSS where practical, skip/failure counts, parity status, and explicit x3/x10 pass/fail evidence for the minimal artifact path.
+- [ ] **TEST-13**: Benchmark reports include raw input size, default artifact size, artifact-size percentiles, max artifact bytes, parse-only throughput, aggregate-only throughput where meaningful, end-to-end throughput, memory/RSS where practical, skip/failure counts, parity status, and explicit x3/x10 pass/fail evidence for the minimal artifact path.
 - [x] **TEST-14**: Old-vs-new comparison reports are summary-first and human-reviewable by default, with mismatch counts by category and impact, top actionable diffs, and detailed machine-readable evidence separated from the default review surface.
-- [ ] **TEST-15**: Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5% and p95 artifact/raw ratio is <= 10%, with tiny fixtures reported separately from acceptance.
+- [ ] **TEST-15**: Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5%, p95 artifact/raw ratio is <= 10%, and every successful default artifact is <= 100 KB (100,000 bytes), with tiny fixtures reported separately from acceptance.
 
 ### Worker Integration
 

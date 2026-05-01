@@ -45,7 +45,7 @@ Phase 5.2 has been inserted before worker integration to make the default artifa
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Include benchmark evidence that establishes the current parser baseline, proves x3 end-to-end CLI speedup on one large representative replay, proves x10 end-to-end throughput across all raw files in `~/sg_stats/raw_replays`, and reports artifact-size percentiles.
+- [ ] Include benchmark evidence that establishes the current parser baseline, proves x3 end-to-end CLI speedup on one large representative replay, proves x10 end-to-end throughput across all raw files in `~/sg_stats/raw_replays`, reports artifact-size percentiles, and proves every successful default artifact is <= 100 KB (100,000 bytes).
 
 ### Out of Scope
 
@@ -137,7 +137,7 @@ Open implementation details for later phases:
 - **Language**: Rust - chosen for deterministic parsing, performance, and deployable CLI/worker binaries.
 - **Replay format**: OCAP JSON only - supporting other formats is outside v1 scope.
 - **Validation data**: `~/sg_stats` - historical data is the golden/test baseline, not a production import source.
-- **Performance**: At least x3 faster than the current parser for end-to-end CLI parsing on one large representative replay and at least x10 faster across all raw replay files in `~/sg_stats/raw_replays`, with raw-input size, output-artifact size, artifact-size percentiles, wall time, throughput, skip/failure counts, and parity/triage status reported before any performance claim.
+- **Performance**: At least x3 faster than the current parser for end-to-end CLI parsing on one large representative replay and at least x10 faster across all raw replay files in `~/sg_stats/raw_replays`, with raw-input size, output-artifact size, artifact-size percentiles, max artifact bytes, wall time, throughput, skip/failure counts, parity/triage status, and proof that every successful default artifact is <= 100 KB (100,000 bytes) reported before any performance claim.
 - **Runtime modes**: CLI plus worker/container mode - local reproducibility and server integration are both required.
 - **Queue integration**: RabbitMQ - worker mode consumes parse requests and publishes parse results/failures.
 - **File input**: S3-compatible object storage - parser worker reads replay content by object key/checksum.

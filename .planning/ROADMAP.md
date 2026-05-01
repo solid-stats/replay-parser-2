@@ -193,7 +193,7 @@ Execution outcome:
   4. GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 contract, schema, examples, tests, docs, and planning requirements; v1 still preserves kills-from-vehicle, vehicle-kill, weapon/vehicle context, and destroyed-vehicle facts needed by current stats and future raw replay reprocessing.
   5. Benchmark reports first capture the current old/new baseline on the chosen workloads, then prove the new end-to-end CLI is at least 3x faster than the old parser on one large representative replay and at least 10x faster across all files in `~/sg_stats/raw_replays`.
   6. The all-raw corpus gate attempts every file in `~/sg_stats/raw_replays`, requires zero failed/skipped artifacts unless an explicit allowlist is approved, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
-  7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5% and p95 artifact/raw ratio is <= 10%; tiny fixtures may be reported separately but do not define acceptance.
+  7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5%, p95 artifact/raw ratio is <= 10%, and every successful default artifact is <= 100 KB (100,000 bytes); tiny fixtures may be reported separately but do not define acceptance.
   8. Product-owner compatibility acceptance is recorded: `server-2` will adapt later to the minimal flat artifact, while parser still does not own canonical identity, PostgreSQL persistence, public APIs, UI behavior, or bounty payout calculation.
 **Plans**: 7 plans
 **Execution waves**: Wave 1 runs `05.2-00-PLAN.md`; Wave 2 runs `05.2-01-PLAN.md`; Wave 3 runs `05.2-02-PLAN.md`; Wave 4 runs `05.2-03-PLAN.md`; Wave 5 runs `05.2-04-PLAN.md`; Wave 6 runs `05.2-05-PLAN.md`; Wave 7 runs `05.2-06-PLAN.md`.
@@ -202,7 +202,7 @@ Cross-cutting constraints:
 - The default artifact must use `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; debug-only source refs, rule IDs, frame/time, event indexes, entity snapshots, and normalized event snapshots are not default output.
 - GitHub issue #13 vehicle score is removed from active v1 contract, parser-core, schema, examples, tests, docs, and benchmark/comparison surfaces while ordinary `vehicleKills`, `killsFromVehicle`, weapon, attacker vehicle, and destroyed-vehicle facts remain.
 - Debug sidecar output is explicit internal tooling through `--debug-artifact <path>` and must not contaminate default parser performance or server-facing contract guarantees.
-- Phase 6 remains blocked unless Phase 5.2 records compatibility acceptance plus selected x3, all-raw x10, zero-failure, and artifact-size acceptance.
+- Phase 6 remains blocked unless Phase 5.2 records compatibility acceptance plus selected x3, all-raw x10, zero-failure, ratio artifact-size, and hard 100 KB max artifact acceptance.
 
 Plans:
 - [x] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
