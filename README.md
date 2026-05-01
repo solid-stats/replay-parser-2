@@ -64,6 +64,8 @@ Full acceptance requires `scripts/benchmark-phase5.sh --ci` to write `.planning/
 - Size acceptance requires median artifact/raw ratio <= 5%, p95 <= 10%, and every successful default artifact <= 100 KB (100,000 bytes).
 - The hard default artifact limit is `artifact_size_limit_bytes: 100000`; selected evidence passes size only when `artifact_bytes <= 100000`, and all-raw evidence passes size only when `max_artifact_bytes <= 100000` and `oversized_artifact_count == 0`.
 
+Latest final Phase 5.2 gate evidence from `05.2-06` is structurally valid but is not an acceptance pass. `.planning/generated/phase-05/benchmarks/benchmark-report.json` records selected replay `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`, `artifact_bytes: 203683`, `artifact_size_status: fail`, selected `x3_status: unknown`, selected `parity_status: not_run`, all-raw `x10_status: unknown`, all-raw `size_gate_status: unknown`, and all-raw `zero_failure_status: unknown`. Phase 6 remains blocked until those statuses pass or the user explicitly accepts the benchmark gap.
+
 Short cargo aliases are also available:
 
 ```bash

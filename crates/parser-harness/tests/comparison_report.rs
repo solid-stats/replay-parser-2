@@ -364,7 +364,7 @@ fn finding<'a>(report: &'a ComparisonReport, surface: &str) -> &'a ComparisonFin
         .findings
         .iter()
         .find(|finding| finding.surface == surface)
-        .unwrap_or_else(|| panic!("{surface} finding should exist"))
+        .expect("requested surface finding should exist")
 }
 
 fn legacy_surface_artifact_json(status: &str) -> Vec<u8> {
@@ -381,6 +381,10 @@ fn legacy_surface_artifact_json(status: &str) -> Vec<u8> {
     .expect("legacy surface fixture JSON should serialize")
 }
 
+#[allow(
+    clippy::too_many_lines,
+    reason = "integration fixture JSON stays inline so old/new parity expectations are reviewable"
+)]
 fn minimal_artifact_json(status: &str) -> Vec<u8> {
     serde_json::to_vec(&json!({
         "status": status,

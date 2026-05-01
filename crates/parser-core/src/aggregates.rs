@@ -335,7 +335,7 @@ fn player_role(entity: &ObservedEntity) -> Option<String> {
         .map(ToOwned::to_owned)
 }
 
-fn actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef> {
+const fn actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(value),
         FieldPresence::ExplicitNull { .. }
@@ -357,7 +357,7 @@ fn actor_side(field: &FieldPresence<EventActorRef>) -> Option<EntitySide> {
     actor(field).and_then(|actor| present_side(&actor.side))
 }
 
-fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
+const fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(*value),
         FieldPresence::ExplicitNull { .. }
@@ -367,7 +367,7 @@ fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
     }
 }
 
-fn present_side(field: &FieldPresence<EntitySide>) -> Option<EntitySide> {
+const fn present_side(field: &FieldPresence<EntitySide>) -> Option<EntitySide> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(*value),
         FieldPresence::ExplicitNull { .. }
@@ -377,7 +377,7 @@ fn present_side(field: &FieldPresence<EntitySide>) -> Option<EntitySide> {
     }
 }
 
-fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
+const fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
     match field {
         FieldPresence::Present { value, source: _ } | FieldPresence::Inferred { value, .. } => {
             Some(value.as_str())

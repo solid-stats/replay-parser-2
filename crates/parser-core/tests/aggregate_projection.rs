@@ -100,10 +100,7 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
 }
 
-fn player_stats<'a>(
-    artifact: &'a ParseArtifact,
-    source_entity_id: i64,
-) -> &'a MinimalPlayerStatsRow {
+fn player_stats(artifact: &ParseArtifact, source_entity_id: i64) -> &MinimalPlayerStatsRow {
     artifact
         .player_stats
         .iter()

@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap escalated into Phase 5.1 redesign)
 - [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target. (execution complete 2026-04-29; benchmark/parity acceptance gap blocks Phase 6)
-- [ ] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal flat v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and prove x3 selected-replay plus x10 all-raw corpus performance gates before worker integration.
+- [ ] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal flat v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and prove x3 selected-replay plus x10 all-raw corpus performance gates before worker integration. Final gates are running, but benchmark acceptance still blocks Phase 6 because selected artifact size is 203683 bytes over the 100000-byte hard limit and all-raw gates are unknown.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -185,7 +185,7 @@ Execution outcome:
 **Goal**: The default parser output is reduced to a minimal flat v1 statistics artifact, issue #13 vehicle score is removed from v1, and performance acceptance is proven before worker integration.
 **Depends on**: Phase 5.1
 **Requirements**: OUT-09, OUT-10, OUT-11, OUT-12, PARS-12, AGG-12, TEST-06, TEST-13, TEST-14, TEST-15
-**Status**: Planned, ready to execute.
+**Status**: Executing final plan; code quality gates pass, benchmark acceptance remains blocked.
 **Success Criteria** (what must be TRUE):
   1. The default artifact uses flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; it does not include full normalized event/entity dumps, source-ref dumps, or vehicle-score sections.
   2. `kills[]` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: killer/victim observed player references, enemy/teamkill/suicide/null-killer/unknown classification, weapon, attacker vehicle, and destroyed vehicle/entity type.
@@ -212,6 +212,11 @@ Plans:
 - [x] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
 - [x] 05.2-05-PLAN.md - Selected large replay x3, all-raw x10, zero-failure, and artifact-size benchmark gates.
 - [ ] 05.2-06-PLAN.md - Fault target retune, final quality gates, README/ROADMAP/STATE handoff, and Phase 6 blocker status.
+
+Current final-gate evidence:
+- `05.2-06` fault gate no longer targets removed issue #13 scoring code and now targets minimal artifact behavior.
+- `scripts/benchmark-phase5.sh --ci` and `benchmark-report-check` validate the report shape, but the report is not acceptance evidence: selected `artifact_bytes: 203683` exceeds `artifact_size_limit_bytes: 100000`, selected `x3_status: unknown`, selected `parity_status: not_run`, all-raw `x10_status: unknown`, all-raw `size_gate_status: unknown`, and all-raw `zero_failure_status: unknown`.
+- Phase 6 remains blocked unless the selected x3, selected parity, selected size, all-raw x10, all-raw zero-failure, and all-raw size gates all pass or the user explicitly accepts the benchmark gap.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.

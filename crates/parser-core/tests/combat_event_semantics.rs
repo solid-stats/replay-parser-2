@@ -103,7 +103,7 @@ fn kill_by_classification(
         .kills
         .iter()
         .find(|row| row.classification == classification)
-        .unwrap_or_else(|| panic!("{classification:?} kill row should exist"))
+        .expect("requested kill classification row should exist")
 }
 
 #[test]

@@ -104,7 +104,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert!(serialized.get("entities").is_none());
     assert!(serialized.get("events").is_none());
     assert!(serialized.get("aggregates").is_none());
-    assert!(serialized.get("side_facts").is_some());
+    assert!(serialized.get("side_facts").is_none());
     assert!(serialized.get("failure").is_some());
 
     let extension_keys = serialized["extensions"]

@@ -177,14 +177,17 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 5.1 implementation and code gates are complete, but the generated
+Active: Phase 05.2 code and quality gates are passing, but the generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is not a
-performance/parity acceptance pass. It records selected
-`ten_x_status=unknown`, selected `parity_status=not_run`,
-`whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and
-selected artifact/raw ratio `59.97366881` on the tiny CI fixture. Phase 6
-worker integration remains blocked until whole-list/corpus benchmark and parity
-evidence pass, or the user explicitly accepts the gap.
+performance/artifact-size acceptance pass. It records selected replay
+`/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`,
+selected `artifact_bytes=203683` against `artifact_size_limit_bytes=100000`,
+selected `artifact_size_status=fail`, selected `x3_status=unknown`, selected
+`parity_status=not_run`, all-raw `x10_status=unknown`, all-raw
+`size_gate_status=unknown`, and all-raw `zero_failure_status=unknown` because
+`RUN_PHASE5_FULL_CORPUS=1` was not enabled. Phase 6 worker integration remains
+blocked until selected x3/parity/size and all-raw x10/zero-failure/size gates
+pass, or the user explicitly accepts the gap.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and

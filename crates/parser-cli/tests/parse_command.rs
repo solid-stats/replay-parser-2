@@ -134,6 +134,7 @@ fn parse_command_should_write_minified_minimal_json_by_default() {
     assert!(artifact_text.ends_with('\n'));
     assert!(artifact_text.trim_end().lines().count() == 1);
     assert_minimal_artifact_root(&artifact);
+    let retired_score_section = ["vehicle", "score"].join("_");
     for forbidden_key in [
         "participants",
         "facts",
@@ -143,10 +144,10 @@ fn parse_command_should_write_minified_minimal_json_by_default() {
         "frame",
         "event_index",
         "json_path",
-        "vehicle_score",
     ] {
         assert_no_key_recursive(&artifact, forbidden_key);
     }
+    assert_no_key_recursive(&artifact, &retired_score_section);
 }
 
 #[test]

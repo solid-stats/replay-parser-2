@@ -23,7 +23,7 @@ fn benchmark_report_should_accept_phase_05_2_acceptance_evidence() {
 
     // Assert
     assert_eq!(report.phase, "05.2");
-    assert_eq!(report.artifact_size_limit_bytes, 100000);
+    assert_eq!(report.artifact_size_limit_bytes, 100_000);
     assert_eq!(report.artifact_size_limit_bytes, DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES);
     assert_eq!(report.selected_large_replay.x3_status, GateStatus::Pass);
     assert_eq!(report.all_raw_corpus.x10_status, GateStatus::Pass);
@@ -38,14 +38,14 @@ fn benchmark_report_should_reject_wrong_artifact_size_limit() {
     report.artifact_size_limit_bytes = 100_001;
 
     // Act
-    let error = report.validate().expect_err("artifact_size_limit_bytes must be exactly 100000");
+    let error = report.validate().expect_err("artifact_size_limit_bytes must be exactly 100_000");
 
     // Assert
     assert_eq!(
         error,
         BenchmarkReportValidationError::InvalidArtifactSizeLimit {
-            expected: 100000,
-            actual: 100001
+            expected: 100_000,
+            actual: 100_001
         }
     );
 }
@@ -87,7 +87,7 @@ fn benchmark_report_should_reject_selected_artifact_size_above_100000() {
 
     // Act
     let error = valid_report(selected, all_raw_corpus(), None)
-        .expect_err("selected artifact_size_status pass should require artifact_bytes <= 100000");
+        .expect_err("selected artifact_size_status pass should require artifact_bytes <= 100_000");
 
     // Assert
     assert_eq!(error, BenchmarkReportValidationError::SelectedArtifactSizePassRequiresLimit);
@@ -249,7 +249,7 @@ fn selected_large_replay() -> SelectedLargeReplay {
         sha256: "6666666666666666666666666666666666666666666666666666666666666666".to_owned(),
         old_wall_time_ms: Some(300.0),
         new_wall_time_ms: Some(90.0),
-        speedup: Some(3.333333),
+        speedup: Some(3.333_333),
         x3_status: GateStatus::Pass,
         parity_status: ParityStatus::Passed,
         artifact_bytes: 100_000,
@@ -270,7 +270,7 @@ fn all_raw_corpus() -> AllRawCorpus {
         artifact_bytes: 180_000,
         old_wall_time_ms: Some(10_000.0),
         new_wall_time_ms: Some(900.0),
-        speedup: Some(11.111111),
+        speedup: Some(11.111_111),
         x10_status: GateStatus::Pass,
         median_artifact_raw_ratio: Some(0.03),
         p95_artifact_raw_ratio: Some(0.09),

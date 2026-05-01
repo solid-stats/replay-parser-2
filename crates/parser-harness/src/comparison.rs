@@ -446,36 +446,37 @@ fn player_ref_for_kill_player(
         .or_else(|| source_entity_id.and_then(|id| players.by_source_entity_id.get(&id).cloned()))
 }
 
-fn side_name(side: Option<EntitySide>) -> Option<&'static str> {
-    side.map(|side| match side {
-        EntitySide::East => "east",
-        EntitySide::West => "west",
-        EntitySide::Guer => "guer",
-        EntitySide::Civ => "civ",
-        EntitySide::Unknown => "unknown",
-    })
+const fn side_name(side: Option<EntitySide>) -> Option<&'static str> {
+    match side {
+        Some(EntitySide::East) => Some("east"),
+        Some(EntitySide::West) => Some("west"),
+        Some(EntitySide::Guer) => Some("guer"),
+        Some(EntitySide::Civ) => Some("civ"),
+        Some(EntitySide::Unknown) => Some("unknown"),
+        None => None,
+    }
 }
 
 fn kd_ratio(kills: u64, teamkills: u64, deaths_total: u64, deaths_by_teamkills: u64) -> f64 {
     let deaths_without_teamkills = deaths_total.abs_diff(deaths_by_teamkills);
-    let total = kills as i64 - teamkills as i64;
+    let total = replay_count_difference(kills, teamkills);
 
     if deaths_without_teamkills == 0 {
-        return total as f64;
+        return signed_count_to_f64(total);
     }
 
-    round_2(total as f64 / deaths_without_teamkills as f64)
+    round_2(signed_count_to_f64(total) / unsigned_count_to_f64(deaths_without_teamkills))
 }
 
 fn score(total_played_games: u64, kills: u64, teamkills: u64, deaths_by_teamkills: u64) -> f64 {
-    let total_score = kills as i64 - teamkills as i64;
-    let games_count = total_played_games as i64 - deaths_by_teamkills as i64;
+    let total_score = replay_count_difference(kills, teamkills);
+    let games_count = replay_count_difference(total_played_games, deaths_by_teamkills);
 
     if games_count <= 0 {
-        return total_score as f64;
+        return signed_count_to_f64(total_score);
     }
 
-    round_2(total_score as f64 / games_count as f64)
+    round_2(signed_count_to_f64(total_score) / signed_count_to_f64(games_count))
 }
 
 fn kills_from_vehicle_coef(kills: u64, kills_from_vehicle: u64) -> f64 {
@@ -483,11 +484,28 @@ fn kills_from_vehicle_coef(kills: u64, kills_from_vehicle: u64) -> f64 {
         return 0.0;
     }
 
-    round_2(kills_from_vehicle as f64 / kills as f64)
+    round_2(unsigned_count_to_f64(kills_from_vehicle) / unsigned_count_to_f64(kills))
 }
 
 fn round_2(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
+}
+
+fn replay_count_difference(left: u64, right: u64) -> i64 {
+    u64_to_i64_saturating(left).saturating_sub(u64_to_i64_saturating(right))
+}
+
+fn u64_to_i64_saturating(value: u64) -> i64 {
+    i64::try_from(value).unwrap_or(i64::MAX)
+}
+
+fn signed_count_to_f64(value: i64) -> f64 {
+    let magnitude = unsigned_count_to_f64(value.unsigned_abs());
+    if value.is_negative() { -magnitude } else { magnitude }
+}
+
+fn unsigned_count_to_f64(value: u64) -> f64 {
+    u32::try_from(value).map_or_else(|_| f64::from(u32::MAX), f64::from)
 }
 
 const fn selected_surfaces() -> [SelectedSurface; 5] {
