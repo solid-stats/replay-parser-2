@@ -1,35 +1,34 @@
-//! Serializable benchmark report vocabulary and release-gate validation.
-// coverage-exclusion: reviewed Phase 05 benchmark report defensive branches are allowlisted by exact source line.
+//! Serializable Phase 05.2 benchmark report vocabulary and release-gate validation.
 //!
-//! Benchmark reports tie speed claims to workload identity, parity status,
-//! deterministic old baseline evidence, throughput, and memory/RSS notes.
+//! Benchmark reports tie performance claims to selected large-replay evidence,
+//! all-raw corpus coverage, deterministic old baseline evidence, and the hard
+//! default artifact size limit.
 
 use serde::{Deserialize, Serialize};
 
 /// Current benchmark report schema version.
-pub const BENCHMARK_REPORT_VERSION: &str = "1";
+pub const BENCHMARK_REPORT_VERSION: &str = "2";
 
-/// Benchmark workload tier.
+/// Phase 05.2 hard maximum size for each successful default parser artifact.
+pub const DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES: u64 = 100_000;
+
+/// Deterministic large replay selection policy recorded in reports.
+pub const SELECTED_LARGE_REPLAY_SELECTION_POLICY: &str =
+    "largest .json by byte size under ~/sg_stats/raw_replays; tie-break lexicographic path";
+
+/// All-raw corpus selector recorded in reports.
+pub const ALL_RAW_CORPUS_SELECTOR: &str =
+    "~/sg_stats/raw_replays/**/*.json sorted lexicographically";
+
+/// Pass/fail/unknown status for a benchmark gate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum BenchmarkTier {
-    /// Small sample intended for CI and local smoke checks.
-    SmallCi,
-    /// Curated representative sample with broader replay shape coverage.
-    CuratedRepresentative,
-    /// Optional/manual full historical corpus run.
-    ManualFullCorpus,
-}
-
-/// Status of the roughly 10x target.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TenXStatus {
-    /// The measured workload met or exceeded the 10x target.
+pub enum GateStatus {
+    /// The measured gate passed.
     Pass,
-    /// The measured workload did not meet the 10x target.
+    /// The measured gate failed.
     Fail,
-    /// The target could not be evaluated for this run.
+    /// The gate could not be evaluated for this report.
     Unknown,
 }
 
@@ -47,157 +46,215 @@ pub enum ParityStatus {
     NotRun,
 }
 
-/// Timing and throughput metrics for one benchmark dimension.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct BenchmarkMetric {
-    /// Wall-clock time in milliseconds.
-    pub wall_time_ms: f64,
-    /// Files processed per second when available.
-    pub files_per_sec: Option<f64>,
-    /// Megabytes processed per second when available.
-    pub mb_per_sec: Option<f64>,
-    /// Events processed per second when available.
-    pub events_per_sec: Option<f64>,
-    /// Resident set size in MiB when practical to measure.
-    pub rss_mb: Option<f64>,
+/// User approval state for a corpus failure allowlist.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AllowlistApprovalStatus {
+    /// The user explicitly approved the allowlist.
+    AcceptedByUser,
+    /// An allowlist exists but has not been approved.
+    PendingUserApproval,
+    /// The allowlist was rejected.
+    Rejected,
 }
 
-impl BenchmarkMetric {
-    /// Builds a metric with optional throughput fields.
-    #[must_use]
-    pub const fn new(
-        wall_time_ms: f64,
-        files_per_sec: Option<f64>,
-        mb_per_sec: Option<f64>,
-        events_per_sec: Option<f64>,
-        rss_mb: Option<f64>,
-    ) -> Self {
-        Self { wall_time_ms, files_per_sec, mb_per_sec, events_per_sec, rss_mb }
-    }
-}
-
-/// Compact artifact-size evidence for a measured workload.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct ArtifactSizeEvidence {
-    /// Raw replay input bytes processed by the workload.
-    pub raw_input_bytes: u64,
-    /// Compact parser artifact bytes emitted by the workload.
-    pub compact_artifact_bytes: u64,
-    /// `compact_artifact_bytes / raw_input_bytes`.
-    pub artifact_raw_ratio: f64,
-}
-
-impl ArtifactSizeEvidence {
-    /// Builds compact artifact-size evidence.
-    #[must_use]
-    pub const fn new(
-        raw_input_bytes: u64,
-        compact_artifact_bytes: u64,
-        artifact_raw_ratio: f64,
-    ) -> Self {
-        Self { raw_input_bytes, compact_artifact_bytes, artifact_raw_ratio }
-    }
-}
-
-/// Workload identity for a benchmark report.
+/// Optional failure/skip allowlist for all-raw corpus acceptance.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct BenchmarkWorkload {
-    /// Workload tier.
-    pub tier: BenchmarkTier,
-    /// Exact fixture paths used by the run.
-    pub fixtures: Vec<String>,
-    /// Corpus selector used when fixtures are not enumerated.
-    pub corpus_selector: Option<String>,
-    /// Total input bytes processed.
-    pub total_bytes: u64,
+pub struct BenchmarkAllowlist {
+    /// Path to the allowlist evidence file.
+    pub path: String,
+    /// User approval state.
+    pub approval_status: AllowlistApprovalStatus,
 }
 
-impl BenchmarkWorkload {
-    fn has_identity(&self) -> bool {
-        !self.fixtures.is_empty()
-            || self.corpus_selector.as_deref().is_some_and(|selector| !selector.trim().is_empty())
+impl BenchmarkAllowlist {
+    fn validate(&self) -> Result<(), BenchmarkReportValidationError> {
+        validate_non_empty(&self.path, "allowlist.path")
     }
 }
 
-/// Benchmark evidence for one selected or whole-list/corpus workload.
+/// Benchmark evidence for the deterministic selected large replay x3 gate.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct BenchmarkEvidence {
-    /// Human-readable workload name.
-    pub workload_name: String,
-    /// Workload tier.
-    pub tier: BenchmarkTier,
-    /// Workload identity and byte count.
-    pub workload: BenchmarkWorkload,
-    /// Compact artifact-size evidence for the workload.
-    pub artifact_size: ArtifactSizeEvidence,
-    /// Parse-only stage evidence.
-    pub parse_only: BenchmarkMetric,
-    /// Aggregate-only or nearest public equivalent stage evidence.
-    pub aggregate_only: BenchmarkMetric,
-    /// End-to-end parser evidence.
-    pub end_to_end: BenchmarkMetric,
-    /// Parity status for the measured workload.
+pub struct SelectedLargeReplay {
+    /// Stable selection policy used to choose the replay.
+    pub selection_policy: String,
+    /// Selected replay path.
+    pub path: String,
+    /// Raw replay size in bytes.
+    pub raw_bytes: u64,
+    /// Selected replay SHA-256.
+    pub sha256: String,
+    /// Old parser wall-clock time in milliseconds.
+    pub old_wall_time_ms: Option<f64>,
+    /// New parser wall-clock time in milliseconds.
+    pub new_wall_time_ms: Option<f64>,
+    /// Old/new speedup when both timings are available.
+    pub speedup: Option<f64>,
+    /// x3 status for the selected replay.
+    pub x3_status: GateStatus,
+    /// Old-vs-new parity status.
     pub parity_status: ParityStatus,
-    /// 10x target status.
-    pub ten_x_status: TenXStatus,
-    /// Required triage for failed or unknown 10x status.
+    /// Default artifact size in bytes.
+    pub artifact_bytes: u64,
+    /// `artifact_bytes / raw_bytes`.
+    pub artifact_raw_ratio: f64,
+    /// Hard max-artifact-size status.
+    pub artifact_size_status: GateStatus,
+    /// Required triage for failed or unknown selected-replay gates.
     pub triage: Option<String>,
 }
 
-impl BenchmarkEvidence {
-    /// Validates evidence invariants for one workload.
+impl SelectedLargeReplay {
+    /// Validates selected large-replay evidence.
     ///
     /// # Errors
     ///
-    /// Returns [`BenchmarkReportValidationError`] when workload identity,
-    /// compact size evidence, or 10x triage is missing.
-    pub fn validate(&self) -> Result<(), BenchmarkReportValidationError> {
-        validate_non_empty(&self.workload_name, "workload_name")?;
+    /// Returns [`BenchmarkReportValidationError`] when identity, ratio, x3, or
+    /// hard artifact-size evidence is inconsistent.
+    pub fn validate(&self, limit_bytes: u64) -> Result<(), BenchmarkReportValidationError> {
+        validate_non_empty(&self.selection_policy, "selected_large_replay.selection_policy")?;
+        validate_non_empty(&self.path, "selected_large_replay.path")?;
+        validate_non_empty(&self.sha256, "selected_large_replay.sha256")?;
 
-        if self.tier != self.workload.tier {
-            return Err(BenchmarkReportValidationError::MismatchedEvidenceTier);
-        }
-        if !self.workload.has_identity() {
-            return Err(BenchmarkReportValidationError::MissingWorkloadIdentity);
-        }
-        if self.artifact_size.raw_input_bytes == 0 {
-            return Err(BenchmarkReportValidationError::MissingArtifactSizeEvidence {
-                field: "raw_input_bytes",
-            });
-        }
-        if self.artifact_size.compact_artifact_bytes == 0 {
-            return Err(BenchmarkReportValidationError::MissingArtifactSizeEvidence {
-                field: "compact_artifact_bytes",
+        if self.raw_bytes == 0 {
+            return Err(BenchmarkReportValidationError::MissingByteEvidence {
+                field: "selected_large_replay.raw_bytes",
             });
         }
 
-        let expected_ratio = bytes_as_f64(self.artifact_size.compact_artifact_bytes)
-            / bytes_as_f64(self.artifact_size.raw_input_bytes);
-        if (self.artifact_size.artifact_raw_ratio - expected_ratio).abs() > 0.0001 {
-            return Err(BenchmarkReportValidationError::InvalidArtifactRawRatio);
+        if self.artifact_bytes == 0 {
+            return Err(BenchmarkReportValidationError::MissingByteEvidence {
+                field: "selected_large_replay.artifact_bytes",
+            });
         }
 
-        let triage = self.triage.as_deref().unwrap_or_default();
-        let triage_lower = triage.to_ascii_lowercase();
-        if self.ten_x_status == TenXStatus::Fail
-            && !(triage_lower.contains("bottleneck")
-                && triage_lower.contains("parity")
-                && triage_lower.contains("artifact"))
+        let expected_ratio = bytes_as_f64(self.artifact_bytes) / bytes_as_f64(self.raw_bytes);
+        if (self.artifact_raw_ratio - expected_ratio).abs() > 0.0001 {
+            return Err(BenchmarkReportValidationError::InvalidSelectedArtifactRawRatio);
+        }
+
+        if self.x3_status == GateStatus::Pass
+            && !(self.speedup.is_some_and(|speedup| speedup >= 3.0)
+                && self.parity_status == ParityStatus::Passed)
         {
-            return Err(BenchmarkReportValidationError::FailedTenXRequiresTriage);
+            return Err(BenchmarkReportValidationError::SelectedX3PassRequiresSpeedupAndParity);
         }
 
-        if self.ten_x_status == TenXStatus::Unknown && triage.trim().is_empty() {
-            return Err(BenchmarkReportValidationError::UnknownTenXRequiresTriage);
+        if self.artifact_size_status == GateStatus::Pass && self.artifact_bytes > limit_bytes {
+            return Err(BenchmarkReportValidationError::SelectedArtifactSizePassRequiresLimit);
+        }
+
+        if (self.x3_status != GateStatus::Pass
+            || self.artifact_size_status != GateStatus::Pass
+            || self.parity_status != ParityStatus::Passed)
+            && !triage_mentions_required_terms(self.triage.as_deref())
+        {
+            return Err(BenchmarkReportValidationError::StatusRequiresTriage {
+                scope: "selected_large_replay",
+            });
         }
 
         Ok(())
     }
+}
 
-    const fn any_missing_rss(&self) -> bool {
-        self.parse_only.rss_mb.is_none()
-            || self.aggregate_only.rss_mb.is_none()
-            || self.end_to_end.rss_mb.is_none()
+/// Benchmark evidence for the all-raw corpus x10 and size gates.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AllRawCorpus {
+    /// Corpus selector.
+    pub selector: String,
+    /// Number of raw replay files attempted.
+    pub attempted_count: u64,
+    /// Number of successful default artifacts.
+    pub success_count: u64,
+    /// Number of failed parse attempts.
+    pub failed_count: u64,
+    /// Number of skipped artifacts.
+    pub skipped_count: u64,
+    /// Total raw bytes attempted.
+    pub raw_bytes: u64,
+    /// Total successful default artifact bytes.
+    pub artifact_bytes: u64,
+    /// Old parser corpus wall-clock time in milliseconds.
+    pub old_wall_time_ms: Option<f64>,
+    /// New parser corpus wall-clock time in milliseconds.
+    pub new_wall_time_ms: Option<f64>,
+    /// Old/new speedup when both timings are available.
+    pub speedup: Option<f64>,
+    /// x10 status for the all-raw corpus.
+    pub x10_status: GateStatus,
+    /// Median artifact/raw ratio across successful artifacts.
+    pub median_artifact_raw_ratio: Option<f64>,
+    /// p95 artifact/raw ratio across successful artifacts.
+    pub p95_artifact_raw_ratio: Option<f64>,
+    /// Maximum successful default artifact bytes.
+    pub max_artifact_bytes: u64,
+    /// Number of successful default artifacts above the hard byte limit.
+    pub oversized_artifact_count: u64,
+    /// Combined size gate status.
+    pub size_gate_status: GateStatus,
+    /// Zero-failed/skipped status.
+    pub zero_failure_status: GateStatus,
+    /// Required triage for failed or unknown all-raw gates.
+    pub triage: Option<String>,
+}
+
+impl AllRawCorpus {
+    /// Validates all-raw corpus evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BenchmarkReportValidationError`] when count accounting, x10,
+    /// zero-failure, or size-gate status is inconsistent.
+    pub fn validate(
+        &self,
+        limit_bytes: u64,
+        allowlist: Option<&BenchmarkAllowlist>,
+    ) -> Result<(), BenchmarkReportValidationError> {
+        validate_non_empty(&self.selector, "all_raw_corpus.selector")?;
+
+        if self.attempted_count != self.success_count + self.failed_count + self.skipped_count {
+            return Err(BenchmarkReportValidationError::InvalidAllRawCounts);
+        }
+
+        if self.x10_status == GateStatus::Pass
+            && !(self.attempted_count > 0 && self.speedup.is_some_and(|speedup| speedup >= 10.0))
+        {
+            return Err(BenchmarkReportValidationError::AllRawX10PassRequiresSpeedup);
+        }
+
+        if self.size_gate_status == GateStatus::Pass
+            && !(self.success_count > 0
+                && self.median_artifact_raw_ratio.is_some_and(|ratio| ratio <= 0.05)
+                && self.p95_artifact_raw_ratio.is_some_and(|ratio| ratio <= 0.10)
+                && self.max_artifact_bytes <= limit_bytes
+                && self.oversized_artifact_count == 0)
+        {
+            return Err(BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+        }
+
+        if self.zero_failure_status == GateStatus::Pass
+            && !(self.failed_count == 0 && self.skipped_count == 0
+                || allowlist.is_some_and(|entry| {
+                    entry.approval_status == AllowlistApprovalStatus::AcceptedByUser
+                }))
+        {
+            return Err(
+                BenchmarkReportValidationError::ZeroFailurePassRequiresNoFailuresOrAllowlist,
+            );
+        }
+
+        if (self.x10_status != GateStatus::Pass
+            || self.size_gate_status != GateStatus::Pass
+            || self.zero_failure_status != GateStatus::Pass)
+            && !triage_mentions_required_terms(self.triage.as_deref())
+        {
+            return Err(BenchmarkReportValidationError::StatusRequiresTriage {
+                scope: "all_raw_corpus",
+            });
+        }
+
+        Ok(())
     }
 }
 
@@ -208,50 +265,43 @@ pub struct BenchmarkReport {
     pub report_version: String,
     /// Phase that produced this report.
     pub phase: String,
-    /// Old baseline profile, normally deterministic `WORKER_COUNT=1`.
+    /// Old baseline profile, always documenting deterministic `WORKER_COUNT=1`.
     pub old_baseline_profile: String,
-    /// Old command used or documented for the run.
-    pub old_command: String,
-    /// New parser command used or documented for the run.
-    pub new_command: String,
-    /// Selected replay/sample evidence that is cheap enough for CI.
-    pub selected_evidence: BenchmarkEvidence,
-    /// Whole-list or corpus evidence when prerequisites are available.
-    pub whole_list_or_corpus_evidence: Option<BenchmarkEvidence>,
-    /// Concrete reason whole-list/corpus evidence is unavailable.
-    pub whole_list_unavailable_reason: Option<String>,
-    /// Explanation when memory/RSS is not practical for one or more metrics.
-    pub rss_note: Option<String>,
+    /// Hard default artifact size limit in bytes.
+    pub artifact_size_limit_bytes: u64,
+    /// Deterministic selected large-replay evidence.
+    pub selected_large_replay: SelectedLargeReplay,
+    /// All-raw corpus evidence.
+    pub all_raw_corpus: AllRawCorpus,
+    /// Optional failure/skip allowlist.
+    pub allowlist: Option<BenchmarkAllowlist>,
+    /// Explanation when memory/RSS is not practical to capture.
+    pub rss_note: String,
 }
 
 impl BenchmarkReport {
-    /// Builds and validates a benchmark report.
+    /// Builds and validates a Phase 05.2 benchmark report.
     ///
     /// # Errors
     ///
     /// Returns [`BenchmarkReportValidationError`] when required release-gate
-    /// evidence is missing or an under-10x report lacks triage.
-    #[allow(clippy::too_many_arguments, reason = "report schema mirrors persisted JSON fields")]
+    /// evidence is missing or inconsistent.
     pub fn new(
-        phase: impl Into<String>,
         old_baseline_profile: impl Into<String>,
-        old_command: impl Into<String>,
-        new_command: impl Into<String>,
-        selected_evidence: BenchmarkEvidence,
-        whole_list_or_corpus_evidence: Option<BenchmarkEvidence>,
-        whole_list_unavailable_reason: Option<String>,
-        rss_note: Option<String>,
+        selected_large_replay: SelectedLargeReplay,
+        all_raw_corpus: AllRawCorpus,
+        allowlist: Option<BenchmarkAllowlist>,
+        rss_note: impl Into<String>,
     ) -> Result<Self, BenchmarkReportValidationError> {
         let report = Self {
             report_version: BENCHMARK_REPORT_VERSION.to_owned(),
-            phase: phase.into(),
+            phase: "05.2".to_owned(),
             old_baseline_profile: old_baseline_profile.into(),
-            old_command: old_command.into(),
-            new_command: new_command.into(),
-            selected_evidence,
-            whole_list_or_corpus_evidence,
-            whole_list_unavailable_reason,
-            rss_note,
+            artifact_size_limit_bytes: DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES,
+            selected_large_replay,
+            all_raw_corpus,
+            allowlist,
+            rss_note: rss_note.into(),
         };
         report.validate()?;
         Ok(report)
@@ -262,49 +312,36 @@ impl BenchmarkReport {
     /// # Errors
     ///
     /// Returns [`BenchmarkReportValidationError`] when a required field is
-    /// missing or inconsistent with Phase 05 benchmark decisions.
+    /// missing or inconsistent with Phase 05.2 benchmark decisions.
     pub fn validate(&self) -> Result<(), BenchmarkReportValidationError> {
         validate_non_empty(&self.report_version, "report_version")?;
         validate_non_empty(&self.phase, "phase")?;
         validate_non_empty(&self.old_baseline_profile, "old_baseline_profile")?;
-        validate_non_empty(&self.old_command, "old_command")?;
-        validate_non_empty(&self.new_command, "new_command")?;
-        self.selected_evidence.validate()?;
+        validate_non_empty(&self.rss_note, "rss_note")?;
 
-        if let Some(evidence) = &self.whole_list_or_corpus_evidence {
-            evidence.validate()?;
-        } else if self
-            .whole_list_unavailable_reason
-            .as_deref()
-            .is_none_or(|reason| reason.trim().is_empty())
-        {
-            return Err(BenchmarkReportValidationError::MissingWholeListEvidence);
+        if self.phase != "05.2" {
+            return Err(BenchmarkReportValidationError::InvalidPhase);
         }
 
-        let selected_triage = self.selected_evidence.triage.as_deref().unwrap_or_default();
-        let selected_triage_lower = selected_triage.to_ascii_lowercase();
-        if !self.old_baseline_profile.contains("WORKER_COUNT=1")
-            && (self.selected_evidence.ten_x_status != TenXStatus::Unknown
-                || !selected_triage_lower.contains("baseline"))
-        {
+        if self.artifact_size_limit_bytes != DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES {
+            return Err(BenchmarkReportValidationError::InvalidArtifactSizeLimit {
+                expected: DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES,
+                actual: self.artifact_size_limit_bytes,
+            });
+        }
+
+        if !self.old_baseline_profile.contains("WORKER_COUNT=1") {
             return Err(BenchmarkReportValidationError::MissingDeterministicOldBaseline);
         }
 
-        if self.any_missing_rss()
-            && self.rss_note.as_deref().is_none_or(|note| note.trim().is_empty())
-        {
-            return Err(BenchmarkReportValidationError::MissingRssNote);
+        if let Some(allowlist) = &self.allowlist {
+            allowlist.validate()?;
         }
 
-        Ok(())
-    }
+        self.selected_large_replay.validate(self.artifact_size_limit_bytes)?;
+        self.all_raw_corpus.validate(self.artifact_size_limit_bytes, self.allowlist.as_ref())?;
 
-    fn any_missing_rss(&self) -> bool {
-        self.selected_evidence.any_missing_rss()
-            || self
-                .whole_list_or_corpus_evidence
-                .as_ref()
-                .is_some_and(BenchmarkEvidence::any_missing_rss)
+        Ok(())
     }
 }
 
@@ -317,6 +354,16 @@ fn validate_non_empty(
     }
 
     Ok(())
+}
+
+fn triage_mentions_required_terms(triage: Option<&str>) -> bool {
+    let Some(triage) = triage else {
+        return false;
+    };
+    let triage = triage.to_ascii_lowercase();
+    ["bottleneck", "parity", "artifact", "failure"]
+        .into_iter()
+        .all(|required| triage.contains(required))
 }
 
 #[allow(
@@ -337,38 +384,61 @@ pub enum BenchmarkReportValidationError {
         /// Empty field name.
         field: &'static str,
     },
-    /// Neither fixture list nor corpus selector identified the workload.
-    #[error("benchmark report is missing workload identity")]
-    MissingWorkloadIdentity,
-    /// `BenchmarkEvidence` tier and nested workload tier differ.
-    #[error("benchmark evidence tier does not match workload tier")]
-    MismatchedEvidenceTier,
-    /// Compact artifact-size evidence is missing.
-    #[error("benchmark report is missing artifact size field `{field}`")]
-    MissingArtifactSizeEvidence {
-        /// Missing or zero artifact-size field.
+    /// A required byte evidence field was zero.
+    #[error("benchmark report is missing byte evidence field `{field}`")]
+    MissingByteEvidence {
+        /// Missing or zero byte field.
         field: &'static str,
     },
-    /// Artifact/raw ratio does not match the recorded bytes.
-    #[error(
-        "benchmark report artifact_raw_ratio does not match compact_artifact_bytes/raw_input_bytes"
-    )]
-    InvalidArtifactRawRatio,
-    /// No whole-list/corpus evidence and no unavailable rationale were provided.
-    #[error(
-        "benchmark report requires whole-list/corpus evidence or whole_list_unavailable_reason"
-    )]
-    MissingWholeListEvidence,
-    /// Old baseline profile is not the deterministic baseline and lacks accepted unknown triage.
+    /// Phase is not the Phase 05.2 acceptance report phase.
+    #[error("benchmark report phase must be 05.2")]
+    InvalidPhase,
+    /// Artifact-size limit is not the hard default limit.
+    #[error("benchmark report artifact_size_limit_bytes must be {expected} bytes, got {actual}")]
+    InvalidArtifactSizeLimit {
+        /// Required limit.
+        expected: u64,
+        /// Reported limit.
+        actual: u64,
+    },
+    /// Old baseline profile is not the deterministic baseline.
     #[error("benchmark report is missing deterministic WORKER_COUNT=1 old baseline")]
     MissingDeterministicOldBaseline,
-    /// Failed 10x status lacks required bottleneck, parity, and artifact triage.
-    #[error("benchmark report ten_x_status=fail requires bottleneck, parity, and artifact triage")]
-    FailedTenXRequiresTriage,
-    /// Unknown 10x status lacks explanatory triage.
-    #[error("benchmark report ten_x_status=unknown requires triage")]
-    UnknownTenXRequiresTriage,
-    /// RSS was omitted without a note.
-    #[error("benchmark report is missing rss_note while one or more rss_mb values are absent")]
-    MissingRssNote,
+    /// Selected artifact/raw ratio does not match the recorded bytes.
+    #[error("selected_large_replay artifact_raw_ratio does not match artifact_bytes/raw_bytes")]
+    InvalidSelectedArtifactRawRatio,
+    /// Selected x3 status cannot pass without speedup >= 3.0 and passed parity.
+    #[error("selected x3_status=pass requires speedup >= 3.0 and parity_status=passed")]
+    SelectedX3PassRequiresSpeedupAndParity,
+    /// Selected hard artifact-size status cannot pass above the byte limit.
+    #[error(
+        "selected artifact_size_status=pass requires artifact_bytes <= artifact_size_limit_bytes"
+    )]
+    SelectedArtifactSizePassRequiresLimit,
+    /// All-raw attempted/success/failed/skipped counts are inconsistent.
+    #[error(
+        "all_raw_corpus attempted_count must equal success_count + failed_count + skipped_count"
+    )]
+    InvalidAllRawCounts,
+    /// All-raw x10 status cannot pass without speedup >= 10.0.
+    #[error("all_raw_corpus x10_status=pass requires speedup >= 10.0")]
+    AllRawX10PassRequiresSpeedup,
+    /// All-raw size gate cannot pass without median/p95/max/oversized limits.
+    #[error(
+        "all_raw_corpus size_gate_status=pass requires median <= 0.05, p95 <= 0.10, max_artifact_bytes <= limit, and oversized_artifact_count == 0"
+    )]
+    AllRawSizeGatePassRequiresRatioAndMaxBytes,
+    /// Zero-failure cannot pass without no failures/skips or an accepted allowlist.
+    #[error(
+        "all_raw_corpus zero_failure_status=pass requires failed_count == 0 and skipped_count == 0, unless allowlist.approval_status=accepted_by_user"
+    )]
+    ZeroFailurePassRequiresNoFailuresOrAllowlist,
+    /// Failed or unknown status lacks required triage terms.
+    #[error(
+        "{scope} failed or unknown statuses require triage mentioning bottleneck, parity, artifact, and failure"
+    )]
+    StatusRequiresTriage {
+        /// Report scope needing triage.
+        scope: &'static str,
+    },
 }

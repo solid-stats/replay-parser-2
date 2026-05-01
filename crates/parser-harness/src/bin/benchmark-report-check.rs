@@ -25,11 +25,15 @@ fn run() -> Result<String, String> {
     report.validate().map_err(|error| error.to_string())?;
 
     Ok(format!(
-        "benchmark_report_valid=true\nphase={}\nselected_ten_x_status={:?}\nselected_parity_status={:?}\nwhole_list_or_corpus_evidence={}\n",
+        "benchmark_report_valid=true\nphase={}\nartifact_size_limit_bytes={}\nselected_x3_status={:?}\nselected_parity_status={:?}\nselected_artifact_size_status={:?}\nall_raw_x10_status={:?}\nall_raw_size_gate_status={:?}\nall_raw_zero_failure_status={:?}\n",
         report.phase,
-        report.selected_evidence.ten_x_status,
-        report.selected_evidence.parity_status,
-        report.whole_list_or_corpus_evidence.is_some()
+        report.artifact_size_limit_bytes,
+        report.selected_large_replay.x3_status,
+        report.selected_large_replay.parity_status,
+        report.selected_large_replay.artifact_size_status,
+        report.all_raw_corpus.x10_status,
+        report.all_raw_corpus.size_gate_status,
+        report.all_raw_corpus.zero_failure_status
     ))
 }
 
