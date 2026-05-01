@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05.2-03-PLAN.md
-last_updated: "2026-05-01T03:04:02.428Z"
+stopped_at: Completed 05.2-04-PLAN.md
+last_updated: "2026-05-01T03:23:08.200Z"
 last_activity: 2026-05-01
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 45
-  completed_plans: 42
-  percent: 93
+  completed_plans: 43
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-05-01
 
-Progress: [█████████░] 93%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -87,6 +87,7 @@ Progress: [█████████░] 93%
 | Phase 05.2 P01 | 10 min | 3 tasks | 18 files |
 | Phase 05.2 P02 | 22m04s | 3 tasks | 21 files |
 | Phase 05.2 P03 | 9m22s | 3 tasks | 5 files |
+| Phase 05.2 P04 | 14m18s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,9 @@ Recent decisions affecting current work:
 - [Phase 05.2]: CLI parse now writes minified v3 minimal JSON by default; human-readable JSON requires --pretty.
 - [Phase 05.2]: CLI debug sidecar output is explicit internal tooling through --debug-artifact <path> and uses parser-core parse_replay_debug only when requested.
 - [Phase 05.2]: Public schema and README references now use schemas/parse-artifact-v3.schema.json and v3 example artifacts.
+- [Phase 05.2]: Old-vs-new parity compares a derived legacy view from v3 minimal tables. — This preserves Phase 5.2 minimal default artifacts while keeping v1 human-review parity meaningful.
+- [Phase 05.2]: Selected comparison surfaces exclude vehicle_score, compact facts, aggregate contributions, participants, and summary projections. — Final selected parity is limited to status, replay, legacy player rows, legacy relationships, and bounty inputs.
+- [Phase 05.2]: Phase 05.2 benchmark acceptance must enforce max default artifact bytes <= 100_000 per successful artifact. — The benchmark report now carries explicit size evidence placeholders while Wave 6 owns the hard gate.
 
 ### Roadmap Evolution
 
@@ -213,8 +217,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T03:04:02.424Z
-Stopped at: Completed 05.2-03-PLAN.md
+Last session: 2026-05-01T03:23:08.195Z
+Stopped at: Completed 05.2-04-PLAN.md
 Resume file: None
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25

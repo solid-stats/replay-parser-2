@@ -209,7 +209,7 @@ Plans:
 - [x] 05.2-01-PLAN.md - Contract v3 minimal flat tables, schema/examples, and vehicle-score contract removal.
 - [x] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
 - [x] 05.2-03-PLAN.md - CLI minified default output, explicit pretty/debug flags, schema command, and README command updates.
-- [ ] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
+- [x] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
 - [ ] 05.2-05-PLAN.md - Selected large replay x3, all-raw x10, zero-failure, and artifact-size benchmark gates.
 - [ ] 05.2-06-PLAN.md - Fault target retune, final quality gates, README/ROADMAP/STATE handoff, and Phase 6 blocker status.
 
