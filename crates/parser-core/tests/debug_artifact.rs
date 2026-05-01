@@ -7,13 +7,15 @@
 
 use parser_contract::{
     presence::FieldPresence,
-    source_ref::{ReplaySource, SourceChecksum},
+    source_ref::{ReplaySource, RuleId, SourceChecksum},
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay, parse_replay_debug};
 use serde_json::json;
 
 const AGGREGATE_FIXTURE: &[u8] = include_bytes!("fixtures/aggregate-combat.ocap.json");
+const COMBAT_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/combat-events.ocap.json");
+const VEHICLE_CONTEXT_FIXTURE: &[u8] = include_bytes!("fixtures/vehicle-context.ocap.json");
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -23,10 +25,10 @@ fn parser_info() -> ParserInfo {
     .expect("test parser info should be valid")
 }
 
-fn replay_source() -> ReplaySource {
+fn replay_source(source_file: &str) -> ReplaySource {
     ReplaySource {
         replay_id: Some("replay-debug".to_string()),
-        source_file: "fixtures/aggregate-combat.ocap.json".to_string(),
+        source_file: source_file.to_string(),
         checksum: FieldPresence::Present {
             value: SourceChecksum::sha256(
                 "9999999999999999999999999999999999999999999999999999999999999999",
@@ -37,13 +39,17 @@ fn replay_source() -> ReplaySource {
     }
 }
 
-fn parser_input() -> ParserInput<'static> {
+fn parser_input_for(bytes: &'static [u8], source_file: &str) -> ParserInput<'static> {
     ParserInput {
-        bytes: AGGREGATE_FIXTURE,
-        source: replay_source(),
+        bytes,
+        source: replay_source(source_file),
         parser: parser_info(),
         options: ParserOptions::default(),
     }
+}
+
+fn parser_input() -> ParserInput<'static> {
+    parser_input_for(AGGREGATE_FIXTURE, "fixtures/aggregate-combat.ocap.json")
 }
 
 #[test]
@@ -98,4 +104,23 @@ fn debug_artifact_should_serialize_identically_when_same_input_is_parsed_twice()
         serde_json::to_string(&second_artifact).expect("second debug artifact should serialize");
 
     assert_eq!(first_serialized, second_serialized);
+}
+
+#[test]
+fn debug_artifact_should_keep_event_rule_ids_consistent_with_source_refs() {
+    for (fixture, source_file) in [
+        (COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json"),
+        (VEHICLE_CONTEXT_FIXTURE, "fixtures/vehicle-context.ocap.json"),
+    ] {
+        let debug_artifact = parse_replay_debug(parser_input_for(fixture, source_file));
+
+        for event in debug_artifact.events {
+            for source_ref in event.source_refs.as_slice() {
+                assert_eq!(
+                    source_ref.rule_id.as_ref().map(RuleId::as_str),
+                    Some(event.rule_id.as_str())
+                );
+            }
+        }
+    }
 }

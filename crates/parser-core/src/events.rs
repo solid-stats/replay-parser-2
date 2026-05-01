@@ -318,7 +318,7 @@ fn build_teamkill_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, VEHICLE_DESTROYED_RULE_ID);
+    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
@@ -435,7 +435,7 @@ fn build_friendly_vehicle_destroyed_event(
     entity_index: &BTreeMap<i64, &ObservedEntity>,
     context: &SourceContext,
 ) -> Option<NormalizedEvent> {
-    let source_ref = event_source_ref(context, observation, TEAMKILL_RULE_ID);
+    let source_ref = event_source_ref(context, observation, VEHICLE_DESTROYED_RULE_ID);
     let killer_actor = actor_ref(killer);
     let victim_actor = actor_ref(victim);
 
