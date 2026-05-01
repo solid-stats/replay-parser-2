@@ -171,6 +171,25 @@ fn parse_command_should_write_pretty_minimal_json_when_requested() {
 }
 
 #[test]
+fn parse_command_should_omit_debug_provenance_from_partial_default_artifact() {
+    // Arrange
+    let input = parser_core_fixture("metadata-drift.ocap.json");
+    let output_path = temp_output_path("partial-public", "artifact.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+    let artifact = read_json(&output_path);
+
+    // Assert
+    assert!(command_output.status.success());
+    assert_eq!(artifact["status"], "partial");
+    assert_eq!(artifact["diagnostics"][0]["code"], "schema.metadata_field");
+    for forbidden_key in ["source_refs", "rule_id", "frame", "event_index", "json_path"] {
+        assert_no_key_recursive(&artifact, forbidden_key);
+    }
+}
+
+#[test]
 fn parse_command_should_write_debug_artifact_sidecar_when_requested() {
     // Arrange
     let input = parser_core_fixture("aggregate-combat.ocap.json");

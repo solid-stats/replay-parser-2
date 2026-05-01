@@ -20,7 +20,7 @@
       "description": "Structured warnings and errors that did not necessarily fail parsing.",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Diagnostic"
+        "$ref": "#/$defs/MinimalDiagnosticRow"
       }
     },
     "extensions": {
@@ -332,60 +332,6 @@
           "type": "string",
           "const": "unknown_side"
         }
-      ]
-    },
-    "Diagnostic": {
-      "description": "Structured warning or error emitted during parsing.",
-      "type": "object",
-      "properties": {
-        "code": {
-          "description": "Stable diagnostic code.",
-          "type": "string"
-        },
-        "expected_shape": {
-          "description": "Expected source shape, when the diagnostic concerns schema drift.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "json_path": {
-          "description": "JSON path to the replay source field, when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "message": {
-          "description": "Human-readable diagnostic message.",
-          "type": "string"
-        },
-        "observed_shape": {
-          "description": "Observed source shape, when the diagnostic concerns schema drift.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "parser_action": {
-          "description": "Parser action taken in response to the issue.",
-          "type": "string"
-        },
-        "severity": {
-          "description": "Diagnostic severity.",
-          "$ref": "#/$defs/DiagnosticSeverity"
-        },
-        "source_refs": {
-          "description": "Source evidence backing the diagnostic.",
-          "$ref": "#/$defs/SourceRefs"
-        }
-      },
-      "required": [
-        "code",
-        "severity",
-        "message",
-        "parser_action",
-        "source_refs"
       ]
     },
     "DiagnosticSeverity": {
@@ -2290,6 +2236,34 @@
       },
       "required": [
         "classification"
+      ]
+    },
+    "MinimalDiagnosticRow": {
+      "description": "Minimal diagnostic row emitted by default parser artifacts.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "Stable diagnostic code.",
+          "type": "string"
+        },
+        "message": {
+          "description": "Human-readable diagnostic message.",
+          "type": "string"
+        },
+        "parser_action": {
+          "description": "Parser action taken in response to the issue.",
+          "type": "string"
+        },
+        "severity": {
+          "description": "Diagnostic severity.",
+          "$ref": "#/$defs/DiagnosticSeverity"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message",
+        "parser_action"
       ]
     },
     "MinimalKillRow": {

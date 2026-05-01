@@ -11,7 +11,7 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{ParserInput, ParserOptions, parse_replay, parse_replay_debug};
 use serde_json::json;
 
 const VALID_MINIMAL_FIXTURE: &[u8] = include_bytes!("fixtures/valid-minimal.ocap.json");
@@ -85,15 +85,24 @@ fn schema_drift_status_should_keep_artifact_success_when_no_data_loss_diagnostic
 fn schema_drift_status_should_append_summary_diagnostic_when_diagnostic_limit_is_exceeded() {
     let artifact =
         parse_fixture_with_options(DIAGNOSTIC_CAP_FIXTURE, ParserOptions { diagnostic_limit: 2 });
+    let debug_artifact = parse_replay_debug(parser_input(
+        DIAGNOSTIC_CAP_FIXTURE,
+        ParserOptions { diagnostic_limit: 2 },
+    ));
     let summary = artifact
         .diagnostics
         .iter()
         .find(|diagnostic| diagnostic.code == "diagnostic.limit_exceeded")
         .expect("diagnostic cap should emit a summary diagnostic");
+    let debug_summary = debug_artifact
+        .diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.code == "diagnostic.limit_exceeded")
+        .expect("debug artifact should keep full summary diagnostic");
 
     assert_eq!(artifact.status, ParseStatus::Partial);
     assert_eq!(artifact.diagnostics.len(), 3);
     assert!(summary.message.contains('3'));
-    assert_eq!(summary.json_path.as_deref(), Some("$"));
+    assert_eq!(debug_summary.json_path.as_deref(), Some("$"));
     assert_eq!(summary.parser_action, "summarized_repeated_diagnostics");
 }

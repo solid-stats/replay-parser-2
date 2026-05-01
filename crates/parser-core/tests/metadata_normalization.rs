@@ -12,7 +12,7 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{ParserInput, ParserOptions, parse_replay, parse_replay_debug};
 use serde_json::json;
 
 const VALID_MINIMAL_FIXTURE: &[u8] = include_bytes!("fixtures/valid-minimal.ocap.json");
@@ -99,14 +99,20 @@ fn metadata_normalization_should_emit_unknown_and_warning_when_metadata_field_ha
         .iter()
         .find(|diagnostic| diagnostic.code == "schema.metadata_field")
         .expect("schema drift should emit a metadata diagnostic");
+    let debug_artifact = parse_replay_debug(parser_input(METADATA_DRIFT_FIXTURE));
+    let debug_diagnostic = debug_artifact
+        .diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.code == "schema.metadata_field")
+        .expect("debug artifact should keep full metadata diagnostic");
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(diagnostic.json_path.as_deref(), Some("$.playersCount"));
-    assert_eq!(diagnostic.expected_shape.as_deref(), Some("array<unsigned integer>"));
-    assert_eq!(diagnostic.observed_shape.as_deref(), Some("string"));
     assert_eq!(diagnostic.parser_action, "set_unknown");
+    assert_eq!(debug_diagnostic.json_path.as_deref(), Some("$.playersCount"));
+    assert_eq!(debug_diagnostic.expected_shape.as_deref(), Some("array<unsigned integer>"));
+    assert_eq!(debug_diagnostic.observed_shape.as_deref(), Some("string"));
     assert_eq!(
-        diagnostic
+        debug_diagnostic
             .source_refs
             .as_slice()
             .first()

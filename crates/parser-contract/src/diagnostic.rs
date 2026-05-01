@@ -35,3 +35,27 @@ pub struct Diagnostic {
     /// Source evidence backing the diagnostic.
     pub source_refs: SourceRefs,
 }
+
+/// Minimal diagnostic row emitted by default parser artifacts.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MinimalDiagnosticRow {
+    /// Stable diagnostic code.
+    pub code: String,
+    /// Diagnostic severity.
+    pub severity: DiagnosticSeverity,
+    /// Human-readable diagnostic message.
+    pub message: String,
+    /// Parser action taken in response to the issue.
+    pub parser_action: String,
+}
+
+impl From<Diagnostic> for MinimalDiagnosticRow {
+    fn from(diagnostic: Diagnostic) -> Self {
+        Self {
+            code: diagnostic.code,
+            severity: diagnostic.severity,
+            message: diagnostic.message,
+            parser_action: diagnostic.parser_action,
+        }
+    }
+}

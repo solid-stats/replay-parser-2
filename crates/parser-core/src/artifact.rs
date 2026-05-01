@@ -64,7 +64,7 @@ fn success_artifact(
         source,
         status: diagnostic_report.status_for_successful_parse,
         produced_at: None,
-        diagnostics: diagnostic_report.diagnostics,
+        diagnostics: diagnostic_report.diagnostics.into_iter().map(Into::into).collect(),
         replay: Some(replay),
         players: minimal_tables.players,
         player_stats: minimal_tables.player_stats,

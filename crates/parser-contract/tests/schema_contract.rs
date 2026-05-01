@@ -125,6 +125,19 @@ fn schema_contract_committed_schema_should_include_minimal_row_types() {
 }
 
 #[test]
+fn schema_contract_committed_schema_should_use_minimal_diagnostics() {
+    let schema = read_json(committed_schema_path());
+    let diagnostic_schema = schema["$defs"]["MinimalDiagnosticRow"]
+        .as_object()
+        .expect("schema should define MinimalDiagnosticRow");
+
+    assert!(diagnostic_schema["properties"].get("code").is_some());
+    assert!(diagnostic_schema["properties"].get("parser_action").is_some());
+    assert!(diagnostic_schema["properties"].get("source_refs").is_none());
+    assert!(diagnostic_schema["properties"].get("json_path").is_none());
+}
+
+#[test]
 fn schema_contract_committed_schema_should_match_fresh_generation() {
     let committed_schema_text =
         fs::read_to_string(committed_schema_path()).expect("committed schema should be readable");

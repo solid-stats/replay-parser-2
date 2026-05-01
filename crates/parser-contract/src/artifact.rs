@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
-    diagnostic::Diagnostic,
+    diagnostic::MinimalDiagnosticRow,
     failure::ParseFailure,
     metadata::ReplayMetadata,
     minimal::{
@@ -44,7 +44,7 @@ pub struct ParseArtifact {
     /// Optional production timestamp supplied by non-deterministic adapters.
     pub produced_at: Option<String>,
     /// Structured warnings and errors that did not necessarily fail parsing.
-    pub diagnostics: Vec<Diagnostic>,
+    pub diagnostics: Vec<MinimalDiagnosticRow>,
     /// Normalized replay metadata when it could be extracted.
     pub replay: Option<ReplayMetadata>,
     /// Minimal observed player rows from the replay.
