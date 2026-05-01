@@ -185,7 +185,33 @@ fn comparison_report_compare_artifacts_should_emit_compatible_findings_when_sele
 
     // Assert
     assert!(report.findings.iter().any(|finding| finding.category == MismatchCategory::Compatible));
-    assert_eq!(report.summary.by_category["compatible"], 9);
+    assert_eq!(report.summary.by_category["compatible"], 12);
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_derive_legacy_view_from_minimal_tables() {
+    // Arrange
+    let old_json = legacy_surface_artifact_json("success");
+    let new_json = minimal_artifact_json("success");
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("minimal artifact should derive legacy comparison surfaces");
+
+    // Assert
+    let player_results = finding(&report, "legacy.player_game_results");
+    assert_eq!(player_results.category, MismatchCategory::Compatible);
+    assert_eq!(player_results.new_value[0]["killsFromVehicle"], 1);
+
+    let relationships = finding(&report, "legacy.relationships");
+    assert_eq!(relationships.category, MismatchCategory::Compatible);
+    assert_eq!(relationships.new_value["killed"][0]["relationship"], "killed");
+    assert_eq!(relationships.new_value["teamkillers"][0]["relationship"], "teamkillers");
+
+    let bounty_inputs = finding(&report, "bounty.inputs");
+    assert_eq!(bounty_inputs.category, MismatchCategory::Compatible);
+    assert_eq!(bounty_inputs.new_value[0]["attacker_vehicle_name"], "Offroad HMG");
 }
 
 #[test]
@@ -307,7 +333,298 @@ fn selected_artifact_json(status: &str) -> Vec<u8> {
                 "bounty.inputs": [],
                 "vehicle_score.inputs": []
             }
+        },
+        "legacy": {
+            "player_game_results": [],
+            "relationships": {
+                "killed": [],
+                "killers": [],
+                "teamkilled": [],
+                "teamkillers": []
+            }
+        },
+        "bounty": {
+            "inputs": []
         }
     }))
     .expect("selected fixture JSON should serialize")
+}
+
+fn finding<'a>(report: &'a ComparisonReport, surface: &str) -> &'a ComparisonFinding {
+    report
+        .findings
+        .iter()
+        .find(|finding| finding.surface == surface)
+        .unwrap_or_else(|| panic!("{surface} finding should exist"))
+}
+
+fn legacy_surface_artifact_json(status: &str) -> Vec<u8> {
+    serde_json::to_vec(&json!({
+        "status": status,
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "legacy": expected_legacy_surfaces(),
+        "bounty": {
+            "inputs": expected_bounty_inputs()
+        }
+    }))
+    .expect("legacy surface fixture JSON should serialize")
+}
+
+fn minimal_artifact_json(status: &str) -> Vec<u8> {
+    serde_json::to_vec(&json!({
+        "status": status,
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "players": [
+            {
+                "player_id": "entity:1",
+                "source_entity_id": 1,
+                "observed_name": "Alpha",
+                "side": "west",
+                "group": "Alpha 1-1",
+                "role": "Rifleman",
+                "steam_id": null,
+                "compatibility_key": "legacy_name:Alpha"
+            },
+            {
+                "player_id": "entity:2",
+                "source_entity_id": 2,
+                "observed_name": "Bravo",
+                "side": "east",
+                "group": "Bravo 1-1",
+                "role": "Rifleman",
+                "steam_id": null,
+                "compatibility_key": "legacy_name:Bravo"
+            },
+            {
+                "player_id": "entity:3",
+                "source_entity_id": 3,
+                "observed_name": "Charlie",
+                "side": "west",
+                "group": "Alpha 1-2",
+                "role": "Rifleman",
+                "steam_id": null,
+                "compatibility_key": "legacy_name:Charlie"
+            }
+        ],
+        "player_stats": [
+            {
+                "player_id": "entity:1",
+                "source_entity_id": 1,
+                "kills": 1,
+                "deaths": 0,
+                "teamkills": 1,
+                "suicides": 0,
+                "null_killer_deaths": 0,
+                "unknown_deaths": 0,
+                "vehicleKills": 1,
+                "killsFromVehicle": 1
+            },
+            {
+                "player_id": "entity:2",
+                "source_entity_id": 2,
+                "kills": 0,
+                "deaths": 1,
+                "teamkills": 0,
+                "suicides": 0,
+                "null_killer_deaths": 0,
+                "unknown_deaths": 0,
+                "vehicleKills": 0,
+                "killsFromVehicle": 0
+            },
+            {
+                "player_id": "entity:3",
+                "source_entity_id": 3,
+                "kills": 0,
+                "deaths": 1,
+                "teamkills": 0,
+                "suicides": 0,
+                "null_killer_deaths": 0,
+                "unknown_deaths": 0,
+                "vehicleKills": 0,
+                "killsFromVehicle": 0
+            }
+        ],
+        "kills": [
+            {
+                "killer_player_id": "entity:1",
+                "killer_source_entity_id": 1,
+                "killer_name": "Alpha",
+                "killer_side": "west",
+                "victim_player_id": "entity:2",
+                "victim_source_entity_id": 2,
+                "victim_name": "Bravo",
+                "victim_side": "east",
+                "classification": "enemy_kill",
+                "weapon": "M2",
+                "attacker_vehicle_entity_id": 20,
+                "attacker_vehicle_name": "Offroad HMG",
+                "attacker_vehicle_class": "offroad_hmg",
+                "bounty_eligible": true,
+                "bounty_exclusion_reasons": []
+            },
+            {
+                "killer_player_id": "entity:1",
+                "killer_source_entity_id": 1,
+                "killer_name": "Alpha",
+                "killer_side": "west",
+                "victim_player_id": "entity:3",
+                "victim_source_entity_id": 3,
+                "victim_name": "Charlie",
+                "victim_side": "west",
+                "classification": "teamkill",
+                "weapon": "AK-74",
+                "attacker_vehicle_entity_id": null,
+                "attacker_vehicle_name": null,
+                "attacker_vehicle_class": null,
+                "bounty_eligible": false,
+                "bounty_exclusion_reasons": ["teamkill"]
+            }
+        ],
+        "destroyed_vehicles": [
+            {
+                "attacker_player_id": "entity:1",
+                "attacker_source_entity_id": 1,
+                "attacker_name": "Alpha",
+                "attacker_side": "west",
+                "classification": "enemy",
+                "weapon": "RPG-7",
+                "attacker_vehicle_entity_id": null,
+                "attacker_vehicle_name": null,
+                "attacker_vehicle_class": null,
+                "destroyed_entity_id": 30,
+                "destroyed_entity_type": "vehicle",
+                "destroyed_name": "BTR",
+                "destroyed_class": "apc",
+                "destroyed_side": "east"
+            }
+        ]
+    }))
+    .expect("minimal fixture JSON should serialize")
+}
+
+fn expected_legacy_surfaces() -> Value {
+    json!({
+        "player_game_results": [
+            {
+                "compatibility_key": "legacy_name:Alpha",
+                "observed_entity_ids": [1],
+                "observed_name": "Alpha",
+                "side": "west",
+                "kills": 1,
+                "killsFromVehicle": 1,
+                "vehicleKills": 1,
+                "teamkills": 1,
+                "isDead": false,
+                "isDeadByTeamkill": false,
+                "deaths": {
+                    "total": 0,
+                    "byTeamkills": 0
+                },
+                "kdRatio": 0.0,
+                "killsFromVehicleCoef": 1.0,
+                "score": 0.0,
+                "totalPlayedGames": 1
+            },
+            {
+                "compatibility_key": "legacy_name:Bravo",
+                "observed_entity_ids": [2],
+                "observed_name": "Bravo",
+                "side": "east",
+                "kills": 0,
+                "killsFromVehicle": 0,
+                "vehicleKills": 0,
+                "teamkills": 0,
+                "isDead": true,
+                "isDeadByTeamkill": false,
+                "deaths": {
+                    "total": 1,
+                    "byTeamkills": 0
+                },
+                "kdRatio": 0.0,
+                "killsFromVehicleCoef": 0.0,
+                "score": 0.0,
+                "totalPlayedGames": 1
+            },
+            {
+                "compatibility_key": "legacy_name:Charlie",
+                "observed_entity_ids": [3],
+                "observed_name": "Charlie",
+                "side": "west",
+                "kills": 0,
+                "killsFromVehicle": 0,
+                "vehicleKills": 0,
+                "teamkills": 0,
+                "isDead": true,
+                "isDeadByTeamkill": true,
+                "deaths": {
+                    "total": 1,
+                    "byTeamkills": 1
+                },
+                "kdRatio": 0.0,
+                "killsFromVehicleCoef": 0.0,
+                "score": 0.0,
+                "totalPlayedGames": 1
+            }
+        ],
+        "relationships": {
+            "killed": [
+                relationship_row("killed", "Alpha", 1, "Bravo", 2)
+            ],
+            "killers": [
+                relationship_row("killers", "Bravo", 2, "Alpha", 1)
+            ],
+            "teamkilled": [
+                relationship_row("teamkilled", "Alpha", 1, "Charlie", 3)
+            ],
+            "teamkillers": [
+                relationship_row("teamkillers", "Charlie", 3, "Alpha", 1)
+            ]
+        }
+    })
+}
+
+fn expected_bounty_inputs() -> Value {
+    json!([
+        {
+            "killer_player_id": "entity:1",
+            "killer_source_entity_id": 1,
+            "killer_compatibility_key": "legacy_name:Alpha",
+            "killer_side": "west",
+            "victim_player_id": "entity:2",
+            "victim_source_entity_id": 2,
+            "victim_compatibility_key": "legacy_name:Bravo",
+            "victim_side": "east",
+            "weapon": "M2",
+            "attacker_vehicle_entity_id": 20,
+            "attacker_vehicle_name": "Offroad HMG",
+            "attacker_vehicle_class": "offroad_hmg"
+        }
+    ])
+}
+
+fn relationship_row(
+    relationship: &str,
+    source_name: &str,
+    source_id: i64,
+    target_name: &str,
+    target_id: i64,
+) -> Value {
+    json!({
+        "relationship": relationship,
+        "source_player_id": format!("entity:{source_id}"),
+        "source_entity_id": source_id,
+        "source_compatibility_key": format!("legacy_name:{source_name}"),
+        "source_observed_entity_ids": [source_id],
+        "source_observed_name": source_name,
+        "target_player_id": format!("entity:{target_id}"),
+        "target_entity_id": target_id,
+        "target_compatibility_key": format!("legacy_name:{target_name}"),
+        "target_observed_entity_ids": [target_id],
+        "target_observed_name": target_name,
+        "count": 1
+    })
 }
