@@ -743,4 +743,6 @@ with open(report_path, "w", encoding="utf-8") as handle:
     handle.write("\n")
 PY
 
-cargo run -p parser-harness --bin benchmark-report-check -- --report "$REPORT_PATH"
+cargo run -p parser-harness --bin benchmark-report-check -- \
+  --report "$REPORT_PATH" \
+  --mode acceptance

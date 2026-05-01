@@ -22,10 +22,12 @@ fn run() -> Result<String, String> {
         .map_err(|error| format!("could not read report {}: {error}", args.report.display()))?;
     let report: BenchmarkReport = serde_json::from_str(&report_json)
         .map_err(|error| format!("benchmark report JSON is invalid: {error}"))?;
-    report.validate().map_err(|error| error.to_string())?;
+    args.mode.validate(&report).map_err(|error| error.to_string())?;
 
     Ok(format!(
-        "benchmark_report_valid=true\nphase={}\nartifact_size_limit_bytes={}\nselected_x3_status={:?}\nselected_parity_status={:?}\nselected_artifact_size_status={:?}\nall_raw_x10_status={:?}\nall_raw_size_gate_status={:?}\nall_raw_zero_failure_status={:?}\n",
+        "benchmark_report_valid=true\n{}benchmark_report_mode={}\nphase={}\nartifact_size_limit_bytes={}\nselected_x3_status={:?}\nselected_parity_status={:?}\nselected_artifact_size_status={:?}\nall_raw_x10_status={:?}\nall_raw_size_gate_status={:?}\nall_raw_zero_failure_status={:?}\n",
+        args.mode.acceptance_summary_line(),
+        args.mode.as_str(),
         report.phase,
         report.artifact_size_limit_bytes,
         report.selected_large_replay.x3_status,
@@ -57,6 +59,7 @@ fn write_stderr(message: &str) -> ExitCode {
 #[derive(Debug, Default)]
 struct Args {
     report: PathBuf,
+    mode: CheckMode,
 }
 
 impl Args {
@@ -68,6 +71,7 @@ impl Args {
             let value = raw_args.next().ok_or_else(|| format!("{flag} requires a value"))?;
             match flag.as_str() {
                 "--report" => args.report = PathBuf::from(value),
+                "--mode" => args.mode = CheckMode::parse(&value)?,
                 other => return Err(format!("unknown argument: {other}")),
             }
         }
@@ -77,5 +81,43 @@ impl Args {
         }
 
         Ok(args)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+enum CheckMode {
+    #[default]
+    Acceptance,
+    Structural,
+}
+
+impl CheckMode {
+    fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "acceptance" => Ok(Self::Acceptance),
+            "structural" => Ok(Self::Structural),
+            other => Err(format!("unknown --mode value: {other}")),
+        }
+    }
+
+    fn validate(self, report: &BenchmarkReport) -> Result<(), impl ToString> {
+        match self {
+            Self::Acceptance => report.validate_acceptance(),
+            Self::Structural => report.validate(),
+        }
+    }
+
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Acceptance => "acceptance",
+            Self::Structural => "structural",
+        }
+    }
+
+    const fn acceptance_summary_line(self) -> &'static str {
+        match self {
+            Self::Acceptance => "benchmark_report_acceptance=true\n",
+            Self::Structural => "",
+        }
     }
 }

@@ -343,6 +343,28 @@ impl BenchmarkReport {
 
         Ok(())
     }
+
+    /// Validates that this structurally valid report is Phase 05.2 acceptance evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BenchmarkReportValidationError`] when structural validation fails or when any
+    /// required selected-replay/all-raw acceptance gate is not passing.
+    pub fn validate_acceptance(&self) -> Result<(), BenchmarkReportValidationError> {
+        self.validate()?;
+
+        if self.selected_large_replay.x3_status != GateStatus::Pass
+            || self.selected_large_replay.parity_status != ParityStatus::Passed
+            || self.selected_large_replay.artifact_size_status != GateStatus::Pass
+            || self.all_raw_corpus.x10_status != GateStatus::Pass
+            || self.all_raw_corpus.size_gate_status != GateStatus::Pass
+            || self.all_raw_corpus.zero_failure_status != GateStatus::Pass
+        {
+            return Err(BenchmarkReportValidationError::AcceptanceGatesNotPassed);
+        }
+
+        Ok(())
+    }
 }
 
 fn validate_non_empty(
@@ -441,4 +463,9 @@ pub enum BenchmarkReportValidationError {
         /// Report scope needing triage.
         scope: &'static str,
     },
+    /// Structurally valid report does not satisfy Phase 05.2 acceptance gates.
+    #[error(
+        "benchmark acceptance requires selected x3/parity/artifact-size and all-raw x10/size/zero-failure gates to pass"
+    )]
+    AcceptanceGatesNotPassed,
 }

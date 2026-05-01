@@ -28,6 +28,7 @@ fn benchmark_report_should_accept_phase_05_2_acceptance_evidence() {
     assert_eq!(report.selected_large_replay.x3_status, GateStatus::Pass);
     assert_eq!(report.all_raw_corpus.x10_status, GateStatus::Pass);
     assert_eq!(report.all_raw_corpus.size_gate_status, GateStatus::Pass);
+    report.validate_acceptance().expect("passing gates should satisfy acceptance validation");
 }
 
 #[test]
@@ -219,6 +220,45 @@ fn benchmark_report_should_reject_failed_or_unknown_status_without_complete_tria
         error,
         BenchmarkReportValidationError::StatusRequiresTriage { scope: "selected_large_replay" }
     );
+}
+
+#[test]
+fn benchmark_report_acceptance_should_reject_structural_smoke_report_with_failed_or_unknown_gates()
+{
+    // Arrange
+    let mut selected = selected_large_replay();
+    selected.old_wall_time_ms = None;
+    selected.speedup = None;
+    selected.x3_status = GateStatus::Unknown;
+    selected.parity_status = ParityStatus::NotRun;
+    selected.artifact_bytes = 203_683;
+    selected.artifact_raw_ratio = 203_683.0 / 2_000_000.0;
+    selected.artifact_size_status = GateStatus::Fail;
+    selected.triage = Some(
+        "selected benchmark bottleneck needs parity rerun, artifact reduction, and failure triage"
+            .to_owned(),
+    );
+
+    let mut all_raw = all_raw_corpus();
+    all_raw.speedup = None;
+    all_raw.x10_status = GateStatus::Unknown;
+    all_raw.size_gate_status = GateStatus::Unknown;
+    all_raw.zero_failure_status = GateStatus::Unknown;
+    all_raw.triage = Some(
+        "all-raw bottleneck needs parity rerun, artifact size evidence, and failure triage"
+            .to_owned(),
+    );
+
+    let report = valid_report(selected, all_raw, None)
+        .expect("smoke report should remain structurally valid with complete triage");
+
+    // Act
+    let error = report
+        .validate_acceptance()
+        .expect_err("acceptance must fail unless all selected and all-raw gates pass");
+
+    // Assert
+    assert_eq!(error, BenchmarkReportValidationError::AcceptanceGatesNotPassed);
 }
 
 #[test]
