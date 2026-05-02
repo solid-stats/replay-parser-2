@@ -228,7 +228,21 @@ Current final-gate evidence:
   3. Successful jobs write deterministic parse artifacts to S3 and emit `parse.completed` messages with job/replay identifiers, contract version, checksum, and artifact reference.
   4. Failed jobs emit `parse.failed` messages with structured error data and retryability.
   5. RabbitMQ jobs are acknowledged only after result or artifact publication succeeds, with manual ack/nack behavior for failure paths.
-**Plans**: TBD
+**Plans**: 6 plans
+**Execution waves**: Wave 1 runs `06-00-PLAN.md`; Wave 2 runs `06-01-PLAN.md`; Wave 3 runs `06-02-PLAN.md` and `06-03-PLAN.md`; Wave 4 runs `06-04-PLAN.md`; Wave 5 runs `06-05-PLAN.md`.
+Cross-cutting constraints:
+- Worker request/result contracts are typed in `parser-contract` and backed by generated JSON Schema before runtime code consumes or publishes them.
+- `parser-core` remains transport-free; RabbitMQ, S3, Tokio runtime, non-deterministic logs, and shutdown behavior live in `parser-worker` and the CLI only delegates.
+- Worker mode uses the same minimal public v3 parser artifact path as the CLI default, never the debug sidecar path.
+- Manual ack is allowed only after confirmed `parse.completed` or confirmed `parse.failed`; RabbitMQ requeue is reserved for inability to publish a durable outcome.
+- Phase 6 defaults to one in-flight job with prefetch `1`; Phase 7 owns multi-worker safety, health/readiness, and container hardening.
+Plans:
+- [ ] 06-00-PLAN.md - Worker request/result contract, schemas, and examples.
+- [ ] 06-01-PLAN.md - `parser-worker` crate foundation, worker config, and CLI worker subcommand.
+- [ ] 06-02-PLAN.md - S3-compatible raw download, checksum verification, deterministic artifact keys, and artifact write/reuse policy.
+- [ ] 06-03-PLAN.md - RabbitMQ consumer, result publisher confirms, and manual ack/nack policy.
+- [ ] 06-04-PLAN.md - End-to-end job processor, minimal artifact delivery, handled failures, and graceful shutdown drain.
+- [ ] 06-05-PLAN.md - Final worker gates, schema freshness, README/ROADMAP/STATE handoff, and Phase 7 boundary checks.
 
 ### Phase 7: Parallel and Container Hardening
 **Goal**: Operators can run the worker safely in parallel container mode with observable readiness.
@@ -253,6 +267,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 | 4. Event Semantics and Aggregates | 7/7 | Complete | 2026-04-28 |
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
-| 5.2. Minimal Artifact and Performance Acceptance | 7/7 | Execution complete; benchmark acceptance blocks Phase 6 | - |
-| 6. RabbitMQ/S3 Worker Integration | 0/TBD | Not started | - |
+| 5.2. Minimal Artifact and Performance Acceptance | 7/7 | Execution complete; accepted benchmark policy unblocks Phase 6 | - |
+| 6. RabbitMQ/S3 Worker Integration | 0/6 | Planned; ready to execute | - |
 | 7. Parallel and Container Hardening | 0/TBD | Not started | - |
