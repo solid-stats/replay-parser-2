@@ -1,0 +1,10 @@
+{
+  "job_id": "job-0001",
+  "replay_id": "replay-0001",
+  "object_key": "raw/replay-0001.ocap.json",
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "parser_contract_version": "3.0.0"
+}

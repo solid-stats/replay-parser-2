@@ -7,6 +7,7 @@ use crate::{
         BountyInputContributionValue, LegacyCounterContributionValue, RelationshipContributionValue,
     },
     artifact::ParseArtifact,
+    worker::{ParseJobMessage, ParseResultMessage},
 };
 use serde_json::map::Entry;
 
@@ -21,8 +22,24 @@ pub fn parse_artifact_schema() -> Schema {
     schema
 }
 
+/// Builds the JSON Schema for the parser-worker parse job message contract.
+#[must_use]
+pub fn parse_job_schema() -> Schema {
+    let mut schema = schemars::schema_for!(ParseJobMessage);
+    close_top_level_schema(&mut schema);
+    schema
+}
+
+/// Builds the JSON Schema for the parser-worker result message contract.
+#[must_use]
+pub fn parse_result_schema() -> Schema {
+    let mut schema = schemars::schema_for!(ParseResultMessage);
+    close_top_level_schema(&mut schema);
+    schema
+}
+
 fn close_default_artifact_schema(schema: &mut Schema) {
-    drop(schema.insert("unevaluatedProperties".to_string(), json!(false)));
+    close_top_level_schema(schema);
 
     for definition_name in [
         "MinimalDestroyedVehicleRow",
@@ -33,6 +50,10 @@ fn close_default_artifact_schema(schema: &mut Schema) {
     ] {
         close_schema_definition(schema, definition_name);
     }
+}
+
+fn close_top_level_schema(schema: &mut Schema) {
+    drop(schema.insert("unevaluatedProperties".to_string(), json!(false)));
 }
 
 fn close_schema_definition(schema: &mut Schema, definition_name: &str) {

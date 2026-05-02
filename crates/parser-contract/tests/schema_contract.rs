@@ -7,7 +7,11 @@
 
 use std::{fs, path::PathBuf};
 
-use parser_contract::{artifact::ParseArtifact, schema::parse_artifact_schema};
+use parser_contract::{
+    artifact::ParseArtifact,
+    schema::{parse_artifact_schema, parse_job_schema, parse_result_schema},
+    worker::{ParseCompletedMessage, ParseFailedMessage, ParseJobMessage, ParseResultMessage},
+};
 use serde_json::{Value, json};
 
 fn workspace_root() -> PathBuf {
@@ -23,12 +27,32 @@ fn committed_schema_path() -> PathBuf {
     workspace_root().join("schemas/parse-artifact-v3.schema.json")
 }
 
+fn committed_parse_job_schema_path() -> PathBuf {
+    workspace_root().join("schemas/parse-job-v1.schema.json")
+}
+
+fn committed_parse_result_schema_path() -> PathBuf {
+    workspace_root().join("schemas/parse-result-v1.schema.json")
+}
+
 fn success_example_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_artifact_success.v3.json")
 }
 
 fn failure_example_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_failure.v3.json")
+}
+
+fn parse_job_example_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_job.v1.json")
+}
+
+fn parse_completed_example_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_completed.v1.json")
+}
+
+fn parse_failed_example_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/parse_failed.v1.json")
 }
 
 fn read_json(path: PathBuf) -> Value {
@@ -54,11 +78,39 @@ fn freshly_generated_schema_text() -> String {
     )
 }
 
+fn freshly_generated_parse_job_schema_text() -> String {
+    format!(
+        "{}\n",
+        serde_json::to_string_pretty(&parse_job_schema())
+            .expect("parse job schema should serialize")
+    )
+}
+
+fn freshly_generated_parse_result_schema_text() -> String {
+    format!(
+        "{}\n",
+        serde_json::to_string_pretty(&parse_result_schema())
+            .expect("parse result schema should serialize")
+    )
+}
+
 #[test]
 fn schema_contract_committed_parse_artifact_schema_should_exist() {
     assert!(
         committed_schema_path().is_file(),
         "schemas/parse-artifact-v3.schema.json should be committed"
+    );
+}
+
+#[test]
+fn schema_contract_committed_worker_schemas_should_exist() {
+    assert!(
+        committed_parse_job_schema_path().is_file(),
+        "schemas/parse-job-v1.schema.json should be committed"
+    );
+    assert!(
+        committed_parse_result_schema_path().is_file(),
+        "schemas/parse-result-v1.schema.json should be committed"
     );
 }
 
@@ -168,12 +220,42 @@ fn schema_contract_committed_schema_should_match_fresh_generation() {
 }
 
 #[test]
+fn schema_contract_committed_worker_schemas_should_match_fresh_generation() {
+    let committed_parse_job_schema_text = fs::read_to_string(committed_parse_job_schema_path())
+        .expect("committed parse job schema should be readable");
+    let committed_parse_result_schema_text =
+        fs::read_to_string(committed_parse_result_schema_path())
+            .expect("committed parse result schema should be readable");
+
+    assert_eq!(committed_parse_job_schema_text, freshly_generated_parse_job_schema_text());
+    assert_eq!(committed_parse_result_schema_text, freshly_generated_parse_result_schema_text());
+}
+
+#[test]
 fn schema_contract_success_and_failure_examples_should_deserialize_into_parse_artifact() {
     for example_path in [success_example_path(), failure_example_path()] {
         let example = read_json(example_path);
         let _artifact: ParseArtifact =
             serde_json::from_value(example).expect("example should deserialize into ParseArtifact");
     }
+}
+
+#[test]
+fn schema_contract_worker_examples_should_deserialize_into_typed_messages() {
+    let parse_job = read_json(parse_job_example_path());
+    let parse_completed = read_json(parse_completed_example_path());
+    let parse_failed = read_json(parse_failed_example_path());
+
+    let _job: ParseJobMessage =
+        serde_json::from_value(parse_job).expect("parse job example should deserialize");
+    let _completed: ParseCompletedMessage = serde_json::from_value(parse_completed.clone())
+        .expect("parse completed example should deserialize");
+    let _failed: ParseFailedMessage = serde_json::from_value(parse_failed.clone())
+        .expect("parse failed example should deserialize");
+    let _completed_result: ParseResultMessage = serde_json::from_value(parse_completed)
+        .expect("parse completed example should deserialize as result message");
+    let _failed_result: ParseResultMessage = serde_json::from_value(parse_failed)
+        .expect("parse failed example should deserialize as result message");
 }
 
 #[test]
@@ -190,6 +272,48 @@ fn schema_contract_success_and_failure_examples_should_validate_against_committe
             validation.err()
         );
     }
+}
+
+#[test]
+fn schema_contract_worker_examples_should_validate_against_committed_schemas() {
+    let parse_job_schema = read_json(committed_parse_job_schema_path());
+    let parse_result_schema = read_json(committed_parse_result_schema_path());
+    let parse_job_validator =
+        jsonschema::draft202012::new(&parse_job_schema).expect("parse job schema should compile");
+    let parse_result_validator = jsonschema::draft202012::new(&parse_result_schema)
+        .expect("parse result schema should compile");
+
+    let parse_job = read_json(parse_job_example_path());
+    let parse_completed = read_json(parse_completed_example_path());
+    let parse_failed = read_json(parse_failed_example_path());
+
+    assert!(
+        parse_job_validator.validate(&parse_job).is_ok(),
+        "parse job example should validate against committed schema"
+    );
+    for example in [parse_completed, parse_failed] {
+        let validation = parse_result_validator.validate(&example);
+        assert!(
+            validation.is_ok(),
+            "parse result example should validate against committed schema: {:?}",
+            validation.err()
+        );
+    }
+}
+
+#[test]
+fn schema_contract_parse_result_schema_should_reject_inline_parse_artifact_payload() {
+    let parse_result_schema = read_json(committed_parse_result_schema_path());
+    let parse_result_validator = jsonschema::draft202012::new(&parse_result_schema)
+        .expect("parse result schema should compile");
+    let mut parse_completed = read_json(parse_completed_example_path());
+
+    parse_completed["artifact_payload"] = read_json(success_example_path());
+
+    assert!(
+        parse_result_validator.validate(&parse_completed).is_err(),
+        "completed result should reject inline artifact payload"
+    );
 }
 
 #[test]

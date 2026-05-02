@@ -1,0 +1,64 @@
+{
+  "message_type": "parse.failed",
+  "job_id": {
+    "state": "present",
+    "value": "job-0001"
+  },
+  "replay_id": {
+    "state": "present",
+    "value": "replay-0001"
+  },
+  "object_key": {
+    "state": "present",
+    "value": "raw/replay-0001.ocap.json"
+  },
+  "parser_contract_version": {
+    "state": "present",
+    "value": "9.0.0"
+  },
+  "source_checksum": {
+    "state": "present",
+    "value": {
+      "algorithm": "sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "failure": {
+    "job_id": {
+      "state": "present",
+      "value": "job-0001"
+    },
+    "replay_id": {
+      "state": "present",
+      "value": "replay-0001"
+    },
+    "source_file": {
+      "state": "present",
+      "value": "raw/replay-0001.ocap.json"
+    },
+    "checksum": {
+      "state": "present",
+      "value": {
+        "algorithm": "sha256",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    "stage": "schema",
+    "error_code": "unsupported.contract_version",
+    "message": "unsupported parser contract version",
+    "retryability": "not_retryable",
+    "source_cause": {
+      "state": "unknown",
+      "reason": "source_field_absent"
+    },
+    "source_refs": [
+      {
+        "json_path": "$"
+      }
+    ]
+  },
+  "parser": {
+    "name": "replay-parser-2",
+    "version": "0.1.0"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParseJobMessage",
+  "description": "Parser-worker request message consumed from RabbitMQ.",
+  "type": "object",
+  "properties": {
+    "checksum": {
+      "description": "Expected raw replay object checksum.",
+      "$ref": "#/$defs/SourceChecksum"
+    },
+    "job_id": {
+      "description": "Durable parse-job identifier owned by `server-2`.",
+      "type": "string"
+    },
+    "object_key": {
+      "description": "S3-compatible raw replay object key.",
+      "type": "string"
+    },
+    "parser_contract_version": {
+      "description": "Parser artifact contract version requested by the job.",
+      "$ref": "#/$defs/ContractVersion"
+    },
+    "replay_id": {
+      "description": "Replay identifier owned by `server-2`.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "replay_id",
+    "object_key",
+    "checksum",
+    "parser_contract_version"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "ChecksumAlgorithm": {
+      "description": "Supported source checksum algorithms.",
+      "oneOf": [
+        {
+          "description": "SHA-256 checksum.",
+          "type": "string",
+          "const": "sha256"
+        }
+      ]
+    },
+    "ChecksumValue": {
+      "description": "Lowercase hexadecimal SHA-256 checksum value.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ContractVersion": {
+      "description": "Semantic parser artifact contract version.",
+      "$ref": "#/$defs/SemVer"
+    },
+    "SemVer": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "SourceChecksum": {
+      "description": "Source checksum with algorithm metadata.",
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "description": "Checksum algorithm.",
+          "$ref": "#/$defs/ChecksumAlgorithm"
+        },
+        "value": {
+          "description": "Checksum value.",
+          "$ref": "#/$defs/ChecksumValue"
+        }
+      },
+      "required": [
+        "algorithm",
+        "value"
+      ]
+    }
+  }
+}

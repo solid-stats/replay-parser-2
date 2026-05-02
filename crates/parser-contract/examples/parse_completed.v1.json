@@ -1,0 +1,23 @@
+{
+  "message_type": "parse.completed",
+  "job_id": "job-0001",
+  "replay_id": "replay-0001",
+  "parser_contract_version": "3.0.0",
+  "source_checksum": {
+    "algorithm": "sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "artifact": {
+    "bucket": "solid-stats-replays",
+    "key": "artifacts/v3/replay-0001/0000000000000000000000000000000000000000000000000000000000000000.json"
+  },
+  "artifact_checksum": {
+    "algorithm": "sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "artifact_size_bytes": 1234,
+  "parser": {
+    "name": "replay-parser-2",
+    "version": "0.1.0"
+  }
+}
