@@ -257,11 +257,26 @@ Execution outcome:
 **Goal**: Operators can run the worker safely in parallel container mode with observable readiness.
 **Depends on**: Phase 6
 **Requirements**: WORK-08, WORK-09
+**Status**: Planned; ready for execution.
 **Success Criteria** (what must be TRUE):
   1. Operator can run multiple worker instances in parallel without duplicate artifact corruption or nondeterministic parser output.
   2. Operator can inspect structured logs that identify job, replay, parser stage, and worker lifecycle state.
   3. Container orchestration can use health/readiness endpoints or probes to decide whether a worker can accept jobs.
-**Plans**: TBD
+**Plans**: 5 plans
+**Execution waves**: Wave 1 runs `07-00-PLAN.md`; Wave 2 runs `07-01-PLAN.md`; Wave 3 runs `07-02-PLAN.md`; Wave 4 runs `07-03-PLAN.md`; Wave 5 runs `07-04-PLAN.md`.
+Cross-cutting constraints:
+- Keep parser-core and parser-contract transport-free: RabbitMQ, S3, HTTP probes, Docker, logs, timestamps, and signal/runtime state stay in parser-worker/parser-cli.
+- Preserve the Phase 6 worker message contracts, minimal v3 artifact shape, deterministic artifact key format, and ack-after-confirmed-outcome policy.
+- Keep default prefetch at `1`; Phase 7 proves horizontal multi-instance safety, not in-process task pools or higher default concurrency.
+- Do not log secrets, raw replay bytes, raw artifact JSON, or password-bearing AMQP URLs.
+- Timeweb Cloud S3 compatibility must be documented and capability-checked when credentials are supplied; conditional writes must retain compare/reuse/conflict fallback.
+
+Plans:
+- [ ] 07-00-PLAN.md - S3 artifact race and duplicate redelivery hardening.
+- [ ] 07-01-PLAN.md - HTTP liveness/readiness probes, cached runtime state, and worker identity config.
+- [ ] 07-02-PLAN.md - Stable structured worker log taxonomy and secret-safe operations fields.
+- [ ] 07-03-PLAN.md - Two-worker container smoke, Docker health wiring, and Timeweb S3 compatibility hooks.
+- [ ] 07-04-PLAN.md - Final Phase 7 gates, UAT evidence, README/ROADMAP/STATE handoff.
 
 ## Progress
 
@@ -278,4 +293,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
 | 5.2. Minimal Artifact and Performance Acceptance | 7/7 | Execution complete; accepted benchmark policy unblocks Phase 6 | - |
 | 6. RabbitMQ/S3 Worker Integration | 6/6 | Complete | 2026-05-02 |
-| 7. Parallel and Container Hardening | 0/TBD | Ready for planning | - |
+| 7. Parallel and Container Hardening | 0/5 | Ready to execute | - |
