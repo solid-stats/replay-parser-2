@@ -141,7 +141,7 @@ impl MinimalComparisonTables {
         Some(Self {
             players: rows(root, "players")?,
             weapons: optional_rows(root, "weapons")?,
-            kills: optional_rows(root, "kills")?,
+            kills: minimal_kills_from_root(root)?,
             destroyed_vehicles: optional_rows(root, "destroyed_vehicles")?,
         })
     }
@@ -151,6 +151,15 @@ impl MinimalComparisonTables {
             self.weapons.iter().find(|weapon| weapon.id == id).map(|weapon| weapon.name.as_str())
         })
     }
+}
+
+fn minimal_kills_from_root(root: &Value) -> Option<Vec<MinimalKillRow>> {
+    if root.get("kills").is_some() {
+        return optional_rows(root, "kills");
+    }
+
+    let players = rows::<MinimalPlayerRow>(root, "players")?;
+    Some(nested_player_kills(&players))
 }
 
 fn rows<T>(root: &Value, key: &str) -> Option<Vec<T>>
@@ -166,6 +175,22 @@ where
 {
     root.get(key)
         .map_or_else(|| Some(Vec::new()), |value| serde_json::from_value(value.clone()).ok())
+}
+
+fn nested_player_kills(players: &[MinimalPlayerRow]) -> Vec<MinimalKillRow> {
+    players
+        .iter()
+        .flat_map(|player| {
+            player.kill_rows.iter().map(|kill| MinimalKillRow {
+                killer_source_entity_id: Some(player.source_entity_id),
+                victim_source_entity_id: kill.victim_source_entity_id,
+                classification: kill.classification,
+                weapon_id: kill.weapon_id,
+                attacker_vehicle_entity_id: kill.attacker_vehicle_entity_id,
+                attacker_vehicle_class: kill.attacker_vehicle_class.clone(),
+            })
+        })
+        .collect()
 }
 
 fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
@@ -188,6 +213,7 @@ fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
                         compatibility_key: player_id(player.source_entity_id),
                         observed_entity_ids: vec![player.source_entity_id],
                         observed_name: None,
+                        observed_tag: None,
                         side: None,
                     });
                 let deaths_by_teamkill =
@@ -200,6 +226,7 @@ fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
                     "compatibility_key": player_ref.compatibility_key,
                     "observed_entity_ids": player_ref.observed_entity_ids,
                     "observed_name": player_ref.observed_name,
+                    "observed_tag": player_ref.observed_tag,
                     "side": side_name(player_ref.side),
                     "kills": player.kills,
                     "killsFromVehicle": player.kills_from_vehicle,
@@ -371,11 +398,13 @@ impl RelationshipRow {
             "source_compatibility_key": self.source.compatibility_key,
             "source_observed_entity_ids": self.source.observed_entity_ids,
             "source_observed_name": self.source.observed_name,
+            "source_observed_tag": self.source.observed_tag,
             "target_player_id": self.target.player_id,
             "target_entity_id": self.target.source_entity_id,
             "target_compatibility_key": self.target.compatibility_key,
             "target_observed_entity_ids": self.target.observed_entity_ids,
             "target_observed_name": self.target.observed_name,
+            "target_observed_tag": self.target.observed_tag,
             "count": self.count,
         })
     }
@@ -418,6 +447,7 @@ struct PlayerComparisonRef {
     compatibility_key: String,
     observed_entity_ids: Vec<i64>,
     observed_name: Option<String>,
+    observed_tag: Option<String>,
     side: Option<EntitySide>,
 }
 
@@ -432,18 +462,30 @@ fn player_refs(tables: &MinimalComparisonTables) -> PlayerRefs {
 
     for player in &tables.players {
         let player_id = player_id(player.source_entity_id);
+        let observed_entity_ids = if player.source_entity_ids.is_empty() {
+            vec![player.source_entity_id]
+        } else {
+            player.source_entity_ids.clone()
+        };
+        let compatibility_key = player.compatibility_key.clone().unwrap_or_else(|| {
+            player
+                .observed_name
+                .as_ref()
+                .map_or_else(|| player_id.clone(), |name| format!("legacy_name:{name}"))
+        });
         let player_ref = PlayerComparisonRef {
             player_id: player_id.clone(),
             source_entity_id: player.source_entity_id,
-            compatibility_key: player
-                .compatibility_key
-                .clone()
-                .unwrap_or_else(|| player_id.clone()),
-            observed_entity_ids: vec![player.source_entity_id],
+            compatibility_key,
+            observed_entity_ids,
             observed_name: player.observed_name.clone(),
+            observed_tag: player.observed_tag.clone(),
             side: player.side,
         };
         drop(refs.by_player_id.insert(player_id, player_ref.clone()));
+        for entity_id in &player_ref.observed_entity_ids {
+            drop(refs.by_source_entity_id.insert(*entity_id, player_ref.clone()));
+        }
         drop(refs.by_source_entity_id.insert(player.source_entity_id, player_ref));
     }
 

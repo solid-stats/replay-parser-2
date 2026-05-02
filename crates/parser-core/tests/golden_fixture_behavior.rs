@@ -83,7 +83,6 @@ fn golden_fixture_behavior_should_return_failed_artifact_when_fixture_is_malform
     assert!(artifact.failure.is_some());
     assert!(artifact.players.is_empty());
     assert!(artifact.weapons.is_empty());
-    assert!(artifact.kills.is_empty());
     assert!(artifact.destroyed_vehicles.is_empty());
 }
 
@@ -102,7 +101,6 @@ fn golden_fixture_behavior_should_preserve_old_shape_cases_without_panicking() {
     let artifact = parse_manifest_category("old_shape");
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert!(!artifact.kills.is_empty());
     assert!(
         artifact
             .diagnostics
@@ -124,8 +122,9 @@ fn golden_fixture_behavior_should_emit_destroyed_vehicle_rows_for_vehicle_kill_f
 fn golden_fixture_behavior_should_exclude_teamkill_from_bounty_awards() {
     let artifact = parse_manifest_category("teamkill");
     let teamkill_row = artifact
-        .kills
+        .players
         .iter()
+        .flat_map(|player| player.kill_rows.iter())
         .find(|row| row.classification == KillClassification::Teamkill)
         .expect("teamkill row should exist");
 
@@ -148,8 +147,14 @@ fn golden_fixture_behavior_should_keep_side_facts_empty_in_default_minimal_artif
 fn golden_fixture_behavior_should_preserve_null_killer_semantics() {
     let artifact = parse_manifest_category("null_killer");
 
-    assert!(artifact.kills.iter().any(|row| row.classification == KillClassification::NullKiller
-        && row.killer_source_entity_id.is_none()));
+    assert!(
+        artifact
+            .players
+            .iter()
+            .flat_map(|player| player.kill_rows.iter())
+            .all(|row| row.classification != KillClassification::NullKiller)
+    );
+    assert!(artifact.players.iter().any(|player| player.null_killer_deaths > 0));
 }
 
 #[test]
@@ -159,11 +164,12 @@ fn golden_fixture_behavior_should_preserve_duplicate_slot_players() {
         .players
         .iter()
         .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:SameName"))
-        .count();
+        .collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Success);
-    assert_eq!(artifact.players.len(), 3);
-    assert_eq!(duplicate_players, 2);
+    assert_eq!(artifact.players.len(), 2);
+    assert_eq!(duplicate_players.len(), 1);
+    assert_eq!(duplicate_players[0].source_entity_ids, vec![21, 22]);
 }
 
 #[test]

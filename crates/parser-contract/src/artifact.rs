@@ -8,7 +8,7 @@ use crate::{
     diagnostic::MinimalDiagnosticRow,
     failure::ParseFailure,
     metadata::ReplayMetadata,
-    minimal::{MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalWeaponRow},
+    minimal::{MinimalDestroyedVehicleRow, MinimalPlayerRow, MinimalWeaponRow},
     side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
     version::{ContractVersion, ParserInfo},
@@ -54,9 +54,6 @@ pub struct ParseArtifact {
     /// Minimal deterministic weapon dictionary rows referenced by event tables.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub weapons: Vec<MinimalWeaponRow>,
-    /// Minimal player death rows.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub kills: Vec<MinimalKillRow>,
     /// Minimal vehicle and static weapon destruction rows.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,

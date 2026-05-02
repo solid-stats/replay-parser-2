@@ -6,7 +6,7 @@
     "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
       "source_file": "2026_04_25__00_52_18__1_ocap.json",
-      "notes": "Focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.2 minimal default assertions target players, player_stats, kills, destroyed_vehicles, and absence of default debug sidecar detail."
+      "notes": "Focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.2 minimal default assertions target players with nested player-authored kills, destroyed_vehicles, and absence of default debug sidecar detail."
     },
     "requirements": [
       "TEST-01",
@@ -26,14 +26,13 @@
       "deterministic_serialization",
       "winner_unknown_when_absent",
       "players",
-      "player_stats",
-      "kills",
+      "nested_player_kills",
       "destroyed_vehicles",
       "no_top_level_entities",
       "no_top_level_events"
     ],
     "cross_app_impact": {
-      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields while using minimal players, player_stats, kills, and destroyed_vehicles instead of full top-level entities/events.",
+      "parser_artifact": "Proves normal local parser artifacts remain deterministic and populated from observed OCAP top-level fields while using minimal players with nested player-authored kills and destroyed_vehicles instead of full top-level entities/events.",
       "server_2": "Provides a minimal success artifact shape server-2 can later persist or compare through its own tables.",
       "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs."
     }
@@ -62,8 +61,7 @@
       "structured_failure",
       "json_decode_failure",
       "empty_players",
-      "empty_player_stats",
-      "empty_kills",
+      "empty_nested_player_kills",
       "empty_destroyed_vehicles"
     ],
     "cross_app_impact": {

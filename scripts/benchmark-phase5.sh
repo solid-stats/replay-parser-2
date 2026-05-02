@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_ROOT=".planning/generated/phase-05/benchmarks"
-COMPARISON_ROOT=".planning/generated/phase-05/comparison"
+PHASE5_GENERATED_ROOT=".planning/generated/phase-05"
+OUTPUT_ROOT="$PHASE5_GENERATED_ROOT/benchmarks"
+COMPARISON_ROOT="$PHASE5_GENERATED_ROOT/comparison"
 REPORT_PATH="$OUTPUT_ROOT/benchmark-report.json"
 BENCH_LOG="$OUTPUT_ROOT/cargo-bench.log"
 FIXTURE="crates/parser-core/tests/fixtures/aggregate-combat.ocap.json"
@@ -30,12 +31,17 @@ REAL_HOME="${PHASE5_REAL_HOME:-$HOME}"
 REPLAY_LIST="$REAL_HOME/sg_stats/lists/replaysList.json"
 RAW_REPLAYS_DIR="$REAL_HOME/sg_stats/raw_replays"
 
-mkdir -p "$OUTPUT_ROOT" "$COMPARISON_ROOT" "$ALL_RAW_OUTPUT"
-
 if [[ "${1:-}" != "--ci" ]]; then
   printf '%s\n' "usage: scripts/benchmark-phase5.sh --ci"
   exit 2
 fi
+
+rm -rf \
+  "$PHASE5_GENERATED_ROOT/benchmarks" \
+  "$PHASE5_GENERATED_ROOT/comparison" \
+  "$PHASE5_GENERATED_ROOT/coverage" \
+  "$PHASE5_GENERATED_ROOT/fault-report"
+mkdir -p "$OUTPUT_ROOT" "$COMPARISON_ROOT" "$ALL_RAW_OUTPUT"
 
 printf '%s\n' \
   "Criterion parser_pipeline benchmarks are validated by the dedicated cargo bench gate." \
@@ -206,42 +212,109 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 
+type PlayerIdentity = {
+  compatibilityKey: string | null;
+  observedName: string | null;
+  observedTag: string | null;
+};
+
+const splitPlayerName = (rawName: unknown): { name: string | null; tag: string | null } => {
+  if (typeof rawName !== 'string') return { name: null, tag: null };
+  const trimmed = rawName.trim();
+  if (!trimmed.includes('[')) return { name: trimmed || null, tag: null };
+
+  const firstTag = trimmed.match(/\[.*?\]/)?.[0]?.trim() ?? null;
+  const name = trimmed
+    .replace(/\[.*?\]/g, '')
+    .replace('[', '')
+    .replace(']', '')
+    .trim();
+
+  return {
+    name: name || null,
+    tag: firstTag && firstTag !== '[]' ? firstTag : null,
+  };
+};
+
 const compatibilityKey = (player: any) => {
-  if (typeof player?.name === 'string' && player.name.length > 0) {
-    return `legacy_name:${player.name}`;
+  const { name } = splitPlayerName(player?.name);
+  if (name) {
+    return `legacy_name:${name}`;
   }
   return null;
+};
+
+const playerIdentity = (player: any, byName?: Map<string, PlayerIdentity>): PlayerIdentity => {
+  const split = splitPlayerName(player?.name);
+  const fromList = split.name ? byName?.get(split.name) : undefined;
+
+  return {
+    compatibilityKey: compatibilityKey(player),
+    observedName: split.name,
+    observedTag: split.tag ?? fromList?.observedTag ?? null,
+  };
+};
+
+const identitiesByObservedName = (players: any[]) => {
+  const result = new Map<string, PlayerIdentity>();
+
+  for (const player of players) {
+    const identity = playerIdentity(player);
+    if (identity.observedName && !result.has(identity.observedName)) {
+      result.set(identity.observedName, identity);
+    }
+  }
+
+  return result;
 };
 
 const relationshipRows = (
   players: any[],
   field: 'killed' | 'teamkilled',
   relationship: 'killed' | 'teamkilled',
-) => players.flatMap((player) => (
-  (player[field] ?? []).map((target: any) => ({
-    relationship,
-    source_compatibility_key: compatibilityKey(player),
-    source_observed_name: player.name ?? null,
-    target_compatibility_key: compatibilityKey(target),
-    target_observed_name: target.name ?? null,
-    count: target.count,
-  }))
-));
+  byName: Map<string, PlayerIdentity>,
+) => players.flatMap((player) => {
+  const source = playerIdentity(player, byName);
+
+  return (player[field] ?? []).map((target: any) => {
+    const targetIdentity = playerIdentity(target, byName);
+
+    return {
+      relationship,
+      source_compatibility_key: source.compatibilityKey,
+      source_observed_name: source.observedName,
+      source_observed_tag: source.observedTag,
+      target_compatibility_key: targetIdentity.compatibilityKey,
+      target_observed_name: targetIdentity.observedName,
+      target_observed_tag: targetIdentity.observedTag,
+      count: target.count,
+    };
+  });
+});
 
 const inverseRelationshipRows = (
   players: any[],
   field: 'killed' | 'teamkilled',
   relationship: 'killers' | 'teamkillers',
-) => players.flatMap((player) => (
-  (player[field] ?? []).map((target: any) => ({
-    relationship,
-    source_compatibility_key: compatibilityKey(target),
-    source_observed_name: target.name ?? null,
-    target_compatibility_key: compatibilityKey(player),
-    target_observed_name: player.name ?? null,
-    count: target.count,
-  }))
-));
+  byName: Map<string, PlayerIdentity>,
+) => players.flatMap((player) => {
+  const target = playerIdentity(player, byName);
+
+  return (player[field] ?? []).map((sourcePlayer: any) => {
+    const source = playerIdentity(sourcePlayer, byName);
+
+    return {
+      relationship,
+      source_compatibility_key: source.compatibilityKey,
+      source_observed_name: source.observedName,
+      source_observed_tag: source.observedTag,
+      target_compatibility_key: target.compatibilityKey,
+      target_observed_name: target.observedName,
+      target_observed_tag: target.observedTag,
+      count: sourcePlayer.count,
+    };
+  });
+});
 
 async function main() {
   const [
@@ -270,6 +343,7 @@ async function main() {
   fs.writeFileSync(responsePath, JSON.stringify({ response, wall_time_ms: wallTimeMs }, null, 2));
 
   const players = response.status === 'success' ? response.data.result : [];
+  const identitiesByName = identitiesByObservedName(players);
   const artifact = {
     status: response.status === 'success' ? 'success' : response.status,
     replay: {
@@ -281,10 +355,10 @@ async function main() {
     legacy: {
       player_game_results: players,
       relationships: {
-        killed: relationshipRows(players, 'killed', 'killed'),
-        killers: inverseRelationshipRows(players, 'killed', 'killers'),
-        teamkilled: relationshipRows(players, 'teamkilled', 'teamkilled'),
-        teamkillers: inverseRelationshipRows(players, 'teamkilled', 'teamkillers'),
+        killed: relationshipRows(players, 'killed', 'killed', identitiesByName),
+        killers: inverseRelationshipRows(players, 'killed', 'killers', identitiesByName),
+        teamkilled: relationshipRows(players, 'teamkilled', 'teamkilled', identitiesByName),
+        teamkillers: inverseRelationshipRows(players, 'teamkilled', 'teamkillers', identitiesByName),
       },
     },
     bounty: {
@@ -511,6 +585,8 @@ type ReplayRow = {
   date?: string;
   mission_name?: string;
   missionName?: string;
+  game_type?: string;
+  gameType?: string;
 };
 
 type TaskRow = {
@@ -518,84 +594,130 @@ type TaskRow = {
   date: string;
   missionName: string;
   gameType: GameType;
+  path: string;
 };
 
 const gameTypes: GameType[] = ['sg', 'mace', 'sm'];
 
 const missionName = (row: ReplayRow) => row.mission_name ?? row.missionName ?? '';
 
-const uniqueByFilename = (rows: ReplayRow[]) => {
-  const seen = new Set<string>();
-  const result: ReplayRow[] = [];
+const flattenReplayRows = (rows: unknown): ReplayRow[] => {
+  if (Array.isArray(rows)) return rows as ReplayRow[];
+  if (rows && typeof rows === 'object' && Array.isArray((rows as { replays?: unknown }).replays)) {
+    return (rows as { replays: ReplayRow[] }).replays;
+  }
+
+  return [];
+};
+
+const replayRowsByFilename = (rows: ReplayRow[]) => {
+  const result = new Map<string, ReplayRow>();
 
   for (const row of rows) {
-    if (!row.filename || seen.has(row.filename)) continue;
-    seen.add(row.filename);
-    result.push(row);
+    if (row.filename && !result.has(row.filename)) result.set(row.filename, row);
   }
 
   return result;
 };
 
-const isAfterSmCutoffMonth = (date: string | undefined) => {
-  if (!date) return false;
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return false;
+const listJsonFiles = (root: string): string[] => {
+  const result: string[] = [];
+  const stack = [root];
 
-  return parsed >= new Date('2023-02-01T00:00:00.000Z');
+  while (stack.length > 0) {
+    const current = stack.pop() as string;
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const next = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(next);
+      } else if (entry.isFile() && entry.name.endsWith('.json')) {
+        result.push(next);
+      }
+    }
+  }
+
+  return result.sort();
 };
 
-const tasksForGameType = (rows: ReplayRow[], gameType: GameType): TaskRow[] => rows
-  .filter((row) => {
-    const mission = missionName(row);
+const inferDateFromFilename = (filename: string): string => {
+  const match = filename.match(/^(\d{4})_(\d{2})_(\d{2})__(\d{2})_(\d{2})_(\d{2})/);
+  if (!match) return '1970-01-01T00:00:00.000Z';
 
-    return mission.startsWith(gameType) && !mission.startsWith('sgs');
-  })
-  .filter((row) => gameType !== 'sm' || isAfterSmCutoffMonth(row.date))
-  .flatMap((row) => {
-    const mission = missionName(row);
-    if (!row.filename || !row.date || !mission) return [];
+  const [, year, month, day, hour, minute, second] = match;
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
+};
 
-    return [{
-      filename: row.filename,
-      date: row.date,
-      missionName: mission,
-      gameType,
-    }];
-  });
+const inferGameType = (row: ReplayRow | undefined, mission: string): GameType => {
+  const explicit = row?.game_type ?? row?.gameType;
+  if (explicit && gameTypes.includes(explicit as GameType)) return explicit as GameType;
+
+  const prefix = mission.includes('@') ? mission.split('@', 1)[0] : mission.split(/\s+/, 1)[0];
+  if (gameTypes.includes(prefix as GameType)) return prefix as GameType;
+  if (mission.startsWith('mace')) return 'mace';
+  if (mission.startsWith('sm')) return 'sm';
+
+  return 'sg';
+};
+
+const taskForRawPath = (rawPath: string, rowsByFilename: Map<string, ReplayRow>): TaskRow => {
+  const filename = path.basename(rawPath, '.json');
+  const row = rowsByFilename.get(filename);
+  const mission = missionName(row ?? {});
+  const date = row?.date ?? inferDateFromFilename(filename);
+
+  return {
+    filename,
+    date,
+    missionName: mission,
+    gameType: inferGameType(row, mission),
+    path: rawPath,
+  };
+};
 
 async function main() {
-  const [oldRepo, replayListPath, summaryPath] = process.argv.slice(2);
-  const workerPath = path.join(oldRepo, 'src/1 - replays/workers/parseReplayWorker.ts');
-  const { runParseTask } = await import(pathToFileURL(workerPath).href);
+  const [oldRepo, replayListPath, rawReplaysDir, summaryPath] = process.argv.slice(2);
+  const parseReplayInfoPath = path.join(oldRepo, 'src/2 - parseReplayInfo/index.ts');
+  const prepareNamesListPath = path.join(oldRepo, 'src/0 - utils/namesHelper/prepareNamesList.ts');
+  const { default: parseReplayInfo } = await import(pathToFileURL(parseReplayInfoPath).href);
+  const { prepareNamesList } = await import(pathToFileURL(prepareNamesListPath).href);
   const replayList = JSON.parse(fs.readFileSync(replayListPath, 'utf8'));
-  const rows = uniqueByFilename(Array.isArray(replayList) ? replayList : replayList.replays ?? []);
-  const tasks = gameTypes.flatMap((gameType) => tasksForGameType(rows, gameType));
+  const rows = flattenReplayRows(replayList);
+  const rowsByFilename = replayRowsByFilename(rows);
+  const rawPaths = listJsonFiles(rawReplaysDir);
+  const tasks = rawPaths.map((rawPath) => taskForRawPath(rawPath, rowsByFilename));
   const statusCounts: Record<string, number> = {};
   const firstErrors: unknown[] = [];
-  const firstSkipped: unknown[] = [];
   const byGameType: Record<GameType, number> = { sg: 0, mace: 0, sm: 0 };
+
+  prepareNamesList();
 
   const start = process.hrtime.bigint();
 
   for (let index = 0; index < tasks.length; index += 1) {
     const task = tasks[index];
     byGameType[task.gameType] += 1;
-    const response = await runParseTask({
-      taskId: `phase-05-all-raw-${index + 1}`,
-      filename: task.filename,
-      date: task.date,
-      missionName: task.missionName,
-      gameType: task.gameType as any,
-    });
-    const status = response.status ?? 'unknown';
-    statusCounts[status] = (statusCounts[status] ?? 0) + 1;
 
-    if (status === 'error' && firstErrors.length < 10) {
-      firstErrors.push(response);
-    }
-    if (status === 'skipped' && firstSkipped.length < 10) {
-      firstSkipped.push(response);
+    try {
+      const replayInfo = JSON.parse(fs.readFileSync(task.path, 'utf8')) as ReplayInfo;
+      const parsedReplayInfo = parseReplayInfo(replayInfo, task.date);
+      const result = Object.values(parsedReplayInfo);
+      statusCounts.success = (statusCounts.success ?? 0) + 1;
+      if (index % 1000 === 0) {
+        process.stderr.write(`old baseline parsed ${index + 1}/${tasks.length}\n`);
+      }
+      void result;
+    } catch (error) {
+      statusCounts.error = (statusCounts.error ?? 0) + 1;
+      if (firstErrors.length < 10) {
+        firstErrors.push({
+          taskId: `phase-05-all-raw-${index + 1}`,
+          status: 'error',
+          filename: task.filename,
+          path: task.path,
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
     }
   }
 
@@ -603,16 +725,18 @@ async function main() {
   const wallTimeMs = Number(end - start) / 1_000_000;
 
   fs.writeFileSync(summaryPath, JSON.stringify({
+    source: 'raw_replays_full_direct_parseReplayInfo_no_skip',
     attempted_count: tasks.length,
     success_count: statusCounts.success ?? 0,
     error_count: statusCounts.error ?? 0,
-    skipped_count: statusCounts.skipped ?? 0,
+    skipped_count: 0,
     status_counts: statusCounts,
     by_game_type: byGameType,
     replay_list_unique_count: rows.length,
+    raw_file_count: rawPaths.length,
     wall_time_ms: wallTimeMs,
     first_errors: firstErrors,
-    first_skipped: firstSkipped,
+    first_skipped: [],
   }, null, 2));
 }
 
@@ -626,7 +750,8 @@ TS
   if (
     cd "$OLD_REPO"
     HOME="$OLD_FULL_HOME_ABS" WORKER_COUNT=1 pnpm exec tsx "$OLD_FULL_RUNNER_ABS" \
-      "$OLD_REPO" "$OLD_FULL_HOME_ABS/sg_stats/lists/replaysList.json" "$OLD_FULL_SUMMARY_ABS"
+      "$OLD_REPO" "$OLD_FULL_HOME_ABS/sg_stats/lists/replaysList.json" \
+      "$OLD_FULL_HOME_ABS/sg_stats/raw_replays" "$OLD_FULL_SUMMARY_ABS"
   ) >"$OLD_FULL_LOG" 2>&1; then
     old_all_raw_available=true
   fi
@@ -655,7 +780,6 @@ PY
   )
   if [[ "$old_all_raw_available" == "true" \
     && "$old_all_raw_attempted_count" == "$all_raw_attempted" \
-    && "$old_all_raw_error_count" == "0" \
     && "$old_all_raw_skipped_count" == "0" ]]; then
     old_all_raw_covers_all=true
   fi

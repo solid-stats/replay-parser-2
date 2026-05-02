@@ -76,7 +76,6 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_minimal_field
         "diagnostics",
         "players",
         "weapons",
-        "kills",
         "destroyed_vehicles",
         "failure",
     ] {
@@ -106,10 +105,13 @@ fn schema_contract_committed_schema_should_include_minimal_row_types() {
 
     for expected_fragment in [
         "MinimalPlayerRow",
-        "MinimalKillRow",
+        "MinimalPlayerKillRow",
         "MinimalDestroyedVehicleRow",
         "MinimalWeaponRow",
         "\"eid\"",
+        "\"eids\"",
+        "\"tag\"",
+        "\"rn\"",
         "\"kfv\"",
         "\"vk\"",
         "\"avc\"",
@@ -220,11 +222,12 @@ fn schema_contract_failure_example_should_include_required_structured_failure_fi
 fn schema_contract_success_example_should_expose_minimal_tables_only() {
     let success_example = read_json(success_example_path());
 
-    for expected_field in ["players", "weapons", "kills", "destroyed_vehicles"] {
+    for expected_field in ["players", "weapons", "destroyed_vehicles"] {
         assert!(success_example[expected_field].is_array());
     }
 
-    for removed_field in ["participants", "facts", "summaries", "player_stats", "failure"] {
+    for removed_field in ["participants", "facts", "summaries", "player_stats", "kills", "failure"]
+    {
         assert!(success_example.get(removed_field).is_none());
     }
 }
@@ -233,12 +236,12 @@ fn schema_contract_success_example_should_expose_minimal_tables_only() {
 fn schema_contract_success_example_should_use_compact_short_keys_and_omit_zero_defaults() {
     let success_example = read_json(success_example_path());
     let player = success_example["players"][0].as_object().expect("player row should be an object");
-    let kill = success_example["kills"][0].as_object().expect("kill row should be an object");
+    let kill = player["kills"][0].as_object().expect("player kill row should be an object");
     let destroyed = success_example["destroyed_vehicles"][0]
         .as_object()
         .expect("destroyed vehicle row should be an object");
 
-    for expected_key in ["eid", "n", "s", "k", "vk", "kfv"] {
+    for expected_key in ["eid", "n", "s", "k", "vk", "kfv", "kills"] {
         assert!(player.contains_key(expected_key), "player row should include {expected_key}");
     }
     for omitted_zero_key in ["d", "tk", "su", "nkd", "ud"] {
@@ -254,7 +257,7 @@ fn schema_contract_success_example_should_use_compact_short_keys_and_omit_zero_d
         );
     }
 
-    for expected_key in ["k", "v", "c", "w", "av", "avc"] {
+    for expected_key in ["v", "c", "w", "av", "avc"] {
         assert!(kill.contains_key(expected_key), "kill row should include {expected_key}");
     }
     for removed_key in [
@@ -339,7 +342,7 @@ fn schema_contract_gap_regression_should_reject_string_counter_in_player_row() {
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_kill_classification() {
     let mut success_example = read_json(success_example_path());
-    success_example["kills"][0]["c"] = json!("friendly_fire");
+    success_example["players"][0]["kills"][0]["c"] = json!("friendly_fire");
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -354,7 +357,9 @@ fn schema_contract_gap_regression_should_reject_invalid_destroyed_vehicle_classi
 
 #[test]
 fn schema_contract_gap_regression_should_reject_removed_top_level_fields() {
-    for removed_field in ["vehicle_score", "entities", "events", "source_refs", "player_stats"] {
+    for removed_field in
+        ["vehicle_score", "entities", "events", "source_refs", "player_stats", "kills"]
+    {
         let mut success_example = read_json(success_example_path());
         success_example[removed_field] = json!({});
 
@@ -365,8 +370,8 @@ fn schema_contract_gap_regression_should_reject_removed_top_level_fields() {
 #[test]
 fn schema_contract_gap_regression_should_reject_debug_fields_in_minimal_rows() {
     let mut success_example = read_json(success_example_path());
-    success_example["kills"][0]["source_refs"] = json!([]);
-    success_example["kills"][0]["rule_id"] = json!("event.killed.enemy");
+    success_example["players"][0]["kills"][0]["source_refs"] = json!([]);
+    success_example["players"][0]["kills"][0]["rule_id"] = json!("event.killed.enemy");
 
     assert_committed_schema_rejects(&success_example);
 }

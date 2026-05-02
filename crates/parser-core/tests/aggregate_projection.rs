@@ -8,7 +8,9 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerRow},
+    minimal::{
+        DestroyedVehicleClassification, KillClassification, MinimalPlayerKillRow, MinimalPlayerRow,
+    },
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
@@ -108,6 +110,10 @@ fn player_row(artifact: &ParseArtifact, source_entity_id: i64) -> &MinimalPlayer
         .unwrap_or_else(|| panic!("player row {source_entity_id} should exist"))
 }
 
+fn player_kill_rows(artifact: &ParseArtifact) -> Vec<&MinimalPlayerKillRow> {
+    artifact.players.iter().flat_map(|player| player.kill_rows.iter()).collect()
+}
+
 #[test]
 fn aggregate_projection_should_emit_compact_players_with_merged_counter_rows() {
     let artifact = aggregate_artifact();
@@ -115,7 +121,7 @@ fn aggregate_projection_should_emit_compact_players_with_merged_counter_rows() {
         artifact.players.iter().map(|player| player.source_entity_id).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Success);
-    assert_eq!(player_ids, vec![1, 2, 4, 5, 6]);
+    assert_eq!(player_ids, vec![1, 2, 4, 6]);
     assert_eq!(
         serde_json::to_value(&artifact).expect("artifact should serialize").get("player_stats"),
         None
@@ -135,8 +141,7 @@ fn aggregate_projection_should_derive_replay_local_player_counters() {
     let alpha = player_row(&artifact, 1);
     let bravo = player_row(&artifact, 2);
     let delta = player_row(&artifact, 4);
-    let echo_killer = player_row(&artifact, 5);
-    let echo_victim = player_row(&artifact, 6);
+    let echo = player_row(&artifact, 6);
 
     assert_eq!(alpha.kills, 1);
     assert_eq!(alpha.deaths, 0);
@@ -151,8 +156,8 @@ fn aggregate_projection_should_derive_replay_local_player_counters() {
     assert_eq!(bravo.deaths, 1);
     assert_eq!(delta.deaths, 1);
     assert_eq!(delta.null_killer_deaths, 1);
-    assert_eq!(echo_killer.teamkills, 1);
-    assert_eq!(echo_victim.deaths, 1);
+    assert_eq!(echo.teamkills, 1);
+    assert_eq!(echo.deaths, 1);
 }
 
 #[test]
@@ -167,20 +172,13 @@ fn aggregate_projection_should_emit_deterministic_weapon_dictionary() {
 #[test]
 fn aggregate_projection_should_emit_compact_kill_rows_without_vehicle_victims() {
     let artifact = aggregate_artifact();
-    let classifications = artifact.kills.iter().map(|row| row.classification).collect::<Vec<_>>();
+    let kill_rows = player_kill_rows(&artifact);
+    let classifications = kill_rows.iter().map(|row| row.classification).collect::<Vec<_>>();
 
-    assert_eq!(
-        classifications,
-        vec![
-            KillClassification::EnemyKill,
-            KillClassification::Teamkill,
-            KillClassification::NullKiller,
-        ]
-    );
-    assert!(artifact.kills.iter().all(|row| row.victim_source_entity_id != Some(20)));
-    assert!(artifact.kills.iter().any(|row| {
+    assert_eq!(classifications, vec![KillClassification::EnemyKill, KillClassification::Teamkill]);
+    assert!(kill_rows.iter().all(|row| row.victim_source_entity_id != Some(20)));
+    assert!(player_row(&artifact, 1).kill_rows.iter().any(|row| {
         row.classification == KillClassification::EnemyKill
-            && row.killer_source_entity_id == Some(1)
             && row.victim_source_entity_id == Some(2)
             && row.weapon_id == Some(2)
             && row.attacker_vehicle_entity_id == Some(30)
@@ -206,17 +204,14 @@ fn aggregate_projection_should_emit_minimal_destroyed_vehicle_rows() {
 }
 
 #[test]
-fn aggregate_projection_should_preserve_duplicate_slot_players_without_merging_rows() {
+fn aggregate_projection_should_merge_duplicate_slot_players_like_legacy_parser() {
     let artifact = aggregate_artifact();
-    let duplicate_players = artifact
-        .players
-        .iter()
-        .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:Echo"))
-        .collect::<Vec<_>>();
+    let duplicate_player = player_row(&artifact, 6);
 
-    assert_eq!(duplicate_players.len(), 2);
-    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 5));
-    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 6));
+    assert_eq!(duplicate_player.compatibility_key.as_deref(), Some("legacy_name:Echo"));
+    assert_eq!(duplicate_player.source_entity_ids, vec![5, 6]);
+    assert_eq!(duplicate_player.teamkills, 1);
+    assert_eq!(duplicate_player.deaths, 1);
 }
 
 #[test]
@@ -244,7 +239,6 @@ fn aggregate_projection_should_omit_debug_only_keys_from_default_success_json() 
     let default_rows = json!({
         "players": artifact.players,
         "weapons": artifact.weapons,
-        "kills": artifact.kills,
         "destroyed_vehicles": artifact.destroyed_vehicles,
     });
     let serialized_rows =

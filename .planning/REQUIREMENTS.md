@@ -47,8 +47,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **OUT-08**: Parser output ordering is deterministic across repeated runs on the same input and contract version.
 - [x] **OUT-09**: Default parser output for `server-2` is a compact artifact that excludes full normalized event/entity dumps and includes only replay/source metadata, observed participant references, aggregate/stat contribution inputs, bounty inputs, ordinary vehicle kill/destruction facts, diagnostics, and schema/version data needed for ingestion and recalculation.
 - [x] **OUT-10**: Heavy audit, debug, parity, source-reference, rule-ID, normalized event/entity, or future-analytics detail is optional sidecar/debug output or raw-replay reprocessing material; it is not required for ordinary worker ingestion and must not be sent as the default `parse.completed` artifact.
-- [x] **OUT-11**: Default v1 success artifacts use minimal flat tables: `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`.
-- [x] **OUT-12**: Default `kills[]` and `destroyed_vehicles[]` rows include identity and context needed for current statistics and bounty inputs, but detailed event indexes, source references, rule IDs, entity snapshots, and normalized event/entity evidence are debug-sidecar-only.
+- [x] **OUT-11**: Default v1 success artifacts use compact minimal tables: `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kill rows are nested under the killer `players[].kills`.
+- [x] **OUT-12**: Default `players[].kills` and `destroyed_vehicles[]` rows include identity and context needed for current statistics and bounty inputs, but detailed event indexes, source references, rule IDs, entity snapshots, and normalized event/entity evidence are debug-sidecar-only.
 
 ### Parser Core
 
@@ -214,16 +214,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
-| TEST-06 | Phase 5.2 | Blocked: selected x3 is unknown, selected parity is not_run, and all-raw x10 is unknown |
+| TEST-06 | Phase 5.2 | Blocked: selected x3 fails at 2.8190x, selected parity is human_review, and all-raw x10 fails at 1.7544x |
 | TEST-07 | Phase 5 | Complete |
 | TEST-08 | Phase 5 | Complete |
 | TEST-09 | Phase 5 | Complete |
 | TEST-10 | Phase 5 | Complete |
 | TEST-11 | Phase 5 | Complete |
 | TEST-12 | Phase 5 | Complete |
-| TEST-13 | Phase 5.2 | Blocked: report is structurally valid but lacks passing x3/x10 evidence |
+| TEST-13 | Phase 5.2 | Blocked: report is structurally valid but selected x3 and all-raw x10 fail |
 | TEST-14 | Phase 5.1 | Complete |
-| TEST-15 | Phase 5.2 | Blocked: selected artifact is 203683 bytes over the 100000-byte limit and all-raw size gate is unknown |
+| TEST-15 | Phase 5.2 | Blocked: selected artifact size passes, but all-raw p95 artifact/raw ratio is 0.12417910447761193 > 0.10 |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
 | WORK-03 | Phase 6 | Pending |

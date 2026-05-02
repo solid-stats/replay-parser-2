@@ -403,7 +403,21 @@ fn minimal_artifact_json(status: &str) -> Vec<u8> {
                 "k": 1,
                 "tk": 1,
                 "vk": 1,
-                "kfv": 1
+                "kfv": 1,
+                "kills": [
+                    {
+                        "v": 2,
+                        "c": "enemy_kill",
+                        "w": 2,
+                        "av": 20,
+                        "avc": "offroad_hmg"
+                    },
+                    {
+                        "v": 3,
+                        "c": "teamkill",
+                        "w": 1
+                    }
+                ]
             },
             {
                 "eid": 2,
@@ -438,22 +452,6 @@ fn minimal_artifact_json(status: &str) -> Vec<u8> {
                 "n": "RPG-7"
             }
         ],
-        "kills": [
-            {
-                "k": 1,
-                "v": 2,
-                "c": "enemy_kill",
-                "w": 2,
-                "av": 20,
-                "avc": "offroad_hmg"
-            },
-            {
-                "k": 1,
-                "v": 3,
-                "c": "teamkill",
-                "w": 1
-            }
-        ],
         "destroyed_vehicles": [
             {
                 "a": 1,
@@ -475,6 +473,7 @@ fn expected_legacy_surfaces() -> Value {
                 "compatibility_key": "legacy_name:Alpha",
                 "observed_entity_ids": [1],
                 "observed_name": "Alpha",
+                "observed_tag": null,
                 "side": "west",
                 "kills": 1,
                 "killsFromVehicle": 1,
@@ -495,6 +494,7 @@ fn expected_legacy_surfaces() -> Value {
                 "compatibility_key": "legacy_name:Bravo",
                 "observed_entity_ids": [2],
                 "observed_name": "Bravo",
+                "observed_tag": null,
                 "side": "east",
                 "kills": 0,
                 "killsFromVehicle": 0,
@@ -515,6 +515,7 @@ fn expected_legacy_surfaces() -> Value {
                 "compatibility_key": "legacy_name:Charlie",
                 "observed_entity_ids": [3],
                 "observed_name": "Charlie",
+                "observed_tag": null,
                 "side": "west",
                 "kills": 0,
                 "killsFromVehicle": 0,
@@ -581,11 +582,13 @@ fn relationship_row(
         "source_compatibility_key": format!("legacy_name:{source_name}"),
         "source_observed_entity_ids": [source_id],
         "source_observed_name": source_name,
+        "source_observed_tag": null,
         "target_player_id": format!("entity:{target_id}"),
         "target_entity_id": target_id,
         "target_compatibility_key": format!("legacy_name:{target_name}"),
         "target_observed_entity_ids": [target_id],
         "target_observed_name": target_name,
+        "target_observed_tag": null,
         "count": 1
     })
 }

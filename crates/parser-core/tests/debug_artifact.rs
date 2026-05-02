@@ -65,8 +65,8 @@ fn debug_artifact_should_keep_full_detail_out_of_default_artifact() {
 
     assert!(default_root.contains_key("players"));
     assert!(default_root.contains_key("weapons"));
-    assert!(default_root.contains_key("kills"));
     assert!(default_root.contains_key("destroyed_vehicles"));
+    assert!(!default_root.contains_key("kills"));
     assert!(!default_root.contains_key("player_stats"));
     assert!(!default_root.contains_key("entities"));
     assert!(!default_root.contains_key("events"));

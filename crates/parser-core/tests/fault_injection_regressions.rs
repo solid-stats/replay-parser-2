@@ -52,16 +52,19 @@ fn parse_fixture(bytes: &[u8], source_file: &str) -> ParseArtifact {
     })
 }
 
+fn player_kill_rows(
+    artifact: &ParseArtifact,
+) -> impl Iterator<Item = &parser_contract::minimal::MinimalPlayerKillRow> {
+    artifact.players.iter().flat_map(|player| player.kill_rows.iter())
+}
+
 #[test]
 fn fault_injection_regressions_should_catch_same_side_kills_counted_as_enemy_kills() {
     let artifact = parse_fixture(COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json");
-    let teamkill = artifact
-        .kills
-        .iter()
+    let teamkill = player_kill_rows(&artifact)
         .find(|row| row.classification == KillClassification::Teamkill)
         .expect("same-side teamkill row should exist");
 
-    assert_eq!(teamkill.killer_source_entity_id, Some(1));
     assert_eq!(teamkill.victim_source_entity_id, Some(3));
     assert_eq!(teamkill.classification, KillClassification::Teamkill);
 }
@@ -69,23 +72,22 @@ fn fault_injection_regressions_should_catch_same_side_kills_counted_as_enemy_kil
 #[test]
 fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_awards() {
     let artifact = parse_fixture(COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json");
-    let null_killer = artifact
-        .kills
+    let null_killer_victim = artifact
+        .players
         .iter()
-        .find(|row| row.classification == KillClassification::NullKiller)
-        .expect("null-killer row should exist");
+        .find(|row| row.source_entity_id == 5)
+        .expect("null-killer victim row should exist");
 
-    assert_eq!(null_killer.killer_source_entity_id, None);
-    assert_eq!(null_killer.victim_source_entity_id, Some(5));
-    assert_eq!(null_killer.classification, KillClassification::NullKiller);
+    assert_eq!(null_killer_victim.null_killer_deaths, 1);
+    assert!(
+        player_kill_rows(&artifact).all(|row| row.classification != KillClassification::NullKiller)
+    );
 }
 
 #[test]
 fn fault_injection_regressions_should_catch_vehicle_context_loss_in_minimal_rows() {
     let artifact = parse_fixture(VEHICLE_CONTEXT_FIXTURE, "fixtures/vehicle-context.ocap.json");
-    let vehicle_kill = artifact
-        .kills
-        .iter()
+    let vehicle_kill = player_kill_rows(&artifact)
         .find(|row| row.classification == KillClassification::EnemyKill)
         .expect("enemy kill from vehicle should exist");
     let stats = artifact

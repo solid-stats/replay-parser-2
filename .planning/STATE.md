@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: blocked
-stopped_at: Completed quick task 260502-gn2; Phase 6 still blocked by benchmark acceptance
-last_updated: "2026-05-02T05:37:23Z"
+stopped_at: Completed quick task 260502-i8w; Phase 6 still blocked by benchmark acceptance
+last_updated: "2026-05-02T06:47:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTION COMPLETE; BLOCKED
 Plan: 7 of 7
 Status: Phase 6 blocked by benchmark acceptance
-Last activity: 2026-05-02 - Completed quick task 260502-gn2: full Phase 5.2 benchmark, legacy runner repair, and selected old-vs-new stats diff
+Last activity: 2026-05-02 - Completed quick task 260502-i8w: all-raw old baseline full coverage, same-name player merge, split legacy tags, nested player kills, generated cleanup, and x10 evidence
 
 Progress: [██████████] 100%
 
@@ -143,14 +143,14 @@ Recent decisions affecting current work:
 - [Phase 05.1]: Parser-core normal input now passes through a selective root boundary instead of `serde_json::Value` full-DOM decode in the checked hot-path files. — Internal normalized semantics are still used before compact mapping where needed for behavior preservation.
 - [Phase 05.1]: Comparison output is summary-first Markdown by default with explicit JSON details through `--detail-output` or `--format json`. — Compact surfaces replace old top-level event/entity comparison surfaces.
 - [Phase 05.1]: Benchmark reports now require raw input bytes, compact artifact bytes, artifact/raw ratio, selected evidence, and whole-list/corpus evidence or a concrete unavailable reason. — The latest CI report is valid but records selected `ten_x_status=unknown`, selected `parity_status=not_run`, `whole_list_unavailable_reason=RUN_PHASE5_FULL_CORPUS not enabled`, and artifact/raw ratio `59.97366881`; Phase 6 remains blocked pending acceptance or remediation.
-- [Phase 05.2]: Discussion locked minimal default artifact decisions. — Default v1 output should be minified flat `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`; no frame/time/source refs/rule IDs/event indexes/entity snapshots in default rows; full normalized detail belongs only behind an internal `--debug-artifact`-style sidecar.
+- [Phase 05.2]: Discussion locked minimal default artifact decisions. — Default v1 output should be minified compact `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kills live under the killer `players[].kills`; no frame/time/source refs/rule IDs/event indexes/entity snapshots in default rows; full normalized detail belongs only behind an internal `--debug-artifact`-style sidecar.
 - [Phase 05.2]: Discussion locked performance and issue #13 decisions. — Remove issue #13 vehicle score implementation from v1; use automatic large selected replay for x3; use sequential `WORKER_COUNT=1` old baseline and sequential new artifact writing for all-raw x10; require zero failed/skipped full-corpus artifacts unless an explicit allowlist is later approved.
 - [Phase 05.2]: Planning produced 7 execution plans. — Wave 1 records minimal artifact server compatibility acceptance; Wave 2 replaces the public contract with v3 minimal flat tables and removes vehicle-score contract surfaces; Wave 3 updates parser-core minimal rows and debug sidecar; Wave 4 updates CLI/schema/README command behavior; Wave 5 derives old-vs-new parity from minimal tables; Wave 6 implements selected x3, all-raw x10, zero-failure, and artifact-size benchmark gates; Wave 7 runs final quality gates and handoff docs.
 - [Phase 05.2]: Plan 00 recorded product-owner approval for minimal flat artifact implementation. — Brief-level downstream evidence is sufficient after explicit approval; server-2 will adapt later.
-- [Phase 05.2]: Plan 01 cuts the parser contract to v3.0.0 minimal flat tables: players, player_stats, kills, destroyed_vehicles, and diagnostics. — Matches Phase 5.2 minimal artifact direction before parser-core construction.
+- [Phase 05.2]: Plan 01 cuts the parser contract to v3.0.0 minimal tables: players, weapons, nested player kills, destroyed_vehicles, and diagnostics. — Matches Phase 5.2 minimal artifact direction before parser-core construction.
 - [Phase 05.2]: Issue 13 vehicle score contract types, schema helpers, projection keys, and tests are no longer active v1 parser-contract surfaces. — Ordinary vehicleKills, killsFromVehicle, weapon, and attacker vehicle context remain for current stats and future raw replay reprocessing.
 - [Phase 05.2]: side_facts remains in ParseArtifact but is defaultable for minimal v3 examples. — This preserves the retained contract field while keeping success examples free of rule/source provenance fields.
-- [Phase 05.2]: parser-core parse_replay now emits v3 minimal players, player_stats, kills, and destroyed_vehicles by default.
+- [Phase 05.2]: parser-core parse_replay now emits v3 minimal players, weapons, nested player kills, and destroyed_vehicles by default.
 - [Phase 05.2]: Issue 13 vehicle score parser-core implementation was removed while ordinary vehicleKills, killsFromVehicle, attacker vehicle context, and destroyed_vehicles remain covered.
 - [Phase 05.2]: Full normalized entities, events, source refs, rule IDs, side facts, and diagnostics are available only through parser-core parse_replay_debug.
 - [Phase 05.2]: CLI parse now writes minified v3 minimal JSON by default; human-readable JSON requires --pretty.
@@ -167,6 +167,7 @@ Recent decisions affecting current work:
 - [Phase 05.2]: Fault report gates now target parser-core::minimal_artifact and the stale active v2 vehicle-score schema was removed from maintained schema surfaces.
 - [Quick 260502-ecp]: The default selected-large artifact was compacted to 40042 bytes by merging player counters into `players[]`, using numeric refs and a weapon dictionary, and omitting null/empty/zero default fields. This resolves the selected hard-size blocker only; selected x3/parity and all-raw x10/zero-failure/size acceptance still require the normal Phase 05.2 benchmark workflow.
 - [Quick 260502-gn2]: Full Phase 5.2 benchmark evidence was regenerated after replacing the non-parsing old WorkerPool all-raw path with a generated direct `runParseTask` runner. Selected artifact size passes at 40042 bytes, selected x3 fails at 2.4996x, selected parity remains `human_review`, all-raw x10 is `unknown` because old coverage is incomplete, all-raw size fails p95 ratio, and all-raw zero-failure fails on 4 new-parser raw failures.
+- [Quick 260502-i8w]: The generated Phase 5 benchmark directory was fully cleaned, tracked generated placeholders were removed, same-name slots now merge like the old parser, legacy tags are split from observed nicknames, player-authored kill rows now live under `players[].kills`, and the old all-raw baseline now attempts every raw file. Full evidence records selected x3 fail at 2.8190x, selected parity `human_review`, all-raw x10 fail at 1.7544x, all-raw old/new attempted_count=23473, all-raw size p95 fail at 0.12417910447761193, and zero-failure fail on the same 4 malformed raw files.
 
 ### Roadmap Evolution
 
@@ -183,18 +184,17 @@ None yet.
 ### Blockers/Concerns
 
 Active: Phase 05.2 code and quality gates are passing, and quick task
-`260502-gn2` regenerated full benchmark evidence after fixing the old all-raw
-baseline runner. The generated
+`260502-i8w` regenerated full benchmark evidence after making the old all-raw
+baseline cover every raw file. The generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is still not a
-performance acceptance pass: selected artifact size passes at 40042 bytes, but
-selected `x3_status=fail` at 2.4996x, selected `parity_status=human_review`,
-all-raw `x10_status=unknown` because the old direct baseline attempted 22996
-tasks while the new all-raw parser attempted 23473 raw files, all-raw
-`size_gate_status=fail` because p95 artifact/raw ratio is 0.121999 > 0.10, and
-all-raw `zero_failure_status=fail` because the new parser failed 4 raw files.
-Phase 6 worker integration remains blocked until selected x3/parity and
-all-raw x10/zero-failure/size gates pass, or the user explicitly accepts the
-remaining benchmark gap.
+performance acceptance pass: selected artifact size passes at 40780 bytes, but
+selected `x3_status=fail` at 2.8190x, selected `parity_status=human_review`,
+all-raw old/new `attempted_count=23473`, all-raw `x10_status=fail` at 1.7544x,
+all-raw `size_gate_status=fail` because p95 artifact/raw ratio is
+0.12417910447761193 > 0.10, and all-raw `zero_failure_status=fail` because the
+new parser failed 4 malformed raw files. Phase 6 worker integration remains
+blocked until selected x3/parity and all-raw x10/zero-failure/size gates pass,
+or the user explicitly accepts the remaining benchmark gap.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
@@ -205,7 +205,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
-- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40042 bytes, but selected x3_status=fail, selected parity_status=human_review, all-raw x10_status=unknown, all-raw size_gate_status=fail, and all-raw zero_failure_status=fail.
+- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40780 bytes, but selected x3_status=fail, selected parity_status=human_review, all-raw x10_status=fail, all-raw size_gate_status=fail, and all-raw zero_failure_status=fail.
 
 ### Quick Tasks Completed
 
@@ -224,7 +224,8 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260426-rfs | Added `replays-fetcher` product boundary and S3 artifact-reference result policy | 2026-04-26 | docs-only | Verified | [260426-rfs-replays-fetcher-boundary](./quick/260426-rfs-replays-fetcher-boundary/) |
 | 260429-bench-scope | Clarified that one-replay benchmark evidence is insufficient and whole-list/corpus parsing must be measured | 2026-04-29 | docs-only | Verified |  |
 | 260502-ecp | Compacted selected default parser artifact below 100 KB | 2026-05-02 | bbebfcb | Verified | [260502-ecp-compact-default-parser-artifact-below-10](./quick/260502-ecp-compact-default-parser-artifact-below-10/) |
-| 260502-gn2 | Ran full Phase 5.2 benchmark and selected old-vs-new stats diff after fixing the legacy all-raw baseline runner | 2026-05-02 | pending | Verified | [260502-gn2-phase-5-2-x3-x10-old-vs-new](./quick/260502-gn2-phase-5-2-x3-x10-old-vs-new/) |
+| 260502-gn2 | Ran full Phase 5.2 benchmark and selected old-vs-new stats diff after fixing the legacy all-raw baseline runner | 2026-05-02 | 998c799 | Verified | [260502-gn2-phase-5-2-x3-x10-old-vs-new](./quick/260502-gn2-phase-5-2-x3-x10-old-vs-new/) |
+| 260502-i8w | Fixed old all-raw coverage, merged same-name players, split legacy tags, nested player kills under players, cleaned generated phase output, and reran x10 evidence | 2026-05-02 | committed | Verified | [260502-i8w-phase-5-2-old-baseline-all-raw-coverage-](./quick/260502-i8w-phase-5-2-old-baseline-all-raw-coverage-/) |
 
 ## Deferred Items
 

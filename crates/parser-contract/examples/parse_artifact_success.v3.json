@@ -30,7 +30,16 @@
       "r": "Rifleman",
       "k": 1,
       "vk": 1,
-      "kfv": 1
+      "kfv": 1,
+      "kills": [
+        {
+          "v": 202,
+          "c": "enemy_kill",
+          "w": 1,
+          "av": 501,
+          "avc": "rhs_t72ba_tv"
+        }
+      ]
     },
     {
       "eid": 202,
@@ -46,20 +55,6 @@
     {
       "id": 1,
       "n": "rhs_t72"
-    }
-  ],
-  "kills": [
-    {
-      "k": 101,
-      "v": 202,
-      "c": "enemy_kill",
-      "w": 1,
-      "av": 501,
-      "avc": "rhs_t72ba_tv"
-    },
-    {
-      "v": 101,
-      "c": "null_killer"
     }
   ],
   "destroyed_vehicles": [

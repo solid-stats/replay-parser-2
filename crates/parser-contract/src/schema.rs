@@ -27,7 +27,7 @@ fn close_default_artifact_schema(schema: &mut Schema) {
     for definition_name in [
         "MinimalDestroyedVehicleRow",
         "MinimalDiagnosticRow",
-        "MinimalKillRow",
+        "MinimalPlayerKillRow",
         "MinimalPlayerRow",
         "MinimalWeaponRow",
     ] {

@@ -10,7 +10,7 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    minimal::{DestroyedVehicleClassification, KillClassification, MinimalKillRow},
+    minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerKillRow},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
@@ -98,26 +98,46 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
 fn kill_by_classification(
     artifact: &ParseArtifact,
     classification: KillClassification,
-) -> &MinimalKillRow {
+) -> &MinimalPlayerKillRow {
     artifact
-        .kills
+        .players
         .iter()
+        .flat_map(|player| player.kill_rows.iter())
         .find(|row| row.classification == classification)
         .expect("requested kill classification row should exist")
+}
+
+fn player_kill_rows(artifact: &ParseArtifact) -> Vec<&MinimalPlayerKillRow> {
+    artifact.players.iter().flat_map(|player| player.kill_rows.iter()).collect()
+}
+
+fn player_by_id(
+    artifact: &ParseArtifact,
+    source_entity_id: i64,
+) -> &parser_contract::minimal::MinimalPlayerRow {
+    artifact
+        .players
+        .iter()
+        .find(|player| player.source_entity_id == source_entity_id)
+        .expect("requested player row should exist")
 }
 
 #[test]
 fn combat_event_semantics_should_partition_player_deaths_and_destroyed_vehicles() {
     let artifact = combat_artifact();
-    let classifications = artifact.kills.iter().map(|row| row.classification).collect::<Vec<_>>();
+    let kill_rows = player_kill_rows(&artifact);
+    let classifications = kill_rows.iter().map(|row| row.classification).collect::<Vec<_>>();
+    let delta = player_by_id(&artifact, 4);
+    let echo = player_by_id(&artifact, 5);
+    let bravo = player_by_id(&artifact, 2);
 
-    assert_eq!(artifact.kills.len(), 5);
+    assert_eq!(kill_rows.len(), 2);
     assert_eq!(artifact.destroyed_vehicles.len(), 1);
     assert!(classifications.contains(&KillClassification::EnemyKill));
     assert!(classifications.contains(&KillClassification::Teamkill));
-    assert!(classifications.contains(&KillClassification::Suicide));
-    assert!(classifications.contains(&KillClassification::NullKiller));
-    assert!(classifications.contains(&KillClassification::Unknown));
+    assert_eq!(delta.suicides, 1);
+    assert_eq!(echo.null_killer_deaths, 1);
+    assert_eq!(bravo.unknown_deaths, 1);
 }
 
 #[test]
@@ -125,7 +145,6 @@ fn combat_event_semantics_should_classify_enemy_kill_as_bounty_eligible() {
     let artifact = combat_artifact();
     let enemy_kill = kill_by_classification(&artifact, KillClassification::EnemyKill);
 
-    assert_eq!(enemy_kill.killer_source_entity_id, Some(1));
     assert_eq!(enemy_kill.victim_source_entity_id, Some(2));
     assert_eq!(enemy_kill.classification, KillClassification::EnemyKill);
 }
@@ -134,12 +153,12 @@ fn combat_event_semantics_should_classify_enemy_kill_as_bounty_eligible() {
 fn combat_event_semantics_should_classify_teamkill_suicide_and_null_killer_as_excluded() {
     let artifact = combat_artifact();
     let teamkill = kill_by_classification(&artifact, KillClassification::Teamkill);
-    let suicide = kill_by_classification(&artifact, KillClassification::Suicide);
-    let null_killer = kill_by_classification(&artifact, KillClassification::NullKiller);
+    let delta = player_by_id(&artifact, 4);
+    let echo = player_by_id(&artifact, 5);
 
     assert_eq!(teamkill.classification, KillClassification::Teamkill);
-    assert_eq!(suicide.classification, KillClassification::Suicide);
-    assert_eq!(null_killer.classification, KillClassification::NullKiller);
+    assert_eq!(delta.suicides, 1);
+    assert_eq!(echo.null_killer_deaths, 1);
 }
 
 #[test]
@@ -156,25 +175,25 @@ fn combat_event_semantics_should_classify_vehicle_destroyed_event() {
 #[test]
 fn combat_event_semantics_should_emit_unknown_player_death_and_partial_status_for_missing_actor() {
     let artifact = combat_artifact();
-    let unknown = kill_by_classification(&artifact, KillClassification::Unknown);
+    let bravo = player_by_id(&artifact, 2);
     let diagnostic_codes =
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(unknown.victim_source_entity_id, Some(2));
-    assert_eq!(unknown.classification, KillClassification::Unknown);
+    assert_eq!(bravo.unknown_deaths, 1);
     assert!(diagnostic_codes.contains(&"event.killed_actor_unknown"));
 }
 
 #[test]
-fn combat_event_semantics_should_emit_unknown_rows_and_diagnostics_for_malformed_killed_tuples() {
+fn combat_event_semantics_should_emit_diagnostics_without_stats_for_malformed_killed_tuples() {
     let artifact = parse_fixture(MALFORMED_KILLED_EVENTS_FIXTURE);
     let diagnostic_codes =
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
+    let bravo = player_by_id(&artifact, 2);
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(artifact.kills.len(), 2);
-    assert!(artifact.kills.iter().all(|row| row.classification == KillClassification::Unknown));
+    assert!(player_kill_rows(&artifact).is_empty());
+    assert_eq!(bravo.unknown_deaths, 0);
     assert_eq!(
         diagnostic_codes.iter().filter(|code| **code == "event.killed_shape_unknown").count(),
         2
@@ -185,7 +204,7 @@ fn combat_event_semantics_should_emit_unknown_rows_and_diagnostics_for_malformed
 fn combat_event_semantics_should_omit_event_coordinates_from_default_rows() {
     let artifact = combat_artifact();
     let default_rows = json!({
-        "kills": artifact.kills,
+        "players": artifact.players,
         "destroyed_vehicles": artifact.destroyed_vehicles,
     });
     let serialized = serde_json::to_string(&default_rows).expect("default rows should serialize");
@@ -242,14 +261,11 @@ fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_as_min
     }"#;
 
     let artifact = parse_fixture(fixture);
-    let unknown_rows = artifact
-        .kills
-        .iter()
-        .filter(|row| row.classification == KillClassification::Unknown)
-        .count();
+    let unknown_deaths = artifact.players.iter().map(|player| player.unknown_deaths).sum::<u64>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
-    assert_eq!(unknown_rows, 3);
+    assert_eq!(unknown_deaths, 2);
+    assert!(player_kill_rows(&artifact).is_empty());
     assert_eq!(artifact.destroyed_vehicles.len(), 1);
     assert!(
         artifact.diagnostics.iter().any(|diagnostic| diagnostic

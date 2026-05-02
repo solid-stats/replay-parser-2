@@ -97,7 +97,7 @@ fn deterministic_output_should_serialize_minimal_artifact_identically() {
 
     assert_eq!(first_serialized, second_serialized);
     assert!(!first_artifact.players.is_empty());
-    assert!(!first_artifact.kills.is_empty());
+    assert!(first_artifact.players.iter().any(|player| !player.kill_rows.is_empty()));
     assert!(!first_artifact.destroyed_vehicles.is_empty());
     assert!(first_artifact.produced_at.is_none());
 }
@@ -121,8 +121,8 @@ fn deterministic_output_should_omit_full_detail_and_old_compact_sections() {
     let root = serialized.as_object().expect("artifact should serialize as an object");
 
     assert!(root.contains_key("players"));
-    assert!(root.contains_key("kills"));
     assert!(root.contains_key("destroyed_vehicles"));
+    assert!(!root.contains_key("kills"));
     assert!(!root.contains_key("player_stats"));
     assert!(!root.contains_key("participants"));
     assert!(!root.contains_key("facts"));

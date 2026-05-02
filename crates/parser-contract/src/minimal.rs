@@ -9,9 +9,18 @@ pub struct MinimalPlayerRow {
     /// Source entity identifier from OCAP data.
     #[serde(rename = "eid")]
     pub source_entity_id: i64,
-    /// Observed participant nickname or display name.
+    /// Source entity identifiers merged into this replay-local player row.
+    #[serde(default, rename = "eids", skip_serializing_if = "Vec::is_empty")]
+    pub source_entity_ids: Vec<i64>,
+    /// Observed participant nickname without legacy squad/clan tag.
     #[serde(default, rename = "n", skip_serializing_if = "Option::is_none")]
     pub observed_name: Option<String>,
+    /// Observed legacy squad/clan tag, including brackets, when present.
+    #[serde(default, rename = "tag", skip_serializing_if = "Option::is_none")]
+    pub observed_tag: Option<String>,
+    /// Raw observed participant name when it differs from split `tag` + `n`.
+    #[serde(default, rename = "rn", skip_serializing_if = "Option::is_none")]
+    pub raw_observed_name: Option<String>,
     /// Observed side alignment.
     #[serde(default, rename = "s", skip_serializing_if = "Option::is_none")]
     pub side: Option<EntitySide>,
@@ -51,9 +60,12 @@ pub struct MinimalPlayerRow {
     /// Enemy-kill counter attributed to an attacker vehicle.
     #[serde(default, rename = "kfv", skip_serializing_if = "is_zero_u64")]
     pub kills_from_vehicle: u64,
+    /// Player-authored kill rows used by statistics and bounty calculation.
+    #[serde(default, rename = "kills", skip_serializing_if = "Vec::is_empty")]
+    pub kill_rows: Vec<MinimalPlayerKillRow>,
 }
 
-/// Minimal player death classification emitted by `kills[]`.
+/// Minimal player death classification emitted by `players[].kills` and legacy comparison rows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum KillClassification {
@@ -69,6 +81,26 @@ pub enum KillClassification {
     Unknown,
 }
 
+/// Minimal player-authored kill row nested under `players[]`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MinimalPlayerKillRow {
+    /// Victim source entity identifier, when known.
+    #[serde(default, rename = "v", skip_serializing_if = "Option::is_none")]
+    pub victim_source_entity_id: Option<i64>,
+    /// Replay-local kill classification.
+    #[serde(rename = "c")]
+    pub classification: KillClassification,
+    /// Compact weapon dictionary identifier, when known.
+    #[serde(default, rename = "w", skip_serializing_if = "Option::is_none")]
+    pub weapon_id: Option<u32>,
+    /// Attacker vehicle source entity identifier, when matched.
+    #[serde(default, rename = "av", skip_serializing_if = "Option::is_none")]
+    pub attacker_vehicle_entity_id: Option<i64>,
+    /// Raw attacker vehicle observed class.
+    #[serde(default, rename = "avc", skip_serializing_if = "Option::is_none")]
+    pub attacker_vehicle_class: Option<String>,
+}
+
 /// Minimal vehicle/static destruction classification emitted by `destroyed_vehicles[]`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -81,7 +113,7 @@ pub enum DestroyedVehicleClassification {
     UnknownSide,
 }
 
-/// Minimal player death row emitted by the default v3 artifact.
+/// Deprecated compatibility player death row accepted from older generated v3 artifacts.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct MinimalKillRow {
     /// Killer source entity identifier, when known.

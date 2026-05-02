@@ -58,7 +58,6 @@ fn success_artifact() -> ParseArtifact {
         replay: None,
         players: Vec::new(),
         weapons: Vec::new(),
-        kills: Vec::new(),
         destroyed_vehicles: Vec::new(),
         side_facts: ReplaySideFacts::default(),
         failure: None,

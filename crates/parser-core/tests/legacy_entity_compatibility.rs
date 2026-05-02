@@ -130,7 +130,7 @@ fn legacy_entity_compatibility_should_not_serialize_source_refs_in_default_playe
 }
 
 #[test]
-fn legacy_entity_compatibility_should_add_duplicate_slot_key_without_merging_same_name_entities() {
+fn legacy_entity_compatibility_should_merge_same_name_slot_entities_like_legacy_parser() {
     let artifact = duplicate_artifact();
     let duplicate_players = artifact
         .players
@@ -138,10 +138,10 @@ fn legacy_entity_compatibility_should_add_duplicate_slot_key_without_merging_sam
         .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:SameName"))
         .collect::<Vec<_>>();
 
-    assert_eq!(artifact.players.len(), 3);
-    assert_eq!(duplicate_players.len(), 2);
-    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 21));
-    assert!(duplicate_players.iter().any(|player| player.source_entity_id == 22));
+    assert_eq!(artifact.players.len(), 2);
+    assert_eq!(duplicate_players.len(), 1);
+    assert_eq!(duplicate_players[0].source_entity_id, 22);
+    assert_eq!(duplicate_players[0].source_entity_ids, vec![21, 22]);
 }
 
 #[test]

@@ -38,13 +38,6 @@
         }
       ]
     },
-    "kills": {
-      "description": "Minimal player death rows.",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/MinimalKillRow"
-      }
-    },
     "parser": {
       "description": "Parser binary and build metadata.",
       "$ref": "#/$defs/ParserInfo"
@@ -2048,7 +2041,7 @@
       ]
     },
     "KillClassification": {
-      "description": "Minimal player death classification emitted by `kills[]`.",
+      "description": "Minimal player death classification emitted by `players[].kills` and legacy comparison rows.",
       "oneOf": [
         {
           "description": "Enemy player kill.",
@@ -2215,8 +2208,8 @@
         "parser_action"
       ]
     },
-    "MinimalKillRow": {
-      "description": "Minimal player death row emitted by the default v3 artifact.",
+    "MinimalPlayerKillRow": {
+      "description": "Minimal player-authored kill row nested under `players[]`.",
       "type": "object",
       "properties": {
         "av": {
@@ -2235,16 +2228,8 @@
           ]
         },
         "c": {
-          "description": "Replay-local death classification.",
+          "description": "Replay-local kill classification.",
           "$ref": "#/$defs/KillClassification"
-        },
-        "k": {
-          "description": "Killer source entity identifier, when known.",
-          "type": [
-            "integer",
-            "null"
-          ],
-          "format": "int64"
         },
         "v": {
           "description": "Victim source entity identifier, when known.",
@@ -2291,6 +2276,14 @@
           "type": "integer",
           "format": "int64"
         },
+        "eids": {
+          "description": "Source entity identifiers merged into this replay-local player row.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
         "g": {
           "description": "Observed group or squad label where available.",
           "type": [
@@ -2310,8 +2303,15 @@
           "format": "uint64",
           "minimum": 0
         },
+        "kills": {
+          "description": "Player-authored kill rows used by statistics and bounty calculation.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MinimalPlayerKillRow"
+          }
+        },
         "n": {
-          "description": "Observed participant nickname or display name.",
+          "description": "Observed participant nickname without legacy squad/clan tag.",
           "type": [
             "string",
             "null"
@@ -2325,6 +2325,13 @@
         },
         "r": {
           "description": "Observed role or description where available.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rn": {
+          "description": "Raw observed participant name when it differs from split `tag` + `n`.",
           "type": [
             "string",
             "null"
@@ -2353,6 +2360,13 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0
+        },
+        "tag": {
+          "description": "Observed legacy squad/clan tag, including brackets, when present.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "tk": {
           "description": "Teamkill counter.",
