@@ -239,8 +239,8 @@ Cross-cutting constraints:
 Plans:
 - [x] 06-00-PLAN.md - Worker request/result contract, schemas, and examples.
 - [x] 06-01-PLAN.md - `parser-worker` crate foundation, worker config, and CLI worker subcommand.
-- [ ] 06-02-PLAN.md - S3-compatible raw download, checksum verification, deterministic artifact keys, and artifact write/reuse policy.
-- [ ] 06-03-PLAN.md - RabbitMQ consumer, result publisher confirms, and manual ack/nack policy.
+- [x] 06-02-PLAN.md - S3-compatible raw download, checksum verification, deterministic artifact keys, and artifact write/reuse policy.
+- [x] 06-03-PLAN.md - RabbitMQ consumer, result publisher confirms, and manual ack/nack policy.
 - [ ] 06-04-PLAN.md - End-to-end job processor, minimal artifact delivery, handled failures, and graceful shutdown drain.
 - [ ] 06-05-PLAN.md - Final worker gates, schema freshness, README/ROADMAP/STATE handoff, and Phase 7 boundary checks.
 
