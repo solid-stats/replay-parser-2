@@ -64,12 +64,17 @@ fn debug_artifact_should_keep_full_detail_out_of_default_artifact() {
         serde_json::to_string(&default_json).expect("default artifact should stringify");
 
     assert!(default_root.contains_key("players"));
-    assert!(default_root.contains_key("player_stats"));
+    assert!(default_root.contains_key("weapons"));
     assert!(default_root.contains_key("kills"));
     assert!(default_root.contains_key("destroyed_vehicles"));
+    assert!(!default_root.contains_key("player_stats"));
     assert!(!default_root.contains_key("entities"));
     assert!(!default_root.contains_key("events"));
     assert!(!default_serialized.contains("\"source_refs\""));
+    assert!(!default_serialized.contains("killer_name"));
+    assert!(!default_serialized.contains("victim_name"));
+    assert!(!default_serialized.contains("attacker_vehicle_name"));
+    assert!(!default_serialized.contains("destroyed_name"));
 
     assert!(!debug_artifact.entities.is_empty());
     assert!(!debug_artifact.events.is_empty());

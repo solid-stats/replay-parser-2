@@ -8,7 +8,7 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerStatsRow},
+    minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerRow},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
@@ -100,36 +100,34 @@ fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
 }
 
-fn player_stats(artifact: &ParseArtifact, source_entity_id: i64) -> &MinimalPlayerStatsRow {
+fn player_row(artifact: &ParseArtifact, source_entity_id: i64) -> &MinimalPlayerRow {
     artifact
-        .player_stats
+        .players
         .iter()
         .find(|row| row.source_entity_id == source_entity_id)
-        .unwrap_or_else(|| panic!("player stats row {source_entity_id} should exist"))
+        .unwrap_or_else(|| panic!("player row {source_entity_id} should exist"))
 }
 
 #[test]
-fn aggregate_projection_should_emit_minimal_players_and_zero_counter_rows() {
+fn aggregate_projection_should_emit_compact_players_with_merged_counter_rows() {
     let artifact = aggregate_artifact();
     let player_ids =
         artifact.players.iter().map(|player| player.source_entity_id).collect::<Vec<_>>();
-    let stats_ids =
-        artifact.player_stats.iter().map(|stats| stats.source_entity_id).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(player_ids, vec![1, 2, 4, 5, 6]);
-    assert_eq!(stats_ids, player_ids);
-    assert!(artifact.players.iter().all(|player| player.player_id.starts_with("entity:")));
+    assert_eq!(serde_json::to_value(&artifact).expect("artifact should serialize").get("player_stats"), None);
+    assert!(artifact.players.iter().all(|player| player.compatibility_key.is_none()));
 }
 
 #[test]
 fn aggregate_projection_should_derive_replay_local_player_counters() {
     let artifact = aggregate_artifact();
-    let alpha = player_stats(&artifact, 1);
-    let bravo = player_stats(&artifact, 2);
-    let delta = player_stats(&artifact, 4);
-    let echo_killer = player_stats(&artifact, 5);
-    let echo_victim = player_stats(&artifact, 6);
+    let alpha = player_row(&artifact, 1);
+    let bravo = player_row(&artifact, 2);
+    let delta = player_row(&artifact, 4);
+    let echo_killer = player_row(&artifact, 5);
+    let echo_victim = player_row(&artifact, 6);
 
     assert_eq!(alpha.kills, 1);
     assert_eq!(alpha.deaths, 0);
@@ -137,8 +135,9 @@ fn aggregate_projection_should_derive_replay_local_player_counters() {
     assert_eq!(alpha.vehicle_kills, 1);
     assert_eq!(alpha.kills_from_vehicle, 1);
     let alpha_json = serde_json::to_value(alpha).expect("stats row should serialize");
-    assert_eq!(alpha_json["vehicleKills"], 1);
-    assert_eq!(alpha_json["killsFromVehicle"], 1);
+    assert_eq!(alpha_json["vk"], 1);
+    assert_eq!(alpha_json["kfv"], 1);
+    assert!(alpha_json.get("d").is_none());
 
     assert_eq!(bravo.deaths, 1);
     assert_eq!(delta.deaths, 1);
@@ -148,7 +147,16 @@ fn aggregate_projection_should_derive_replay_local_player_counters() {
 }
 
 #[test]
-fn aggregate_projection_should_emit_minimal_kill_rows_without_vehicle_victims() {
+fn aggregate_projection_should_emit_deterministic_weapon_dictionary() {
+    let artifact = aggregate_artifact();
+    let weapons =
+        artifact.weapons.iter().map(|row| (row.id, row.name.as_str())).collect::<Vec<_>>();
+
+    assert_eq!(weapons, vec![(1, "AK-74"), (2, "Offroad HMG"), (3, "RPG-7")]);
+}
+
+#[test]
+fn aggregate_projection_should_emit_compact_kill_rows_without_vehicle_victims() {
     let artifact = aggregate_artifact();
     let classifications = artifact.kills.iter().map(|row| row.classification).collect::<Vec<_>>();
 
@@ -165,8 +173,9 @@ fn aggregate_projection_should_emit_minimal_kill_rows_without_vehicle_victims() 
         row.classification == KillClassification::EnemyKill
             && row.killer_source_entity_id == Some(1)
             && row.victim_source_entity_id == Some(2)
-            && row.bounty_eligible
-            && row.attacker_vehicle_name.as_deref() == Some("Offroad HMG")
+            && row.weapon_id == Some(2)
+            && row.attacker_vehicle_entity_id == Some(30)
+            && row.attacker_vehicle_class.as_deref() == Some("car")
     }));
 }
 
@@ -179,7 +188,9 @@ fn aggregate_projection_should_emit_minimal_destroyed_vehicle_rows() {
     assert_eq!(artifact.destroyed_vehicles.len(), 1);
     assert_eq!(destroyed.classification, DestroyedVehicleClassification::Enemy);
     assert_eq!(destroyed.attacker_source_entity_id, Some(1));
-    assert_eq!(destroyed.weapon.as_deref(), Some("RPG-7"));
+    assert_eq!(destroyed.weapon_id, Some(3));
+    assert_eq!(destroyed.attacker_vehicle_entity_id, Some(30));
+    assert_eq!(destroyed.attacker_vehicle_class.as_deref(), Some("car"));
     assert_eq!(destroyed.destroyed_entity_id, Some(20));
     assert_eq!(destroyed.destroyed_entity_type.as_deref(), Some("vehicle"));
     assert_eq!(destroyed.destroyed_class.as_deref(), Some("apc"));
@@ -191,7 +202,7 @@ fn aggregate_projection_should_preserve_duplicate_slot_players_without_merging_r
     let duplicate_players = artifact
         .players
         .iter()
-        .filter(|player| player.compatibility_key == "legacy_name:Echo")
+        .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:Echo"))
         .collect::<Vec<_>>();
 
     assert_eq!(duplicate_players.len(), 2);
@@ -202,14 +213,20 @@ fn aggregate_projection_should_preserve_duplicate_slot_players_without_merging_r
 #[test]
 fn aggregate_projection_should_emit_zero_counter_rows_for_eligible_players_without_contributions() {
     let artifact = parse_fixture(LEGACY_PLAYER_ELIGIBILITY_FIXTURE);
-    let eligible = player_stats(&artifact, 1);
+    let eligible = player_row(&artifact, 1);
+    let serialized = serde_json::to_value(eligible).expect("player row should serialize");
 
     assert_eq!(artifact.players.len(), 1);
+    assert!(artifact.weapons.is_empty());
     assert_eq!(eligible.kills, 0);
     assert_eq!(eligible.deaths, 0);
     assert_eq!(eligible.teamkills, 0);
     assert_eq!(eligible.vehicle_kills, 0);
     assert_eq!(eligible.kills_from_vehicle, 0);
+    assert!(serialized.get("k").is_none());
+    assert!(serialized.get("d").is_none());
+    assert!(serialized.get("vk").is_none());
+    assert!(serialized.get("kfv").is_none());
 }
 
 #[test]
@@ -217,7 +234,7 @@ fn aggregate_projection_should_omit_debug_only_keys_from_default_success_json() 
     let artifact = aggregate_artifact();
     let default_rows = json!({
         "players": artifact.players,
-        "player_stats": artifact.player_stats,
+        "weapons": artifact.weapons,
         "kills": artifact.kills,
         "destroyed_vehicles": artifact.destroyed_vehicles,
     });
@@ -236,6 +253,12 @@ fn aggregate_projection_should_omit_debug_only_keys_from_default_success_json() 
         "aggregate_contributions",
         "normalized_event",
         "entity_snapshot",
+        "killer_name",
+        "victim_name",
+        "attacker_vehicle_name",
+        "destroyed_name",
+        "bounty_eligible",
+        "bounty_exclusion_reasons",
     ] {
         assert!(
             !serialized_rows.contains(forbidden_key),
