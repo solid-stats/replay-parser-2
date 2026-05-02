@@ -243,13 +243,18 @@ Deployable worker image:
 ```bash
 docker build -t replay-parser-2-worker .
 docker run --rm \
+  -p 8080:8080 \
   -e REPLAY_PARSER_AMQP_URL \
   -e REPLAY_PARSER_S3_BUCKET='solid-replays' \
   -e AWS_REGION='us-east-1' \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
+  -e REPLAY_PARSER_PROBE_BIND='0.0.0.0' \
+  -e REPLAY_PARSER_PROBE_PORT='8080' \
   replay-parser-2-worker
 ```
+
+The worker image runs as `USER 65532:65532`, exposes port `8080`, and uses the hidden `replay-parser-2 healthcheck --url http://127.0.0.1:8080/readyz` command for Docker readiness without adding curl or debug tooling to the runtime image.
 
 Local RabbitMQ/S3 smoke infrastructure:
 
@@ -257,7 +262,25 @@ Local RabbitMQ/S3 smoke infrastructure:
 scripts/worker-smoke.sh
 ```
 
-The smoke script starts RabbitMQ and MinIO with Docker Compose, uploads the valid OCAP fixture as a raw replay object, runs the worker against those live services, verifies a `parse.completed` result plus the written S3 artifact, then verifies a checksum-mismatch `parse.failed` result. Set `KEEP_SMOKE_INFRA=1` to leave the local services running for manual inspection.
+The smoke script builds the worker image, starts RabbitMQ and MinIO with Docker Compose, prepares the bucket/topology, runs two worker containers (`worker-a` and `worker-b`) with `/livez` and `/readyz` probes, verifies duplicate redelivery artifact reuse, verifies an artifact-conflict `parse.failed` result, and greps structured worker logs for worker IDs and stable event names. Set `KEEP_SMOKE_INFRA=1` to leave the local services running for manual inspection.
+
+Timeweb S3-compatible deployments should set:
+
+```bash
+REPLAY_PARSER_S3_ENDPOINT=https://s3.twcstorage.ru
+REPLAY_PARSER_S3_FORCE_PATH_STYLE=true
+AWS_REGION=ru-1
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+```
+
+Supply credentials through the deployment secret store; do not commit them. To run the optional no-secret capability probe against an already configured Timeweb bucket, use:
+
+```bash
+TIMEWEB_S3_SMOKE=1 scripts/worker-smoke.sh
+```
+
+This mode prints only capability labels such as `timeweb_conditional_write=pass`, `timeweb_conditional_write=unsupported_fallback_required`, or `timeweb_conditional_write=failed`. If Timeweb conditional writes are unsupported or unreliable, the worker still uses the tested compare/reuse/conflict fallback before accepting or rejecting existing artifact objects.
 
 ## Development Workflow
 
@@ -294,4 +317,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-05-02 after Phase 6 RabbitMQ/S3 worker integration.
+Last updated: 2026-05-02 during Phase 7 parallel and container hardening.
