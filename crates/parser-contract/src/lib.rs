@@ -31,3 +31,5 @@ pub mod side_facts;
 pub mod source_ref;
 /// Parser and contract version contract types.
 pub mod version;
+/// RabbitMQ worker request and result message contract types.
+pub mod worker;
