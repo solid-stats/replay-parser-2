@@ -11,7 +11,6 @@
     "destroyed_vehicles": {
       "description": "Minimal vehicle and static weapon destruction rows.",
       "type": "array",
-      "default": [],
       "items": {
         "$ref": "#/$defs/MinimalDestroyedVehicleRow"
       }
@@ -42,7 +41,6 @@
     "kills": {
       "description": "Minimal player death rows.",
       "type": "array",
-      "default": [],
       "items": {
         "$ref": "#/$defs/MinimalKillRow"
       }
@@ -51,18 +49,9 @@
       "description": "Parser binary and build metadata.",
       "$ref": "#/$defs/ParserInfo"
     },
-    "player_stats": {
-      "description": "Minimal replay-local player counter rows.",
-      "type": "array",
-      "default": [],
-      "items": {
-        "$ref": "#/$defs/MinimalPlayerStatsRow"
-      }
-    },
     "players": {
       "description": "Minimal observed player rows from the replay.",
       "type": "array",
-      "default": [],
       "items": {
         "$ref": "#/$defs/MinimalPlayerRow"
       }
@@ -96,6 +85,13 @@
     "status": {
       "description": "Overall parse status.",
       "$ref": "#/$defs/ParseStatus"
+    },
+    "weapons": {
+      "description": "Minimal deterministic weapon dictionary rows referenced by event tables.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MinimalWeaponRow"
+      }
     }
   },
   "allOf": [
@@ -137,10 +133,10 @@
         ]
       },
       "then": {
-        "properties": {
-          "failure": {
-            "type": "null"
-          }
+        "not": {
+          "required": [
+            "failure"
+          ]
         }
       }
     }
@@ -149,9 +145,7 @@
     "contract_version",
     "parser",
     "source",
-    "status",
-    "diagnostics",
-    "extensions"
+    "status"
   ],
   "unevaluatedProperties": false,
   "$defs": {
@@ -2128,32 +2122,7 @@
       "description": "Minimal vehicle/static destruction row emitted by the default v3 artifact.",
       "type": "object",
       "properties": {
-        "attacker_name": {
-          "description": "Attacker observed name, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "attacker_player_id": {
-          "description": "Stable parser-local attacker player identifier, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "attacker_side": {
-          "description": "Attacker side, when known.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EntitySide"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "attacker_source_entity_id": {
+        "a": {
           "description": "Attacker source entity identifier, when known.",
           "type": [
             "integer",
@@ -2161,14 +2130,7 @@
           ],
           "format": "int64"
         },
-        "attacker_vehicle_class": {
-          "description": "Raw attacker vehicle observed class.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "attacker_vehicle_entity_id": {
+        "av": {
           "description": "Attacker vehicle source entity identifier, when matched.",
           "type": [
             "integer",
@@ -2176,25 +2138,25 @@
           ],
           "format": "int64"
         },
-        "attacker_vehicle_name": {
-          "description": "Raw attacker vehicle observed name.",
+        "avc": {
+          "description": "Raw attacker vehicle observed class.",
           "type": [
             "string",
             "null"
           ]
         },
-        "classification": {
+        "c": {
           "description": "Replay-local destruction classification.",
           "$ref": "#/$defs/DestroyedVehicleClassification"
         },
-        "destroyed_class": {
+        "dc": {
           "description": "Destroyed observed class, when known.",
           "type": [
             "string",
             "null"
           ]
         },
-        "destroyed_entity_id": {
+        "de": {
           "description": "Destroyed source entity identifier, when known.",
           "type": [
             "integer",
@@ -2202,42 +2164,26 @@
           ],
           "format": "int64"
         },
-        "destroyed_entity_type": {
+        "dt": {
           "description": "Destroyed entity kind label, when known.",
           "type": [
             "string",
             "null"
           ]
         },
-        "destroyed_name": {
-          "description": "Destroyed observed name, when known.",
+        "w": {
+          "description": "Compact weapon dictionary identifier, when known.",
           "type": [
-            "string",
+            "integer",
             "null"
-          ]
-        },
-        "destroyed_side": {
-          "description": "Destroyed side, when known.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EntitySide"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "weapon": {
-          "description": "Raw weapon string, when available.",
-          "type": [
-            "string",
-            "null"
-          ]
+          ],
+          "format": "uint32",
+          "minimum": 0
         }
       },
       "additionalProperties": false,
       "required": [
-        "classification"
+        "c"
       ]
     },
     "MinimalDiagnosticRow": {
@@ -2273,14 +2219,7 @@
       "description": "Minimal player death row emitted by the default v3 artifact.",
       "type": "object",
       "properties": {
-        "attacker_vehicle_class": {
-          "description": "Raw attacker vehicle observed class.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "attacker_vehicle_entity_id": {
+        "av": {
           "description": "Attacker vehicle source entity identifier, when matched.",
           "type": [
             "integer",
@@ -2288,54 +2227,18 @@
           ],
           "format": "int64"
         },
-        "attacker_vehicle_name": {
-          "description": "Raw attacker vehicle observed name.",
+        "avc": {
+          "description": "Raw attacker vehicle observed class.",
           "type": [
             "string",
             "null"
           ]
         },
-        "bounty_eligible": {
-          "description": "Whether this row can be consumed as a bounty-awarding input.",
-          "type": "boolean"
-        },
-        "bounty_exclusion_reasons": {
-          "description": "Stable exclusion reasons when not bounty eligible.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "classification": {
+        "c": {
           "description": "Replay-local death classification.",
           "$ref": "#/$defs/KillClassification"
         },
-        "killer_name": {
-          "description": "Killer observed name, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "killer_player_id": {
-          "description": "Stable parser-local killer player identifier, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "killer_side": {
-          "description": "Killer side, when known.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EntitySide"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "killer_source_entity_id": {
+        "k": {
           "description": "Killer source entity identifier, when known.",
           "type": [
             "integer",
@@ -2343,32 +2246,7 @@
           ],
           "format": "int64"
         },
-        "victim_name": {
-          "description": "Victim observed name, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "victim_player_id": {
-          "description": "Stable parser-local victim player identifier, when known.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "victim_side": {
-          "description": "Victim side, when known.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EntitySide"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "victim_source_entity_id": {
+        "v": {
           "description": "Victim source entity identifier, when known.",
           "type": [
             "integer",
@@ -2376,55 +2254,83 @@
           ],
           "format": "int64"
         },
-        "weapon": {
-          "description": "Raw weapon string, when available.",
+        "w": {
+          "description": "Compact weapon dictionary identifier, when known.",
           "type": [
-            "string",
+            "integer",
             "null"
-          ]
+          ],
+          "format": "uint32",
+          "minimum": 0
         }
       },
       "additionalProperties": false,
       "required": [
-        "classification",
-        "bounty_eligible",
-        "bounty_exclusion_reasons"
+        "c"
       ]
     },
     "MinimalPlayerRow": {
       "description": "Minimal observed player row emitted by the default v3 artifact.",
       "type": "object",
       "properties": {
-        "compatibility_key": {
-          "description": "Legacy compatibility key used by downstream comparison and import logic.",
-          "type": "string"
+        "ck": {
+          "description": "Legacy compatibility key when it is not derivable from `eid`.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "group": {
+        "d": {
+          "description": "Death counter.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "eid": {
+          "description": "Source entity identifier from OCAP data.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "g": {
           "description": "Observed group or squad label where available.",
           "type": [
             "string",
             "null"
           ]
         },
-        "observed_name": {
+        "k": {
+          "description": "Enemy-kill counter.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "kfv": {
+          "description": "Enemy-kill counter attributed to an attacker vehicle.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "n": {
           "description": "Observed participant nickname or display name.",
           "type": [
             "string",
             "null"
           ]
         },
-        "player_id": {
-          "description": "Stable parser-local player row identifier.",
-          "type": "string"
+        "nkd": {
+          "description": "Deaths with an explicit null killer.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
         },
-        "role": {
+        "r": {
           "description": "Observed role or description where available.",
           "type": [
             "string",
             "null"
           ]
         },
-        "side": {
+        "s": {
           "description": "Observed side alignment.",
           "anyOf": [
             {
@@ -2435,82 +2341,32 @@
             }
           ]
         },
-        "source_entity_id": {
-          "description": "Source entity identifier from OCAP data.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "steam_id": {
+        "sid": {
           "description": "Observed `SteamID`, when present.",
           "type": [
             "string",
             "null"
           ]
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "player_id",
-        "source_entity_id",
-        "compatibility_key"
-      ]
-    },
-    "MinimalPlayerStatsRow": {
-      "description": "Minimal replay-local player counter row emitted by the default v3 artifact.",
-      "type": "object",
-      "properties": {
-        "deaths": {
-          "description": "Death counter.",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0
         },
-        "kills": {
-          "description": "Enemy-kill counter.",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0
-        },
-        "killsFromVehicle": {
-          "description": "Enemy-kill counter attributed to an attacker vehicle.",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0
-        },
-        "null_killer_deaths": {
-          "description": "Deaths with an explicit null killer.",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0
-        },
-        "player_id": {
-          "description": "Stable parser-local player row identifier.",
-          "type": "string"
-        },
-        "source_entity_id": {
-          "description": "Source entity identifier from OCAP data.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "suicides": {
+        "su": {
           "description": "Suicide counter.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0
         },
-        "teamkills": {
+        "tk": {
           "description": "Teamkill counter.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0
         },
-        "unknown_deaths": {
+        "ud": {
           "description": "Deaths where player identity or actor evidence is incomplete.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0
         },
-        "vehicleKills": {
+        "vk": {
           "description": "Vehicle/static destruction counter.",
           "type": "integer",
           "format": "uint64",
@@ -2519,16 +2375,28 @@
       },
       "additionalProperties": false,
       "required": [
-        "player_id",
-        "source_entity_id",
-        "kills",
-        "deaths",
-        "teamkills",
-        "suicides",
-        "null_killer_deaths",
-        "unknown_deaths",
-        "vehicleKills",
-        "killsFromVehicle"
+        "eid"
+      ]
+    },
+    "MinimalWeaponRow": {
+      "description": "Minimal deterministic weapon dictionary row emitted by the default v3 artifact.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Compact replay-local weapon identifier.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "n": {
+          "description": "Raw weapon class/name referenced by compact event rows.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "n"
       ]
     },
     "NullReason": {

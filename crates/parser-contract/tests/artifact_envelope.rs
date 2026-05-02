@@ -57,7 +57,7 @@ fn success_artifact() -> ParseArtifact {
         diagnostics: Vec::new(),
         replay: None,
         players: Vec::new(),
-        player_stats: Vec::new(),
+        weapons: Vec::new(),
         kills: Vec::new(),
         destroyed_vehicles: Vec::new(),
         side_facts: ReplaySideFacts::default(),
@@ -91,13 +91,14 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert_eq!(serialized["source"]["source_file"], "2025_04_05__23_27_21__1_ocap.json");
     assert_eq!(serialized["source"]["checksum"]["value"]["algorithm"], "sha256");
     assert_eq!(serialized["status"], "success");
-    assert!(serialized.get("produced_at").is_some());
-    assert!(serialized.get("diagnostics").is_some());
-    assert!(serialized.get("replay").is_some());
-    assert!(serialized.get("players").is_some());
-    assert!(serialized.get("player_stats").is_some());
-    assert!(serialized.get("kills").is_some());
-    assert!(serialized.get("destroyed_vehicles").is_some());
+    assert!(serialized.get("produced_at").is_none());
+    assert!(serialized.get("diagnostics").is_none());
+    assert!(serialized.get("replay").is_none());
+    assert!(serialized.get("players").is_none());
+    assert!(serialized.get("weapons").is_none());
+    assert!(serialized.get("kills").is_none());
+    assert!(serialized.get("destroyed_vehicles").is_none());
+    assert!(serialized.get("player_stats").is_none());
     assert!(serialized.get("participants").is_none());
     assert!(serialized.get("facts").is_none());
     assert!(serialized.get("summaries").is_none());
@@ -105,7 +106,7 @@ fn artifact_envelope_serializes_unified_fields_with_deterministic_extensions() {
     assert!(serialized.get("events").is_none());
     assert!(serialized.get("aggregates").is_none());
     assert!(serialized.get("side_facts").is_none());
-    assert!(serialized.get("failure").is_some());
+    assert!(serialized.get("failure").is_none());
 
     let extension_keys = serialized["extensions"]
         .as_object()

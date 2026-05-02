@@ -29,7 +29,7 @@ fn close_default_artifact_schema(schema: &mut Schema) {
         "MinimalDiagnosticRow",
         "MinimalKillRow",
         "MinimalPlayerRow",
-        "MinimalPlayerStatsRow",
+        "MinimalWeaponRow",
     ] {
         close_schema_definition(schema, definition_name);
     }
@@ -158,8 +158,8 @@ fn enforce_status_failure_invariants(schema: &mut Schema) {
                     }
                 },
                 "then": {
-                    "properties": {
-                        "failure": { "type": "null" }
+                    "not": {
+                        "required": ["failure"]
                     }
                 }
             }

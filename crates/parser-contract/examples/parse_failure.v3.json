@@ -22,13 +22,6 @@
     }
   },
   "status": "failed",
-  "produced_at": null,
-  "diagnostics": [],
-  "replay": null,
-  "players": [],
-  "player_stats": [],
-  "kills": [],
-  "destroyed_vehicles": [],
   "failure": {
     "job_id": {
       "state": "present",
@@ -70,13 +63,9 @@
           "algorithm": "sha256",
           "value": "0000000000000000000000000000000000000000000000000000000000000000"
         },
-        "frame": null,
-        "event_index": null,
-        "entity_id": null,
         "json_path": "$",
         "rule_id": "failure.json.decode"
       }
     ]
-  },
-  "extensions": {}
+  }
 }

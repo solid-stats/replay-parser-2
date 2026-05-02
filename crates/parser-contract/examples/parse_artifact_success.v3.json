@@ -22,113 +22,57 @@
     }
   },
   "status": "success",
-  "produced_at": null,
-  "diagnostics": [],
-  "replay": null,
   "players": [
     {
-      "player_id": "player-101",
-      "source_entity_id": 101,
-      "observed_name": "Afganor",
-      "side": "west",
-      "group": "Alpha 1-1",
-      "role": "Rifleman",
-      "steam_id": null,
-      "compatibility_key": "afganor"
+      "eid": 101,
+      "n": "Afganor",
+      "s": "west",
+      "g": "Alpha 1-1",
+      "r": "Rifleman",
+      "k": 1,
+      "vk": 1,
+      "kfv": 1
     },
     {
-      "player_id": "player-202",
-      "source_entity_id": 202,
-      "observed_name": "Target",
-      "side": "east",
-      "group": "Bravo 1-1",
-      "role": "Automatic Rifleman",
-      "steam_id": "76561198000000002",
-      "compatibility_key": "target"
+      "eid": 202,
+      "n": "Target",
+      "s": "east",
+      "g": "Bravo 1-1",
+      "r": "Automatic Rifleman",
+      "sid": "76561198000000002",
+      "d": 1
     }
   ],
-  "player_stats": [
+  "weapons": [
     {
-      "player_id": "player-101",
-      "source_entity_id": 101,
-      "kills": 1,
-      "deaths": 0,
-      "teamkills": 0,
-      "suicides": 0,
-      "null_killer_deaths": 0,
-      "unknown_deaths": 0,
-      "vehicleKills": 1,
-      "killsFromVehicle": 1
-    },
-    {
-      "player_id": "player-202",
-      "source_entity_id": 202,
-      "kills": 0,
-      "deaths": 1,
-      "teamkills": 0,
-      "suicides": 0,
-      "null_killer_deaths": 0,
-      "unknown_deaths": 0,
-      "vehicleKills": 0,
-      "killsFromVehicle": 0
+      "id": 1,
+      "n": "rhs_t72"
     }
   ],
   "kills": [
     {
-      "killer_player_id": "player-101",
-      "killer_source_entity_id": 101,
-      "killer_name": "Afganor",
-      "killer_side": "west",
-      "victim_player_id": "player-202",
-      "victim_source_entity_id": 202,
-      "victim_name": "Target",
-      "victim_side": "east",
-      "classification": "enemy_kill",
-      "weapon": "rhs_t72",
-      "attacker_vehicle_entity_id": 501,
-      "attacker_vehicle_name": "Tank 1",
-      "attacker_vehicle_class": "rhs_t72ba_tv",
-      "bounty_eligible": true,
-      "bounty_exclusion_reasons": []
+      "k": 101,
+      "v": 202,
+      "c": "enemy_kill",
+      "w": 1,
+      "av": 501,
+      "avc": "rhs_t72ba_tv"
     },
     {
-      "killer_player_id": null,
-      "killer_source_entity_id": null,
-      "killer_name": null,
-      "killer_side": null,
-      "victim_player_id": "player-101",
-      "victim_source_entity_id": 101,
-      "victim_name": "Afganor",
-      "victim_side": "west",
-      "classification": "null_killer",
-      "weapon": null,
-      "attacker_vehicle_entity_id": null,
-      "attacker_vehicle_name": null,
-      "attacker_vehicle_class": null,
-      "bounty_eligible": false,
-      "bounty_exclusion_reasons": [
-        "null_killer"
-      ]
+      "v": 101,
+      "c": "null_killer"
     }
   ],
   "destroyed_vehicles": [
     {
-      "attacker_player_id": "player-101",
-      "attacker_source_entity_id": 101,
-      "attacker_name": "Afganor",
-      "attacker_side": "west",
-      "classification": "enemy",
-      "weapon": "rhs_t72",
-      "attacker_vehicle_entity_id": 501,
-      "attacker_vehicle_name": "Tank 1",
-      "attacker_vehicle_class": "rhs_t72ba_tv",
-      "destroyed_entity_id": 601,
-      "destroyed_entity_type": "vehicle",
-      "destroyed_name": "BTR-80",
-      "destroyed_class": "rhs_btr80",
-      "destroyed_side": "east"
+      "a": 101,
+      "c": "enemy",
+      "w": 1,
+      "av": 501,
+      "avc": "rhs_t72ba_tv",
+      "de": 601,
+      "dt": "vehicle",
+      "dc": "rhs_btr80"
     }
-  ],
-  "failure": null,
-  "extensions": {}
+  ]
 }

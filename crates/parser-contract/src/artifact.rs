@@ -9,7 +9,7 @@ use crate::{
     failure::ParseFailure,
     metadata::ReplayMetadata,
     minimal::{
-        MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalPlayerStatsRow,
+        MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalWeaponRow,
     },
     side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
@@ -42,29 +42,34 @@ pub struct ParseArtifact {
     /// Overall parse status.
     pub status: ParseStatus,
     /// Optional production timestamp supplied by non-deterministic adapters.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub produced_at: Option<String>,
     /// Structured warnings and errors that did not necessarily fail parsing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<MinimalDiagnosticRow>,
     /// Normalized replay metadata when it could be extracted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub replay: Option<ReplayMetadata>,
     /// Minimal observed player rows from the replay.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub players: Vec<MinimalPlayerRow>,
-    /// Minimal replay-local player counter rows.
-    #[serde(default)]
-    pub player_stats: Vec<MinimalPlayerStatsRow>,
+    /// Minimal deterministic weapon dictionary rows referenced by event tables.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub weapons: Vec<MinimalWeaponRow>,
     /// Minimal player death rows.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub kills: Vec<MinimalKillRow>,
     /// Minimal vehicle and static weapon destruction rows.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
     /// Replay-side commander and outcome facts.
     #[serde(default, skip_serializing_if = "ReplaySideFacts::is_default")]
     pub side_facts: ReplaySideFacts,
     /// Structured failure details required when status is `failed`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failure: Option<ParseFailure>,
     /// Stable extension object reserved for forward-compatible parser metadata.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub extensions: BTreeMap<String, Value>,
 }
 
