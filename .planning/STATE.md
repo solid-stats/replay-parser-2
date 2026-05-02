@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-05-02T13:04:53.921Z"
-last_activity: 2026-05-02 -- Phase 06 execution started
+status: ready
+stopped_at: Phase 7 ready for planning
+last_updated: "2026-05-02T15:17:09Z"
+last_activity: 2026-05-02 -- Phase 06 completed; Phase 07 ready
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 51
-  completed_plans: 45
-  percent: 88
+  completed_plans: 46
+  percent: 90
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 06 — rabbitmq-s3-worker-integration
+**Current focus:** Phase 07 — parallel-and-container-hardening
 
 ## Current Position
 
-Phase: 06 (rabbitmq-s3-worker-integration) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 06
-Last activity: 2026-05-02 -- Phase 06 execution started
+Phase: 07 (parallel-and-container-hardening) — READY
+Plan: 0 of TBD
+Status: Ready for Phase 07 planning/execution
+Last activity: 2026-05-02 -- Phase 06 completed; Phase 07 ready
 Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
 
-Progress: [████████░░] 88%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 30
+- Total plans completed: 31
 - Average duration: N/A
 - Total execution time: 0.0 hours
 
@@ -51,6 +51,7 @@ Progress: [████████░░] 88%
 | 04 | 7/7 | 96m40s | 13m49s |
 | 05 | 6/6 | 221m | 36m50s |
 | 05.1 | 8/8 | executed; acceptance gap | - |
+| 06 | 6/6 | executed | - |
 
 **Recent Trend:**
 
@@ -91,6 +92,7 @@ Progress: [████████░░] 88%
 | Phase 05.2 P04 | 14m18s | 3 tasks | 4 files |
 | Phase 05.2 P05 | 15m | 3 tasks | 6 files |
 | Phase 05.2 P06 | 14m48s | 3 tasks | 16 files |
+| Phase 06 P05 | 49m26s | 2 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -179,6 +181,12 @@ Recent decisions affecting current work:
 - [Quick 260502-q4m]: A fourth deterministic year-edge old/new parity sample used seed `260502-q4m`. It selected 73 replays. New parser succeeded on all 73, old parser succeeded on 56 and skipped 17. Stats-only parity is 33 matches / 23 mismatches; mismatch rows are 25 retained `Throw`/`Binoculars` weapon rows, 6 duplicate-slot `isDeadByTeamkill` rows, and 1 known old-parser `teamkillers` merge-bug row. Full evidence is under `.planning/generated/quick/260502-q4m-old-new-year-edge-parity-fourth-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-q4m-old-new-year-edge-parity-fourth-sample/`.
 - [Quick 260502-v8n]: A fifth deterministic year-edge old/new parity sample used seed `260502-v8n`. It selected 73 replays. New parser succeeded on all 73, old parser succeeded on 63 and skipped 10. Stats-only parity is 45 matches / 18 mismatches; mismatch rows are 18 retained `Throw`/`Binoculars` weapon rows and 9 duplicate-slot `isDeadByTeamkill` rows. Full evidence is under `.planning/generated/quick/260502-v8n-old-new-year-edge-parity-fifth-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-v8n-old-new-year-edge-parity-fifth-sample/`.
 - [Quick 260502-rollup]: Five-sample year-edge parity rollup covered 364 selected replay entries and 291 unique replay files. New parser succeeded on all selected entries; old parser produced 305 comparable artifacts and skipped 59. The 93 comparable stats-only mismatches contained only documented known classes: 104 retained `Throw`/`Binoculars` weapon detail rows, 26 duplicate-slot `isDeadByTeamkill` rows, and 2 old-parser `teamkillers` merge-bug rows. Phase 05/05.2 parity follow-up is non-blocking; accepted differences are documented in `.planning/quick/260502-year-edge-parity-five-sample-rollup/KNOWN-DIFFERENCES.md`.
+- [Phase 06]: Worker request/result contracts are typed in `parser-contract`, generated into `schemas/parse-job-v1.schema.json` and `schemas/parse-result-v1.schema.json`, and backed by parse job/completed/failed examples.
+- [Phase 06]: `replay-parser-2 worker` is implemented as a single-worker RabbitMQ/S3 adapter. It consumes jobs with `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`; downloads raw objects; verifies local SHA-256; writes minimal v3 artifacts; and publishes `parse.completed` or `parse.failed`.
+- [Phase 06]: Worker artifact keys are deterministic `artifacts/v3/{encoded_replay_id}/{source_sha256}.json` paths and use the raw source checksum segment, not the artifact checksum.
+- [Phase 06]: RabbitMQ manual ack happens only after confirmed completed/failed result publication. Publish failures nack for retry, and default prefetch stays `1`.
+- [Phase 06]: Parser-core and parser-contract remain transport-free. Worker/CLI contain runtime integration; debug sidecar parsing remains explicit CLI tooling and is not used by worker result artifacts.
+- [Phase 06]: WORK-01 through WORK-07 are complete. WORK-08 and WORK-09 remain Phase 7 pending for multi-worker safety, structured operations logs, container probes, and hardening.
 
 ### Roadmap Evolution
 
@@ -194,17 +202,15 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 05.2 code and quality gates are passing, quick task
-`260502-jeh` optimized the default minimal parser hot path, and the user has
-accepted the remaining benchmark gaps. Current accepted evidence records cached
-old all-raw wall `501274.528655ms`, new all-raw wall `235598.648803ms`, speedup
-`2.1277x`, all-raw old/new `attempted_count=23473`, new
-success/failure/skip counts `23469/4/0`, p95 artifact/raw ratio
-`0.12417910447761193`, max artifact bytes `48313`, and zero oversized artifacts.
-The 4 malformed/non-JSON failures are accepted only while new failure paths
-match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json` and the old
-cached baseline keeps `error_count=4`, `skipped_count=0`. Phase 6 worker
-integration can proceed on this accepted Phase 05.2 benchmark policy.
+Active: Phase 6 worker integration is complete. Current final-gate all-raw
+evidence records cached old all-raw wall `501274.528655ms`, new all-raw wall
+`272233.457364ms`, speedup `1.8413x`, all-raw old/new
+`attempted_count=23473`, new success/failure/skip counts `23469/4/0`, p95
+artifact/raw ratio `0.12432307336264753`, max artifact bytes `48270`, and zero
+oversized artifacts. The 4 malformed/non-JSON failures are accepted only while
+new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`
+and the old cached baseline keeps `error_count=4`, `skipped_count=0`.
+Phase 7 is ready to plan/execute WORK-08 and WORK-09.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
@@ -215,7 +221,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
-- Phase 6 is no longer blocked by Phase 05.2 performance, p95 size, or known malformed-file gates because the user explicitly accepted those gaps on 2026-05-02.
+- Phase 6 completed on 2026-05-02 and is no longer blocked by Phase 05.2 performance, p95 size, known malformed-file gates, or worker integration gates.
 
 ### Quick Tasks Completed
 
@@ -254,12 +260,13 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-02T12:49:50.634Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-rabbitmq-s3-worker-integration/06-CONTEXT.md
+Last session: 2026-05-02T15:17:09Z
+Stopped at: Phase 7 ready for planning
+Resume file: .planning/ROADMAP.md#phase-7-parallel-and-container-hardening
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
-**Next Step:** Start Phase 06 RabbitMQ/S3 worker integration.
+**Completed Phase:** 06 (RabbitMQ/S3 Worker Integration) — 6 plans — 2026-05-02
+**Next Step:** Start Phase 07 parallel and container hardening.

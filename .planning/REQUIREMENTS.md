@@ -104,13 +104,13 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 
 ### Worker Integration
 
-- [ ] **WORK-01**: Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
-- [ ] **WORK-02**: Worker downloads replay files from S3-compatible object storage using configurable endpoint, bucket, credentials, and path-style settings.
-- [ ] **WORK-03**: Worker verifies downloaded object checksum before parsing and emits structured failure on mismatch.
-- [ ] **WORK-04**: Worker writes successful parse artifacts to S3-compatible storage using a deterministic artifact key agreed with `server-2`.
-- [ ] **WORK-05**: Worker publishes `parse.completed` result messages with job/replay identifiers, parser contract version, checksum, and artifact reference.
-- [ ] **WORK-06**: Worker publishes `parse.failed` result messages with structured error data and retryability.
-- [ ] **WORK-07**: Worker uses manual ack/nack behavior and acknowledges RabbitMQ jobs only after result/artifact publication succeeds.
+- [x] **WORK-01**: Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
+- [x] **WORK-02**: Worker downloads replay files from S3-compatible object storage using configurable endpoint, bucket, credentials, and path-style settings.
+- [x] **WORK-03**: Worker verifies downloaded object checksum before parsing and emits structured failure on mismatch.
+- [x] **WORK-04**: Worker writes successful parse artifacts to S3-compatible storage using a deterministic artifact key agreed with `server-2`.
+- [x] **WORK-05**: Worker publishes `parse.completed` result messages with job/replay identifiers, parser contract version, checksum, and artifact reference.
+- [x] **WORK-06**: Worker publishes `parse.failed` result messages with structured error data and retryability.
+- [x] **WORK-07**: Worker uses manual ack/nack behavior and acknowledges RabbitMQ jobs only after result/artifact publication succeeds.
 - [ ] **WORK-08**: Worker can run multiple instances in parallel without duplicate artifact corruption or nondeterministic parser output.
 - [ ] **WORK-09**: Worker has structured logs and health/readiness endpoints or probes suitable for container operation.
 
@@ -224,13 +224,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-13 | Phase 5.2 | Complete: report includes required performance, parity, size, percentile, and failure evidence |
 | TEST-14 | Phase 5.1 | Complete |
 | TEST-15 | Phase 5.2 | Complete: hard max artifact size passes; p95 > 0.10 accepted as non-blocking trend evidence |
-| WORK-01 | Phase 6 | Pending |
-| WORK-02 | Phase 6 | Pending |
-| WORK-03 | Phase 6 | Pending |
-| WORK-04 | Phase 6 | Pending |
-| WORK-05 | Phase 6 | Pending |
-| WORK-06 | Phase 6 | Pending |
-| WORK-07 | Phase 6 | Pending |
+| WORK-01 | Phase 6 | Complete |
+| WORK-02 | Phase 6 | Complete |
+| WORK-03 | Phase 6 | Complete |
+| WORK-04 | Phase 6 | Complete |
+| WORK-05 | Phase 6 | Complete |
+| WORK-06 | Phase 6 | Complete |
+| WORK-07 | Phase 6 | Complete |
 | WORK-08 | Phase 7 | Pending |
 | WORK-09 | Phase 7 | Pending |
 
@@ -241,4 +241,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-05-01 after Phase 5.2 minimal artifact and performance insertion*
+*Last updated: 2026-05-02 after Phase 6 RabbitMQ/S3 worker integration*

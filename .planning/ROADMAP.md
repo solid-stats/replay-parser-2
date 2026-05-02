@@ -19,8 +19,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap escalated into Phase 5.1 redesign)
 - [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target. (execution complete 2026-04-29; benchmark/parity acceptance gap blocks Phase 6)
 - [x] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and record accepted selected/all-raw benchmark evidence before worker integration. Execution is complete; on 2026-05-02 the product owner accepted current performance, p95 > 10% as non-blocking, and the 4 known malformed/non-JSON all-raw failures when old/new error parity matches.
-- [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
-- [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
+- [x] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement. (completed 2026-05-02)
+- [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability. (ready for planning)
 
 ## Phase Details
 
@@ -222,6 +222,7 @@ Current final-gate evidence:
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.
 **Depends on**: Phase 5.2
 **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05, WORK-06, WORK-07
+**Status**: Complete as of 2026-05-02; Phase 7 owns parallel/container hardening.
 **Success Criteria** (what must be TRUE):
   1. Worker consumes RabbitMQ parse request jobs containing `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
   2. Worker downloads replay files from S3-compatible storage with configurable endpoint, bucket, credentials, and path-style settings, then fails structurally on checksum mismatch.
@@ -242,7 +243,15 @@ Plans:
 - [x] 06-02-PLAN.md - S3-compatible raw download, checksum verification, deterministic artifact keys, and artifact write/reuse policy.
 - [x] 06-03-PLAN.md - RabbitMQ consumer, result publisher confirms, and manual ack/nack policy.
 - [x] 06-04-PLAN.md - End-to-end job processor, minimal artifact delivery, handled failures, and graceful shutdown drain.
-- [ ] 06-05-PLAN.md - Final worker gates, schema freshness, README/ROADMAP/STATE handoff, and Phase 7 boundary checks.
+- [x] 06-05-PLAN.md - Final worker gates, schema freshness, README/ROADMAP/STATE handoff, and Phase 7 boundary checks.
+
+Execution outcome:
+- `replay-parser-2 worker` consumes typed parse jobs with `job_id`, `replay_id`, `object_key`, `checksum`, and `parser_contract_version`.
+- The worker downloads raw objects from S3-compatible storage, verifies local SHA-256, writes deterministic minimal v3 artifacts under `artifacts/v3/{encoded_replay_id}/{source_sha256}.json`, and publishes `parse.completed` with artifact bucket/key/checksum/size.
+- Structured `parse.failed` messages cover malformed jobs, unsupported contract versions, checksum mismatches, parser failures, storage failures, and artifact conflicts with retryability.
+- Manual ack occurs only after confirmed completed/failed result publication; publish failures nack for retry.
+- Final gates passed for format, clippy, workspace tests, docs, coverage smoke, fault report, full-corpus benchmark acceptance, schema freshness, worker/CLI targeted tests, boundary greps, and whitespace checks.
+- Phase 7 keeps WORK-08 and WORK-09 pending: multi-worker safety, structured operations logs, container probes, and runtime hardening are not Phase 6 deliverables.
 
 ### Phase 7: Parallel and Container Hardening
 **Goal**: Operators can run the worker safely in parallel container mode with observable readiness.
@@ -268,5 +277,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 | 5. CLI, Golden Parity, Benchmarks, and Coverage Gates | 6/6 | Verification gap escalated | - |
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
 | 5.2. Minimal Artifact and Performance Acceptance | 7/7 | Execution complete; accepted benchmark policy unblocks Phase 6 | - |
-| 6. RabbitMQ/S3 Worker Integration | 0/6 | Planned; ready to execute | - |
-| 7. Parallel and Container Hardening | 0/TBD | Not started | - |
+| 6. RabbitMQ/S3 Worker Integration | 6/6 | Complete | 2026-05-02 |
+| 7. Parallel and Container Hardening | 0/TBD | Ready for planning | - |

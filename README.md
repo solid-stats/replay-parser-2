@@ -8,25 +8,29 @@ The default v1 output must reduce replay data for `server-2`. A 10-15 MB OCAP re
 
 ## Current Status
 
-Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 implementation is executed, and Phase 5.2 replaced that compact artifact with a v3 minimal v1 statistics artifact, moved detailed evidence behind an explicit debug sidecar, removed GitHub issue #13 vehicle score from v1, and recorded accepted current performance, hard max-artifact-size, and malformed-file parity evidence before worker integration.
+Phase 6 execution is complete. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, the CLI adapter binary `replay-parser-2`, and the RabbitMQ/S3 worker adapter at `crates/parser-worker`. Phase 5.2 replaced the earlier compact artifact with a v3 minimal v1 statistics artifact, moved detailed evidence behind an explicit debug sidecar, removed GitHub issue #13 vehicle score from v1, and recorded accepted current performance, hard max-artifact-size, and malformed-file parity evidence before worker integration.
 
-The CLI can parse a local OCAP JSON file into minified minimal JSON by default, export the v3 parser contract schema, compare selected old/new artifacts or a selected replay against a saved old artifact, and write an internal full-detail debug sidecar only when `--debug-artifact <path>` is requested. The ordinary default tables are `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kills are nested under the killer `players[].kills`, same-name slots are merged into one replay-local player row, and legacy squad tags are split from observed nicknames. Source refs, rule IDs, entity snapshots, and normalized event/entity evidence stay out of ordinary ingestion unless the debug sidecar is explicitly requested. Phase 5.2 performance and size acceptance now treats x3/x10 and artifact percentiles as reported evidence, not blockers; the hard artifact-size blocker is every successful default artifact being <= 100 KB (100,000 bytes), and malformed/non-JSON raw files are acceptable when old/new failure parity matches the accepted evidence. RabbitMQ/S3 worker mode, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into minified minimal JSON by default, export the v3 parser contract schema, compare selected old/new artifacts or a selected replay against a saved old artifact, run `replay-parser-2 worker` for server integration, and write an internal full-detail debug sidecar only when `--debug-artifact <path>` is requested. The ordinary default tables are `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kills are nested under the killer `players[].kills`, same-name slots are merged into one replay-local player row, and legacy squad tags are split from observed nicknames. Source refs, rule IDs, entity snapshots, and normalized event/entity evidence stay out of ordinary ingestion unless the debug sidecar is explicitly requested. Phase 5.2 performance and size acceptance now treats x3/x10 and artifact percentiles as reported evidence, not blockers; the hard artifact-size blocker is every successful default artifact being <= 100 KB (100,000 bytes), and malformed/non-JSON raw files are acceptable when old/new failure parity matches the accepted evidence. RabbitMQ/S3 worker mode is implemented; PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, parallel worker hardening, container probe endpoints, and annual/yearly nomination product support remain outside this parser or later-phase scope.
 
-- Current phase: Phase 6, `RabbitMQ/S3 Worker Integration` (ready after Phase 5.2 benchmark gap acceptance).
+- Current phase: Phase 7, `Parallel and Container Hardening` (ready after Phase 6 worker integration).
 - Roadmap: 9 phases.
 - v1 requirements: 80 mapped requirements.
 - Contract crate: `crates/parser-contract`.
 - Current artifact contract version: `3.0.0`.
 - Parser-core crate: `crates/parser-core`.
 - CLI crate: `crates/parser-cli`.
+- Worker crate: `crates/parser-worker`.
 - Harness crate: `crates/parser-harness`.
 - Contract schema: `schemas/parse-artifact-v3.schema.json`.
+- Worker schemas: `schemas/parse-job-v1.schema.json` and `schemas/parse-result-v1.schema.json`.
 - Example artifacts: `crates/parser-contract/examples/parse_artifact_success.v3.json` and `crates/parser-contract/examples/parse_failure.v3.json`.
+- Worker examples: `crates/parser-contract/examples/parse_job.v1.json`, `crates/parser-contract/examples/parse_completed.v1.json`, and `crates/parser-contract/examples/parse_failed.v1.json`.
 - Phase 3 plans: `.planning/phases/03-deterministic-parser-core/03-00-PLAN.md` through `03-05-PLAN.md`.
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
 - Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (executed, awaiting benchmark/parity acceptance or remediation).
 - Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (executed; benchmark performance, p95, and known malformed-file gaps accepted on 2026-05-02).
+- Phase 6 directory: `.planning/phases/06-rabbitmq-s3-worker-integration/` (executed; worker mode delivered, Phase 7 owns parallel/container hardening).
 
 The implemented developer validation commands are:
 
@@ -36,7 +40,9 @@ cargo test -p parser-core
 cargo check -p parser-cli --all-targets
 cargo test -p parser-cli
 cargo test -p parser-harness
+cargo test -p parser-worker
 cargo run -p parser-contract --example export_schema > schemas/parse-artifact-v3.schema.json
+cargo run -p parser-contract --example export_worker_schemas -- --output-dir schemas
 ```
 
 The broader workspace gate is:
@@ -50,6 +56,7 @@ scripts/coverage-gate.sh --check
 scripts/coverage-gate.sh
 scripts/fault-report-gate.sh
 scripts/benchmark-phase5.sh --ci
+RUN_PHASE5_FULL_CORPUS=1 scripts/benchmark-phase5.sh --ci
 ```
 
 ## Benchmark Acceptance
@@ -64,7 +71,7 @@ Full acceptance requires `scripts/benchmark-phase5.sh --ci` to write `.planning/
 - Failure acceptance: all-raw failures pass when there are zero failed/skipped files, or when failures match a user-approved malformed/non-JSON allowlist and the cached old baseline reports the same failure count.
 - Size acceptance: percentile ratios are reported for trend visibility, but p95 > 10% is accepted; the blocking size criterion is `artifact_size_limit_bytes: 100000`, with selected `artifact_bytes <= 100000`, all-raw `max_artifact_bytes <= 100000`, and `oversized_artifact_count == 0`.
 
-Latest Phase 5.2 all-raw evidence from quick task `260502-jeh` records cached old wall time `501274.528655ms`, new wall time `235598.648803ms`, speedup `2.1277x`, all-raw old/new attempted files `23473`, new successes/failures/skips `23469/4/0`, p95 artifact/raw ratio `0.12417910447761193`, `max_artifact_bytes: 48313`, and `oversized_artifact_count: 0`. The current performance is accepted, the p95 ratio is accepted, and the 4 malformed/non-JSON failures are accepted through `.planning/benchmarks/phase-05-all-raw-accepted-failures.json` as long as old/new failure parity remains unchanged.
+Latest Phase 6 final-gate all-raw evidence records cached old wall time `501274.528655ms`, new wall time `272233.457364ms`, speedup `1.8413x`, all-raw old/new attempted files `23473`, new successes/failures/skips `23469/4/0`, p95 artifact/raw ratio `0.12432307336264753`, `max_artifact_bytes: 48270`, and `oversized_artifact_count: 0`. The current performance is accepted, the p95 ratio is accepted, and the 4 malformed/non-JSON failures are accepted through `.planning/benchmarks/phase-05-all-raw-accepted-failures.json` as long as old/new failure parity remains unchanged.
 
 Short cargo aliases are also available:
 
@@ -76,7 +83,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 can proceed on top of the accepted Phase 5.2 benchmark policy.
+Phase 6 worker integration proceeded on top of the accepted Phase 5.2 benchmark policy and is now complete. Phase 7 can proceed with parallel execution proof, container probes, and operations hardening.
 
 ## Product Context
 
@@ -156,7 +163,7 @@ The expected implementation shape is:
 
 - Rust 2024 Cargo workspace.
 - Current contract crate at `crates/parser-contract`.
-- Pure parser core at `crates/parser-core`, shared by the CLI, future worker, tests, benchmarks, and comparison tools.
+- Pure parser core at `crates/parser-core`, shared by the CLI, worker, tests, benchmarks, and comparison tools.
 - Selective parsing for the v1 hot path, avoiding unnecessary full JSON DOM cloning or full JSON-to-JSON reserialization where practical.
 - Thin runtime adapters for CLI and RabbitMQ/S3 worker mode.
 - `serde` / `serde_json` for correctness-first OCAP JSON parsing.
@@ -168,7 +175,27 @@ Parser output must preserve observed replay identity fields only, such as nickna
 
 Production raw replay discovery is owned by `replays-fetcher`: it writes raw replay objects under S3 `raw/` and ingestion staging records. `server-2` promotes staged records into canonical `replays` and `parse_jobs`, then passes `object_key` and `checksum` to this parser through RabbitMQ.
 
-`replay-parser-2` owns the parser artifact contract and schema. Successful worker parses should write deterministic minimal parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
+`replay-parser-2` owns the parser artifact contract and schema. Successful worker parses write deterministic minimal parser artifacts under S3 `artifacts/` and publish `parse.completed` with an artifact reference. `server-2` remains responsible for validating/storing parser artifacts, mapping them into PostgreSQL and OpenAPI-owned API shapes, and coordinating any API-visible changes with `web`.
+
+## Worker Mode
+
+`replay-parser-2 worker` is implemented for single-worker RabbitMQ/S3 integration.
+
+Worker jobs are JSON messages validated by `schemas/parse-job-v1.schema.json`. Each job contains:
+
+- `job_id`
+- `replay_id`
+- `object_key`
+- `checksum`
+- `parser_contract_version`
+
+The worker reads raw replay objects from S3-compatible storage, computes the local SHA-256 digest, and emits a structured non-retryable failure when the supplied checksum does not match the downloaded bytes. Successful parses write the same minimal v3 artifact shape as the default CLI path; the worker does not use the debug sidecar path.
+
+Successful artifacts use deterministic keys in the form `artifacts/v3/{encoded_replay_id}/{source_sha256}.json`, where the replay segment is percent-encoded and the checksum segment is the raw source SHA-256. The worker publishes `parse.completed` with `job_id`, `replay_id`, parser information, artifact bucket/key/checksum/size, and source checksum proof. Parser failures, malformed jobs, checksum mismatches, storage failures, and unsupported contract versions publish `parse.failed` with structured stage, error code, message, retryability, and optional malformed-job fields.
+
+RabbitMQ delivery acknowledgement is manual. The worker acknowledges a job only after confirmed publication of either `parse.completed` or `parse.failed`; inability to publish a durable outcome is nacked for retry. The default prefetch is `1`, so Phase 6 proves the single in-flight job path. Phase 7 owns multi-worker proof, container probe endpoints, and wider runtime hardening.
+
+Runtime configuration is available through `replay-parser-2 worker --help` and matching environment variables. Do not commit broker credentials or cloud secrets; use local shell environment, secret managers, or deployment-time injection.
 
 ## User Commands
 
@@ -203,14 +230,13 @@ scripts/fault-report-gate.sh
 scripts/benchmark-phase5.sh --ci
 ```
 
-Reserved command slots for later phases:
+Worker integration command:
 
 ```bash
-# Run worker mode for server integration
 replay-parser-2 worker
 ```
 
-Worker mode is Phase 6 scope and is not exposed by the current CLI.
+The command consumes RabbitMQ jobs, reads raw S3 objects, writes parser artifacts to S3-compatible storage, and publishes `parse.completed` or `parse.failed` result messages.
 
 ## Development Workflow
 
@@ -247,4 +273,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-05-02 after Phase 5.2 benchmark gap acceptance.
+Last updated: 2026-05-02 after Phase 6 RabbitMQ/S3 worker integration.
