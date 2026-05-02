@@ -159,14 +159,88 @@ async fn publish_completed_action(
     publisher: &impl ResultPublisher,
     message: &ParseCompletedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
-    Ok(delivery_action_after_publish(publisher.publish_completed(message).await))
+    let published = publisher.publish_completed(message).await;
+    match &published {
+        Ok(PublishedOutcome::Completed) => tracing::info!(
+            event = "worker_job_completed",
+            job_id = %message.job_id,
+            replay_id = %message.replay_id,
+            artifact_key = %message.artifact.key,
+            "worker_job_completed"
+        ),
+        Ok(PublishedOutcome::Failed) => tracing::warn!(
+            event = "worker_job_failed",
+            job_id = %message.job_id,
+            replay_id = %message.replay_id,
+            artifact_key = %message.artifact.key,
+            error_code = "internal.unexpected_publish_outcome",
+            retryability = ?Retryability::Unknown,
+            "worker_job_failed"
+        ),
+        Err(error) => tracing::warn!(
+            event = "worker_job_failed",
+            job_id = %message.job_id,
+            replay_id = %message.replay_id,
+            artifact_key = %message.artifact.key,
+            error_code = "output.rabbitmq_publish",
+            retryability = ?Retryability::Unknown,
+            error = %error,
+            "worker_job_failed"
+        ),
+    }
+    Ok(delivery_action_after_publish(published))
 }
 
 async fn publish_failed_action(
     publisher: &impl ResultPublisher,
     message: &ParseFailedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
-    Ok(delivery_action_after_publish(publisher.publish_failed(message).await))
+    let published = publisher.publish_failed(message).await;
+    let job_id = field_presence_value(&message.job_id);
+    let replay_id = field_presence_value(&message.replay_id);
+    let object_key = field_presence_value(&message.object_key);
+    match &published {
+        Ok(PublishedOutcome::Failed) => tracing::info!(
+            event = "worker_job_failed",
+            job_id = ?job_id,
+            replay_id = ?replay_id,
+            object_key = ?object_key,
+            error_code = %message.failure.error_code.as_str(),
+            retryability = ?message.failure.retryability,
+            "worker_job_failed"
+        ),
+        Ok(PublishedOutcome::Completed) => tracing::warn!(
+            event = "worker_job_failed",
+            job_id = ?job_id,
+            replay_id = ?replay_id,
+            object_key = ?object_key,
+            error_code = "internal.unexpected_publish_outcome",
+            retryability = ?Retryability::Unknown,
+            "worker_job_failed"
+        ),
+        Err(error) => tracing::warn!(
+            event = "worker_job_failed",
+            job_id = ?job_id,
+            replay_id = ?replay_id,
+            object_key = ?object_key,
+            error_code = "output.rabbitmq_publish",
+            retryability = ?Retryability::Unknown,
+            error = %error,
+            "worker_job_failed"
+        ),
+    }
+    Ok(delivery_action_after_publish(published))
+}
+
+fn field_presence_value(presence: &FieldPresence<String>) -> Option<&str> {
+    match presence {
+        FieldPresence::Present { value, .. } | FieldPresence::Inferred { value, .. } => {
+            Some(value.as_str())
+        }
+        FieldPresence::ExplicitNull { .. }
+        | FieldPresence::Unknown { .. }
+        | FieldPresence::NotApplicable { .. } => None,
+    }
 }
 
 fn malformed_job_failed_message(

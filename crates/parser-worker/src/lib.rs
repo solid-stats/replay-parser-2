@@ -17,5 +17,7 @@ pub mod error;
 pub mod processor;
 /// Worker runtime entrypoint.
 pub mod runner;
+/// Graceful shutdown drain helpers.
+pub mod shutdown;
 /// S3-compatible raw replay and artifact object storage.
 pub mod storage;

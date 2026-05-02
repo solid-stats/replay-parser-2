@@ -169,6 +169,12 @@ impl RabbitMqClient {
         &self.consumer
     }
 
+    /// Returns the mutable job consumer stream.
+    #[must_use]
+    pub fn consumer_mut(&mut self) -> &mut Consumer {
+        &mut self.consumer
+    }
+
     /// Returns the channel used for manual delivery acknowledgements.
     #[must_use]
     pub fn consume_channel(&self) -> &Channel {
