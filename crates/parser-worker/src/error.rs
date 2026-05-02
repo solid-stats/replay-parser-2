@@ -39,7 +39,7 @@ pub enum WorkerFailureKind {
         /// Newly produced artifact byte size.
         new_size_bytes: u64,
     },
-    /// RabbitMQ result publication could not be confirmed as durable.
+    /// `RabbitMQ` result publication could not be confirmed as durable.
     #[error("output.rabbitmq_publish: {message}")]
     RabbitMqPublish {
         /// Safe publish failure detail.
@@ -143,7 +143,7 @@ pub enum WorkerError {
     /// Parser metadata could not be constructed or validated.
     #[error("parser metadata error: {0}")]
     ParserMetadata(String),
-    /// RabbitMQ publisher confirmation was negative or missing.
+    /// `RabbitMQ` publisher confirmation was negative or missing.
     #[error("publish confirmation failed: {0}")]
     PublishConfirm(String),
 }

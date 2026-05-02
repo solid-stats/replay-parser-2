@@ -28,13 +28,13 @@ struct FakeAcker {
 }
 
 impl FakeAcker {
-    fn new(calls: Arc<Mutex<Vec<DeliveryAction>>>) -> Self {
+    const fn new(calls: Arc<Mutex<Vec<DeliveryAction>>>) -> Self {
         Self { calls }
     }
 }
 
 impl ShutdownDeliveryAcker for FakeAcker {
-    fn apply<'a>(&'a mut self, action: DeliveryAction) -> ShutdownFuture<'a, ()> {
+    fn apply(&mut self, action: DeliveryAction) -> ShutdownFuture<'_, ()> {
         Box::pin(async move {
             self.calls.lock().expect("fake acker calls lock should not be poisoned").push(action);
             Ok(())
@@ -82,7 +82,7 @@ struct DelayedProcessor {
 }
 
 impl DelayedProcessor {
-    fn new(started: oneshot::Sender<()>, release: oneshot::Receiver<DeliveryAction>) -> Self {
+    const fn new(started: oneshot::Sender<()>, release: oneshot::Receiver<DeliveryAction>) -> Self {
         Self { started: Mutex::new(Some(started)), release: Mutex::new(Some(release)) }
     }
 }

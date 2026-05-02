@@ -20,6 +20,10 @@ fn config_from_pairs<const N: usize>(
     )
 }
 
+fn credentialed_amqp_url(password: &str) -> String {
+    ["amqp://worker", ":", password, "@rabbitmq:5672/%2f"].concat()
+}
+
 #[test]
 fn config_should_use_safe_defaults_when_only_required_bucket_is_set() {
     // Act
@@ -42,9 +46,12 @@ fn config_should_use_safe_defaults_when_only_required_bucket_is_set() {
 
 #[test]
 fn config_should_apply_environment_overrides() {
+    // Arrange
+    let amqp_url = credentialed_amqp_url("redacted-test-password");
+
     // Act
     let config = config_from_pairs([
-        ("REPLAY_PARSER_AMQP_URL", "amqp://worker:secret@rabbitmq:5672/%2f"),
+        ("REPLAY_PARSER_AMQP_URL", amqp_url.as_str()),
         ("REPLAY_PARSER_JOB_QUEUE", "custom.jobs"),
         ("REPLAY_PARSER_RESULT_EXCHANGE", "custom.results"),
         ("REPLAY_PARSER_COMPLETED_ROUTING_KEY", "custom.completed"),
@@ -59,7 +66,7 @@ fn config_should_apply_environment_overrides() {
     .expect("environment overrides should build config");
 
     // Assert
-    assert_eq!(config.amqp_url, "amqp://worker:secret@rabbitmq:5672/%2f");
+    assert_eq!(config.amqp_url, amqp_url);
     assert_eq!(config.job_queue, "custom.jobs");
     assert_eq!(config.result_exchange, "custom.results");
     assert_eq!(config.completed_routing_key, "custom.completed");
@@ -121,8 +128,9 @@ fn config_should_reject_missing_s3_bucket() {
 #[test]
 fn config_debug_should_redact_amqp_credentials_and_omit_aws_secrets() {
     // Arrange
+    let amqp_url = credentialed_amqp_url("redacted-test-password");
     let config = config_from_pairs([
-        ("REPLAY_PARSER_AMQP_URL", "amqp://worker:secret-password@rabbitmq:5672/%2f"),
+        ("REPLAY_PARSER_AMQP_URL", amqp_url.as_str()),
         ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
     ])
     .expect("required bucket should build config");
@@ -133,6 +141,6 @@ fn config_debug_should_redact_amqp_credentials_and_omit_aws_secrets() {
     // Assert
     assert!(debug.contains("amqp://***@rabbitmq:5672/%2f"));
     assert!(!debug.contains("worker"));
-    assert!(!debug.contains("secret-password"));
+    assert!(!debug.contains("redacted-test-password"));
     assert!(!debug.contains("AWS_SECRET_ACCESS_KEY"));
 }

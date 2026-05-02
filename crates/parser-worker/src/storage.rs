@@ -35,7 +35,7 @@ pub struct DownloadedObject {
 }
 
 /// Result of writing or reusing a deterministic parser artifact object.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArtifactWrite {
     /// Durable artifact object reference.
     pub reference: ArtifactReference,
@@ -219,7 +219,7 @@ impl ObjectStore for S3ObjectStore {
     }
 }
 
-fn artifact_write(
+const fn artifact_write(
     bucket: String,
     key: String,
     checksum: SourceChecksum,

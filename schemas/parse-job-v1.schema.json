@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ParseJobMessage",
-  "description": "Parser-worker request message consumed from RabbitMQ.",
+  "description": "Parser-worker request message consumed from an AMQP broker.",
   "type": "object",
   "properties": {
     "checksum": {

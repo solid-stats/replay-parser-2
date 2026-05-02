@@ -10,8 +10,8 @@ use crate::{
     version::{ContractVersion, ParserInfo},
 };
 
-/// Parser-worker request message consumed from RabbitMQ.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+/// Parser-worker request message consumed from an AMQP broker.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ParseJobMessage {
     /// Durable parse-job identifier owned by `server-2`.
     pub job_id: String,
@@ -26,7 +26,7 @@ pub struct ParseJobMessage {
 }
 
 /// S3-compatible object reference for a parser artifact.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ArtifactReference {
     /// Artifact object bucket.
     pub bucket: String,
@@ -46,7 +46,7 @@ pub enum ParseResultKind {
 }
 
 /// Successful parser-worker result message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ParseCompletedMessage {
     /// Result message routing kind.
     pub message_type: ParseResultKind,
@@ -71,6 +71,10 @@ pub struct ParseCompletedMessage {
 impl ParseCompletedMessage {
     /// Builds a completed worker result and sets the routing kind.
     #[must_use]
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "constructor mirrors the explicit worker result wire fields"
+    )]
     pub const fn new(
         job_id: String,
         replay_id: String,
@@ -211,7 +215,7 @@ pub enum UnsupportedContractVersionFailureError {
 #[serde(untagged)]
 pub enum ParseResultMessage {
     /// Successful parser-worker result.
-    Completed(ParseCompletedMessage),
+    Completed(Box<ParseCompletedMessage>),
     /// Failed parser-worker result.
-    Failed(ParseFailedMessage),
+    Failed(Box<ParseFailedMessage>),
 }

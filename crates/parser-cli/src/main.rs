@@ -83,13 +83,13 @@ enum Commands {
     },
     /// Run the RabbitMQ/S3 parser worker.
     Worker {
-        /// RabbitMQ AMQP URL.
+        /// `RabbitMQ` AMQP URL.
         #[arg(long)]
         amqp_url: Option<String>,
-        /// RabbitMQ parse job queue.
+        /// `RabbitMQ` parse job queue.
         #[arg(long)]
         job_queue: Option<String>,
-        /// RabbitMQ exchange for parse results.
+        /// `RabbitMQ` exchange for parse results.
         #[arg(long)]
         result_exchange: Option<String>,
         /// Routing key for successful parse results.
@@ -113,7 +113,7 @@ enum Commands {
         /// Artifact object key prefix.
         #[arg(long)]
         artifact_prefix: Option<String>,
-        /// RabbitMQ prefetch count.
+        /// `RabbitMQ` prefetch count.
         #[arg(long)]
         prefetch: Option<u16>,
     },
@@ -200,12 +200,12 @@ impl Error for CliError {
             Self::ReadInput { source, .. }
             | Self::WriteOutput { source, .. }
             | Self::WriteStdout(source)
-            | Self::WriteStderr(source) => Some(source),
+            | Self::WriteStderr(source)
+            | Self::WorkerRuntime(source) => Some(source),
             Self::Serialize(source) | Self::ParserInfo(source) => Some(source),
             Self::Checksum(source) => Some(source),
             Self::Compare(source) => Some(source),
             Self::Worker(source) => Some(source),
-            Self::WorkerRuntime(source) => Some(source),
             Self::CompareRequiresInput
             | Self::CompareConflictingInput
             | Self::CompareJsonDetailOutput

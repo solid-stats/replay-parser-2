@@ -1,4 +1,4 @@
-//! RabbitMQ adapter for parse-job consumption and parse-result publication.
+//! `RabbitMQ` adapter for parse-job consumption and parse-result publication.
 
 use std::pin::Pin;
 
@@ -47,10 +47,10 @@ pub fn delivery_action_after_publish(
 }
 
 /// Boxed acknowledgement future used by testable acker adapters.
-pub type AckerFuture<'a> = Pin<Box<dyn Future<Output = Result<(), WorkerError>> + 'a>>;
+pub type AckerFuture<'a> = Pin<Box<dyn Future<Output = Result<(), WorkerError>> + Send + 'a>>;
 
 /// Minimal acknowledgement interface used to test ack policy without a live broker.
-pub trait DeliveryAcker {
+pub trait DeliveryAcker: Send {
     /// Acknowledge a delivery.
     fn ack(&mut self, options: lapin::options::BasicAckOptions) -> AckerFuture<'_>;
 
@@ -92,7 +92,7 @@ impl DeliveryAcker for LapinDeliveryAcker<'_> {
 ///
 /// # Errors
 ///
-/// Returns [`WorkerError`] when RabbitMQ rejects the ack/nack operation.
+/// Returns [`WorkerError`] when `RabbitMQ` rejects the ack/nack operation.
 pub async fn apply_delivery_action(
     acker: &mut impl DeliveryAcker,
     action: DeliveryAction,
@@ -109,7 +109,7 @@ pub async fn apply_delivery_action(
 ///
 /// # Errors
 ///
-/// Returns [`WorkerError`] when RabbitMQ rejects the ack/nack operation.
+/// Returns [`WorkerError`] when `RabbitMQ` rejects the ack/nack operation.
 pub async fn apply_lapin_delivery_action(
     delivery: &Delivery,
     action: DeliveryAction,
@@ -118,7 +118,7 @@ pub async fn apply_lapin_delivery_action(
     apply_delivery_action(&mut acker, action).await
 }
 
-/// RabbitMQ client with separate channels for consuming jobs and publishing results.
+/// `RabbitMQ` client with separate channels for consuming jobs and publishing results.
 #[derive(Debug)]
 pub struct RabbitMqClient {
     _connection: Connection,
@@ -129,11 +129,11 @@ pub struct RabbitMqClient {
 }
 
 impl RabbitMqClient {
-    /// Connects to RabbitMQ, configures manual consumption, and enables publisher confirms.
+    /// Connects to `RabbitMQ`, configures manual consumption, and enables publisher confirms.
     ///
     /// # Errors
     ///
-    /// Returns [`WorkerError`] when connection, channel, QoS, consumer, or confirm setup fails.
+    /// Returns [`WorkerError`] when connection, channel, `QoS`, consumer, or confirm setup fails.
     pub async fn connect(config: &WorkerConfig) -> Result<Self, WorkerError> {
         config.validate()?;
 
@@ -165,19 +165,19 @@ impl RabbitMqClient {
 
     /// Returns the job consumer stream.
     #[must_use]
-    pub fn consumer(&self) -> &Consumer {
+    pub const fn consumer(&self) -> &Consumer {
         &self.consumer
     }
 
     /// Returns the mutable job consumer stream.
     #[must_use]
-    pub fn consumer_mut(&mut self) -> &mut Consumer {
+    pub const fn consumer_mut(&mut self) -> &mut Consumer {
         &mut self.consumer
     }
 
     /// Returns the channel used for manual delivery acknowledgements.
     #[must_use]
-    pub fn consume_channel(&self) -> &Channel {
+    pub const fn consume_channel(&self) -> &Channel {
         &self.consume_channel
     }
 
@@ -221,7 +221,7 @@ impl RabbitMqClient {
     }
 }
 
-/// Serialized result publication ready for RabbitMQ.
+/// Serialized result publication ready for `RabbitMQ`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PreparedResultPublish {
     /// Result exchange name.
@@ -245,11 +245,11 @@ pub fn prepare_completed_publish(
     config: &WorkerConfig,
     message: &ParseCompletedMessage,
 ) -> Result<PreparedResultPublish, WorkerError> {
-    prepare_result_publish(
+    Ok(prepare_result_publish(
         config,
         config.completed_routing_key.clone(),
         serde_json::to_vec(message)?,
-    )
+    ))
 }
 
 /// Builds a publish request for a `parse.failed` result.
@@ -261,24 +261,28 @@ pub fn prepare_failed_publish(
     config: &WorkerConfig,
     message: &ParseFailedMessage,
 ) -> Result<PreparedResultPublish, WorkerError> {
-    prepare_result_publish(config, config.failed_routing_key.clone(), serde_json::to_vec(message)?)
+    Ok(prepare_result_publish(
+        config,
+        config.failed_routing_key.clone(),
+        serde_json::to_vec(message)?,
+    ))
 }
 
 fn prepare_result_publish(
     config: &WorkerConfig,
     routing_key: String,
     body: Vec<u8>,
-) -> Result<PreparedResultPublish, WorkerError> {
-    Ok(PreparedResultPublish {
+) -> PreparedResultPublish {
+    PreparedResultPublish {
         exchange: config.result_exchange.clone(),
         routing_key,
         body,
         content_type: RESULT_CONTENT_TYPE,
         mandatory: true,
-    })
+    }
 }
 
-/// Validates that RabbitMQ accepted a published result and did not return a mandatory message.
+/// Validates that `RabbitMQ` accepted a published result and did not return a mandatory message.
 ///
 /// # Errors
 ///
@@ -288,10 +292,10 @@ pub fn ensure_publish_confirmed(confirmation: Confirmation) -> Result<(), Worker
     match confirmation {
         Confirmation::Ack(None) => Ok(()),
         Confirmation::Ack(Some(returned)) => Err(returned_message_error("ack", &returned)),
-        Confirmation::Nack(returned) => Err(match returned {
-            Some(returned) => returned_message_error("nack", &returned),
-            None => rabbitmq_publish_error("broker nacked result publish".to_owned()),
-        }),
+        Confirmation::Nack(returned) => Err(returned.map_or_else(
+            || rabbitmq_publish_error("broker nacked result publish".to_owned()),
+            |returned| returned_message_error("nack", &returned),
+        )),
         Confirmation::NotRequested => {
             Err(rabbitmq_publish_error("publisher confirmation was not requested".to_owned()))
         }
@@ -308,6 +312,6 @@ fn returned_message_error(kind: &str, returned: &BasicReturnMessage) -> WorkerEr
     ))
 }
 
-fn rabbitmq_publish_error(message: String) -> WorkerError {
+const fn rabbitmq_publish_error(message: String) -> WorkerError {
     WorkerError::Failure(WorkerFailureKind::RabbitMqPublish { message })
 }

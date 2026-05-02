@@ -37,20 +37,20 @@ pub trait ResultPublisher: Sync {
 impl ResultPublisher for RabbitMqClient {
     fn publish_completed<'a>(&'a self, message: &'a ParseCompletedMessage) -> PublisherFuture<'a> {
         Box::pin(async move {
-            RabbitMqClient::publish_completed(self, message).await?;
+            Self::publish_completed(self, message).await?;
             Ok(PublishedOutcome::Completed)
         })
     }
 
     fn publish_failed<'a>(&'a self, message: &'a ParseFailedMessage) -> PublisherFuture<'a> {
         Box::pin(async move {
-            RabbitMqClient::publish_failed(self, message).await?;
+            Self::publish_failed(self, message).await?;
             Ok(PublishedOutcome::Failed)
         })
     }
 }
 
-/// Processes one RabbitMQ job body through storage, parser-core, artifact write, and result publish.
+/// Processes one `RabbitMQ` job body through storage, parser-core, artifact write, and result publish.
 ///
 /// # Errors
 ///
@@ -103,7 +103,7 @@ async fn process_decoded_job(
     };
 
     if let Err(kind) = verify_source_checksum(&downloaded.bytes, &job.checksum) {
-        let failed = worker_failure_message(&context, kind, parser_info)?;
+        let failed = worker_failure_message(&context, &kind, parser_info)?;
         return publish_failed_action(publisher, &failed).await;
     }
 
@@ -159,8 +159,8 @@ async fn publish_completed_action(
     publisher: &impl ResultPublisher,
     message: &ParseCompletedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
-    let published = publisher.publish_completed(message).await;
-    match &published {
+    let publish_result = publisher.publish_completed(message).await;
+    match &publish_result {
         Ok(PublishedOutcome::Completed) => tracing::info!(
             event = "worker_job_completed",
             job_id = %message.job_id,
@@ -188,18 +188,18 @@ async fn publish_completed_action(
             "worker_job_failed"
         ),
     }
-    Ok(delivery_action_after_publish(published))
+    Ok(delivery_action_after_publish(publish_result))
 }
 
 async fn publish_failed_action(
     publisher: &impl ResultPublisher,
     message: &ParseFailedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
-    let published = publisher.publish_failed(message).await;
+    let publish_result = publisher.publish_failed(message).await;
     let job_id = field_presence_value(&message.job_id);
     let replay_id = field_presence_value(&message.replay_id);
     let object_key = field_presence_value(&message.object_key);
-    match &published {
+    match &publish_result {
         Ok(PublishedOutcome::Failed) => tracing::info!(
             event = "worker_job_failed",
             job_id = ?job_id,
@@ -229,10 +229,10 @@ async fn publish_failed_action(
             "worker_job_failed"
         ),
     }
-    Ok(delivery_action_after_publish(published))
+    Ok(delivery_action_after_publish(publish_result))
 }
 
-fn field_presence_value(presence: &FieldPresence<String>) -> Option<&str> {
+const fn field_presence_value(presence: &FieldPresence<String>) -> Option<&str> {
     match presence {
         FieldPresence::Present { value, .. } | FieldPresence::Inferred { value, .. } => {
             Some(value.as_str())
@@ -291,7 +291,7 @@ fn parser_failed_message(
 
 fn worker_failure_message(
     context: &JobContext,
-    kind: WorkerFailureKind,
+    kind: &WorkerFailureKind,
     parser: ParserInfo,
 ) -> Result<ParseFailedMessage, WorkerError> {
     let failure = build_parse_failure(
@@ -311,7 +311,7 @@ fn storage_failed_message(
     parser: ParserInfo,
 ) -> Result<ParseFailedMessage, WorkerError> {
     match error {
-        WorkerError::Failure(kind) => worker_failure_message(context, kind, parser),
+        WorkerError::Failure(kind) => worker_failure_message(context, &kind, parser),
         WorkerError::ObjectNotFound { stage, retryability, key, .. } => {
             let code = storage_error_code(stage);
             let failure = build_parse_failure(
@@ -470,7 +470,7 @@ impl JobContext {
     }
 }
 
-fn present<T>(value: T) -> FieldPresence<T> {
+const fn present<T>(value: T) -> FieldPresence<T> {
     FieldPresence::Present { value, source: None }
 }
 
@@ -486,26 +486,30 @@ fn string_value(value: Option<&serde_json::Value>, key: &str) -> Option<String> 
     value.and_then(|root| root.get(key)).and_then(serde_json::Value::as_str).map(str::to_owned)
 }
 
-fn unknown<T>(reason: UnknownReason) -> FieldPresence<T> {
+const fn unknown<T>(reason: UnknownReason) -> FieldPresence<T> {
     FieldPresence::Unknown { reason, source: None }
 }
 
 fn contract_version_presence(value: Option<&serde_json::Value>) -> FieldPresence<ContractVersion> {
-    match value.and_then(|root| root.get("parser_contract_version")) {
-        Some(field) => serde_json::from_value::<ContractVersion>(field.clone())
-            .map_or_else(|_error| unknown(UnknownReason::SchemaDrift), present),
-        None => unknown(UnknownReason::SourceFieldAbsent),
-    }
+    value.and_then(|root| root.get("parser_contract_version")).map_or_else(
+        || unknown(UnknownReason::SourceFieldAbsent),
+        |field| {
+            serde_json::from_value::<ContractVersion>(field.clone())
+                .map_or_else(|_error| unknown(UnknownReason::SchemaDrift), present)
+        },
+    )
 }
 
 fn checksum_presence(value: Option<&serde_json::Value>) -> FieldPresence<SourceChecksum> {
-    match value.and_then(|root| root.get("checksum")) {
-        Some(field) => serde_json::from_value::<SourceChecksum>(field.clone())
-            .map_or_else(|_error| unknown(UnknownReason::SchemaDrift), present),
-        None => unknown(UnknownReason::SourceFieldAbsent),
-    }
+    value.and_then(|root| root.get("checksum")).map_or_else(
+        || unknown(UnknownReason::SourceFieldAbsent),
+        |field| {
+            serde_json::from_value::<SourceChecksum>(field.clone())
+                .map_or_else(|_error| unknown(UnknownReason::SchemaDrift), present)
+        },
+    )
 }
 
-fn internal_error(code: &'static str, message: String) -> WorkerError {
+const fn internal_error(code: &'static str, message: String) -> WorkerError {
     WorkerError::Failure(WorkerFailureKind::Internal { code, message })
 }

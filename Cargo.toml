@@ -65,6 +65,9 @@ dbg_macro = "deny"
 expect_used = "deny"
 float_cmp = "deny"
 integer_division = "deny"
+# The worker stack pulls AWS SDK and AMQP TLS/HTTP transitive trees with
+# duplicate crate versions; Cargo.lock review is the practical control here.
+multiple_crate_versions = "allow"
 nursery = { level = "deny", priority = -1 }
 panic = "deny"
 pedantic = { level = "deny", priority = -1 }

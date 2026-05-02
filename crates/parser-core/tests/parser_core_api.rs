@@ -159,7 +159,7 @@ fn parser_core_api_should_not_populate_produced_at_when_parser_core_runs() {
     assert_eq!(artifact.produced_at, None);
 }
 
-fn field_has_source<T>(presence: &FieldPresence<T>) -> bool {
+const fn field_has_source<T>(presence: &FieldPresence<T>) -> bool {
     match presence {
         FieldPresence::Present { source, .. }
         | FieldPresence::ExplicitNull { source, .. }

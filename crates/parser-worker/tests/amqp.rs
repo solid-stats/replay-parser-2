@@ -1,4 +1,9 @@
-//! RabbitMQ adapter behavior tests.
+//! `RabbitMQ` adapter behavior tests.
+
+#![allow(
+    clippy::expect_used,
+    reason = "integration tests use expect messages as assertion context"
+)]
 
 use lapin::{
     Confirmation,

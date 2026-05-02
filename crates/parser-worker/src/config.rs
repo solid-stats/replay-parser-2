@@ -9,11 +9,11 @@ use std::fmt;
 
 use crate::error::WorkerError;
 
-/// Environment variable for the RabbitMQ AMQP URL.
+/// Environment variable for the `RabbitMQ` AMQP URL.
 pub const ENV_AMQP_URL: &str = "REPLAY_PARSER_AMQP_URL";
-/// Environment variable for the RabbitMQ job queue name.
+/// Environment variable for the `RabbitMQ` job queue name.
 pub const ENV_JOB_QUEUE: &str = "REPLAY_PARSER_JOB_QUEUE";
-/// Environment variable for the RabbitMQ result exchange name.
+/// Environment variable for the `RabbitMQ` result exchange name.
 pub const ENV_RESULT_EXCHANGE: &str = "REPLAY_PARSER_RESULT_EXCHANGE";
 /// Environment variable for the successful-result routing key.
 pub const ENV_COMPLETED_ROUTING_KEY: &str = "REPLAY_PARSER_COMPLETED_ROUTING_KEY";
@@ -29,14 +29,14 @@ pub const ENV_S3_ENDPOINT: &str = "REPLAY_PARSER_S3_ENDPOINT";
 pub const ENV_S3_FORCE_PATH_STYLE: &str = "REPLAY_PARSER_S3_FORCE_PATH_STYLE";
 /// Environment variable for the parser artifact key prefix.
 pub const ENV_ARTIFACT_PREFIX: &str = "REPLAY_PARSER_ARTIFACT_PREFIX";
-/// Environment variable for RabbitMQ prefetch.
+/// Environment variable for `RabbitMQ` prefetch.
 pub const ENV_PREFETCH: &str = "REPLAY_PARSER_PREFETCH";
 
-/// Default local RabbitMQ AMQP URL.
+/// Default local `RabbitMQ` AMQP URL.
 pub const DEFAULT_AMQP_URL: &str = "amqp://127.0.0.1:5672/%2f";
-/// Default RabbitMQ job queue name.
+/// Default `RabbitMQ` job queue name.
 pub const DEFAULT_JOB_QUEUE: &str = "parse.jobs";
-/// Default RabbitMQ result exchange name.
+/// Default `RabbitMQ` result exchange name.
 pub const DEFAULT_RESULT_EXCHANGE: &str = "parse.results";
 /// Default routing key for successful parse results.
 pub const DEFAULT_COMPLETED_ROUTING_KEY: &str = "parse.completed";
@@ -46,17 +46,17 @@ pub const DEFAULT_FAILED_ROUTING_KEY: &str = "parse.failed";
 pub const DEFAULT_S3_REGION: &str = "us-east-1";
 /// Default artifact key prefix.
 pub const DEFAULT_ARTIFACT_PREFIX: &str = "artifacts/v3";
-/// Default in-flight RabbitMQ job count.
+/// Default in-flight `RabbitMQ` job count.
 pub const DEFAULT_PREFETCH: u16 = 1;
 
 /// Validated worker runtime configuration.
 #[derive(Clone, Eq, PartialEq)]
 pub struct WorkerConfig {
-    /// RabbitMQ AMQP URL.
+    /// `RabbitMQ` AMQP URL.
     pub amqp_url: String,
-    /// RabbitMQ job queue name.
+    /// `RabbitMQ` job queue name.
     pub job_queue: String,
-    /// RabbitMQ exchange used for completed and failed result messages.
+    /// `RabbitMQ` exchange used for completed and failed result messages.
     pub result_exchange: String,
     /// Routing key for completed parse results.
     pub completed_routing_key: String,
@@ -72,18 +72,18 @@ pub struct WorkerConfig {
     pub s3_force_path_style: bool,
     /// Prefix used for parser artifact object keys.
     pub artifact_prefix: String,
-    /// RabbitMQ prefetch count. Phase 6 defaults this to one in-flight job.
+    /// `RabbitMQ` prefetch count. Phase 6 defaults this to one in-flight job.
     pub prefetch: u16,
 }
 
 /// Explicit configuration values supplied by the CLI.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct WorkerConfigOverrides {
-    /// RabbitMQ AMQP URL.
+    /// `RabbitMQ` AMQP URL.
     pub amqp_url: Option<String>,
-    /// RabbitMQ job queue name.
+    /// `RabbitMQ` job queue name.
     pub job_queue: Option<String>,
-    /// RabbitMQ exchange used for completed and failed result messages.
+    /// `RabbitMQ` exchange used for completed and failed result messages.
     pub result_exchange: Option<String>,
     /// Routing key for completed parse results.
     pub completed_routing_key: Option<String>,
@@ -99,12 +99,16 @@ pub struct WorkerConfigOverrides {
     pub s3_force_path_style: Option<bool>,
     /// Prefix used for parser artifact object keys.
     pub artifact_prefix: Option<String>,
-    /// RabbitMQ prefetch count.
+    /// `RabbitMQ` prefetch count.
     pub prefetch: Option<u16>,
 }
 
 impl WorkerConfig {
     /// Builds worker configuration from process environment variables.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`WorkerError`] when required settings are missing or invalid.
     pub fn from_env() -> Result<Self, WorkerError> {
         Self::from_env_and_overrides(
             |name| std::env::var(name).ok(),
@@ -116,6 +120,10 @@ impl WorkerConfig {
     ///
     /// Explicit overrides take precedence over environment variables, and
     /// environment variables take precedence over safe defaults.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`WorkerError`] when required settings are missing or invalid.
     pub fn from_env_and_overrides(
         mut env: impl FnMut(&str) -> Option<String>,
         overrides: WorkerConfigOverrides,
@@ -174,6 +182,10 @@ impl WorkerConfig {
     }
 
     /// Validates required non-empty fields and bounded runtime settings.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`WorkerError`] when any required setting is empty or invalid.
     pub fn validate(&self) -> Result<(), WorkerError> {
         validate_non_empty("amqp_url", &self.amqp_url)?;
         validate_non_empty("job_queue", &self.job_queue)?;
@@ -189,7 +201,7 @@ impl WorkerConfig {
 
     /// Returns a redacted representation suitable for logs.
     #[must_use]
-    pub fn redacted(&self) -> RedactedWorkerConfig<'_> {
+    pub const fn redacted(&self) -> RedactedWorkerConfig<'_> {
         RedactedWorkerConfig { config: self }
     }
 }
@@ -254,7 +266,7 @@ fn validate_non_empty(name: &str, value: &str) -> Result<(), WorkerError> {
     Ok(())
 }
 
-fn validation_error(message: String) -> WorkerError {
+const fn validation_error(message: String) -> WorkerError {
     WorkerError::ConfigValidation(message)
 }
 

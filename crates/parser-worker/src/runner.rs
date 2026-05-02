@@ -17,6 +17,11 @@ use crate::{
 ///
 /// The runner owns live AMQP/S3 clients, shutdown signal handling, and applying the
 /// processor's ack/nack decision to each delivery.
+///
+/// # Errors
+///
+/// Returns [`WorkerError`] when configuration, storage, AMQP, processing, or ack/nack
+/// operations fail.
 pub async fn run(config: WorkerConfig) -> Result<(), WorkerError> {
     init_tracing();
     config.validate()?;

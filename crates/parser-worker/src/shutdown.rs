@@ -28,7 +28,7 @@ pub trait ShutdownJobProcessor: Sync {
 /// Ack boundary used by shutdown drain tests.
 pub trait ShutdownDeliveryAcker {
     /// Applies the processor delivery action.
-    fn apply<'a>(&'a mut self, action: DeliveryAction) -> ShutdownFuture<'a, ()>;
+    fn apply(&mut self, action: DeliveryAction) -> ShutdownFuture<'_, ()>;
 }
 
 /// Summary of one drain loop.

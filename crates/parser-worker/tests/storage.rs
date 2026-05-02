@@ -273,7 +273,7 @@ async fn storage_download_raw_should_return_unknown_input_failure_when_object_is
             assert_eq!(retryability, Retryability::Unknown);
         }
         other => {
-            assert!(other.to_string().contains("S3 object not found"), "unexpected error: {other}")
+            assert!(other.to_string().contains("S3 object not found"), "unexpected error: {other}");
         }
     }
 }
@@ -295,7 +295,7 @@ async fn storage_download_raw_should_return_retryable_get_failure_without_panick
             assert_eq!(retryability, Retryability::Retryable);
         }
         other => {
-            assert!(other.to_string().contains("S3 operation failed"), "unexpected error: {other}")
+            assert!(other.to_string().contains("S3 operation failed"), "unexpected error: {other}");
         }
     }
 }
@@ -320,7 +320,7 @@ async fn storage_write_artifact_should_return_retryable_put_failure_without_pani
             assert_eq!(retryability, Retryability::Retryable);
         }
         other => {
-            assert!(other.to_string().contains("S3 operation failed"), "unexpected error: {other}")
+            assert!(other.to_string().contains("S3 operation failed"), "unexpected error: {other}");
         }
     }
 }

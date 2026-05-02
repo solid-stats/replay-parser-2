@@ -280,7 +280,10 @@ async fn processor_valid_job_should_write_artifact_and_publish_completed() {
     assert_eq!(completed[0].artifact.bucket, "solid-replays");
     assert_eq!(completed[0].artifact.key, key);
     assert_eq!(completed[0].artifact_checksum, stored_checksum);
-    assert_eq!(completed[0].artifact_size_bytes, stored.len() as u64);
+    assert_eq!(
+        completed[0].artifact_size_bytes,
+        u64::try_from(stored.len()).expect("stored bytes length should fit u64")
+    );
     assert_eq!(completed[0].source_checksum, job.checksum);
     assert!(publisher.failed_messages().is_empty());
 }

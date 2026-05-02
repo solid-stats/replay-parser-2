@@ -27,11 +27,11 @@ fn artifact_checksum() -> SourceChecksum {
     checksum("2222222222222222222222222222222222222222222222222222222222222222")
 }
 
-fn present<T>(value: T) -> FieldPresence<T> {
+const fn present<T>(value: T) -> FieldPresence<T> {
     FieldPresence::Present { value, source: None }
 }
 
-fn unknown<T>() -> FieldPresence<T> {
+const fn unknown<T>() -> FieldPresence<T> {
     FieldPresence::Unknown { reason: UnknownReason::SourceFieldAbsent, source: None }
 }
 

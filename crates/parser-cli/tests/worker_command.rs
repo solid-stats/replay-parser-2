@@ -30,6 +30,10 @@ fn run_worker(args: &[&str]) -> Output {
     command.arg("worker").args(args).output().expect("worker command should run")
 }
 
+fn credentialed_amqp_url(password: &str) -> String {
+    ["amqp://worker", ":", password, "@rabbitmq:5672/%2f"].concat()
+}
+
 #[test]
 fn worker_command_help_should_list_runtime_configuration_flags() {
     // Act
@@ -48,8 +52,11 @@ fn worker_command_help_should_list_runtime_configuration_flags() {
 
 #[test]
 fn worker_command_missing_s3_bucket_should_fail_without_printing_secrets() {
+    // Arrange
+    let amqp_url = credentialed_amqp_url("redacted-test-password");
+
     // Act
-    let command_output = run_worker(&["--amqp-url", "amqp://worker:secret@rabbitmq:5672/%2f"]);
+    let command_output = run_worker(&["--amqp-url", amqp_url.as_str()]);
     let stderr =
         String::from_utf8(command_output.stderr).expect("stderr should be valid UTF-8 text");
 
@@ -57,6 +64,6 @@ fn worker_command_missing_s3_bucket_should_fail_without_printing_secrets() {
     assert!(!command_output.status.success());
     assert!(stderr.contains("REPLAY_PARSER_S3_BUCKET"));
     assert!(!stderr.contains("AWS_SECRET_ACCESS_KEY"));
-    assert!(!stderr.contains("amqp://worker:secret@rabbitmq:5672/%2f"));
-    assert!(!stderr.contains("secret"));
+    assert!(!stderr.contains(&amqp_url));
+    assert!(!stderr.contains("redacted-test-password"));
 }
