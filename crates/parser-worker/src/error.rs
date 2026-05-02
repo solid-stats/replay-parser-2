@@ -89,11 +89,33 @@ pub enum WorkerError {
     /// RabbitMQ/AMQP operation failed.
     #[error("AMQP operation failed: {0}")]
     Amqp(#[from] lapin::Error),
+    /// S3 object was not found.
+    #[error("S3 object not found during {operation} for bucket {bucket} key {key}")]
+    ObjectNotFound {
+        /// Operation being attempted.
+        operation: &'static str,
+        /// S3 bucket name.
+        bucket: String,
+        /// S3 object key.
+        key: String,
+        /// Parser stage where the storage failure belongs.
+        stage: ParseStage,
+        /// Retryability classification for the storage failure.
+        retryability: Retryability,
+    },
     /// S3 operation failed.
-    #[error("S3 operation failed during {operation}: {message}")]
+    #[error("S3 operation failed during {operation} for bucket {bucket} key {key}: {message}")]
     S3 {
         /// Operation being attempted.
         operation: &'static str,
+        /// S3 bucket name.
+        bucket: String,
+        /// S3 object key.
+        key: String,
+        /// Parser stage where the storage failure belongs.
+        stage: ParseStage,
+        /// Retryability classification for the storage failure.
+        retryability: Retryability,
         /// Error details without secret-bearing configuration.
         message: String,
     },

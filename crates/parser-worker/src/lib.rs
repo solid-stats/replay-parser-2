@@ -13,3 +13,5 @@ pub mod config;
 pub mod error;
 /// Worker runtime entrypoint.
 pub mod runner;
+/// S3-compatible raw replay and artifact object storage.
+pub mod storage;
