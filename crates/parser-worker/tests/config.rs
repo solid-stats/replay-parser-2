@@ -238,6 +238,37 @@ fn config_debug_should_redact_amqp_credentials_and_omit_aws_secrets() {
 }
 
 #[test]
+fn worker_config_redaction_should_keep_worker_and_probe_fields_but_hide_amqp_credentials() {
+    // Arrange
+    let password = "phase-seven-secret";
+    let amqp_url = credentialed_amqp_url(password);
+    let config = config_from_pairs([
+        ("REPLAY_PARSER_AMQP_URL", amqp_url.as_str()),
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_PROBE_BIND", "127.0.0.1"),
+        ("REPLAY_PARSER_PROBE_PORT", "18080"),
+        ("REPLAY_PARSER_PROBES_ENABLED", "true"),
+        ("REPLAY_PARSER_WORKER_ID", "worker-redaction-test"),
+    ])
+    .expect("required bucket should build config");
+
+    // Act
+    let redacted = format!("{:?}", config.redacted());
+
+    // Assert
+    assert!(redacted.contains("worker_id"));
+    assert!(redacted.contains("worker-redaction-test"));
+    assert!(redacted.contains("probe_bind"));
+    assert!(redacted.contains("127.0.0.1"));
+    assert!(redacted.contains("probe_port"));
+    assert!(redacted.contains("18080"));
+    assert!(redacted.contains("probes_enabled"));
+    assert!(redacted.contains("amqp://***@rabbitmq:5672/%2f"));
+    assert!(!redacted.contains(password));
+    assert!(!redacted.contains("worker:phase-seven-secret"));
+}
+
+#[test]
 fn config_debug_should_redact_amqp_password_containing_at_sign() {
     // Arrange
     let amqp_url = credentialed_amqp_url("p@ss");

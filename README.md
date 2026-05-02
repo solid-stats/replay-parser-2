@@ -243,7 +243,7 @@ Deployable worker image:
 ```bash
 docker build -t replay-parser-2-worker .
 docker run --rm \
-  -e REPLAY_PARSER_AMQP_URL='amqp://user:pass@rabbitmq:5672/%2f' \
+  -e REPLAY_PARSER_AMQP_URL \
   -e REPLAY_PARSER_S3_BUCKET='solid-replays' \
   -e AWS_REGION='us-east-1' \
   -e AWS_ACCESS_KEY_ID \
