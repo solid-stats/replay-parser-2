@@ -13,13 +13,12 @@ use std::{
 use clap::{Parser, Subcommand, ValueEnum};
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
-    metadata::ReplayMetadata,
     presence::FieldPresence,
     schema::parse_artifact_schema,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay, parse_replay_debug};
+use parser_core::{ParserInput, ParserOptions, parse_replay_debug, public_parse_replay};
 use parser_harness::{
     comparison::{ComparisonError, compare_artifacts},
     summary_report::render_markdown_summary,
@@ -278,7 +277,7 @@ fn parse_command(
     }
 
     let input_data = read_parser_input(input, replay_id)?;
-    let artifact = public_parse_artifact(parse_replay(input_data.parser_input()));
+    let artifact = public_parse_replay(input_data.parser_input());
     let artifact_bytes = if pretty {
         serde_json::to_vec_pretty(&artifact).map_err(CliError::Serialize)?
     } else {
@@ -315,7 +314,7 @@ fn parse_artifact_from_input(
     replay_id: Option<String>,
 ) -> Result<ParseArtifact, CliError> {
     let input_data = read_parser_input(input, replay_id)?;
-    Ok(parse_replay(input_data.parser_input()))
+    Ok(public_parse_replay(input_data.parser_input()))
 }
 
 struct ReadParserInput {
@@ -349,34 +348,6 @@ fn read_parser_input(input: &Path, replay_id: Option<String>) -> Result<ReadPars
     };
     let parser = parser_info()?;
     Ok(ReadParserInput { bytes, source, parser })
-}
-
-fn public_parse_artifact(mut artifact: ParseArtifact) -> ParseArtifact {
-    if let Some(replay) = artifact.replay.as_mut() {
-        strip_replay_metadata_sources(replay);
-    }
-    artifact
-}
-
-fn strip_replay_metadata_sources(replay: &mut ReplayMetadata) {
-    strip_field_presence_source(&mut replay.mission_name);
-    strip_field_presence_source(&mut replay.world_name);
-    strip_field_presence_source(&mut replay.mission_author);
-    strip_field_presence_source(&mut replay.players_count);
-    strip_field_presence_source(&mut replay.capture_delay);
-    strip_field_presence_source(&mut replay.end_frame);
-    strip_field_presence_source(&mut replay.time_bounds);
-    strip_field_presence_source(&mut replay.frame_bounds);
-}
-
-fn strip_field_presence_source<T>(presence: &mut FieldPresence<T>) {
-    match presence {
-        FieldPresence::Present { source, .. }
-        | FieldPresence::ExplicitNull { source, .. }
-        | FieldPresence::Unknown { source, .. }
-        | FieldPresence::Inferred { source, .. } => *source = None,
-        FieldPresence::NotApplicable { .. } => {}
-    }
 }
 
 fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
@@ -509,7 +480,7 @@ mod tests {
                 source: None,
             },
         };
-        let mut artifact = parse_replay(ParserInput {
+        let mut artifact = parser_core::parse_replay(ParserInput {
             bytes: b"{",
             source,
             parser: parser_info().expect("parser info should be valid"),

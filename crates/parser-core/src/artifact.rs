@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     failure::{ErrorCode, ErrorCodeError, ParseFailure, ParseStage, Retryability},
+    metadata::ReplayMetadata,
     presence::{FieldPresence, UnknownReason},
     side_facts::ReplaySideFacts,
     source_ref::{
@@ -39,6 +40,36 @@ pub fn parse_replay(input: ParserInput<'_>) -> ParseArtifact {
         Err(CompactDecodeError::JsonDecode { source_cause }) => {
             failed_artifact(input.parser, input.source, &FailureSpec::JsonDecode { source_cause })
         }
+    }
+}
+
+/// Strips source provenance that is intentionally omitted from the public minimal artifact.
+#[must_use]
+pub fn public_parse_artifact(mut artifact: ParseArtifact) -> ParseArtifact {
+    if let Some(replay) = artifact.replay.as_mut() {
+        strip_replay_metadata_sources(replay);
+    }
+    artifact
+}
+
+fn strip_replay_metadata_sources(replay: &mut ReplayMetadata) {
+    strip_field_presence_source(&mut replay.mission_name);
+    strip_field_presence_source(&mut replay.world_name);
+    strip_field_presence_source(&mut replay.mission_author);
+    strip_field_presence_source(&mut replay.players_count);
+    strip_field_presence_source(&mut replay.capture_delay);
+    strip_field_presence_source(&mut replay.end_frame);
+    strip_field_presence_source(&mut replay.time_bounds);
+    strip_field_presence_source(&mut replay.frame_bounds);
+}
+
+fn strip_field_presence_source<T>(presence: &mut FieldPresence<T>) {
+    match presence {
+        FieldPresence::Present { source, .. }
+        | FieldPresence::ExplicitNull { source, .. }
+        | FieldPresence::Unknown { source, .. }
+        | FieldPresence::Inferred { source, .. } => *source = None,
+        FieldPresence::NotApplicable { .. } => {}
     }
 }
 

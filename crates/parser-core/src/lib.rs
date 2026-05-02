@@ -26,6 +26,20 @@ pub fn parse_replay(input: ParserInput<'_>) -> parser_contract::artifact::ParseA
     artifact::parse_replay(input)
 }
 
+/// Strips debug-only provenance from a parser artifact for public ingestion output.
+#[must_use]
+pub fn public_parse_artifact(
+    artifact: parser_contract::artifact::ParseArtifact,
+) -> parser_contract::artifact::ParseArtifact {
+    artifact::public_parse_artifact(artifact)
+}
+
+/// Parses replay bytes through the public minimal artifact path used by CLI and worker modes.
+#[must_use]
+pub fn public_parse_replay(input: ParserInput<'_>) -> parser_contract::artifact::ParseArtifact {
+    public_parse_artifact(parse_replay(input))
+}
+
 /// Parses replay bytes into a full deterministic parser-side debug artifact.
 #[must_use]
 pub fn parse_replay_debug(input: ParserInput<'_>) -> DebugParseArtifact {

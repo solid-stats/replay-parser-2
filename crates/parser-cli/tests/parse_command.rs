@@ -13,7 +13,14 @@ use std::{
 };
 
 use assert_cmd::Command;
-use serde_json::Value;
+use parser_contract::{
+    presence::FieldPresence,
+    source_ref::{ReplaySource, SourceChecksum},
+    version::ParserInfo,
+};
+use parser_core::{ParserInput, ParserOptions, public_parse_replay};
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -57,6 +64,39 @@ fn run_parse_with_args<const N: usize>(
 fn read_json(path: &PathBuf) -> Value {
     let text = fs::read_to_string(path).expect("output artifact should be readable");
     serde_json::from_str(&text).expect("output artifact should be valid JSON")
+}
+
+fn public_parser_core_output_bytes(input: &PathBuf) -> Vec<u8> {
+    let bytes = fs::read(input).expect("fixture should be readable");
+    let checksum =
+        SourceChecksum::sha256(sha256_hex(&bytes)).expect("fixture checksum should be valid");
+    let artifact = public_parse_replay(ParserInput {
+        bytes: &bytes,
+        source: ReplaySource {
+            replay_id: None,
+            source_file: input.display().to_string(),
+            checksum: FieldPresence::Present { value: checksum, source: None },
+        },
+        parser: parser_info(),
+        options: ParserOptions::default(),
+    });
+    let mut output = serde_json::to_vec(&artifact).expect("public artifact should serialize");
+    output.push(b'\n');
+    output
+}
+
+fn parser_info() -> ParserInfo {
+    serde_json::from_value(json!({
+        "name": "replay-parser-2",
+        "version": env!("CARGO_PKG_VERSION")
+    }))
+    .expect("test parser info should be valid")
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hex::encode(hasher.finalize())
 }
 
 fn assert_compact_artifact_root(artifact: &Value) {
@@ -173,6 +213,22 @@ fn parse_command_should_write_minified_minimal_json_by_default() {
     }
     assert_no_key_recursive(&artifact, &retired_score_section);
     assert_no_null_recursive(&artifact);
+}
+
+#[test]
+fn parse_command_default_output_should_match_public_parser_core_bytes() {
+    // Arrange
+    let input = parser_core_fixture("metadata-drift.ocap.json");
+    let output_path = temp_output_path("public-core-bytes", "artifact.json");
+
+    // Act
+    let command_output = run_parse(&input, &output_path);
+    let cli_bytes = fs::read(&output_path).expect("output artifact should be readable");
+    let core_bytes = public_parser_core_output_bytes(&input);
+
+    // Assert
+    assert!(command_output.status.success());
+    assert_eq!(cli_bytes, core_bytes);
 }
 
 #[test]

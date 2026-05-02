@@ -12,7 +12,9 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{
+    ParserInput, ParserOptions, parse_replay, public_parse_artifact, public_parse_replay,
+};
 use serde_json::json;
 
 const INVALID_JSON_FIXTURE: &[u8] = include_bytes!("fixtures/invalid-json.ocap.json");
@@ -62,6 +64,36 @@ fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
     assert!(artifact.weapons.is_empty());
     assert!(artifact.destroyed_vehicles.is_empty());
     assert_eq!(artifact.failure, None);
+}
+
+#[test]
+fn public_parse_replay_should_match_public_parse_artifact_wrapper() {
+    let bytes = br#"{"missionName":"Operation Copper","worldName":"Altis","entities":[]}"#;
+
+    let public_from_replay = public_parse_replay(parser_input(bytes));
+    let public_from_artifact = public_parse_artifact(parse_replay(parser_input(bytes)));
+
+    assert_eq!(public_from_replay, public_from_artifact);
+}
+
+#[test]
+fn public_parse_replay_should_strip_replay_metadata_sources() {
+    let bytes = br#"{"missionName":"Operation Copper","worldName":"Altis","entities":[]}"#;
+
+    let internal_artifact = parse_replay(parser_input(bytes));
+    let public_artifact = public_parse_replay(parser_input(bytes));
+    let internal_replay = internal_artifact.replay.expect("internal replay metadata should exist");
+    let public_replay = public_artifact.replay.expect("public replay metadata should exist");
+
+    assert!(field_has_source(&internal_replay.mission_name));
+    assert!(!field_has_source(&public_replay.mission_name));
+    assert!(!field_has_source(&public_replay.world_name));
+    assert!(!field_has_source(&public_replay.mission_author));
+    assert!(!field_has_source(&public_replay.players_count));
+    assert!(!field_has_source(&public_replay.capture_delay));
+    assert!(!field_has_source(&public_replay.end_frame));
+    assert!(!field_has_source(&public_replay.time_bounds));
+    assert!(!field_has_source(&public_replay.frame_bounds));
 }
 
 #[test]
@@ -125,4 +157,14 @@ fn parser_core_api_should_not_populate_produced_at_when_parser_core_runs() {
 
     assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(artifact.produced_at, None);
+}
+
+fn field_has_source<T>(presence: &FieldPresence<T>) -> bool {
+    match presence {
+        FieldPresence::Present { source, .. }
+        | FieldPresence::ExplicitNull { source, .. }
+        | FieldPresence::Unknown { source, .. }
+        | FieldPresence::Inferred { source, .. } => source.is_some(),
+        FieldPresence::NotApplicable { .. } => false,
+    }
 }
