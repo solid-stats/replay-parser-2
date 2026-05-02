@@ -1,0 +1,1460 @@
+{
+  "selection_policy": {
+    "game_types": [
+      "sg",
+      "mace",
+      "sm"
+    ],
+    "edge_window": 20,
+    "per_edge": 2,
+    "random_seed": "game_type:year:bucket:260502-nx9",
+    "dedupe": "filename"
+  },
+  "result": {
+    "selected_replays": 72,
+    "new_successes": 72,
+    "old_successes": 67,
+    "comparisons_run": 67,
+    "json_surface_failed_comparisons": 72,
+    "stats_only_matches": 52,
+    "stats_only_mismatches": 15,
+    "stats_only_old_skipped": 5,
+    "stats_only_new_failed": 0,
+    "all_comparable_statistics_compatible": false
+  },
+  "counts": {
+    "by_game_type": {
+      "mace": 28,
+      "sg": 28,
+      "sm": 16
+    },
+    "by_game_type_year": {
+      "mace:2020": 4,
+      "mace:2021": 4,
+      "mace:2022": 4,
+      "mace:2023": 4,
+      "mace:2024": 4,
+      "mace:2025": 4,
+      "mace:2026": 4,
+      "sg:2020": 4,
+      "sg:2021": 4,
+      "sg:2022": 4,
+      "sg:2023": 4,
+      "sg:2024": 4,
+      "sg:2025": 4,
+      "sg:2026": 4,
+      "sm:2020": 1,
+      "sm:2023": 4,
+      "sm:2024": 4,
+      "sm:2025": 4,
+      "sm:2026": 3
+    },
+    "comparison_findings_by_category": {
+      "compatible": 44,
+      "human_review": 291
+    },
+    "stats_only_by_status": {
+      "match": 52,
+      "mismatch": 15,
+      "old_skipped": 5
+    }
+  },
+  "failing_samples": [
+    {
+      "sample_id": "mace-2020-end-c095aeeb",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_30__22_59_11_ocap",
+      "date": "2020-12-30T21:48:06.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2020-end-c095aeeb.json"
+    },
+    {
+      "sample_id": "mace-2020-end-3a840a74",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_30__23_59_40_ocap",
+      "date": "2020-12-30T22:58:05.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2020-end-3a840a74.json"
+    },
+    {
+      "sample_id": "mace-2020-start-262f064b",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_23__22_46_48_ocap",
+      "date": "2020-09-23T20:00:13.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 3,
+        "human_review": 2
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2020-start-262f064b.json"
+    },
+    {
+      "sample_id": "mace-2020-start-62c9bab1",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_07__21_10_34_ocap",
+      "date": "2020-10-07T18:47:39.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2020-start-62c9bab1.json"
+    },
+    {
+      "sample_id": "mace-2021-end-375433e1",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_23__00_10_17__1_ocap",
+      "date": "2021-12-22T23:02:27.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2021-end-375433e1.json"
+    },
+    {
+      "sample_id": "mace-2021-end-e95566f8",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_29__20_32_08__1_ocap",
+      "date": "2021-12-29T19:16:28.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2021-end-e95566f8.json"
+    },
+    {
+      "sample_id": "mace-2021-start-c860e676",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_20__20_26_11_ocap",
+      "date": "2021-01-20T19:22:56.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2021-start-c860e676.json"
+    },
+    {
+      "sample_id": "mace-2021-start-53c288a1",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_20__20_31_41_ocap",
+      "date": "2021-01-20T19:27:31.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2021-start-53c288a1.json"
+    },
+    {
+      "sample_id": "mace-2022-end-0aa55bad",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_30__23_28_18__1_ocap",
+      "date": "2022-12-30T23:16:08.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2022-end-0aa55bad.json"
+    },
+    {
+      "sample_id": "mace-2022-end-b9bfee8d",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_31__00_02_37__1_ocap",
+      "date": "2022-12-30T23:55:47.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2022-end-b9bfee8d.json"
+    },
+    {
+      "sample_id": "mace-2022-start-268f91b1",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_05__20_41_27__1_ocap",
+      "date": "2022-01-05T19:40:02.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2022-start-268f91b1.json"
+    },
+    {
+      "sample_id": "mace-2022-start-29a7d0b5",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_05__20_49_40__1_ocap",
+      "date": "2022-01-05T19:44:10.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2022-start-29a7d0b5.json"
+    },
+    {
+      "sample_id": "mace-2023-end-f0f33d24",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_31__19_45_52__1_ocap",
+      "date": "2023-12-31T16:36:00.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2023-end-f0f33d24.json"
+    },
+    {
+      "sample_id": "mace-2023-end-8d58f000",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_31__20_21_26__1_ocap",
+      "date": "2023-12-31T17:17:03.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2023-end-8d58f000.json"
+    },
+    {
+      "sample_id": "mace-2023-start-b9995d11",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__12_51_35__1_ocap",
+      "date": "2023-01-04T12:48:35.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2023-start-b9995d11.json"
+    },
+    {
+      "sample_id": "mace-2023-start-5adbb136",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__16_31_24__1_ocap",
+      "date": "2023-01-04T16:15:49.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2023-start-5adbb136.json"
+    },
+    {
+      "sample_id": "mace-2024-end-40f91ab4",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_30__18_28_20__1_ocap",
+      "date": "2024-12-30T15:18:16.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2024-end-40f91ab4.json"
+    },
+    {
+      "sample_id": "mace-2024-end-91ab4a4a",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_31__01_13_51__1_ocap",
+      "date": "2024-12-30T22:03:47.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2024-end-91ab4a4a.json"
+    },
+    {
+      "sample_id": "mace-2024-start-2cd27e8f",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_01__17_33_57__1_ocap",
+      "date": "2024-01-01T14:26:45.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2024-start-2cd27e8f.json"
+    },
+    {
+      "sample_id": "mace-2024-start-beb8c413",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_01__21_14_57__1_ocap",
+      "date": "2024-01-01T17:58:38.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2024-start-beb8c413.json"
+    },
+    {
+      "sample_id": "mace-2025-end-cb0e8229",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__09_56_27__1_ocap",
+      "date": "2025-12-30T17:49:45.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2025-end-cb0e8229.json"
+    },
+    {
+      "sample_id": "mace-2025-end-9331bfeb",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__11_38_40__1_ocap",
+      "date": "2025-12-30T19:26:37.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2025-end-9331bfeb.json"
+    },
+    {
+      "sample_id": "mace-2025-start-be240ca1",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_02__01_32_08__1_ocap",
+      "date": "2025-01-01T22:24:16.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2025-start-be240ca1.json"
+    },
+    {
+      "sample_id": "mace-2025-start-7d4fa878",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_02__01_54_33__1_ocap",
+      "date": "2025-01-01T22:46:51.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2025-start-7d4fa878.json"
+    },
+    {
+      "sample_id": "mace-2026-end-aad8b2ff",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__20_56_17__1_ocap",
+      "date": "2026-04-20T17:53:40.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2026-end-aad8b2ff.json"
+    },
+    {
+      "sample_id": "mace-2026-end-a9632577",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__21_06_23__1_ocap",
+      "date": "2026-04-20T18:05:30.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2026-end-a9632577.json"
+    },
+    {
+      "sample_id": "mace-2026-start-d5681019",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_05__12_04_57__1_ocap",
+      "date": "2026-01-05T20:02:14.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2026-start-d5681019.json"
+    },
+    {
+      "sample_id": "mace-2026-start-7a6c2858",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_05__12_17_44__1_ocap",
+      "date": "2026-01-05T20:15:27.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/mace-2026-start-7a6c2858.json"
+    },
+    {
+      "sample_id": "sg-2020-end-d3bcd9e7",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_11_28__23_03_33_ocap",
+      "date": "2020-11-28T20:06:18.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2020-end-d3bcd9e7.json"
+    },
+    {
+      "sample_id": "sg-2020-end-aae85a7f",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_18__23_58_15_ocap",
+      "date": "2020-12-18T21:39:25.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2020-end-aae85a7f.json"
+    },
+    {
+      "sample_id": "sg-2020-start-38d8dd2f",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_26__01_05_50_ocap",
+      "date": "2020-09-25T21:46:30.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 2,
+        "human_review": 3
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2020-start-38d8dd2f.json"
+    },
+    {
+      "sample_id": "sg-2020-start-d2a5f576",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_04__01_13_02_ocap",
+      "date": "2020-10-03T21:28:17.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2020-start-d2a5f576.json"
+    },
+    {
+      "sample_id": "sg-2021-end-941bedbe",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_11__22_25_46__1_ocap",
+      "date": "2021-12-11T20:04:41.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2021-end-941bedbe.json"
+    },
+    {
+      "sample_id": "sg-2021-end-c7831e8a",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_24__22_28_24__1_ocap",
+      "date": "2021-12-24T20:06:29.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2021-end-c7831e8a.json"
+    },
+    {
+      "sample_id": "sg-2021-start-7d0c3558",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_23__22_45_01_ocap",
+      "date": "2021-01-23T20:04:21.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2021-start-7d0c3558.json"
+    },
+    {
+      "sample_id": "sg-2021-start-bf1ef92d",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_30__00_38_15_ocap",
+      "date": "2021-01-29T22:05:35.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2021-start-bf1ef92d.json"
+    },
+    {
+      "sample_id": "sg-2022-end-15c2d6a0",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__22_29_52__1_ocap",
+      "date": "2022-12-23T21:18:22.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2022-end-15c2d6a0.json"
+    },
+    {
+      "sample_id": "sg-2022-end-e4fa593a",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__23_51_55__1_ocap",
+      "date": "2022-12-23T22:45:15.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2022-end-e4fa593a.json"
+    },
+    {
+      "sample_id": "sg-2022-start-00ad3e80",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_15__21_36_45__2_ocap",
+      "date": "2022-01-15T19:06:30.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2022-start-00ad3e80.json"
+    },
+    {
+      "sample_id": "sg-2022-start-bd4b69ea",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_21__21_37_16__2_ocap",
+      "date": "2022-01-21T19:05:16.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2022-start-bd4b69ea.json"
+    },
+    {
+      "sample_id": "sg-2023-end-d8ad5f67",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_29__22_25_02__2_ocap",
+      "date": "2023-12-29T18:05:03.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2023-end-d8ad5f67.json"
+    },
+    {
+      "sample_id": "sg-2023-end-fa71b79b",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_29__23_32_53__2_ocap",
+      "date": "2023-12-29T19:36:49.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2023-end-fa71b79b.json"
+    },
+    {
+      "sample_id": "sg-2023-start-3374727f",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_07__22_14_36__2_ocap",
+      "date": "2023-01-07T21:03:31.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2023-start-3374727f.json"
+    },
+    {
+      "sample_id": "sg-2023-start-7f18725f",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_13__22_42_11__2_ocap",
+      "date": "2023-01-13T21:07:01.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2023-start-7f18725f.json"
+    },
+    {
+      "sample_id": "sg-2024-end-825d864c",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_20__22_36_51__1_ocap",
+      "date": "2024-12-20T18:10:17.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2024-end-825d864c.json"
+    },
+    {
+      "sample_id": "sg-2024-end-bb447216",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_28__01_09_15__2_ocap",
+      "date": "2024-12-27T20:08:46.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2024-end-bb447216.json"
+    },
+    {
+      "sample_id": "sg-2024-start-3a553d9a",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_06__23_04_57__1_ocap",
+      "date": "2024-01-06T18:12:19.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2024-start-3a553d9a.json"
+    },
+    {
+      "sample_id": "sg-2024-start-37c16010",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_13__21_58_54__2_ocap",
+      "date": "2024-01-13T18:32:22.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2024-start-37c16010.json"
+    },
+    {
+      "sample_id": "sg-2025-end-f4202640",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_19__22_55_10__2_ocap",
+      "date": "2025-12-19T18:12:35.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2025-end-f4202640.json"
+    },
+    {
+      "sample_id": "sg-2025-end-1c5f7854",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_27__00_24_07__2_ocap",
+      "date": "2025-12-26T20:03:00.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2025-end-1c5f7854.json"
+    },
+    {
+      "sample_id": "sg-2025-start-1de393ce",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_04__00_37_12__2_ocap",
+      "date": "2025-01-03T19:57:30.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2025-start-1de393ce.json"
+    },
+    {
+      "sample_id": "sg-2025-start-81e934b3",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_04__22_45_45__2_ocap",
+      "date": "2025-01-04T18:04:50.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2025-start-81e934b3.json"
+    },
+    {
+      "sample_id": "sg-2026-end-3f1f3cbe",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_11__23_56_03__2_ocap",
+      "date": "2026-04-11T19:38:26.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2026-end-3f1f3cbe.json"
+    },
+    {
+      "sample_id": "sg-2026-end-f61d4875",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_17__22_20_00__2_ocap",
+      "date": "2026-04-17T18:14:45.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2026-end-f61d4875.json"
+    },
+    {
+      "sample_id": "sg-2026-start-64ef3e4c",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_11__00_40_42__2_ocap",
+      "date": "2026-01-10T19:55:17.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2026-start-64ef3e4c.json"
+    },
+    {
+      "sample_id": "sg-2026-start-9c5d5801",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_10__14_01_18__1_ocap",
+      "date": "2026-01-10T20:07:07.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sg-2026-start-9c5d5801.json"
+    },
+    {
+      "sample_id": "sm-2020-end-bc6b9d09",
+      "game_type": "sm",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_08_26__22_50_59_ocap",
+      "date": "2020-08-26T20:31:24.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2020-end-bc6b9d09.json"
+    },
+    {
+      "sample_id": "sm-2023-end-feece92c",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_08_13__21_17_28__1_ocap",
+      "date": "2023-08-13T17:47:44.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2023-end-feece92c.json"
+    },
+    {
+      "sample_id": "sm-2023-end-b7bfd4d1",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_09_24__21_22_25__1_ocap",
+      "date": "2023-09-24T17:37:10.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2023-end-b7bfd4d1.json"
+    },
+    {
+      "sample_id": "sm-2023-start-44431773",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_07_02__20_46_36__1_ocap",
+      "date": "2023-07-02T16:29:43.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2023-start-44431773.json"
+    },
+    {
+      "sample_id": "sm-2023-start-6ebb49a6",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_07_30__20_12_07__1_ocap",
+      "date": "2023-07-30T16:25:32.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2023-start-6ebb49a6.json"
+    },
+    {
+      "sample_id": "sm-2024-end-fa91e1da",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_15__22_10_21__1_ocap",
+      "date": "2024-12-15T18:03:42.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2024-end-fa91e1da.json"
+    },
+    {
+      "sample_id": "sm-2024-end-7e8520de",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_29__22_11_05__1_ocap",
+      "date": "2024-12-29T18:02:48.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2024-end-7e8520de.json"
+    },
+    {
+      "sample_id": "sm-2024-start-d6ec860d",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_07__20_19_56__1_ocap",
+      "date": "2024-01-07T16:35:22.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2024-start-d6ec860d.json"
+    },
+    {
+      "sample_id": "sm-2024-start-80d656a3",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_02_25__20_31_42__1_ocap",
+      "date": "2024-02-25T16:33:11.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2024-start-80d656a3.json"
+    },
+    {
+      "sample_id": "sm-2025-end-b572df39",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_11_16__11_02_37__1_ocap",
+      "date": "2025-11-16T17:50:50.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2025-end-b572df39.json"
+    },
+    {
+      "sample_id": "sm-2025-end-1909b204",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_21__09_52_10__1_ocap",
+      "date": "2025-12-21T16:32:34.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2025-end-1909b204.json"
+    },
+    {
+      "sample_id": "sm-2025-start-6ab68893",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_19__22_45_51__1_ocap",
+      "date": "2025-01-19T18:26:45.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2025-start-6ab68893.json"
+    },
+    {
+      "sample_id": "sm-2025-start-f4b5998b",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_02_23__20_49_03__1_ocap",
+      "date": "2025-02-23T16:32:41.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2025-start-f4b5998b.json"
+    },
+    {
+      "sample_id": "sm-2026-end-533d3479",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_02_01__09_45_33__1_ocap",
+      "date": "2026-02-01T16:45:28.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2026-end-533d3479.json"
+    },
+    {
+      "sample_id": "sm-2026-end-747cf162",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_03_22__20_36_14__1_ocap",
+      "date": "2026-03-22T16:32:15.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2026-end-747cf162.json"
+    },
+    {
+      "sample_id": "sm-2026-start-026ba87a",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_02_01__11_03_27__1_ocap",
+      "date": "2026-02-01T18:10:49.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/comparison-reports/sm-2026-start-026ba87a.json"
+    }
+  ],
+  "stats_mismatch_samples": [
+    {
+      "sample_id": "mace-2020-end-3a840a74",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_30__23_59_40_ocap",
+      "date": "2020-12-30T22:58:05.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics: mace_min_players"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2020-end-3a840a74.json"
+    },
+    {
+      "sample_id": "mace-2020-start-62c9bab1",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_07__21_10_34_ocap",
+      "date": "2020-10-07T18:47:39.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Vorobushek', 'weapon': 'Binoculars', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2020-start-62c9bab1.json"
+    },
+    {
+      "sample_id": "mace-2023-start-b9995d11",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__12_51_35__1_ocap",
+      "date": "2023-01-04T12:48:35.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics: mace_min_players"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2023-start-b9995d11.json"
+    },
+    {
+      "sample_id": "mace-2023-start-5adbb136",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__16_31_24__1_ocap",
+      "date": "2023-01-04T16:15:49.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics: mace_min_players"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2023-start-5adbb136.json"
+    },
+    {
+      "sample_id": "mace-2026-end-aad8b2ff",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__20_56_17__1_ocap",
+      "date": "2026-04-20T17:53:40.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics: mace_min_players"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2026-end-aad8b2ff.json"
+    },
+    {
+      "sample_id": "mace-2026-end-a9632577",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__21_06_23__1_ocap",
+      "date": "2026-04-20T18:05:30.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics: mace_min_players"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/mace-2026-end-a9632577.json"
+    },
+    {
+      "sample_id": "sg-2020-end-d3bcd9e7",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_11_28__23_03_33_ocap",
+      "date": "2020-11-28T20:06:18.000Z",
+      "status": "mismatch",
+      "diff_count": 2,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Besheniy', 'weapon': 'Binoculars', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Kalmist', 'weapon': 'Binoculars', 'kills': 7}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2020-end-d3bcd9e7.json"
+    },
+    {
+      "sample_id": "sg-2020-start-d2a5f576",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_04__01_13_02_ocap",
+      "date": "2020-10-03T21:28:17.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:KIRrv', 'weapon': 'Binoculars', 'kills': 2}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2020-start-d2a5f576.json"
+    },
+    {
+      "sample_id": "sg-2022-end-15c2d6a0",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__22_29_52__1_ocap",
+      "date": "2022-12-23T21:18:22.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Pensioner', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2022-end-15c2d6a0.json"
+    },
+    {
+      "sample_id": "sg-2022-end-e4fa593a",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__23_51_55__1_ocap",
+      "date": "2022-12-23T22:45:15.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Molodoi', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2022-end-e4fa593a.json"
+    },
+    {
+      "sample_id": "sg-2022-start-bd4b69ea",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_21__21_37_16__2_ocap",
+      "date": "2022-01-21T19:05:16.000Z",
+      "status": "mismatch",
+      "diff_count": 2,
+      "diffs": [
+        "players.legacy_name:Bear: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:MarolFox: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2022-start-bd4b69ea.json"
+    },
+    {
+      "sample_id": "sg-2023-start-3374727f",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_07__22_14_36__2_ocap",
+      "date": "2023-01-07T21:03:31.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Leotar', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2023-start-3374727f.json"
+    },
+    {
+      "sample_id": "sg-2024-end-825d864c",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_20__22_36_51__1_ocap",
+      "date": "2024-12-20T18:10:17.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "players.legacy_name:Metabo: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2024-end-825d864c.json"
+    },
+    {
+      "sample_id": "sg-2024-end-bb447216",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_28__01_09_15__2_ocap",
+      "date": "2024-12-27T20:08:46.000Z",
+      "status": "mismatch",
+      "diff_count": 2,
+      "diffs": [
+        "players.legacy_name:Grace: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:beda: old={'kills': 3, 'killsFromVehicle': 1, 'vehicleKills': 4, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 3, 'killsFromVehicle': 1, 'vehicleKills': 4, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2024-end-bb447216.json"
+    },
+    {
+      "sample_id": "sg-2024-start-3a553d9a",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_06__23_04_57__1_ocap",
+      "date": "2024-01-06T18:12:19.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:ZeB', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2024-start-3a553d9a.json"
+    },
+    {
+      "sample_id": "sg-2025-end-f4202640",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_19__22_55_10__2_ocap",
+      "date": "2025-12-19T18:12:35.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Hey', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2025-end-f4202640.json"
+    },
+    {
+      "sample_id": "sg-2025-start-1de393ce",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_04__00_37_12__2_ocap",
+      "date": "2025-01-03T19:57:30.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "players.legacy_name:Death: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2025-start-1de393ce.json"
+    },
+    {
+      "sample_id": "sg-2026-start-9c5d5801",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_10__14_01_18__1_ocap",
+      "date": "2026-01-10T20:07:07.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Skyride', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sg-2026-start-9c5d5801.json"
+    },
+    {
+      "sample_id": "sm-2023-end-b7bfd4d1",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_09_24__21_22_25__1_ocap",
+      "date": "2023-09-24T17:37:10.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Disciple', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sm-2023-end-b7bfd4d1.json"
+    },
+    {
+      "sample_id": "sm-2024-start-80d656a3",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_02_25__20_31_42__1_ocap",
+      "date": "2024-02-25T16:33:11.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Van', 'weapon': 'Throw', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/stats-only-reports/sm-2024-start-80d656a3.json"
+    }
+  ]
+}

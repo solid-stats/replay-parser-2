@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-stopped_at: Improved quick old/new year-edge replay parity comparison; 42 of 58 comparable stats now match with latest-death teamkill markers
-last_updated: "2026-05-02T11:00:15Z"
+stopped_at: Ran second quick old/new year-edge replay parity sample; 52 of 67 comparable stats match
+last_updated: "2026-05-02T11:17:03Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -29,7 +29,7 @@ Phase: 06 (RabbitMQ/S3 Worker Integration) — READY
 Plan: not started
 Status: Phase 05.2 benchmark performance, p95, and known malformed-file gaps accepted by user
 Last activity: 2026-05-02 - Recorded user acceptance that current performance is sufficient, p95 > 0.10 is acceptable when max artifact size passes, and 4 known malformed/non-JSON raw files are acceptable when old/new error parity matches
-Last quick task: 2026-05-02 - Improved deterministic year-edge `sg`/`mace`/`sm` old/new parity after comparator and parser compatibility fixes; new parser succeeded on all 73 selected replays, old parser succeeded on 58 and skipped 15, and stats-only parity now matches 42 of 58 comparable replays after preserving non-empty weapon names and making `isDeadByTeamkill` follow the latest counted death state.
+Last quick task: 2026-05-02 - Ran a second deterministic year-edge `sg`/`mace`/`sm` old/new parity sample with seed `260502-nx9`; new parser succeeded on all 72 selected replays, old parser succeeded on 67 and skipped 5, and stats-only parity matched 52 of 67 comparable replays. The sample overlapped the first run by 12 replays and added 60 unique replays.
 
 Progress: [██████████] 100%
 
@@ -174,6 +174,7 @@ Recent decisions affecting current work:
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted p95 artifact/raw ratio above `0.10`; all-raw size acceptance now focuses on hard max artifact size `<= 100000` and `oversized_artifact_count == 0`, while median/p95 remain trend evidence.
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted the 4 malformed/non-JSON all-raw failures when the old cached baseline reports the same failure count and new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`.
 - [Quick 260502-k2u]: Deterministic year-edge old/new parity sample selected 73 replays across `sg`, `mace`, and `sm`. New parser produced 73 artifacts, old parser produced 58 successful artifacts and 15 skipped rows. Compatibility fixes first improved stats-only parity from 12 matches / 46 mismatches to 55 matches / 3 mismatches among comparable old-parser successes. After the follow-up decision to preserve old-parser forbidden weapon names such as `Throw` and `Binoculars`, stats-only parity was 40 matches / 18 mismatches. After adding a compact latest-death teamkill marker for `isDeadByTeamkill`, current stats-only parity is 42 matches / 16 mismatches; 21 mismatch rows are expected `weapon_extra_in_new` differences, with one remaining old teamkill relationship merge edge row. Full evidence is under `.planning/generated/quick/260502-k2u-old-new-year-edge-parity/`, with lightweight summary artifacts committed under `.planning/quick/260502-k2u-old-new-year-edge-parity/`.
+- [Quick 260502-nx9]: A second deterministic year-edge old/new parity sample used the same policy as `260502-k2u` but with seed `260502-nx9`. It selected 72 replays, overlapped the first sample by 12 replays, and added 60 unique replays. New parser succeeded on all 72, old parser succeeded on 67 and skipped 5. Stats-only parity is 52 matches / 15 mismatches; mismatch rows are 12 retained `Throw`/`Binoculars` weapon rows and 6 `isDeadByTeamkill` rows in duplicate-slot/respawn cases where the new parser follows the latest counted merged-player death while the old baseline leaves the teamkill flag true. Full evidence is under `.planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-nx9-old-new-year-edge-parity-second-sample/`.
 
 ### Roadmap Evolution
 
@@ -233,6 +234,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-i8w | Fixed old all-raw coverage, merged same-name players, split legacy tags, nested player kills under players, cleaned generated phase output, and reran x10 evidence | 2026-05-02 | committed | Verified | [260502-i8w-phase-5-2-old-baseline-all-raw-coverage-](./quick/260502-i8w-phase-5-2-old-baseline-all-raw-coverage-/) |
 | 260502-jeh | Optimized default minimal parser hot path and reused cached old all-raw baseline for new benchmark comparisons | 2026-05-02 | 3176abb | Verified | [260502-jeh-full-optimize-parser-points-2-3-and-4-di](./quick/260502-jeh-full-optimize-parser-points-2-3-and-4-di/) |
 | 260502-k2u | Compared deterministic year-edge old/new replay statistics; parity failed on comparable stats | 2026-05-02 | committed | Verified - parity failed | [260502-k2u-old-new-year-edge-parity](./quick/260502-k2u-old-new-year-edge-parity/) |
+| 260502-nx9 | Ran a second deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - parity failed | [260502-nx9-old-new-year-edge-parity-second-sample](./quick/260502-nx9-old-new-year-edge-parity-second-sample/) |
 
 ## Deferred Items
 

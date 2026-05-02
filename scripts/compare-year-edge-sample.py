@@ -48,6 +48,7 @@ def main() -> int:
     parser.add_argument("--new-bin", type=pathlib.Path, default=pathlib.Path("target/release/replay-parser-2"))
     parser.add_argument("--edge-window", type=int, default=20)
     parser.add_argument("--per-edge", type=int, default=2)
+    parser.add_argument("--sample-seed", default="260502-k2u")
     args = parser.parse_args()
 
     output_root = args.output_root
@@ -63,7 +64,7 @@ def main() -> int:
         check=True,
     )
 
-    samples = select_samples(replay_list, raw_dir, args.edge_window, args.per_edge)
+    samples = select_samples(replay_list, raw_dir, args.edge_window, args.per_edge, args.sample_seed)
     write_json(output_root / "selected-replays.json", [sample.__dict__ | {"raw_path": str(sample.raw_path)} for sample in samples])
 
     new_dir = output_root / "new-artifacts"
@@ -85,6 +86,7 @@ def main() -> int:
         stats_results,
         args.edge_window,
         args.per_edge,
+        args.sample_seed,
     )
     write_json(output_root / "summary.json", summary)
     write_markdown(output_root / "summary.md", summary)
@@ -102,7 +104,13 @@ def validate_inputs(replay_list: pathlib.Path, raw_dir: pathlib.Path, config_dir
         raise SystemExit("pnpm is required to run the old parser baseline")
 
 
-def select_samples(replay_list: pathlib.Path, raw_dir: pathlib.Path, edge_window: int, per_edge: int) -> list[ReplaySample]:
+def select_samples(
+    replay_list: pathlib.Path,
+    raw_dir: pathlib.Path,
+    edge_window: int,
+    per_edge: int,
+    sample_seed: str,
+) -> list[ReplaySample]:
     payload = json.loads(replay_list.read_text(encoding="utf-8"))
     rows = payload.get("replays", [])
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
@@ -128,7 +136,7 @@ def select_samples(replay_list: pathlib.Path, raw_dir: pathlib.Path, edge_window
             ("start", rows_for_group[:edge_window]),
             ("end", rows_for_group[-edge_window:]),
         ):
-            rng = random.Random(f"{game_type}:{year}:{bucket}:260502-k2u")
+            rng = random.Random(f"{game_type}:{year}:{bucket}:{sample_seed}")
             picked = sorted(
                 rng.sample(candidates, min(per_edge, len(candidates))),
                 key=lambda row: (row["date"], row["filename"]),
@@ -742,6 +750,7 @@ def build_summary(
     stats_results: dict[str, dict[str, Any]],
     edge_window: int,
     per_edge: int,
+    sample_seed: str,
 ) -> dict[str, Any]:
     by_category = Counter()
     by_stats_status = Counter()
@@ -810,7 +819,7 @@ def build_summary(
             "game_types": list(GAME_TYPES),
             "edge_window": edge_window,
             "per_edge": per_edge,
-            "random_seed": "game_type:year:bucket:260502-k2u",
+            "random_seed": f"game_type:year:bucket:{sample_seed}",
             "dedupe": "filename",
         },
         "result": result,
