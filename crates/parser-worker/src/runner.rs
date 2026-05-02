@@ -23,6 +23,24 @@ use crate::{
 /// Returns [`WorkerError`] when configuration, storage, AMQP, processing, or ack/nack
 /// operations fail.
 pub async fn run(config: WorkerConfig) -> Result<(), WorkerError> {
+    let shutdown = CancellationToken::new();
+    spawn_ctrl_c_listener(shutdown.clone());
+    run_until_cancelled(config, shutdown).await
+}
+
+/// Starts the worker runtime and exits when the supplied cancellation token is cancelled.
+///
+/// This entrypoint is used by deployment smoke tests that run the worker against live
+/// RabbitMQ/S3-compatible services and need deterministic shutdown without sending a process signal.
+///
+/// # Errors
+///
+/// Returns [`WorkerError`] when configuration, storage, AMQP, processing, or ack/nack
+/// operations fail.
+pub async fn run_until_cancelled(
+    config: WorkerConfig,
+    shutdown: CancellationToken,
+) -> Result<(), WorkerError> {
     init_tracing();
     config.validate()?;
     tracing::info!(
@@ -41,8 +59,6 @@ pub async fn run(config: WorkerConfig) -> Result<(), WorkerError> {
         "worker_connected"
     );
 
-    let shutdown = CancellationToken::new();
-    spawn_ctrl_c_listener(shutdown.clone());
     consume_until_shutdown(&config, &mut rabbit, &store, shutdown, parser_info()?).await
 }
 

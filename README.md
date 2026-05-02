@@ -238,6 +238,27 @@ replay-parser-2 worker
 
 The command consumes RabbitMQ jobs, reads raw S3 objects, writes parser artifacts to S3-compatible storage, and publishes `parse.completed` or `parse.failed` result messages.
 
+Deployable worker image:
+
+```bash
+docker build -t replay-parser-2-worker .
+docker run --rm \
+  -e REPLAY_PARSER_AMQP_URL='amqp://user:pass@rabbitmq:5672/%2f' \
+  -e REPLAY_PARSER_S3_BUCKET='solid-replays' \
+  -e AWS_REGION='us-east-1' \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  replay-parser-2-worker
+```
+
+Local RabbitMQ/S3 smoke infrastructure:
+
+```bash
+scripts/worker-smoke.sh
+```
+
+The smoke script starts RabbitMQ and MinIO with Docker Compose, uploads the valid OCAP fixture as a raw replay object, runs the worker against those live services, verifies a `parse.completed` result plus the written S3 artifact, then verifies a checksum-mismatch `parse.failed` result. Set `KEEP_SMOKE_INFRA=1` to leave the local services running for manual inspection.
+
 ## Development Workflow
 
 Project development is performed only by AI agents using the GSD workflow. Direct non-GSD development is out of process for this repository.
