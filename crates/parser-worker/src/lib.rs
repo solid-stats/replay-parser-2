@@ -13,6 +13,8 @@ pub mod checksum;
 pub mod config;
 /// Worker runtime error types.
 pub mod error;
+/// End-to-end parse job processing.
+pub mod processor;
 /// Worker runtime entrypoint.
 pub mod runner;
 /// S3-compatible raw replay and artifact object storage.
