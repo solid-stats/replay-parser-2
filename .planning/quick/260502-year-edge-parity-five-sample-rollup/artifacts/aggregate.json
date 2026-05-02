@@ -1,0 +1,18 @@
+{
+  "sample_runs": 5,
+  "selected_replay_entries": 364,
+  "unique_selected_replay_files": 291,
+  "new_successes": 364,
+  "old_successes": 305,
+  "old_skipped": 59,
+  "stats_only_matches": 212,
+  "stats_only_mismatches": 93,
+  "stats_only_new_failed": 0,
+  "known_mismatch_detail_rows": {
+    "weapon_extra_in_new": 104,
+    "is_dead_by_teamkill": 26,
+    "relationship_extra_in_new": 2
+  },
+  "new_mismatch_classes_after_five_samples": 0,
+  "phase_05_parity_followup_blocking": false
+}

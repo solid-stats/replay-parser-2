@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-stopped_at: Ran third quick old/new year-edge replay parity sample; 40 of 61 comparable stats match
-last_updated: "2026-05-02T11:37:57Z"
+stopped_at: Completed five-sample year-edge parity follow-up; no new mismatch classes found and Phase 05/05.2 parity follow-up is non-blocking
+last_updated: "2026-05-02T11:42:43Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -29,7 +29,7 @@ Phase: 06 (RabbitMQ/S3 Worker Integration) — READY
 Plan: not started
 Status: Phase 05.2 benchmark performance, p95, and known malformed-file gaps accepted by user
 Last activity: 2026-05-02 - Recorded user acceptance that current performance is sufficient, p95 > 0.10 is acceptable when max artifact size passes, and 4 known malformed/non-JSON raw files are acceptable when old/new error parity matches
-Last quick task: 2026-05-02 - Ran a third deterministic year-edge `sg`/`mace`/`sm` old/new parity sample with seed `260502-p7r`; new parser succeeded on all 73 selected replays, old parser succeeded on 61 and skipped 12, and stats-only parity matched 40 of 61 comparable replays. The sample overlapped previous runs by 16 replays and added 57 unique replays.
+Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
 
 Progress: [██████████] 100%
 
@@ -176,6 +176,9 @@ Recent decisions affecting current work:
 - [Quick 260502-k2u]: Deterministic year-edge old/new parity sample selected 73 replays across `sg`, `mace`, and `sm`. New parser produced 73 artifacts, old parser produced 58 successful artifacts and 15 skipped rows. Compatibility fixes first improved stats-only parity from 12 matches / 46 mismatches to 55 matches / 3 mismatches among comparable old-parser successes. After the follow-up decision to preserve old-parser forbidden weapon names such as `Throw` and `Binoculars`, stats-only parity was 40 matches / 18 mismatches. After adding a compact latest-death teamkill marker for `isDeadByTeamkill`, current stats-only parity is 42 matches / 16 mismatches; 21 mismatch rows are expected `weapon_extra_in_new` differences, with one remaining old teamkill relationship merge edge row. Full evidence is under `.planning/generated/quick/260502-k2u-old-new-year-edge-parity/`, with lightweight summary artifacts committed under `.planning/quick/260502-k2u-old-new-year-edge-parity/`.
 - [Quick 260502-nx9]: A second deterministic year-edge old/new parity sample used the same policy as `260502-k2u` but with seed `260502-nx9`. It selected 72 replays, overlapped the first sample by 12 replays, and added 60 unique replays. New parser succeeded on all 72, old parser succeeded on 67 and skipped 5. Stats-only parity is 52 matches / 15 mismatches; mismatch rows are 12 retained `Throw`/`Binoculars` weapon rows and 6 `isDeadByTeamkill` rows in duplicate-slot/respawn cases where the new parser follows the latest counted merged-player death while the old baseline leaves the teamkill flag true. Full evidence is under `.planning/generated/quick/260502-nx9-old-new-year-edge-parity-second-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-nx9-old-new-year-edge-parity-second-sample/`.
 - [Quick 260502-p7r]: A third deterministic year-edge old/new parity sample used seed `260502-p7r`. It selected 73 replays, overlapped previous samples by 16 replays, and added 57 unique replays. New parser succeeded on all 73, old parser succeeded on 61 and skipped 12. Stats-only parity is 40 matches / 21 mismatches; mismatch rows are 28 retained `Throw`/`Binoculars` weapon rows and 5 `isDeadByTeamkill` rows in the same old-parser merge-OR class. Full evidence is under `.planning/generated/quick/260502-p7r-old-new-year-edge-parity-third-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-p7r-old-new-year-edge-parity-third-sample/`.
+- [Quick 260502-q4m]: A fourth deterministic year-edge old/new parity sample used seed `260502-q4m`. It selected 73 replays. New parser succeeded on all 73, old parser succeeded on 56 and skipped 17. Stats-only parity is 33 matches / 23 mismatches; mismatch rows are 25 retained `Throw`/`Binoculars` weapon rows, 6 duplicate-slot `isDeadByTeamkill` rows, and 1 known old-parser `teamkillers` merge-bug row. Full evidence is under `.planning/generated/quick/260502-q4m-old-new-year-edge-parity-fourth-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-q4m-old-new-year-edge-parity-fourth-sample/`.
+- [Quick 260502-v8n]: A fifth deterministic year-edge old/new parity sample used seed `260502-v8n`. It selected 73 replays. New parser succeeded on all 73, old parser succeeded on 63 and skipped 10. Stats-only parity is 45 matches / 18 mismatches; mismatch rows are 18 retained `Throw`/`Binoculars` weapon rows and 9 duplicate-slot `isDeadByTeamkill` rows. Full evidence is under `.planning/generated/quick/260502-v8n-old-new-year-edge-parity-fifth-sample/`, with lightweight summary artifacts committed under `.planning/quick/260502-v8n-old-new-year-edge-parity-fifth-sample/`.
+- [Quick 260502-rollup]: Five-sample year-edge parity rollup covered 364 selected replay entries and 291 unique replay files. New parser succeeded on all selected entries; old parser produced 305 comparable artifacts and skipped 59. The 93 comparable stats-only mismatches contained only documented known classes: 104 retained `Throw`/`Binoculars` weapon detail rows, 26 duplicate-slot `isDeadByTeamkill` rows, and 2 old-parser `teamkillers` merge-bug rows. Phase 05/05.2 parity follow-up is non-blocking; accepted differences are documented in `.planning/quick/260502-year-edge-parity-five-sample-rollup/KNOWN-DIFFERENCES.md`.
 
 ### Roadmap Evolution
 
@@ -237,6 +240,9 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-k2u | Compared deterministic year-edge old/new replay statistics; parity failed on comparable stats | 2026-05-02 | committed | Verified - parity failed | [260502-k2u-old-new-year-edge-parity](./quick/260502-k2u-old-new-year-edge-parity/) |
 | 260502-nx9 | Ran a second deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - parity failed | [260502-nx9-old-new-year-edge-parity-second-sample](./quick/260502-nx9-old-new-year-edge-parity-second-sample/) |
 | 260502-p7r | Ran a third deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - parity failed | [260502-p7r-old-new-year-edge-parity-third-sample](./quick/260502-p7r-old-new-year-edge-parity-third-sample/) |
+| 260502-q4m | Ran a fourth deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - known differences only | [260502-q4m-old-new-year-edge-parity-fourth-sample](./quick/260502-q4m-old-new-year-edge-parity-fourth-sample/) |
+| 260502-v8n | Ran a fifth deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - known differences only | [260502-v8n-old-new-year-edge-parity-fifth-sample](./quick/260502-v8n-old-new-year-edge-parity-fifth-sample/) |
+| 260502-rollup | Documented five-sample year-edge parity result and accepted old/new difference classes | 2026-05-02 | committed | Verified - Phase 05 parity follow-up non-blocking | [260502-year-edge-parity-five-sample-rollup](./quick/260502-year-edge-parity-five-sample-rollup/) |
 
 ## Deferred Items
 
