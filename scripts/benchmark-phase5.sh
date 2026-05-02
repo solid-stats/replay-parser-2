@@ -21,6 +21,7 @@ COMPARISON_REPORT="$COMPARISON_ROOT/comparison-report.json"
 COMPARISON_MARKDOWN="$COMPARISON_ROOT/comparison-report.md"
 OLD_SELECTED_LOG="$COMPARISON_ROOT/old-selected-command.log"
 OLD_FULL_LOG="$COMPARISON_ROOT/old-all-raw-command.log"
+OLD_FULL_SUMMARY="$COMPARISON_ROOT/old-all-raw-summary.json"
 MAX_DEFAULT_ARTIFACT_BYTES=100000
 SELECTION_POLICY="largest .json by byte size under ~/sg_stats/raw_replays; tie-break lexicographic path"
 ALL_RAW_SELECTOR="~/sg_stats/raw_replays/**/*.json sorted lexicographically"
@@ -136,11 +137,17 @@ for row in rows:
         continue
     filename = row.get("filename") or row.get("name") or row.get("replay") or row.get("file")
     if filename == selected_stem:
+        mission_name = row.get("missionName") or row.get("mission_name") or row.get("mission")
+        game_type = row.get("gameType") or row.get("game_type") or row.get("type")
+        if not game_type and isinstance(mission_name, str) and "@" in mission_name:
+            inferred = mission_name.split("@", 1)[0]
+            if inferred in {"sg", "mace", "sm"}:
+                game_type = inferred
         metadata = {
             "filename": filename,
             "date": row.get("date") or row.get("startDate") or row.get("createdAt"),
-            "mission_name": row.get("missionName") or row.get("mission_name") or row.get("mission"),
-            "game_type": row.get("gameType") or row.get("game_type") or row.get("type"),
+            "mission_name": mission_name,
+            "game_type": game_type,
         }
         break
 
@@ -469,6 +476,10 @@ fi
 old_all_raw_available=false
 old_all_raw_covers_all=false
 old_all_raw_wall_time_ms=""
+old_all_raw_attempted_count=0
+old_all_raw_success_count=0
+old_all_raw_error_count=0
+old_all_raw_skipped_count=0
 
 if [[ "$all_raw_run" == "true" \
   && "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" == "1" \
@@ -479,15 +490,143 @@ if [[ "$all_raw_run" == "true" \
   && "$(command -v pnpm || true)" != "" ]]; then
   OLD_FULL_ROOT="$COMPARISON_ROOT/old-all-raw-home-$$"
   OLD_FULL_HOME="$OLD_FULL_ROOT/home"
+  OLD_FULL_RUNNER="$COMPARISON_ROOT/run-old-all-raw.ts"
+  OLD_FULL_RUNNER_ABS="$(cd "$(dirname "$OLD_FULL_RUNNER")" && pwd)/$(basename "$OLD_FULL_RUNNER")"
+  OLD_FULL_SUMMARY_ABS="$(cd "$(dirname "$OLD_FULL_SUMMARY")" && pwd)/$(basename "$OLD_FULL_SUMMARY")"
   mkdir -p "$OLD_FULL_HOME/sg_stats"
   OLD_FULL_HOME_ABS="$(cd "$OLD_FULL_HOME" && pwd)"
   ln -s "$REAL_HOME/sg_stats/raw_replays" "$OLD_FULL_HOME/sg_stats/raw_replays"
   ln -s "$REAL_HOME/sg_stats/lists" "$OLD_FULL_HOME/sg_stats/lists"
   cp -a "$REAL_HOME/sg_stats/config" "$OLD_FULL_HOME/sg_stats/config"
+
+  cat > "$OLD_FULL_RUNNER" <<'TS'
+import fs from 'fs';
+import path from 'path';
+import { pathToFileURL } from 'url';
+
+type GameType = 'sg' | 'mace' | 'sm';
+
+type ReplayRow = {
+  filename?: string;
+  date?: string;
+  mission_name?: string;
+  missionName?: string;
+};
+
+type TaskRow = {
+  filename: string;
+  date: string;
+  missionName: string;
+  gameType: GameType;
+};
+
+const gameTypes: GameType[] = ['sg', 'mace', 'sm'];
+
+const missionName = (row: ReplayRow) => row.mission_name ?? row.missionName ?? '';
+
+const uniqueByFilename = (rows: ReplayRow[]) => {
+  const seen = new Set<string>();
+  const result: ReplayRow[] = [];
+
+  for (const row of rows) {
+    if (!row.filename || seen.has(row.filename)) continue;
+    seen.add(row.filename);
+    result.push(row);
+  }
+
+  return result;
+};
+
+const isAfterSmCutoffMonth = (date: string | undefined) => {
+  if (!date) return false;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return false;
+
+  return parsed >= new Date('2023-02-01T00:00:00.000Z');
+};
+
+const tasksForGameType = (rows: ReplayRow[], gameType: GameType): TaskRow[] => rows
+  .filter((row) => {
+    const mission = missionName(row);
+
+    return mission.startsWith(gameType) && !mission.startsWith('sgs');
+  })
+  .filter((row) => gameType !== 'sm' || isAfterSmCutoffMonth(row.date))
+  .flatMap((row) => {
+    const mission = missionName(row);
+    if (!row.filename || !row.date || !mission) return [];
+
+    return [{
+      filename: row.filename,
+      date: row.date,
+      missionName: mission,
+      gameType,
+    }];
+  });
+
+async function main() {
+  const [oldRepo, replayListPath, summaryPath] = process.argv.slice(2);
+  const workerPath = path.join(oldRepo, 'src/1 - replays/workers/parseReplayWorker.ts');
+  const { runParseTask } = await import(pathToFileURL(workerPath).href);
+  const replayList = JSON.parse(fs.readFileSync(replayListPath, 'utf8'));
+  const rows = uniqueByFilename(Array.isArray(replayList) ? replayList : replayList.replays ?? []);
+  const tasks = gameTypes.flatMap((gameType) => tasksForGameType(rows, gameType));
+  const statusCounts: Record<string, number> = {};
+  const firstErrors: unknown[] = [];
+  const firstSkipped: unknown[] = [];
+  const byGameType: Record<GameType, number> = { sg: 0, mace: 0, sm: 0 };
+
+  const start = process.hrtime.bigint();
+
+  for (let index = 0; index < tasks.length; index += 1) {
+    const task = tasks[index];
+    byGameType[task.gameType] += 1;
+    const response = await runParseTask({
+      taskId: `phase-05-all-raw-${index + 1}`,
+      filename: task.filename,
+      date: task.date,
+      missionName: task.missionName,
+      gameType: task.gameType as any,
+    });
+    const status = response.status ?? 'unknown';
+    statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+
+    if (status === 'error' && firstErrors.length < 10) {
+      firstErrors.push(response);
+    }
+    if (status === 'skipped' && firstSkipped.length < 10) {
+      firstSkipped.push(response);
+    }
+  }
+
+  const end = process.hrtime.bigint();
+  const wallTimeMs = Number(end - start) / 1_000_000;
+
+  fs.writeFileSync(summaryPath, JSON.stringify({
+    attempted_count: tasks.length,
+    success_count: statusCounts.success ?? 0,
+    error_count: statusCounts.error ?? 0,
+    skipped_count: statusCounts.skipped ?? 0,
+    status_counts: statusCounts,
+    by_game_type: byGameType,
+    replay_list_unique_count: rows.length,
+    wall_time_ms: wallTimeMs,
+    first_errors: firstErrors,
+    first_skipped: firstSkipped,
+  }, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+TS
+
   old_full_start_ns=$(date +%s%N)
   if (
     cd "$OLD_REPO"
-    HOME="$OLD_FULL_HOME_ABS" WORKER_COUNT=1 pnpm run parse
+    HOME="$OLD_FULL_HOME_ABS" WORKER_COUNT=1 pnpm exec tsx "$OLD_FULL_RUNNER_ABS" \
+      "$OLD_REPO" "$OLD_FULL_HOME_ABS/sg_stats/lists/replaysList.json" "$OLD_FULL_SUMMARY_ABS"
   ) >"$OLD_FULL_LOG" 2>&1; then
     old_all_raw_available=true
   fi
@@ -495,27 +634,29 @@ if [[ "$all_raw_run" == "true" \
   old_all_raw_wall_time_ms=$(awk -v ns="$((old_full_end_ns - old_full_start_ns))" \
     'BEGIN { printf "%.6f", ns / 1000000 }')
 
-  read -r replay_list_count all_raw_attempted < <(
-    python3 - "$REPLAY_LIST" "$ALL_RAW_SUMMARY" <<'PY'
+  read -r old_all_raw_attempted_count old_all_raw_success_count old_all_raw_error_count old_all_raw_skipped_count all_raw_attempted < <(
+    python3 - "$OLD_FULL_SUMMARY" "$ALL_RAW_SUMMARY" <<'PY'
 import json
 import sys
 
 try:
-    replay_list = json.load(open(sys.argv[1], encoding="utf-8"))
+    old_summary = json.load(open(sys.argv[1], encoding="utf-8"))
 except (OSError, json.JSONDecodeError):
-    replay_list = []
-if isinstance(replay_list, dict):
-    replay_rows = replay_list.get("replays", [])
-elif isinstance(replay_list, list):
-    replay_rows = replay_list
-else:
-    replay_rows = []
-replay_count = len(replay_rows)
+    old_summary = {}
 summary = json.load(open(sys.argv[2], encoding="utf-8"))
-print(replay_count, summary.get("attempted_count", 0))
+print(
+    old_summary.get("attempted_count", 0),
+    old_summary.get("success_count", 0),
+    old_summary.get("error_count", 0),
+    old_summary.get("skipped_count", 0),
+    summary.get("attempted_count", 0),
+)
 PY
   )
-  if [[ "$old_all_raw_available" == "true" && "$replay_list_count" == "$all_raw_attempted" ]]; then
+  if [[ "$old_all_raw_available" == "true" \
+    && "$old_all_raw_attempted_count" == "$all_raw_attempted" \
+    && "$old_all_raw_error_count" == "0" \
+    && "$old_all_raw_skipped_count" == "0" ]]; then
     old_all_raw_covers_all=true
   fi
 fi
@@ -525,7 +666,8 @@ python3 - "$REPORT_PATH" "$SELECTED_INFO" "$SELECTED_ARTIFACT" "$selected_new_wa
   "$OLD_SELECTED_RESPONSE" "$comparison_available" "$COMPARISON_REPORT" "$old_selected_attempted" \
   "$ALL_RAW_SUMMARY" "$old_all_raw_available" "$old_all_raw_covers_all" "$old_all_raw_wall_time_ms" \
   "$MAX_DEFAULT_ARTIFACT_BYTES" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$ALL_RAW_SELECTOR" \
-  "${RUN_PHASE5_FULL_CORPUS:-0}" "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" <<'PY'
+  "${RUN_PHASE5_FULL_CORPUS:-0}" "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" \
+  "$old_all_raw_attempted_count" "$old_all_raw_success_count" "$old_all_raw_error_count" "$old_all_raw_skipped_count" <<'PY'
 import json
 import sys
 
@@ -551,6 +693,10 @@ import sys
     all_raw_selector,
     run_full_corpus,
     run_full_old_baseline,
+    old_all_raw_attempted_count_raw,
+    old_all_raw_success_count_raw,
+    old_all_raw_error_count_raw,
+    old_all_raw_skipped_count_raw,
 ) = sys.argv[1:]
 
 limit = int(limit_raw)
@@ -669,7 +815,14 @@ if all_raw_x10_status != "pass" or all_raw_size_status != "pass" or zero_failure
     elif old_all_raw_available_raw != "true":
         reason = "all-raw old baseline was not run; set RUN_PHASE5_FULL_OLD_BASELINE=1 for full evidence"
     elif old_all_raw_covers_all_raw != "true":
-        reason = "old baseline did not cover every raw replay file"
+        reason = (
+            "old baseline did not cover every raw replay file "
+            f"(old_attempted={old_all_raw_attempted_count_raw}, "
+            f"old_success={old_all_raw_success_count_raw}, "
+            f"old_error={old_all_raw_error_count_raw}, "
+            f"old_skipped={old_all_raw_skipped_count_raw}, "
+            f"new_attempted={all_raw_summary.get('attempted_count', 0)})"
+        )
     else:
         reason = (
             f"speedup={all_raw_speedup}, median={median_ratio}, p95={p95_ratio}, "
@@ -688,7 +841,7 @@ else:
     old_profile += "; selected_large_replay old baseline not-run in --ci"
 
 if old_all_raw_available_raw == "true":
-    old_profile += "; all_raw_corpus old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm run parse"
+    old_profile += "; all_raw_corpus old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm exec tsx run-old-all-raw.ts"
 elif run_full_old_baseline == "1":
     old_profile += "; all_raw_corpus old baseline attempted but unavailable"
 else:

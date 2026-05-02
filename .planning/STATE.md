@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: blocked
-stopped_at: Completed quick task 260502-ecp; Phase 6 still blocked by broader benchmark acceptance
-last_updated: "2026-05-02T04:44:04Z"
+stopped_at: Completed quick task 260502-gn2; Phase 6 still blocked by benchmark acceptance
+last_updated: "2026-05-02T05:37:23Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTION COMPLETE; BLOCKED
 Plan: 7 of 7
 Status: Phase 6 blocked by benchmark acceptance
-Last activity: 2026-05-02 - Completed quick task 260502-ecp: compact selected default parser artifact below 100 KB
+Last activity: 2026-05-02 - Completed quick task 260502-gn2: full Phase 5.2 benchmark, legacy runner repair, and selected old-vs-new stats diff
 
 Progress: [██████████] 100%
 
@@ -166,6 +166,7 @@ Recent decisions affecting current work:
 - [Phase 05.2]: Plan 06 final gates passed structurally, but Phase 6 remained blocked because selected artifact_bytes=203683 exceeded the hard 100000-byte limit and full-corpus gates were unknown.
 - [Phase 05.2]: Fault report gates now target parser-core::minimal_artifact and the stale active v2 vehicle-score schema was removed from maintained schema surfaces.
 - [Quick 260502-ecp]: The default selected-large artifact was compacted to 40042 bytes by merging player counters into `players[]`, using numeric refs and a weapon dictionary, and omitting null/empty/zero default fields. This resolves the selected hard-size blocker only; selected x3/parity and all-raw x10/zero-failure/size acceptance still require the normal Phase 05.2 benchmark workflow.
+- [Quick 260502-gn2]: Full Phase 5.2 benchmark evidence was regenerated after replacing the non-parsing old WorkerPool all-raw path with a generated direct `runParseTask` runner. Selected artifact size passes at 40042 bytes, selected x3 fails at 2.4996x, selected parity remains `human_review`, all-raw x10 is `unknown` because old coverage is incomplete, all-raw size fails p95 ratio, and all-raw zero-failure fails on 4 new-parser raw failures.
 
 ### Roadmap Evolution
 
@@ -182,15 +183,18 @@ None yet.
 ### Blockers/Concerns
 
 Active: Phase 05.2 code and quality gates are passing, and quick task
-`260502-ecp` regenerated the selected large default artifact at 40042 bytes,
-below the 100000-byte hard limit. However, the broader generated
+`260502-gn2` regenerated full benchmark evidence after fixing the old all-raw
+baseline runner. The generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is still not a
-performance acceptance pass: selected `x3_status=unknown`, selected
-`parity_status=not_run`, all-raw `x10_status=unknown`, all-raw
-`size_gate_status=unknown`, and all-raw `zero_failure_status=unknown` because
-`RUN_PHASE5_FULL_CORPUS=1` was not enabled. Phase 6 worker integration remains
-blocked until selected x3/parity and all-raw x10/zero-failure/size gates pass,
-or the user explicitly accepts the remaining benchmark gap.
+performance acceptance pass: selected artifact size passes at 40042 bytes, but
+selected `x3_status=fail` at 2.4996x, selected `parity_status=human_review`,
+all-raw `x10_status=unknown` because the old direct baseline attempted 22996
+tasks while the new all-raw parser attempted 23473 raw files, all-raw
+`size_gate_status=fail` because p95 artifact/raw ratio is 0.121999 > 0.10, and
+all-raw `zero_failure_status=fail` because the new parser failed 4 raw files.
+Phase 6 worker integration remains blocked until selected x3/parity and
+all-raw x10/zero-failure/size gates pass, or the user explicitly accepts the
+remaining benchmark gap.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
@@ -201,7 +205,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
-- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40042 bytes, but selected x3_status=unknown, selected parity_status=not_run, and all-raw x10/size/zero-failure statuses=unknown.
+- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40042 bytes, but selected x3_status=fail, selected parity_status=human_review, all-raw x10_status=unknown, all-raw size_gate_status=fail, and all-raw zero_failure_status=fail.
 
 ### Quick Tasks Completed
 
@@ -220,6 +224,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260426-rfs | Added `replays-fetcher` product boundary and S3 artifact-reference result policy | 2026-04-26 | docs-only | Verified | [260426-rfs-replays-fetcher-boundary](./quick/260426-rfs-replays-fetcher-boundary/) |
 | 260429-bench-scope | Clarified that one-replay benchmark evidence is insufficient and whole-list/corpus parsing must be measured | 2026-04-29 | docs-only | Verified |  |
 | 260502-ecp | Compacted selected default parser artifact below 100 KB | 2026-05-02 | bbebfcb | Verified | [260502-ecp-compact-default-parser-artifact-below-10](./quick/260502-ecp-compact-default-parser-artifact-below-10/) |
+| 260502-gn2 | Ran full Phase 5.2 benchmark and selected old-vs-new stats diff after fixing the legacy all-raw baseline runner | 2026-05-02 | pending | Verified | [260502-gn2-phase-5-2-x3-x10-old-vs-new](./quick/260502-gn2-phase-5-2-x3-x10-old-vs-new/) |
 
 ## Deferred Items
 
