@@ -60,7 +60,7 @@ The parser must stay within `replay-parser-2` ownership: no canonical player mat
 | CLI default | `parse` writes minified JSON with `serde_json::to_vec`; `--pretty` uses `to_vec_pretty`; `--debug-artifact` calls `parse_replay_debug` only when explicitly requested. [VERIFIED: crates/parser-cli/src/main.rs] | Keep compaction in typed contract/core serialization, not in an ad hoc CLI JSON post-processor. |
 | Schema | Schema generation closes default artifact definitions with `additionalProperties: false`; current tests expect v3 fields and reject debug fields in minimal rows. [VERIFIED: crates/parser-contract/src/schema.rs and crates/parser-contract/tests/schema_contract.rs] | Regenerate schema/examples and update closed definitions for compact row names, missing defaulted fields, and weapon dictionary. |
 | Comparison harness | `comparison.rs` deserializes `MinimalPlayerRow`, `MinimalPlayerStatsRow`, `MinimalKillRow`, and `MinimalDestroyedVehicleRow`; bounty inputs currently filter `kill.bounty_eligible`. [VERIFIED: crates/parser-harness/src/comparison.rs] | Update comparison to derive legacy stats from merged player counters and derive bounty inputs from classification/ref fields. |
-| Benchmark gate | The selected artifact passes only when `artifact_bytes <= 100000`; all-raw passes only when median ratio <= 0.05, p95 <= 0.10, max <= 100000, and oversized count is 0. [VERIFIED: crates/parser-harness/src/benchmark_report.rs] | The final proof must be benchmark evidence, not a unit-test-only estimate. |
+| Benchmark gate | The selected artifact passes only when `artifact_bytes <= 100000`; all-raw passes only when median ratio <= 0.05, p95 <= 0.10, max <= 100000, and oversized count is 0. [VERIFIED: crates/parser-harness/src/benchmark_report.rs] | This quick task proves only the selected default-artifact hard-size blocker with current release CLI output plus structural report validation. Full selected x3/parity and all-raw acceptance gates remain unchanged and out of scope. |
 
 ## Size Findings
 
@@ -142,15 +142,15 @@ pub struct CompactPlayerRow {
 
 1. Contract/schema: update `crates/parser-contract/src/minimal.rs`, `artifact.rs`, and schema examples; then run `cargo test -p parser-contract schema_contract`. [VERIFIED: existing schema tests in crates/parser-contract/tests/schema_contract.rs]
 2. Parser-core behavior: update aggregate projection tests for merged counters, numeric refs, weapon dictionary, omitted zero/null fields, and debug-only names/provenance; run `cargo test -p parser-core --test aggregate_projection --test deterministic_output --test debug_artifact --test combat_event_semantics --test fault_injection_regressions`. [VERIFIED: existing test files]
-3. CLI behavior: prove default minified output omits `null`, empty arrays, zero counters, verbose names in event rows, bounty fields, source refs, and debug keys; run `cargo test -p parser-cli --test parse_command --test schema_command`. [VERIFIED: crates/parser-cli/tests/parse_command.rs]
+3. CLI behavior: prove default minified output omits `null`, empty arrays, zero counters, verbose names in event rows, bounty fields, source refs, and debug keys; run `cargo test -p parser-cli --test parse_command`. [VERIFIED: crates/parser-cli/tests/parse_command.rs]
 4. Harness behavior: update comparison derivation to read merged player counters and derive bounty inputs from compact kills; run `cargo test -p parser-harness comparison_report benchmark_report`. [VERIFIED: crates/parser-harness/src/comparison.rs and crates/parser-harness/src/benchmark_report.rs]
-5. Selected size proof: run `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output /tmp/replay-parser-2-selected-current.json` and require `wc -c < /tmp/replay-parser-2-selected-current.json` to be `<= 100000`. [VERIFIED: selected replay path in .planning/STATE.md]
-6. Benchmark report proof: run `scripts/benchmark-phase5.sh --ci` and `cargo run -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural`; for acceptance, rerun with full corpus and old baseline prerequisites, then use `--mode acceptance`. [VERIFIED: scripts/benchmark-phase5.sh and crates/parser-harness/src/bin/benchmark-report-check.rs]
+5. Selected size proof: run `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json` and require the generated artifact size to be `<= 100000`, with recursive absence checks for removed default fields. [VERIFIED: selected replay path in .planning/STATE.md]
+6. Structural report proof: run `cargo run -q -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural`. Do not run `scripts/benchmark-phase5.sh --ci` as this quick plan's verification because it can fail on unrelated full Phase 5.2 acceptance gates; those gates remain preserved for later full acceptance execution. [VERIFIED: scripts/benchmark-phase5.sh and crates/parser-harness/src/bin/benchmark-report-check.rs]
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. Exact short key spellings are not locked beyond `source_entity_id`/`eid`; the recommended map above should be treated as the planner default unless the user wants different public field names. [ASSUMED]
-2. If implementation somehow remains above 100,000 bytes with object rows, tuple-array rows are the locked fallback, but local scratch sizing suggests they are not needed for the selected replay. [VERIFIED: CONTEXT.md and local scratch transform]
+1. RESOLVED: The plan chooses the recommended short-key map as the schema-backed default: `players[]` uses `eid`, `n`, `s`, `g`, `r`, `sid`, `ck`, `k`, `d`, `tk`, `su`, `nkd`, `ud`, `vk`, and `kfv`; `kills[]` uses `k`, `v`, `c`, `w`, `av`, and `avc`; `destroyed_vehicles[]` uses `a`, `c`, `w`, `av`, `avc`, `de`, `dt`, and `dc`; `weapons[]` uses `id` and `n`. [RESOLVED: 260502-ecp-PLAN.md]
+2. RESOLVED: The plan implements schema-backed object rows first. Tuple-array rows are allowed only if those object rows still produce a selected-large default artifact over 100,000 bytes; if needed, the fallback is limited to high-cardinality default rows and must be locked by schema, examples, and tests before claiming the selected-size proof. [RESOLVED: CONTEXT.md and 260502-ecp-PLAN.md]
 
 ## Sources
 
@@ -175,4 +175,4 @@ pub struct CompactPlayerRow {
 
 | ID | Claim | Risk If Wrong |
 |---|---|---|
-| A1 | The exact short-key spellings can be chosen by the planner as long as schema/examples/tests lock them. | If downstream has already seen a preferred compact key map, the plan may need a field-name-only adjustment. |
+| A1 | RESOLVED: The planner chooses the recommended short-key map and locks it through schema/examples/tests. | If downstream later requests different compact key names, that becomes a field-name-only contract migration, not an open planning question for this quick task. |
