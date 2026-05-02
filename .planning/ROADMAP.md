@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target. (execution complete 2026-04-29; benchmark/parity acceptance gap blocks Phase 6)
 - [x] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and record accepted selected/all-raw benchmark evidence before worker integration. Execution is complete; on 2026-05-02 the product owner accepted current performance, p95 > 10% as non-blocking, and the 4 known malformed/non-JSON all-raw failures when old/new error parity matches.
 - [x] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement. (completed 2026-05-02)
-- [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability. (ready for planning)
+- [x] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability. Execution is complete; WORK-08 and WORK-09 are validated by deterministic artifact race handling, duplicate redelivery tests, structured logs, HTTP probes, Docker healthcheck wiring, and two-worker smoke evidence.
 
 ## Phase Details
 
@@ -251,13 +251,13 @@ Execution outcome:
 - Structured `parse.failed` messages cover malformed jobs, unsupported contract versions, checksum mismatches, parser failures, storage failures, and artifact conflicts with retryability.
 - Manual ack occurs only after confirmed completed/failed result publication; publish failures nack for retry.
 - Final gates passed for format, clippy, workspace tests, docs, coverage smoke, fault report, full-corpus benchmark acceptance, schema freshness, worker/CLI targeted tests, boundary greps, and whitespace checks.
-- Phase 7 keeps WORK-08 and WORK-09 pending: multi-worker safety, structured operations logs, container probes, and runtime hardening are not Phase 6 deliverables.
+- Phase 7 completed WORK-08 and WORK-09: multi-worker safety, structured operations logs, container probes, and runtime hardening are covered by the follow-on hardening phase.
 
 ### Phase 7: Parallel and Container Hardening
 **Goal**: Operators can run the worker safely in parallel container mode with observable readiness.
 **Depends on**: Phase 6
 **Requirements**: WORK-08, WORK-09
-**Status**: Planned; ready for execution.
+**Status**: Complete as of 2026-05-02.
 **Success Criteria** (what must be TRUE):
   1. Operator can run multiple worker instances in parallel without duplicate artifact corruption or nondeterministic parser output.
   2. Operator can inspect structured logs that identify job, replay, parser stage, and worker lifecycle state.
@@ -276,7 +276,13 @@ Plans:
 - [x] 07-01-PLAN.md - HTTP liveness/readiness probes, cached runtime state, and worker identity config.
 - [x] 07-02-PLAN.md - Stable structured worker log taxonomy and secret-safe operations fields.
 - [x] 07-03-PLAN.md - Two-worker container smoke, Docker health wiring, and Timeweb S3 compatibility hooks.
-- [ ] 07-04-PLAN.md - Final Phase 7 gates, UAT evidence, README/ROADMAP/STATE handoff.
+- [x] 07-04-PLAN.md - Final Phase 7 gates, UAT evidence, README/ROADMAP/STATE handoff.
+
+Current final-gate evidence:
+- `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo doc --workspace --no-deps` passed.
+- `scripts/coverage-gate.sh --check`, `scripts/fault-report-gate.sh`, `cargo test -p parser-worker`, targeted parser-cli worker/healthcheck tests, `scripts/worker-smoke.sh`, boundary greps, secret greps, operational marker greps, and `git diff --check` passed.
+- The final Phase 5 benchmark rerun was skipped by explicit user instruction on 2026-05-02; Phase 7 did not change parser performance paths or artifact shape, so accepted Phase 05.2/Phase 06 full-corpus benchmark evidence remains the benchmark reference.
+- Timeweb live provider validation still requires deployer-supplied credentials. README and smoke tooling document `https://s3.twcstorage.ru`, path-style settings, no-secret capability labels, and the tested compare/reuse/conflict fallback.
 
 ## Progress
 
@@ -293,4 +299,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 5.1 -> 5.2 -> 6 -> 7
 | 5.1. Compact Artifact and Selective Parser Redesign | 8/8 | Execution complete; acceptance gap blocks Phase 6 | - |
 | 5.2. Minimal Artifact and Performance Acceptance | 7/7 | Execution complete; accepted benchmark policy unblocks Phase 6 | - |
 | 6. RabbitMQ/S3 Worker Integration | 6/6 | Complete | 2026-05-02 |
-| 7. Parallel and Container Hardening | 0/5 | Ready to execute | - |
+| 7. Parallel and Container Hardening | 5/5 | Complete | 2026-05-02 |

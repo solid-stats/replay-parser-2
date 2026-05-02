@@ -193,7 +193,7 @@ The worker reads raw replay objects from S3-compatible storage, computes the loc
 
 Successful artifacts use deterministic keys in the form `artifacts/v3/{encoded_replay_id}/{source_sha256}.json`, where the replay segment is percent-encoded and the checksum segment is the raw source SHA-256. The worker publishes `parse.completed` with `job_id`, `replay_id`, parser information, artifact bucket/key/checksum/size, and source checksum proof. Parser failures, malformed jobs, checksum mismatches, storage failures, and unsupported contract versions publish `parse.failed` with structured stage, error code, message, retryability, and optional malformed-job fields.
 
-RabbitMQ delivery acknowledgement is manual. The worker acknowledges a job only after confirmed publication of either `parse.completed` or `parse.failed`; inability to publish a durable outcome is nacked for retry. The default prefetch is `1`, so Phase 6 proves the single in-flight job path. Phase 7 owns multi-worker proof, container probe endpoints, and wider runtime hardening.
+RabbitMQ delivery acknowledgement is manual. The worker acknowledges a job only after confirmed publication of either `parse.completed` or `parse.failed`; inability to publish a durable outcome is nacked for retry. The default prefetch is `1`; horizontal multi-worker safety, container probe endpoints, and runtime hardening are covered by Phase 7.
 
 Runtime configuration is available through `replay-parser-2 worker --help` and matching environment variables. Do not commit broker credentials or cloud secrets; use local shell environment, secret managers, or deployment-time injection.
 
@@ -255,6 +255,17 @@ docker run --rm \
 ```
 
 The worker image runs as `USER 65532:65532`, exposes port `8080`, and uses the hidden `replay-parser-2 healthcheck --url http://127.0.0.1:8080/readyz` command for Docker readiness without adding curl or debug tooling to the runtime image.
+
+Runtime probes are configured with:
+
+- `REPLAY_PARSER_PROBES_ENABLED` enables or disables the HTTP probe server.
+- `REPLAY_PARSER_PROBE_BIND` sets the probe bind host; containers should use `0.0.0.0`.
+- `REPLAY_PARSER_PROBE_PORT` sets the probe port.
+- `REPLAY_PARSER_WORKER_ID` sets the stable worker identifier included in probe bodies and structured logs.
+
+`/readyz` returns ready only after RabbitMQ and S3 dependency checks pass and flips unavailable during shutdown drain. `/livez` reports process liveness and remains available during dependency degradation, but returns failure for fatal worker state. The worker keeps RabbitMQ prefetch at `1`; horizontal scale is provided by running multiple worker instances, not by increasing in-process concurrency by default.
+
+Multiple workers are safe because artifact writes use deterministic keys plus conditional create with compare/reuse/conflict fallback. Duplicate or redelivered jobs can complete idempotently by reusing byte-identical artifacts, while conflicting existing artifacts produce structured `parse.failed` results instead of overwriting data.
 
 Local RabbitMQ/S3 smoke infrastructure:
 

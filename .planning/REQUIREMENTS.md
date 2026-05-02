@@ -111,8 +111,8 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **WORK-05**: Worker publishes `parse.completed` result messages with job/replay identifiers, parser contract version, checksum, and artifact reference.
 - [x] **WORK-06**: Worker publishes `parse.failed` result messages with structured error data and retryability.
 - [x] **WORK-07**: Worker uses manual ack/nack behavior and acknowledges RabbitMQ jobs only after result/artifact publication succeeds.
-- [ ] **WORK-08**: Worker can run multiple instances in parallel without duplicate artifact corruption or nondeterministic parser output.
-- [ ] **WORK-09**: Worker has structured logs and health/readiness endpoints or probes suitable for container operation.
+- [x] **WORK-08**: Worker can run multiple instances in parallel without duplicate artifact corruption or nondeterministic parser output.
+- [x] **WORK-09**: Worker has structured logs and health/readiness endpoints or probes suitable for container operation.
 
 ## v2 Requirements
 
@@ -231,8 +231,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-05 | Phase 6 | Complete |
 | WORK-06 | Phase 6 | Complete |
 | WORK-07 | Phase 6 | Complete |
-| WORK-08 | Phase 7 | Pending |
-| WORK-09 | Phase 7 | Pending |
+| WORK-08 | Phase 7 | Complete: deterministic artifact keys, conditional write compare/reuse/conflict fallback, duplicate redelivery tests, and two-worker smoke |
+| WORK-09 | Phase 7 | Complete: structured worker log taxonomy, worker IDs, `/livez` and `/readyz`, Docker healthcheck, and smoke validation |
 
 **Coverage:**
 - v1 requirements: 80 total
@@ -241,4 +241,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-24*
-*Last updated: 2026-05-02 after Phase 6 RabbitMQ/S3 worker integration*
+*Last updated: 2026-05-02 after Phase 7 parallel and container hardening*

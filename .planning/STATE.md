@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-05-02T17:30:09.668Z"
-last_activity: 2026-05-02 -- Phase 07 execution started
+status: complete
+stopped_at: Phase 7 complete
+last_updated: "2026-05-02T19:23:05Z"
+last_activity: 2026-05-02 -- Phase 07 parallel and container hardening completed
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 56
-  completed_plans: 51
-  percent: 91
+  completed_plans: 56
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 07 — parallel-and-container-hardening
+**Current focus:** Phase 07 — parallel-and-container-hardening complete
 
 ## Current Position
 
-Phase: 07 (parallel-and-container-hardening) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 07
-Last activity: 2026-05-02 -- Phase 07 execution started
+Phase: 07 (parallel-and-container-hardening) — COMPLETE
+Plan: 5 of 5
+Status: Phase 07 complete
+Last activity: 2026-05-02 -- Phase 07 parallel and container hardening completed
 Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [█████████░] 90%
 | 05 | 6/6 | 221m | 36m50s |
 | 05.1 | 8/8 | executed; acceptance gap | - |
 | 06 | 6/6 | executed | - |
+| 07 | 5/5 | executed | - |
 
 **Recent Trend:**
 
@@ -186,7 +187,12 @@ Recent decisions affecting current work:
 - [Phase 06]: Worker artifact keys are deterministic `artifacts/v3/{encoded_replay_id}/{source_sha256}.json` paths and use the raw source checksum segment, not the artifact checksum.
 - [Phase 06]: RabbitMQ manual ack happens only after confirmed completed/failed result publication. Publish failures nack for retry, and default prefetch stays `1`.
 - [Phase 06]: Parser-core and parser-contract remain transport-free. Worker/CLI contain runtime integration; debug sidecar parsing remains explicit CLI tooling and is not used by worker result artifacts.
-- [Phase 06]: WORK-01 through WORK-07 are complete. WORK-08 and WORK-09 remain Phase 7 pending for multi-worker safety, structured operations logs, container probes, and hardening.
+- [Phase 06]: WORK-01 through WORK-07 are complete. Phase 7 owns multi-worker safety, structured operations logs, container probes, and hardening.
+- [Phase 07]: WORK-08 is complete. Multiple worker instances are supported through deterministic artifact keys, conditional create, compare/reuse/conflict fallback, duplicate redelivery tests, and two-worker Docker smoke.
+- [Phase 07]: WORK-09 is complete. Worker structured logs include stable event/outcome names and worker IDs, `/livez` and `/readyz` expose cached liveness/readiness state, and Docker healthcheck uses the hidden CLI probe command.
+- [Phase 07]: Final gates passed for format, clippy, workspace tests, docs, coverage smoke, fault report, targeted worker/CLI tests, two-worker smoke, boundary greps, secret greps, operational marker greps, and whitespace checks.
+- [Phase 07]: The final Phase 5 benchmark rerun was skipped by explicit user instruction on 2026-05-02. Phase 7 did not change parser performance paths or artifact shape; accepted Phase 05.2/Phase 06 full-corpus benchmark evidence remains the benchmark reference.
+- [Phase 07]: Timeweb S3 settings are documented with `https://s3.twcstorage.ru`, path-style mode, and optional no-secret capability labels. Live Timeweb validation remains pending deployer-supplied credentials; local smoke validates the compare/reuse/conflict fallback.
 
 ### Roadmap Evolution
 
@@ -202,7 +208,7 @@ None yet.
 
 ### Blockers/Concerns
 
-Active: Phase 6 worker integration is complete. Current final-gate all-raw
+Resolved: Phase 6 worker integration is complete. Current final-gate all-raw
 evidence records cached old all-raw wall `501274.528655ms`, new all-raw wall
 `272233.457364ms`, speedup `1.8413x`, all-raw old/new
 `attempted_count=23473`, new success/failure/skip counts `23469/4/0`, p95
@@ -210,7 +216,7 @@ artifact/raw ratio `0.12432307336264753`, max artifact bytes `48270`, and zero
 oversized artifacts. The 4 malformed/non-JSON failures are accepted only while
 new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`
 and the old cached baseline keeps `error_count=4`, `skipped_count=0`.
-Phase 7 is ready to plan/execute WORK-08 and WORK-09.
+Phase 7 completed WORK-08 and WORK-09. Remaining provider-specific Timeweb live validation requires external credentials and is a deployer-run operational check, not a parser code blocker.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
@@ -261,7 +267,7 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-05-02T17:13:39.451Z
-Stopped at: Phase 7 context gathered
+Stopped at: Phase 7 complete
 Resume file: .planning/phases/07-parallel-and-container-hardening/07-CONTEXT.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
@@ -269,4 +275,5 @@ Resume file: .planning/phases/07-parallel-and-container-hardening/07-CONTEXT.md
 **Completed Phase:** 03 (Deterministic Parser Core) — 6 plans — 2026-04-27
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
 **Completed Phase:** 06 (RabbitMQ/S3 Worker Integration) — 6 plans — 2026-05-02
-**Next Step:** Start Phase 07 parallel and container hardening.
+**Completed Phase:** 07 (Parallel and Container Hardening) — 5 plans — 2026-05-02
+**Next Step:** Complete milestone closeout or start the next planned milestone.
