@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: blocked
-stopped_at: Completed quick task 260502-i8w; Phase 6 still blocked by benchmark acceptance
-last_updated: "2026-05-02T06:47:00Z"
+stopped_at: Completed quick task 260502-jeh; Phase 6 still blocked by benchmark acceptance
+last_updated: "2026-05-02T07:11:12Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 Phase: 05.2 (minimal-artifact-and-performance-acceptance) — EXECUTION COMPLETE; BLOCKED
 Plan: 7 of 7
 Status: Phase 6 blocked by benchmark acceptance
-Last activity: 2026-05-02 - Completed quick task 260502-i8w: all-raw old baseline full coverage, same-name player merge, split legacy tags, nested player kills, generated cleanup, and x10 evidence
+Last activity: 2026-05-02 - Completed quick task 260502-jeh: optimized default minimal parser hot path, cached old all-raw baseline reuse, and new all-raw comparison evidence
 
 Progress: [██████████] 100%
 
@@ -168,6 +168,7 @@ Recent decisions affecting current work:
 - [Quick 260502-ecp]: The default selected-large artifact was compacted to 40042 bytes by merging player counters into `players[]`, using numeric refs and a weapon dictionary, and omitting null/empty/zero default fields. This resolves the selected hard-size blocker only; selected x3/parity and all-raw x10/zero-failure/size acceptance still require the normal Phase 05.2 benchmark workflow.
 - [Quick 260502-gn2]: Full Phase 5.2 benchmark evidence was regenerated after replacing the non-parsing old WorkerPool all-raw path with a generated direct `runParseTask` runner. Selected artifact size passes at 40042 bytes, selected x3 fails at 2.4996x, selected parity remains `human_review`, all-raw x10 is `unknown` because old coverage is incomplete, all-raw size fails p95 ratio, and all-raw zero-failure fails on 4 new-parser raw failures.
 - [Quick 260502-i8w]: The generated Phase 5 benchmark directory was fully cleaned, tracked generated placeholders were removed, same-name slots now merge like the old parser, legacy tags are split from observed nicknames, player-authored kill rows now live under `players[].kills`, and the old all-raw baseline now attempts every raw file. Full evidence records selected x3 fail at 2.8190x, selected parity `human_review`, all-raw x10 fail at 1.7544x, all-raw old/new attempted_count=23473, all-raw size p95 fail at 0.12417910447761193, and zero-failure fail on the same 4 malformed raw files.
+- [Quick 260502-jeh]: Default `parse_replay` now derives minimal rows directly from one-pass connected/killed observations and a replay-local vehicle/static name index, while debug parsing keeps full normalized events. Old all-raw baseline is cached at `.planning/benchmarks/phase-05-old-all-raw-baseline.json` and benchmark runs now reuse it unless `RUN_PHASE5_FULL_OLD_BASELINE=1`. Full new all-raw evidence records old cached wall `501274.528655ms`, new wall `235598.648803ms`, and speedup `2.1277x`; all-raw x10/size/zero-failure remain failed, and selected parity/x3 was not run because the old selected `tsx` baseline hit sandbox `EPERM`.
 
 ### Roadmap Evolution
 
@@ -184,12 +185,13 @@ None yet.
 ### Blockers/Concerns
 
 Active: Phase 05.2 code and quality gates are passing, and quick task
-`260502-i8w` regenerated full benchmark evidence after making the old all-raw
-baseline cover every raw file. The generated
+`260502-jeh` optimized the default minimal parser hot path while reusing the
+committed old all-raw baseline instead of rerunning it. The generated
 `.planning/generated/phase-05/benchmarks/benchmark-report.json` is still not a
 performance acceptance pass: selected artifact size passes at 40780 bytes, but
-selected `x3_status=fail` at 2.8190x, selected `parity_status=human_review`,
-all-raw old/new `attempted_count=23473`, all-raw `x10_status=fail` at 1.7544x,
+selected `x3_status=unknown` and selected `parity_status=not_run` because the
+old selected `tsx` baseline hit sandbox `EPERM`; all-raw old/new
+`attempted_count=23473`, all-raw `x10_status=fail` at 2.1277x,
 all-raw `size_gate_status=fail` because p95 artifact/raw ratio is
 0.12417910447761193 > 0.10, and all-raw `zero_failure_status=fail` because the
 new parser failed 4 malformed raw files. Phase 6 worker integration remains
@@ -205,7 +207,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 `cargo llvm-cov --json` postprocessor documented in
 `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-03-BLOCKER.md`.
 
-- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40780 bytes, but selected x3_status=fail, selected parity_status=human_review, all-raw x10_status=fail, all-raw size_gate_status=fail, and all-raw zero_failure_status=fail.
+- Phase 6 remains blocked until benchmark acceptance passes or the user explicitly accepts the gap: selected artifact size now passes at 40780 bytes, but selected x3_status=unknown, selected parity_status=not_run, all-raw x10_status=fail, all-raw size_gate_status=fail, and all-raw zero_failure_status=fail.
 
 ### Quick Tasks Completed
 
@@ -226,6 +228,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-ecp | Compacted selected default parser artifact below 100 KB | 2026-05-02 | bbebfcb | Verified | [260502-ecp-compact-default-parser-artifact-below-10](./quick/260502-ecp-compact-default-parser-artifact-below-10/) |
 | 260502-gn2 | Ran full Phase 5.2 benchmark and selected old-vs-new stats diff after fixing the legacy all-raw baseline runner | 2026-05-02 | 998c799 | Verified | [260502-gn2-phase-5-2-x3-x10-old-vs-new](./quick/260502-gn2-phase-5-2-x3-x10-old-vs-new/) |
 | 260502-i8w | Fixed old all-raw coverage, merged same-name players, split legacy tags, nested player kills under players, cleaned generated phase output, and reran x10 evidence | 2026-05-02 | committed | Verified | [260502-i8w-phase-5-2-old-baseline-all-raw-coverage-](./quick/260502-i8w-phase-5-2-old-baseline-all-raw-coverage-/) |
+| 260502-jeh | Optimized default minimal parser hot path and reused cached old all-raw baseline for new benchmark comparisons | 2026-05-02 | 3176abb | Verified | [260502-jeh-full-optimize-parser-points-2-3-and-4-di](./quick/260502-jeh-full-optimize-parser-points-2-3-and-4-di/) |
 
 ## Deferred Items
 
