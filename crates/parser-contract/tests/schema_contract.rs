@@ -75,7 +75,7 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_minimal_field
         "status",
         "diagnostics",
         "players",
-        "player_stats",
+        "weapons",
         "kills",
         "destroyed_vehicles",
         "failure",
@@ -90,6 +90,7 @@ fn schema_contract_committed_schema_should_name_parse_artifact_and_minimal_field
         "\"entities\"",
         "\"events\"",
         "\"aggregates\"",
+        "\"player_stats\"",
     ] {
         assert!(
             !schema_text.contains(removed_field),
@@ -105,16 +106,34 @@ fn schema_contract_committed_schema_should_include_minimal_row_types() {
 
     for expected_fragment in [
         "MinimalPlayerRow",
-        "MinimalPlayerStatsRow",
         "MinimalKillRow",
         "MinimalDestroyedVehicleRow",
-        "vehicleKills",
-        "killsFromVehicle",
-        "bounty_eligible",
+        "MinimalWeaponRow",
+        "\"eid\"",
+        "\"kfv\"",
+        "\"vk\"",
+        "\"avc\"",
     ] {
         assert!(
             schema_text.contains(expected_fragment),
             "schema should contain {expected_fragment}"
+        );
+    }
+
+    for removed_fragment in [
+        "MinimalPlayerStatsRow",
+        "vehicleKills",
+        "killsFromVehicle",
+        "bounty_eligible",
+        "bounty_exclusion_reasons",
+        "killer_name",
+        "victim_name",
+        "attacker_vehicle_name",
+        "destroyed_name",
+    ] {
+        assert!(
+            !schema_text.contains(removed_fragment),
+            "schema should not contain removed verbose/default fragment {removed_fragment}"
         );
     }
 
@@ -201,12 +220,71 @@ fn schema_contract_failure_example_should_include_required_structured_failure_fi
 fn schema_contract_success_example_should_expose_minimal_tables_only() {
     let success_example = read_json(success_example_path());
 
-    for expected_field in ["players", "player_stats", "kills", "destroyed_vehicles"] {
+    for expected_field in ["players", "weapons", "kills", "destroyed_vehicles"] {
         assert!(success_example[expected_field].is_array());
     }
 
-    for removed_field in ["participants", "facts", "summaries"] {
+    for removed_field in ["participants", "facts", "summaries", "player_stats", "failure"] {
         assert!(success_example.get(removed_field).is_none());
+    }
+}
+
+#[test]
+fn schema_contract_success_example_should_use_compact_short_keys_and_omit_zero_defaults() {
+    let success_example = read_json(success_example_path());
+    let player = success_example["players"][0]
+        .as_object()
+        .expect("player row should be an object");
+    let kill = success_example["kills"][0]
+        .as_object()
+        .expect("kill row should be an object");
+    let destroyed = success_example["destroyed_vehicles"][0]
+        .as_object()
+        .expect("destroyed vehicle row should be an object");
+
+    for expected_key in ["eid", "n", "s", "k", "vk", "kfv"] {
+        assert!(player.contains_key(expected_key), "player row should include {expected_key}");
+    }
+    for omitted_zero_key in ["d", "tk", "su", "nkd", "ud"] {
+        assert!(
+            !player.contains_key(omitted_zero_key),
+            "player row should omit zero counter {omitted_zero_key}"
+        );
+    }
+    for removed_key in ["player_id", "source_entity_id", "observed_name", "compatibility_key"] {
+        assert!(
+            !player.contains_key(removed_key),
+            "player row should omit verbose key {removed_key}"
+        );
+    }
+
+    for expected_key in ["k", "v", "c", "w", "av", "avc"] {
+        assert!(kill.contains_key(expected_key), "kill row should include {expected_key}");
+    }
+    for removed_key in [
+        "killer_name",
+        "killer_side",
+        "victim_name",
+        "victim_side",
+        "weapon",
+        "attacker_vehicle_name",
+        "bounty_eligible",
+        "bounty_exclusion_reasons",
+    ] {
+        assert!(!kill.contains_key(removed_key), "kill row should omit {removed_key}");
+    }
+
+    for expected_key in ["a", "c", "w", "av", "avc", "de", "dt", "dc"] {
+        assert!(
+            destroyed.contains_key(expected_key),
+            "destroyed vehicle row should include {expected_key}"
+        );
+    }
+    for removed_key in ["attacker_name", "attacker_side", "weapon", "destroyed_name"] {
+        assert!(
+            !destroyed.contains_key(removed_key),
+            "destroyed vehicle row should omit {removed_key}"
+        );
     }
 }
 
@@ -224,7 +302,10 @@ fn schema_contract_gap_regression_should_reject_invalid_checksum_algorithm_and_v
 #[test]
 fn schema_contract_gap_regression_should_reject_failed_artifact_without_failure() {
     let mut failure_example = read_json(failure_example_path());
-    failure_example["failure"] = Value::Null;
+    drop(failure_example
+        .as_object_mut()
+        .expect("failure example should be an object")
+        .remove("failure"));
 
     assert_committed_schema_rejects(&failure_example);
 }
@@ -243,16 +324,16 @@ fn schema_contract_gap_regression_should_reject_player_row_without_player_id() {
     let removed = success_example["players"][0]
         .as_object_mut()
         .expect("player row should be an object")
-        .remove("player_id");
+        .remove("eid");
 
-    assert!(removed.is_some(), "player row should include player_id");
+    assert!(removed.is_some(), "player row should include eid");
     assert_committed_schema_rejects(&success_example);
 }
 
 #[test]
-fn schema_contract_gap_regression_should_reject_string_counter_in_player_stats() {
+fn schema_contract_gap_regression_should_reject_string_counter_in_player_row() {
     let mut success_example = read_json(success_example_path());
-    success_example["player_stats"][0]["vehicleKills"] = json!("one");
+    success_example["players"][0]["vk"] = json!("one");
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -275,7 +356,7 @@ fn schema_contract_gap_regression_should_reject_invalid_destroyed_vehicle_classi
 
 #[test]
 fn schema_contract_gap_regression_should_reject_removed_top_level_fields() {
-    for removed_field in ["vehicle_score", "entities", "events", "source_refs"] {
+    for removed_field in ["vehicle_score", "entities", "events", "source_refs", "player_stats"] {
         let mut success_example = read_json(success_example_path());
         success_example[removed_field] = json!({});
 
