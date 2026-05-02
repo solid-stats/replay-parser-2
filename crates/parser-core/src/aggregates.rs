@@ -4,6 +4,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use parser_contract::{
+    diagnostic::{Diagnostic, DiagnosticSeverity},
     events::{
         CombatEventAttributes, CombatSemantic, CombatVictimKind, EventActorRef, NormalizedEvent,
         VehicleContext,
@@ -14,9 +15,15 @@ use parser_contract::{
         MinimalPlayerKillRow, MinimalPlayerRow, MinimalWeaponRow,
     },
     presence::FieldPresence,
+    source_ref::{RuleId, SourceRef, SourceRefs},
 };
 
-use crate::legacy_player::is_legacy_player_entity;
+use crate::{
+    artifact::SourceContext,
+    diagnostics::{DiagnosticAccumulator, DiagnosticImpact},
+    legacy_player::is_legacy_player_entity,
+    raw::{KilledEventKillInfo, KilledEventObservation},
+};
 
 /// Minimal v3 table rows emitted by the default parser artifact.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -121,6 +128,115 @@ pub fn derive_minimal_tables(
     }
 }
 
+/// Derives minimal default artifact rows directly from compact killed-event observations.
+#[must_use]
+pub fn derive_minimal_tables_from_killed_events(
+    entities: &[ObservedEntity],
+    killed_events: &[KilledEventObservation],
+    context: &SourceContext,
+    diagnostics: &mut DiagnosticAccumulator,
+) -> MinimalTables {
+    let entity_index = entity_index(entities);
+    let vehicle_name_index = vehicle_name_index(entities);
+    let mut players = minimal_players(entities);
+    let weapon_ids =
+        weapon_dictionary_from_killed_events(killed_events, &entity_index, &vehicle_name_index);
+    let mut destroyed_vehicles = Vec::new();
+
+    for observation in killed_events {
+        match classify_minimal_killed_event(observation, &entity_index, &vehicle_name_index) {
+            MinimalEventEffect::PlayerKill {
+                killer_entity_id,
+                victim_entity_id,
+                classification,
+                weapon,
+                attacker_vehicle,
+            } => {
+                add_fast_player_kill(
+                    &mut players,
+                    FastPlayerKill {
+                        killer_entity_id,
+                        victim_entity_id,
+                        classification,
+                        weapon,
+                        attacker_vehicle,
+                    },
+                    &weapon_ids,
+                );
+                match classification {
+                    KillClassification::EnemyKill => {
+                        increment_player_by_entity_id(&mut players, killer_entity_id, |player| {
+                            player.kills += 1;
+                            if attacker_vehicle.is_some() {
+                                player.kills_from_vehicle += 1;
+                            }
+                        });
+                        increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
+                            player.deaths += 1;
+                        });
+                    }
+                    KillClassification::Teamkill => {
+                        increment_player_by_entity_id(&mut players, killer_entity_id, |player| {
+                            player.teamkills += 1;
+                        });
+                        increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
+                            player.deaths += 1;
+                        });
+                    }
+                    KillClassification::Suicide
+                    | KillClassification::NullKiller
+                    | KillClassification::Unknown => {}
+                }
+            }
+            MinimalEventEffect::PlayerDeath { victim_entity_id, counter } => {
+                increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
+                    player.deaths += 1;
+                    match counter {
+                        MinimalDeathCounter::Suicide => player.suicides += 1,
+                        MinimalDeathCounter::NullKiller => player.null_killer_deaths += 1,
+                    }
+                });
+            }
+            MinimalEventEffect::UnknownPlayerDeath { victim_entity_id, diagnostic } => {
+                push_minimal_event_diagnostic(diagnostics, context, observation, diagnostic);
+                increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
+                    player.deaths += 1;
+                    player.unknown_deaths += 1;
+                });
+            }
+            MinimalEventEffect::VehicleDestroyed {
+                attacker_entity_id,
+                destroyed_entity,
+                classification,
+                weapon,
+                attacker_vehicle,
+            } => {
+                destroyed_vehicles.push(fast_destroyed_vehicle_row(
+                    attacker_entity_id,
+                    destroyed_entity,
+                    classification,
+                    weapon,
+                    attacker_vehicle,
+                    &weapon_ids,
+                ));
+                increment_player_by_entity_id(&mut players, attacker_entity_id, |player| {
+                    player.vehicle_kills += 1;
+                });
+            }
+            MinimalEventEffect::NoStats { diagnostic: Some(diagnostic) } => {
+                push_minimal_event_diagnostic(diagnostics, context, observation, diagnostic);
+            }
+            MinimalEventEffect::NoStats { diagnostic: None } => {}
+        }
+    }
+
+    MinimalTables {
+        players: players.rows.into_values().collect(),
+        weapons: weapon_ids.into_iter().map(|(name, id)| MinimalWeaponRow { id, name }).collect(),
+        destroyed_vehicles,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct PlayerRows {
     rows: BTreeMap<i64, MinimalPlayerRow>,
@@ -213,6 +329,410 @@ fn weapon_dictionary(
         .enumerate()
         .map(|(index, name)| (name, u32::try_from(index + 1).unwrap_or(u32::MAX)))
         .collect()
+}
+
+fn weapon_dictionary_from_killed_events(
+    killed_events: &[KilledEventObservation],
+    entity_index: &BTreeMap<i64, &ObservedEntity>,
+    vehicle_name_index: &BTreeMap<&str, &ObservedEntity>,
+) -> BTreeMap<String, u32> {
+    let mut weapon_names = BTreeSet::<String>::new();
+
+    for observation in killed_events {
+        match classify_minimal_killed_event(observation, entity_index, vehicle_name_index) {
+            MinimalEventEffect::PlayerKill { weapon: Some(weapon), .. }
+            | MinimalEventEffect::VehicleDestroyed { weapon: Some(weapon), .. } => {
+                let _inserted = weapon_names.insert(weapon.to_owned());
+            }
+            MinimalEventEffect::PlayerKill { weapon: None, .. }
+            | MinimalEventEffect::VehicleDestroyed { weapon: None, .. }
+            | MinimalEventEffect::PlayerDeath { .. }
+            | MinimalEventEffect::UnknownPlayerDeath { .. }
+            | MinimalEventEffect::NoStats { .. } => {}
+        }
+    }
+
+    weapon_names
+        .into_iter()
+        .enumerate()
+        .map(|(index, name)| (name, u32::try_from(index + 1).unwrap_or(u32::MAX)))
+        .collect()
+}
+
+fn entity_index(entities: &[ObservedEntity]) -> BTreeMap<i64, &ObservedEntity> {
+    entities.iter().map(|entity| (entity.source_entity_id, entity)).collect()
+}
+
+fn vehicle_name_index(entities: &[ObservedEntity]) -> BTreeMap<&str, &ObservedEntity> {
+    let mut index = BTreeMap::new();
+
+    for entity in entities.iter().filter(|entity| is_vehicle_or_static_kind(entity.kind)) {
+        if let Some(name) = observed_string(&entity.observed_name) {
+            let _ = index.entry(name).or_insert(entity);
+        }
+    }
+
+    index
+}
+
+#[derive(Clone, Copy)]
+enum MinimalDeathCounter {
+    Suicide,
+    NullKiller,
+}
+
+#[derive(Clone, Copy)]
+struct MinimalEventDiagnostic<'a> {
+    code: &'static str,
+    message: &'static str,
+    expected_shape: &'static str,
+    observed_shape: &'a str,
+    parser_action: &'static str,
+}
+
+enum MinimalEventEffect<'a> {
+    PlayerKill {
+        killer_entity_id: i64,
+        victim_entity_id: i64,
+        classification: KillClassification,
+        weapon: Option<&'a str>,
+        attacker_vehicle: Option<&'a ObservedEntity>,
+    },
+    PlayerDeath {
+        victim_entity_id: i64,
+        counter: MinimalDeathCounter,
+    },
+    UnknownPlayerDeath {
+        victim_entity_id: i64,
+        diagnostic: MinimalEventDiagnostic<'a>,
+    },
+    VehicleDestroyed {
+        attacker_entity_id: i64,
+        destroyed_entity: &'a ObservedEntity,
+        classification: DestroyedVehicleClassification,
+        weapon: Option<&'a str>,
+        attacker_vehicle: Option<&'a ObservedEntity>,
+    },
+    NoStats {
+        diagnostic: Option<MinimalEventDiagnostic<'a>>,
+    },
+}
+
+fn classify_minimal_killed_event<'a>(
+    observation: &'a KilledEventObservation,
+    entity_index: &'a BTreeMap<i64, &ObservedEntity>,
+    vehicle_name_index: &'a BTreeMap<&str, &ObservedEntity>,
+) -> MinimalEventEffect<'a> {
+    if observation.frame.is_none() {
+        return MinimalEventEffect::NoStats {
+            diagnostic: Some(MinimalEventDiagnostic {
+                code: "event.killed_shape_unknown",
+                message: "Killed event frame had an unexpected source shape",
+                expected_shape: "numeric frame in killed tuple slot 0",
+                observed_shape: "absent_or_non_numeric",
+                parser_action: "emit_unknown_combat_event",
+            }),
+        };
+    }
+
+    match &observation.kill_info {
+        KilledEventKillInfo::NullKiller => {
+            classify_minimal_null_killer_event(observation, entity_index)
+        }
+        KilledEventKillInfo::Killer { killer_entity_id, weapon } => classify_minimal_killer_event(
+            observation,
+            *killer_entity_id,
+            weapon.as_deref(),
+            entity_index,
+            vehicle_name_index,
+        ),
+        KilledEventKillInfo::Malformed { observed_shape } => MinimalEventEffect::NoStats {
+            diagnostic: Some(MinimalEventDiagnostic {
+                code: "event.killed_shape_unknown",
+                message: "Killed event kill-info tuple had an unexpected source shape",
+                expected_shape: "killed tuple with numeric victim and [killer_id, weapon]",
+                observed_shape,
+                parser_action: "emit_unknown_combat_event",
+            }),
+        },
+    }
+}
+
+fn classify_minimal_null_killer_event<'a>(
+    observation: &KilledEventObservation,
+    entity_index: &'a BTreeMap<i64, &ObservedEntity>,
+) -> MinimalEventEffect<'a> {
+    let Some(victim) = victim_entity_from_observation(observation, entity_index) else {
+        return MinimalEventEffect::NoStats {
+            diagnostic: Some(actor_unknown_diagnostic(
+                "Killed event has an explicit null killer but no known player victim",
+            )),
+        };
+    };
+
+    if !is_legacy_player_entity(victim) {
+        return MinimalEventEffect::NoStats {
+            diagnostic: Some(actor_unknown_diagnostic(
+                "Killed event has an explicit null killer and a non-player victim",
+            )),
+        };
+    }
+
+    MinimalEventEffect::PlayerDeath {
+        victim_entity_id: victim.source_entity_id,
+        counter: MinimalDeathCounter::NullKiller,
+    }
+}
+
+fn classify_minimal_killer_event<'a>(
+    observation: &KilledEventObservation,
+    killer_entity_id: i64,
+    weapon: Option<&'a str>,
+    entity_index: &'a BTreeMap<i64, &ObservedEntity>,
+    vehicle_name_index: &'a BTreeMap<&str, &ObservedEntity>,
+) -> MinimalEventEffect<'a> {
+    if observation.killed_entity_id.is_none() {
+        return MinimalEventEffect::NoStats {
+            diagnostic: Some(MinimalEventDiagnostic {
+                code: "event.killed_shape_unknown",
+                message: "Killed event has no numeric victim entity identifier",
+                expected_shape: "numeric killed entity identifier",
+                observed_shape: "absent_or_non_numeric",
+                parser_action: "emit_unknown_combat_event",
+            }),
+        };
+    }
+
+    let killer = entity_index.get(&killer_entity_id).copied();
+    let victim = victim_entity_from_observation(observation, entity_index);
+
+    let (Some(killer), Some(victim)) = (killer, victim) else {
+        return unknown_death_or_no_stats(
+            victim,
+            actor_unknown_diagnostic(
+                "Killed event references an actor that is missing from normalized entities",
+            ),
+        );
+    };
+
+    if is_legacy_player_entity(killer) && is_vehicle_or_static_kind(victim.kind) {
+        return MinimalEventEffect::VehicleDestroyed {
+            attacker_entity_id: killer.source_entity_id,
+            destroyed_entity: victim,
+            classification: destroyed_vehicle_classification_from_entities(killer, victim),
+            weapon,
+            attacker_vehicle: weapon.and_then(|weapon| vehicle_name_index.get(weapon).copied()),
+        };
+    }
+
+    if !(is_legacy_player_entity(killer) && is_legacy_player_entity(victim)) {
+        return unknown_death_or_no_stats(
+            Some(victim),
+            actor_unknown_diagnostic(
+                "Killed event actor or victim type is not auditable as a player combat event",
+            ),
+        );
+    }
+
+    if killer.source_entity_id == victim.source_entity_id {
+        return MinimalEventEffect::PlayerDeath {
+            victim_entity_id: victim.source_entity_id,
+            counter: MinimalDeathCounter::Suicide,
+        };
+    }
+
+    match same_present_entity_side(killer, victim) {
+        Some(true) => MinimalEventEffect::PlayerKill {
+            killer_entity_id: killer.source_entity_id,
+            victim_entity_id: victim.source_entity_id,
+            classification: KillClassification::Teamkill,
+            weapon,
+            attacker_vehicle: weapon.and_then(|weapon| vehicle_name_index.get(weapon).copied()),
+        },
+        Some(false) => MinimalEventEffect::PlayerKill {
+            killer_entity_id: killer.source_entity_id,
+            victim_entity_id: victim.source_entity_id,
+            classification: KillClassification::EnemyKill,
+            weapon,
+            attacker_vehicle: weapon.and_then(|weapon| vehicle_name_index.get(weapon).copied()),
+        },
+        None => unknown_death_or_no_stats(
+            Some(victim),
+            actor_unknown_diagnostic(
+                "Killed event player sides are incomplete for enemy/teamkill classification",
+            ),
+        ),
+    }
+}
+
+fn unknown_death_or_no_stats<'a>(
+    victim: Option<&'a ObservedEntity>,
+    diagnostic: MinimalEventDiagnostic<'a>,
+) -> MinimalEventEffect<'a> {
+    if let Some(victim) = victim
+        && is_legacy_player_entity(victim)
+    {
+        return MinimalEventEffect::UnknownPlayerDeath {
+            victim_entity_id: victim.source_entity_id,
+            diagnostic,
+        };
+    }
+
+    MinimalEventEffect::NoStats { diagnostic: Some(diagnostic) }
+}
+
+const fn actor_unknown_diagnostic(message: &'static str) -> MinimalEventDiagnostic<'static> {
+    MinimalEventDiagnostic {
+        code: "event.killed_actor_unknown",
+        message,
+        expected_shape: "known player killer and known killed actor",
+        observed_shape: "missing_or_unclassifiable_actor",
+        parser_action: "emit_unknown_combat_event",
+    }
+}
+
+fn victim_entity_from_observation<'a>(
+    observation: &KilledEventObservation,
+    entity_index: &'a BTreeMap<i64, &ObservedEntity>,
+) -> Option<&'a ObservedEntity> {
+    observation.killed_entity_id.and_then(|entity_id| entity_index.get(&entity_id).copied())
+}
+
+fn same_present_entity_side(killer: &ObservedEntity, victim: &ObservedEntity) -> Option<bool> {
+    let killer_side = present_side(&killer.identity.side)?;
+    let victim_side = present_side(&victim.identity.side)?;
+
+    Some(killer_side == victim_side)
+}
+
+fn destroyed_vehicle_classification_from_entities(
+    killer: &ObservedEntity,
+    victim: &ObservedEntity,
+) -> DestroyedVehicleClassification {
+    match (present_side(&killer.identity.side), present_side(&victim.identity.side)) {
+        (Some(killer_side), Some(victim_side)) if killer_side == victim_side => {
+            DestroyedVehicleClassification::Friendly
+        }
+        (Some(_), Some(_)) => DestroyedVehicleClassification::Enemy,
+        _ => DestroyedVehicleClassification::UnknownSide,
+    }
+}
+
+const fn is_vehicle_or_static_kind(kind: EntityKind) -> bool {
+    matches!(kind, EntityKind::Vehicle | EntityKind::StaticWeapon)
+}
+
+#[derive(Clone, Copy)]
+struct FastPlayerKill<'a> {
+    killer_entity_id: i64,
+    victim_entity_id: i64,
+    classification: KillClassification,
+    weapon: Option<&'a str>,
+    attacker_vehicle: Option<&'a ObservedEntity>,
+}
+
+fn add_fast_player_kill(
+    players: &mut PlayerRows,
+    kill: FastPlayerKill<'_>,
+    weapon_ids: &BTreeMap<String, u32>,
+) {
+    let Some(killer_player_id) = players.entity_to_player_id.get(&kill.killer_entity_id).copied()
+    else {
+        return;
+    };
+    let victim_source_entity_id = players
+        .entity_to_player_id
+        .get(&kill.victim_entity_id)
+        .copied()
+        .unwrap_or(kill.victim_entity_id);
+
+    if let Some(killer) = players.rows.get_mut(&killer_player_id) {
+        killer.kill_rows.push(MinimalPlayerKillRow {
+            victim_source_entity_id: Some(victim_source_entity_id),
+            classification: kill.classification,
+            weapon_id: kill.weapon.and_then(|weapon| weapon_ids.get(weapon).copied()),
+            attacker_vehicle_entity_id: kill.attacker_vehicle.map(|entity| entity.source_entity_id),
+            attacker_vehicle_class: kill
+                .attacker_vehicle
+                .and_then(|entity| observed_string(&entity.observed_class))
+                .map(ToOwned::to_owned),
+        });
+    }
+}
+
+fn increment_player_by_entity_id(
+    players: &mut PlayerRows,
+    entity_id: i64,
+    update: impl FnOnce(&mut MinimalPlayerRow),
+) {
+    if let Some(player) = players
+        .entity_to_player_id
+        .get(&entity_id)
+        .and_then(|player_id| players.rows.get_mut(player_id))
+    {
+        update(player);
+    }
+}
+
+fn fast_destroyed_vehicle_row(
+    attacker_entity_id: i64,
+    destroyed_entity: &ObservedEntity,
+    classification: DestroyedVehicleClassification,
+    weapon: Option<&str>,
+    attacker_vehicle: Option<&ObservedEntity>,
+    weapon_ids: &BTreeMap<String, u32>,
+) -> MinimalDestroyedVehicleRow {
+    MinimalDestroyedVehicleRow {
+        attacker_source_entity_id: Some(attacker_entity_id),
+        classification,
+        weapon_id: weapon.and_then(|weapon| weapon_ids.get(weapon).copied()),
+        attacker_vehicle_entity_id: attacker_vehicle.map(|entity| entity.source_entity_id),
+        attacker_vehicle_class: attacker_vehicle
+            .and_then(|entity| observed_string(&entity.observed_class))
+            .map(ToOwned::to_owned),
+        destroyed_entity_id: Some(destroyed_entity.source_entity_id),
+        destroyed_entity_type: Some(entity_kind_name(destroyed_entity).to_owned()),
+        destroyed_class: observed_string(&destroyed_entity.observed_class).map(ToOwned::to_owned),
+    }
+}
+
+fn push_minimal_event_diagnostic(
+    diagnostics: &mut DiagnosticAccumulator,
+    context: &SourceContext,
+    observation: &KilledEventObservation,
+    diagnostic: MinimalEventDiagnostic<'_>,
+) {
+    let source_ref = minimal_event_source_ref(context, observation);
+    let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
+        return;
+    };
+
+    diagnostics.push(
+        Diagnostic {
+            code: diagnostic.code.to_owned(),
+            severity: DiagnosticSeverity::Warning,
+            message: diagnostic.message.to_owned(),
+            json_path: Some(observation.json_path.clone()),
+            expected_shape: Some(diagnostic.expected_shape.to_owned()),
+            observed_shape: Some(diagnostic.observed_shape.to_owned()),
+            parser_action: diagnostic.parser_action.to_owned(),
+            source_refs,
+        },
+        DiagnosticImpact::DataLoss,
+    );
+}
+
+fn minimal_event_source_ref(
+    context: &SourceContext,
+    observation: &KilledEventObservation,
+) -> SourceRef {
+    context.event_source_ref(
+        &observation.json_path,
+        observation.frame,
+        u64::try_from(observation.event_index).ok(),
+        observation.killed_entity_id,
+        RuleId::new("event.killed.unknown").ok(),
+    )
 }
 
 fn minimal_player_kill_row(

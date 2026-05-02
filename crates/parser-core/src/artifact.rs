@@ -15,13 +15,12 @@ use parser_contract::{
 };
 
 use crate::{
-    aggregates::derive_minimal_tables,
+    aggregates::derive_minimal_tables_from_killed_events,
     diagnostics::{DiagnosticAccumulator, DiagnosticPolicy},
-    entities::normalize_entities,
-    events::normalize_combat_events,
+    entities::normalize_entities_with_connected_events,
     input::ParserInput,
     metadata::normalize_metadata,
-    raw::RawReplay,
+    raw::{RawReplay, relevant_events},
     raw_compact::{CompactDecodeError, RawOcapRoot, decode_compact_root},
 };
 
@@ -52,10 +51,20 @@ fn success_artifact(
     let raw = RawReplay::new(root);
     let context = SourceContext::new(&source);
     let mut diagnostics = DiagnosticAccumulator::new(diagnostic_limit);
+    let raw_events = relevant_events(raw);
     let replay = normalize_metadata(&raw, &context, &mut diagnostics);
-    let entities = normalize_entities(&raw, &context, &mut diagnostics);
-    let events = normalize_combat_events(&raw, &entities, &context, &mut diagnostics);
-    let minimal_tables = derive_minimal_tables(&entities, &events);
+    let entities = normalize_entities_with_connected_events(
+        &raw,
+        &context,
+        &mut diagnostics,
+        &raw_events.connected,
+    );
+    let minimal_tables = derive_minimal_tables_from_killed_events(
+        &entities,
+        &raw_events.killed,
+        &context,
+        &mut diagnostics,
+    );
     let diagnostic_report = diagnostics.finish(&context);
 
     ParseArtifact {

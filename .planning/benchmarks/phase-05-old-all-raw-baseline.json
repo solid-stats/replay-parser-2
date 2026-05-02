@@ -1,0 +1,14 @@
+{
+  "source": "cached_from_quick_260502_i8w_benchmark_report",
+  "old_wall_time_ms": 501274.528655,
+  "summary_wall_time_ms": 500107.497672,
+  "attempted_count": 23473,
+  "success_count": 23469,
+  "error_count": 4,
+  "skipped_count": 0,
+  "raw_file_count": 23473,
+  "replay_list_unique_count": 23456,
+  "captured_by": ".planning/quick/260502-i8w-phase-5-2-old-baseline-all-raw-coverage-/260502-i8w-SUMMARY.md",
+  "benchmark_report": ".planning/generated/phase-05/benchmarks/benchmark-report.json",
+  "command_policy": "Do not rerun old all-raw baseline for parser optimization quick tasks; compare new all-raw runs against this cached prior baseline unless a user explicitly requests a rerun."
+}

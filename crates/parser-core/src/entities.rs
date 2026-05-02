@@ -41,6 +41,22 @@ pub fn normalize_entities(
     context: &SourceContext,
     diagnostics: &mut DiagnosticAccumulator,
 ) -> Vec<ObservedEntity> {
+    let connected = connected_events(*raw);
+    normalize_entities_with_connected_events(raw, context, diagnostics, &connected)
+}
+
+/// Normalizes entity facts using caller-provided connected-player observations.
+#[must_use]
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "normalize_entities and its default-path variant keep matching borrowed RawReplay signatures"
+)]
+pub fn normalize_entities_with_connected_events(
+    raw: &RawReplay<'_>,
+    context: &SourceContext,
+    diagnostics: &mut DiagnosticAccumulator,
+    connected: &[ConnectedEventObservation],
+) -> Vec<ObservedEntity> {
     let RawField::Present { value: entities, json_path: _ } = raw.entities_field() else {
         push_entities_section_diagnostic(*raw, context, diagnostics);
         return Vec::new();
@@ -52,16 +68,16 @@ pub fn normalize_entities(
         .filter_map(|(index, entity)| normalize_entity(entity, index, context, diagnostics))
         .collect::<Vec<_>>();
 
-    apply_connected_player_backfill(*raw, context, &mut normalized);
+    apply_connected_player_backfill(context, &mut normalized, connected);
     apply_duplicate_slot_same_name_hints(diagnostics, &mut normalized);
     normalized.sort_by(compare_entities);
     normalized
 }
 
 fn apply_connected_player_backfill(
-    raw: RawReplay<'_>,
     context: &SourceContext,
     entities: &mut [ObservedEntity],
+    connected_events: &[ConnectedEventObservation],
 ) {
     let entity_index = entities
         .iter()
@@ -69,7 +85,7 @@ fn apply_connected_player_backfill(
         .map(|(index, entity)| (entity.source_entity_id, index))
         .collect::<BTreeMap<_, _>>();
 
-    for connected_event in connected_events(raw) {
+    for connected_event in connected_events {
         if connected_event.name.is_empty() {
             continue;
         }
@@ -83,12 +99,9 @@ fn apply_connected_player_backfill(
             continue;
         }
 
-        let connected_source_ref = connected_event_source_ref(
-            context,
-            &connected_event,
-            CONNECTED_PLAYER_BACKFILL_RULE_ID,
-        );
-        let hint = connected_player_backfill_hint(entity, &connected_event, &connected_source_ref);
+        let connected_source_ref =
+            connected_event_source_ref(context, connected_event, CONNECTED_PLAYER_BACKFILL_RULE_ID);
+        let hint = connected_player_backfill_hint(entity, connected_event, &connected_source_ref);
 
         let inferred_name = inferred_connected_name(&connected_event.name, connected_source_ref);
         if should_infer_connected_name(&entity.observed_name) {
@@ -1320,7 +1333,8 @@ mod tests {
         )];
 
         // Act
-        apply_connected_player_backfill(raw, &context, &mut entities);
+        let connected = connected_events(raw);
+        apply_connected_player_backfill(&context, &mut entities, &connected);
 
         // Assert
         assert!(matches!(

@@ -8,11 +8,12 @@ use serde_json::value::RawValue;
 
 pub use crate::raw_compact::{
     ConnectedEventObservation, KilledEventKillInfo, KilledEventObservation, RawEntityObservation,
+    RawRelevantEvents,
 };
 use crate::raw_compact::{
     RawOcapRoot, compact_connected_events, compact_entities, compact_killed_events,
-    observed_raw_shape, parse_raw_bool_or_numeric, parse_raw_f64, parse_raw_i64, parse_raw_string,
-    parse_raw_u32_vec, parse_raw_u64, raw_array_field,
+    compact_relevant_events, observed_raw_shape, parse_raw_bool_or_numeric, parse_raw_f64,
+    parse_raw_i64, parse_raw_string, parse_raw_u32_vec, parse_raw_u64, raw_array_field,
 };
 
 /// Borrowed wrapper around an OCAP replay root object.
@@ -179,6 +180,12 @@ pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
 #[must_use]
 pub fn killed_events(raw: RawReplay<'_>) -> Vec<KilledEventObservation> {
     compact_killed_events(raw.root)
+}
+
+/// Reads all default-parser-relevant event observations in a single source scan.
+#[must_use]
+pub fn relevant_events(raw: RawReplay<'_>) -> RawRelevantEvents {
+    compact_relevant_events(raw.root)
 }
 
 /// Raw string evidence from a top-level replay field.

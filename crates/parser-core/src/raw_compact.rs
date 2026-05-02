@@ -330,6 +330,15 @@ pub enum KilledEventKillInfo {
     },
 }
 
+/// Relevant event observations gathered by one source `events` scan.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RawRelevantEvents {
+    /// Connected-player observations needed for legacy player backfill.
+    pub connected: Vec<ConnectedEventObservation>,
+    /// Killed-event observations needed for default v1 statistics.
+    pub killed: Vec<KilledEventObservation>,
+}
+
 /// Reads compact entity observations from the borrowed root.
 #[must_use]
 pub fn compact_entities<'a>(root: &'a RawOcapRoot<'a>) -> Vec<RawEntityObservation<'a>> {
@@ -358,19 +367,43 @@ pub fn compact_entities<'a>(root: &'a RawOcapRoot<'a>) -> Vec<RawEntityObservati
 /// Reads connected-player event tuples shaped as `[frame, "connected", name, entity_id]`.
 #[must_use]
 pub fn compact_connected_events(root: &RawOcapRoot<'_>) -> Vec<ConnectedEventObservation> {
-    event_rows(root)
-        .into_iter()
-        .filter_map(|(event_index, event)| connected_event(event, event_index))
-        .collect()
+    compact_relevant_events(root).connected
 }
 
 /// Reads killed event tuples shaped as `[frame, "killed", killed_id, kill_info, distance]`.
 #[must_use]
 pub fn compact_killed_events(root: &RawOcapRoot<'_>) -> Vec<KilledEventObservation> {
-    event_rows(root)
-        .into_iter()
-        .filter_map(|(event_index, event)| killed_event(event, event_index))
-        .collect()
+    compact_relevant_events(root).killed
+}
+
+/// Reads connected-player and killed-event observations with one `events` array scan.
+#[must_use]
+pub fn compact_relevant_events(root: &RawOcapRoot<'_>) -> RawRelevantEvents {
+    let mut connected = Vec::new();
+    let mut killed = Vec::new();
+
+    for (event_index, event) in event_rows(root) {
+        let Some(event) = raw_array_items(event) else {
+            continue;
+        };
+        let Some(event_type) = event.get(1).and_then(|value| parse_raw_string(value)) else {
+            continue;
+        };
+
+        match event_type.as_str() {
+            "connected" => {
+                if let Some(observation) = connected_event(&event, event_index) {
+                    connected.push(observation);
+                }
+            }
+            "killed" => {
+                killed.push(killed_event(&event, event_index));
+            }
+            _ => {}
+        }
+    }
+
+    RawRelevantEvents { connected, killed }
 }
 
 pub(crate) fn raw_array_field(
@@ -433,14 +466,8 @@ fn event_rows<'a>(root: &'a RawOcapRoot<'a>) -> Vec<(usize, &'a RawValue)> {
     raw_array_items(events).map_or_else(Vec::new, |events| events.into_iter().enumerate().collect())
 }
 
-fn connected_event(event: &RawValue, event_index: usize) -> Option<ConnectedEventObservation> {
-    let event = raw_array_items(event)?;
+fn connected_event(event: &[&RawValue], event_index: usize) -> Option<ConnectedEventObservation> {
     let frame = event.first().and_then(|value| parse_raw_u64(value))?;
-    let event_type = event.get(1).and_then(|value| parse_raw_string(value))?;
-
-    if event_type != "connected" {
-        return None;
-    }
 
     Some(ConnectedEventObservation {
         event_index,
@@ -451,22 +478,15 @@ fn connected_event(event: &RawValue, event_index: usize) -> Option<ConnectedEven
     })
 }
 
-fn killed_event(event: &RawValue, event_index: usize) -> Option<KilledEventObservation> {
-    let event = raw_array_items(event)?;
-    let event_type = event.get(1).and_then(|value| parse_raw_string(value))?;
-
-    if event_type != "killed" {
-        return None;
-    }
-
-    Some(KilledEventObservation {
+fn killed_event(event: &[&RawValue], event_index: usize) -> KilledEventObservation {
+    KilledEventObservation {
         event_index,
         frame: event.first().and_then(|value| parse_raw_u64(value)),
         killed_entity_id: event.get(2).and_then(|value| parse_raw_i64(value)),
         kill_info: killed_event_kill_info(event.get(3).copied()),
         distance_meters: event.get(4).and_then(|value| parse_raw_f64(value)),
         json_path: format!("$.events[{event_index}]"),
-    })
+    }
 }
 
 fn killed_event_kill_info(value: Option<&RawValue>) -> KilledEventKillInfo {

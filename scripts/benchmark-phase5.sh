@@ -23,6 +23,7 @@ COMPARISON_MARKDOWN="$COMPARISON_ROOT/comparison-report.md"
 OLD_SELECTED_LOG="$COMPARISON_ROOT/old-selected-command.log"
 OLD_FULL_LOG="$COMPARISON_ROOT/old-all-raw-command.log"
 OLD_FULL_SUMMARY="$COMPARISON_ROOT/old-all-raw-summary.json"
+OLD_FULL_BASELINE_CACHE="${PHASE5_OLD_ALL_RAW_BASELINE_CACHE:-.planning/benchmarks/phase-05-old-all-raw-baseline.json}"
 MAX_DEFAULT_ARTIFACT_BYTES=100000
 SELECTION_POLICY="largest .json by byte size under ~/sg_stats/raw_replays; tie-break lexicographic path"
 ALL_RAW_SELECTOR="~/sg_stats/raw_replays/**/*.json sorted lexicographically"
@@ -554,6 +555,38 @@ old_all_raw_attempted_count=0
 old_all_raw_success_count=0
 old_all_raw_error_count=0
 old_all_raw_skipped_count=0
+old_all_raw_source="not_run"
+
+if [[ "$all_raw_run" == "true" \
+  && "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" != "1" \
+  && -f "$OLD_FULL_BASELINE_CACHE" ]]; then
+  cp "$OLD_FULL_BASELINE_CACHE" "$OLD_FULL_SUMMARY"
+  old_all_raw_available=true
+  old_all_raw_source="cached_previous_run"
+  read -r old_all_raw_wall_time_ms old_all_raw_attempted_count old_all_raw_success_count old_all_raw_error_count old_all_raw_skipped_count all_raw_attempted < <(
+    python3 - "$OLD_FULL_BASELINE_CACHE" "$ALL_RAW_SUMMARY" <<'PY'
+import json
+import sys
+
+cached = json.load(open(sys.argv[1], encoding="utf-8"))
+summary = json.load(open(sys.argv[2], encoding="utf-8"))
+old_wall_ms = cached.get("old_wall_time_ms", cached.get("wall_time_ms", ""))
+print(
+    old_wall_ms,
+    cached.get("attempted_count", 0),
+    cached.get("success_count", 0),
+    cached.get("error_count", cached.get("failed_count", 0)),
+    cached.get("skipped_count", 0),
+    summary.get("attempted_count", 0),
+)
+PY
+  )
+  if [[ "$old_all_raw_available" == "true" \
+    && "$old_all_raw_attempted_count" == "$all_raw_attempted" \
+    && "$old_all_raw_skipped_count" == "0" ]]; then
+    old_all_raw_covers_all=true
+  fi
+fi
 
 if [[ "$all_raw_run" == "true" \
   && "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" == "1" \
@@ -754,6 +787,7 @@ TS
       "$OLD_FULL_HOME_ABS/sg_stats/raw_replays" "$OLD_FULL_SUMMARY_ABS"
   ) >"$OLD_FULL_LOG" 2>&1; then
     old_all_raw_available=true
+    old_all_raw_source="rerun"
   fi
   old_full_end_ns=$(date +%s%N)
   old_all_raw_wall_time_ms=$(awk -v ns="$((old_full_end_ns - old_full_start_ns))" \
@@ -791,7 +825,8 @@ python3 - "$REPORT_PATH" "$SELECTED_INFO" "$SELECTED_ARTIFACT" "$selected_new_wa
   "$ALL_RAW_SUMMARY" "$old_all_raw_available" "$old_all_raw_covers_all" "$old_all_raw_wall_time_ms" \
   "$MAX_DEFAULT_ARTIFACT_BYTES" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$ALL_RAW_SELECTOR" \
   "${RUN_PHASE5_FULL_CORPUS:-0}" "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" \
-  "$old_all_raw_attempted_count" "$old_all_raw_success_count" "$old_all_raw_error_count" "$old_all_raw_skipped_count" <<'PY'
+  "$old_all_raw_attempted_count" "$old_all_raw_success_count" "$old_all_raw_error_count" "$old_all_raw_skipped_count" \
+  "$old_all_raw_source" <<'PY'
 import json
 import sys
 
@@ -821,6 +856,7 @@ import sys
     old_all_raw_success_count_raw,
     old_all_raw_error_count_raw,
     old_all_raw_skipped_count_raw,
+    old_all_raw_source,
 ) = sys.argv[1:]
 
 limit = int(limit_raw)
@@ -965,7 +1001,10 @@ else:
     old_profile += "; selected_large_replay old baseline not-run in --ci"
 
 if old_all_raw_available_raw == "true":
-    old_profile += "; all_raw_corpus old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm exec tsx run-old-all-raw.ts"
+    if old_all_raw_source == "cached_previous_run":
+        old_profile += "; all_raw_corpus old baseline reused from .planning/benchmarks/phase-05-old-all-raw-baseline.json"
+    else:
+        old_profile += "; all_raw_corpus old baseline captured with HOME=<generated-fake-home> WORKER_COUNT=1 pnpm exec tsx run-old-all-raw.ts"
 elif run_full_old_baseline == "1":
     old_profile += "; all_raw_corpus old baseline attempted but unavailable"
 else:
