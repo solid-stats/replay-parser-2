@@ -211,7 +211,8 @@ fn comparison_report_compare_artifacts_should_derive_legacy_view_from_minimal_ta
 
     let bounty_inputs = finding(&report, "bounty.inputs");
     assert_eq!(bounty_inputs.category, MismatchCategory::Compatible);
-    assert_eq!(bounty_inputs.new_value[0]["attacker_vehicle_name"], "Offroad HMG");
+    assert_eq!(bounty_inputs.new_value[0]["weapon"], "M2");
+    assert_eq!(bounty_inputs.new_value[0]["attacker_vehicle_class"], "offroad_hmg");
 }
 
 #[test]
@@ -284,7 +285,7 @@ fn comparison_report_markdown_summary_should_surface_derived_legacy_top_diffs() 
     let old_json = legacy_surface_artifact_json("success");
     let mut new_value: Value = serde_json::from_slice(&minimal_artifact_json("success"))
         .expect("minimal artifact fixture should deserialize");
-    new_value["player_stats"][0]["kills"] = json!(2);
+    new_value["players"][0]["k"] = json!(2);
     let new_json =
         serde_json::to_vec(&new_value).expect("modified minimal fixture should serialize");
     let report =
@@ -393,126 +394,74 @@ fn minimal_artifact_json(status: &str) -> Vec<u8> {
         },
         "players": [
             {
-                "player_id": "entity:1",
-                "source_entity_id": 1,
-                "observed_name": "Alpha",
-                "side": "west",
-                "group": "Alpha 1-1",
-                "role": "Rifleman",
-                "steam_id": null,
-                "compatibility_key": "legacy_name:Alpha"
+                "eid": 1,
+                "n": "Alpha",
+                "s": "west",
+                "g": "Alpha 1-1",
+                "r": "Rifleman",
+                "ck": "legacy_name:Alpha",
+                "k": 1,
+                "tk": 1,
+                "vk": 1,
+                "kfv": 1
             },
             {
-                "player_id": "entity:2",
-                "source_entity_id": 2,
-                "observed_name": "Bravo",
-                "side": "east",
-                "group": "Bravo 1-1",
-                "role": "Rifleman",
-                "steam_id": null,
-                "compatibility_key": "legacy_name:Bravo"
+                "eid": 2,
+                "n": "Bravo",
+                "s": "east",
+                "g": "Bravo 1-1",
+                "r": "Rifleman",
+                "ck": "legacy_name:Bravo",
+                "d": 1
             },
             {
-                "player_id": "entity:3",
-                "source_entity_id": 3,
-                "observed_name": "Charlie",
-                "side": "west",
-                "group": "Alpha 1-2",
-                "role": "Rifleman",
-                "steam_id": null,
-                "compatibility_key": "legacy_name:Charlie"
+                "eid": 3,
+                "n": "Charlie",
+                "s": "west",
+                "g": "Alpha 1-2",
+                "r": "Rifleman",
+                "ck": "legacy_name:Charlie",
+                "d": 1
             }
         ],
-        "player_stats": [
+        "weapons": [
             {
-                "player_id": "entity:1",
-                "source_entity_id": 1,
-                "kills": 1,
-                "deaths": 0,
-                "teamkills": 1,
-                "suicides": 0,
-                "null_killer_deaths": 0,
-                "unknown_deaths": 0,
-                "vehicleKills": 1,
-                "killsFromVehicle": 1
+                "id": 1,
+                "n": "AK-74"
             },
             {
-                "player_id": "entity:2",
-                "source_entity_id": 2,
-                "kills": 0,
-                "deaths": 1,
-                "teamkills": 0,
-                "suicides": 0,
-                "null_killer_deaths": 0,
-                "unknown_deaths": 0,
-                "vehicleKills": 0,
-                "killsFromVehicle": 0
+                "id": 2,
+                "n": "M2"
             },
             {
-                "player_id": "entity:3",
-                "source_entity_id": 3,
-                "kills": 0,
-                "deaths": 1,
-                "teamkills": 0,
-                "suicides": 0,
-                "null_killer_deaths": 0,
-                "unknown_deaths": 0,
-                "vehicleKills": 0,
-                "killsFromVehicle": 0
+                "id": 3,
+                "n": "RPG-7"
             }
         ],
         "kills": [
             {
-                "killer_player_id": "entity:1",
-                "killer_source_entity_id": 1,
-                "killer_name": "Alpha",
-                "killer_side": "west",
-                "victim_player_id": "entity:2",
-                "victim_source_entity_id": 2,
-                "victim_name": "Bravo",
-                "victim_side": "east",
-                "classification": "enemy_kill",
-                "weapon": "M2",
-                "attacker_vehicle_entity_id": 20,
-                "attacker_vehicle_name": "Offroad HMG",
-                "attacker_vehicle_class": "offroad_hmg",
-                "bounty_eligible": true,
-                "bounty_exclusion_reasons": []
+                "k": 1,
+                "v": 2,
+                "c": "enemy_kill",
+                "w": 2,
+                "av": 20,
+                "avc": "offroad_hmg"
             },
             {
-                "killer_player_id": "entity:1",
-                "killer_source_entity_id": 1,
-                "killer_name": "Alpha",
-                "killer_side": "west",
-                "victim_player_id": "entity:3",
-                "victim_source_entity_id": 3,
-                "victim_name": "Charlie",
-                "victim_side": "west",
-                "classification": "teamkill",
-                "weapon": "AK-74",
-                "attacker_vehicle_entity_id": null,
-                "attacker_vehicle_name": null,
-                "attacker_vehicle_class": null,
-                "bounty_eligible": false,
-                "bounty_exclusion_reasons": ["teamkill"]
+                "k": 1,
+                "v": 3,
+                "c": "teamkill",
+                "w": 1
             }
         ],
         "destroyed_vehicles": [
             {
-                "attacker_player_id": "entity:1",
-                "attacker_source_entity_id": 1,
-                "attacker_name": "Alpha",
-                "attacker_side": "west",
-                "classification": "enemy",
-                "weapon": "RPG-7",
-                "attacker_vehicle_entity_id": null,
-                "attacker_vehicle_name": null,
-                "attacker_vehicle_class": null,
-                "destroyed_entity_id": 30,
-                "destroyed_entity_type": "vehicle",
-                "destroyed_name": "BTR",
-                "destroyed_class": "apc",
-                "destroyed_side": "east"
+                "a": 1,
+                "c": "enemy",
+                "w": 3,
+                "de": 30,
+                "dt": "vehicle",
+                "dc": "apc"
             }
         ]
     }))
@@ -613,7 +562,6 @@ fn expected_bounty_inputs() -> Value {
             "victim_side": "east",
             "weapon": "M2",
             "attacker_vehicle_entity_id": 20,
-            "attacker_vehicle_name": "Offroad HMG",
             "attacker_vehicle_class": "offroad_hmg"
         }
     ])

@@ -59,12 +59,12 @@ fn read_json(path: &PathBuf) -> Value {
     serde_json::from_str(&text).expect("output artifact should be valid JSON")
 }
 
-fn assert_minimal_artifact_root(artifact: &Value) {
-    for expected_field in ["players", "player_stats", "kills", "destroyed_vehicles", "failure"] {
+fn assert_compact_artifact_root(artifact: &Value) {
+    for expected_field in ["contract_version", "parser", "source", "status"] {
         assert!(artifact.get(expected_field).is_some(), "artifact should contain {expected_field}");
     }
 
-    for removed_field in ["participants", "facts", "summaries"] {
+    for removed_field in ["participants", "facts", "summaries", "player_stats"] {
         assert!(
             artifact.get(removed_field).is_none(),
             "artifact should not contain removed top-level field {removed_field}"
@@ -92,6 +92,23 @@ fn assert_no_key_recursive(value: &Value, forbidden_key: &str) {
     }
 }
 
+fn assert_no_null_recursive(value: &Value) {
+    match value {
+        Value::Object(map) => {
+            for nested in map.values() {
+                assert_no_null_recursive(nested);
+            }
+        }
+        Value::Array(items) => {
+            for nested in items {
+                assert_no_null_recursive(nested);
+            }
+        }
+        Value::Null => panic!("default artifact should not contain JSON null values"),
+        Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+    }
+}
+
 #[test]
 fn parse_command_should_write_success_artifact_when_input_is_valid() {
     // Arrange
@@ -108,12 +125,13 @@ fn parse_command_should_write_success_artifact_when_input_is_valid() {
     assert_eq!(artifact["source"]["source_file"], input.display().to_string());
     assert!(artifact["source"].get("checksum").is_some());
     assert!(artifact.get("replay").is_some());
-    assert_minimal_artifact_root(&artifact);
-    assert!(artifact["players"].is_array());
-    assert!(artifact["player_stats"].is_array());
-    assert!(artifact["kills"].is_array());
-    assert!(artifact["destroyed_vehicles"].is_array());
-    assert!(artifact["failure"].is_null());
+    assert_compact_artifact_root(&artifact);
+    assert!(artifact.get("players").is_none());
+    assert!(artifact.get("weapons").is_none());
+    assert!(artifact.get("kills").is_none());
+    assert!(artifact.get("destroyed_vehicles").is_none());
+    assert!(artifact.get("failure").is_none());
+    assert_no_null_recursive(&artifact);
 }
 
 #[test]
@@ -133,12 +151,19 @@ fn parse_command_should_write_minified_minimal_json_by_default() {
     assert!(command_output.status.success());
     assert!(artifact_text.ends_with('\n'));
     assert!(artifact_text.trim_end().lines().count() == 1);
-    assert_minimal_artifact_root(&artifact);
+    assert_compact_artifact_root(&artifact);
     let retired_score_section = ["vehicle", "score"].join("_");
     for forbidden_key in [
         "participants",
         "facts",
         "summaries",
+        "player_stats",
+        "bounty_eligible",
+        "bounty_exclusion_reasons",
+        "killer_name",
+        "victim_name",
+        "attacker_vehicle_name",
+        "destroyed_name",
         "source_refs",
         "rule_id",
         "frame",
@@ -148,6 +173,7 @@ fn parse_command_should_write_minified_minimal_json_by_default() {
         assert_no_key_recursive(&artifact, forbidden_key);
     }
     assert_no_key_recursive(&artifact, &retired_score_section);
+    assert_no_null_recursive(&artifact);
 }
 
 #[test]
@@ -167,7 +193,8 @@ fn parse_command_should_write_pretty_minimal_json_when_requested() {
     assert!(command_output.status.success());
     assert!(artifact_text.ends_with('\n'));
     assert!(artifact_text.trim_end().lines().count() > 1);
-    assert_minimal_artifact_root(&artifact);
+    assert_compact_artifact_root(&artifact);
+    assert!(artifact.get("player_stats").is_none());
 }
 
 #[test]
@@ -184,9 +211,11 @@ fn parse_command_should_omit_debug_provenance_from_partial_default_artifact() {
     assert!(command_output.status.success());
     assert_eq!(artifact["status"], "partial");
     assert_eq!(artifact["diagnostics"][0]["code"], "schema.metadata_field");
+    assert_compact_artifact_root(&artifact);
     for forbidden_key in ["source_refs", "rule_id", "frame", "event_index", "json_path"] {
         assert_no_key_recursive(&artifact, forbidden_key);
     }
+    assert_no_null_recursive(&artifact);
 }
 
 #[test]
@@ -212,6 +241,7 @@ fn parse_command_should_write_debug_artifact_sidecar_when_requested() {
     assert!(output_path.is_file());
     assert!(debug_path.is_file());
     assert_no_key_recursive(&artifact, "source_refs");
+    assert_no_key_recursive(&artifact, "player_stats");
     assert!(debug_text.contains("\"source_refs\""));
     assert!(debug_text.contains("\"rule_id\""));
     assert!(debug_text.contains("\"frame\""));
@@ -270,12 +300,13 @@ fn parse_command_should_write_compact_failure_artifact_and_stderr_summary_when_i
     assert!(!command_output.status.success());
     assert_eq!(artifact["status"], "failed");
     assert!(artifact.get("failure").is_some());
-    assert_minimal_artifact_root(&artifact);
-    assert!(artifact["players"].is_array());
-    assert!(artifact["player_stats"].is_array());
-    assert!(artifact["kills"].is_array());
-    assert!(artifact["destroyed_vehicles"].is_array());
+    assert_compact_artifact_root(&artifact);
+    assert!(artifact.get("players").is_none());
+    assert!(artifact.get("weapons").is_none());
+    assert!(artifact.get("kills").is_none());
+    assert!(artifact.get("destroyed_vehicles").is_none());
     assert!(artifact["failure"].is_object());
+    assert_no_null_recursive(&artifact);
     assert!(stderr.contains("parse failed:"));
 }
 
