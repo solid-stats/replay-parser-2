@@ -91,16 +91,16 @@ Requirements for the initial Rust parser release. Each maps to roadmap phases.
 - [x] **TEST-03**: Determinism tests prove repeated parser runs on the same input produce stable JSON output.
 - [x] **TEST-04**: Benchmark harness reports parse-only, aggregate-only, and end-to-end throughput against the pinned old parser baseline.
 - [x] **TEST-05**: Benchmark reporting includes files/sec, MB/sec or events/sec, memory/RSS where practical, and whether output parity passed for the measured sample.
-- [ ] **TEST-06**: Benchmark target is at least x3 faster than the current parser for end-to-end CLI parsing on one large representative replay and at least x10 faster across all raw replay files in `~/sg_stats/raw_replays`, with every raw file counted as an attempted success/skipped/unsupported/failed result.
+- [x] **TEST-06**: Benchmark reporting records old/new end-to-end CLI performance for one large representative replay and all raw files in `~/sg_stats/raw_replays`; the product owner accepted the current measured performance on 2026-05-02, so historical x3/x10 target statuses are reported but no longer block Phase 6 by themselves.
 - [x] **TEST-07**: CI enforces 100% statement, branch, function, and line coverage for all reachable production Rust code in parser core, contract, CLI, worker, harness, and aggregate modules; exclusions are allowed only for impossible-to-execute platform glue, generated code, or defensive unreachable branches with an inline rationale and reviewable allowlist entry.
 - [x] **TEST-08**: Every parser behavior requirement has at least one behavior-level test with a strong oracle, including success, boundary, error, malformed input, unknown/null state, deterministic ordering, parity, and source-reference scenarios where applicable.
 - [x] **TEST-09**: Unit tests follow the `unit-tests-philosophy` RITE standard: readable names, explicit Arrange/Act/Assert structure, isolated fixtures/state, deterministic time/randomness/environment, and assertions against observable behavior rather than private implementation details.
 - [x] **TEST-10**: Test data uses typed builders, minimal focused fixtures, or curated golden corpus samples instead of unsafe casts, ad-hoc duplicated object graphs, or tests that require production-only API changes.
 - [x] **TEST-11**: The test suite includes negative and regression tests for known legacy compatibility traps, including schema drift, malformed events/entities, null killers, duplicate-slot same-name behavior, connected-player backfill, teamkill classification, vehicle score penalties, and missing identity/outcome fields.
 - [x] **TEST-12**: Release gating includes a mutation-testing or equivalent fault-injection report for parser-core and aggregate logic; any surviving high-risk mutant or fault class must be fixed with stronger tests or documented as an accepted non-applicable case.
-- [ ] **TEST-13**: Benchmark reports include raw input size, default artifact size, artifact-size percentiles, max artifact bytes, parse-only throughput, aggregate-only throughput where meaningful, end-to-end throughput, memory/RSS where practical, skip/failure counts, parity status, and explicit x3/x10 pass/fail evidence for the minimal artifact path.
+- [x] **TEST-13**: Benchmark reports include raw input size, default artifact size, artifact-size percentiles, max artifact bytes, parse-only throughput, aggregate-only throughput where meaningful, end-to-end throughput, memory/RSS where practical, skip/failure counts, parity status, explicit x3/x10 pass/fail evidence for the minimal artifact path, and user-accepted current-performance status.
 - [x] **TEST-14**: Old-vs-new comparison reports are summary-first and human-reviewable by default, with mismatch counts by category and impact, top actionable diffs, and detailed machine-readable evidence separated from the default review surface.
-- [ ] **TEST-15**: Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5%, p95 artifact/raw ratio is <= 10%, and every successful default artifact is <= 100 KB (100,000 bytes), with tiny fixtures reported separately from acceptance.
+- [x] **TEST-15**: Successful all-raw artifacts satisfy the accepted default artifact-size gate: every successful default artifact is <= 100 KB (100,000 bytes) and `oversized_artifact_count == 0`; median and p95 artifact/raw ratios remain reported trend evidence, but p95 > 10% is accepted by the product owner.
 
 ### Worker Integration
 
@@ -214,16 +214,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
-| TEST-06 | Phase 5.2 | Blocked: selected x3 fails at 2.8190x, selected parity is human_review, and all-raw x10 fails at 1.7544x |
+| TEST-06 | Phase 5.2 | Complete: current selected/all-raw performance accepted by product owner on 2026-05-02; x3/x10 statuses remain reported |
 | TEST-07 | Phase 5 | Complete |
 | TEST-08 | Phase 5 | Complete |
 | TEST-09 | Phase 5 | Complete |
 | TEST-10 | Phase 5 | Complete |
 | TEST-11 | Phase 5 | Complete |
 | TEST-12 | Phase 5 | Complete |
-| TEST-13 | Phase 5.2 | Blocked: report is structurally valid but selected x3 and all-raw x10 fail |
+| TEST-13 | Phase 5.2 | Complete: report includes required performance, parity, size, percentile, and failure evidence |
 | TEST-14 | Phase 5.1 | Complete |
-| TEST-15 | Phase 5.2 | Blocked: selected artifact size passes, but all-raw p95 artifact/raw ratio is 0.12417910447761193 > 0.10 |
+| TEST-15 | Phase 5.2 | Complete: hard max artifact size passes; p95 > 0.10 accepted as non-blocking trend evidence |
 | WORK-01 | Phase 6 | Pending |
 | WORK-02 | Phase 6 | Pending |
 | WORK-03 | Phase 6 | Pending |

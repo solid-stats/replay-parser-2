@@ -8,11 +8,11 @@ The default v1 output must reduce replay data for `server-2`. A 10-15 MB OCAP re
 
 ## Current Status
 
-Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 implementation is executed, and Phase 5.2 is now replacing that compact artifact with a v3 minimal v1 statistics artifact, moving detailed evidence behind an explicit debug sidecar, removing GitHub issue #13 vehicle score from v1, and proving the new x3 selected-replay plus x10 all-raw corpus performance gates.
+Phase 5 execution is complete, but UAT rejected the previous parser direction as a product-fit gap. The repository contains the Rust workspace with `crates/parser-contract`, generated JSON Schema, committed success/failure examples, contract tests, the pure parser core at `crates/parser-core`, the parser harness at `crates/parser-harness`, and the CLI adapter binary `replay-parser-2`. Phase 5.1 implementation is executed, and Phase 5.2 replaced that compact artifact with a v3 minimal v1 statistics artifact, moved detailed evidence behind an explicit debug sidecar, removed GitHub issue #13 vehicle score from v1, and recorded accepted current performance, hard max-artifact-size, and malformed-file parity evidence before worker integration.
 
-The CLI can parse a local OCAP JSON file into minified minimal JSON by default, export the v3 parser contract schema, compare selected old/new artifacts or a selected replay against a saved old artifact, and write an internal full-detail debug sidecar only when `--debug-artifact <path>` is requested. The ordinary default tables are `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kills are nested under the killer `players[].kills`, same-name slots are merged into one replay-local player row, and legacy squad tags are split from observed nicknames. Source refs, rule IDs, entity snapshots, and normalized event/entity evidence stay out of ordinary ingestion unless the debug sidecar is explicitly requested. Phase 6 remains blocked until Phase 5.2 records current baseline capture, x3 end-to-end CLI speedup on one large representative replay, x10 end-to-end speedup across all files in `~/sg_stats/raw_replays`, and artifact-size acceptance of median <= 5% raw size, p95 <= 10% raw size, and every successful default artifact <= 100 KB (100,000 bytes). RabbitMQ/S3 worker mode, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
+The CLI can parse a local OCAP JSON file into minified minimal JSON by default, export the v3 parser contract schema, compare selected old/new artifacts or a selected replay against a saved old artifact, and write an internal full-detail debug sidecar only when `--debug-artifact <path>` is requested. The ordinary default tables are `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kills are nested under the killer `players[].kills`, same-name slots are merged into one replay-local player row, and legacy squad tags are split from observed nicknames. Source refs, rule IDs, entity snapshots, and normalized event/entity evidence stay out of ordinary ingestion unless the debug sidecar is explicitly requested. Phase 5.2 performance and size acceptance now treats x3/x10 and artifact percentiles as reported evidence, not blockers; the hard artifact-size blocker is every successful default artifact being <= 100 KB (100,000 bytes), and malformed/non-JSON raw files are acceptable when old/new failure parity matches the accepted evidence. RabbitMQ/S3 worker mode, PostgreSQL persistence, public APIs, canonical identity handling, replay discovery, public UI, and annual/yearly nomination product support are not implemented in this parser yet.
 
-- Current phase: Phase 5.2, `Minimal Artifact and Performance Acceptance` (execution complete; benchmark acceptance gap blocks Phase 6).
+- Current phase: Phase 6, `RabbitMQ/S3 Worker Integration` (ready after Phase 5.2 benchmark gap acceptance).
 - Roadmap: 9 phases.
 - v1 requirements: 80 mapped requirements.
 - Contract crate: `crates/parser-contract`.
@@ -26,7 +26,7 @@ The CLI can parse a local OCAP JSON file into minified minimal JSON by default, 
 - Phase 4 plans: `.planning/phases/04-event-semantics-and-aggregates/04-00-PLAN.md` through `04-06-PLAN.md`.
 - Phase 5 plans: `.planning/phases/05-cli-golden-parity-benchmarks-and-coverage-gates/05-00-PLAN.md` through `05-05-PLAN.md`.
 - Phase 5.1 directory: `.planning/phases/05.1-compact-artifact-and-selective-parser-redesign/` (executed, awaiting benchmark/parity acceptance or remediation).
-- Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (executed; Phase 6 blocked by benchmark acceptance).
+- Phase 5.2 directory: `.planning/phases/05.2-minimal-artifact-and-performance-acceptance/` (executed; benchmark performance, p95, and known malformed-file gaps accepted on 2026-05-02).
 
 The implemented developer validation commands are:
 
@@ -58,13 +58,13 @@ Phase 5.2 benchmark acceptance is not defined by tiny fixtures. Tiny fixtures ar
 
 Full acceptance requires `scripts/benchmark-phase5.sh --ci` to write `.planning/generated/phase-05/benchmarks/benchmark-report.json` with these gates:
 
-- Selected large replay x3 gate: the script automatically selects the largest raw replay under `~/sg_stats/raw_replays` by byte size, tie-breaking by lexicographic path, then records selected path, raw bytes, SHA-256, old/new wall times, old-vs-new parity, default artifact bytes, and `x3_status`.
-- All-raw x10 gate: every `*.json` file in `~/sg_stats/raw_replays` is attempted sequentially, the old baseline uses direct legacy `parseReplayInfo` with `HOME=<generated-fake-home> WORKER_COUNT=1` and no legacy skip filters, and the new parser writes default artifacts sequentially.
-- Full-corpus evidence requires zero failed/skipped artifacts unless an explicit user-approved allowlist exists.
-- Size acceptance requires median artifact/raw ratio <= 5%, p95 <= 10%, and every successful default artifact <= 100 KB (100,000 bytes).
-- The hard default artifact limit is `artifact_size_limit_bytes: 100000`; selected evidence passes size only when `artifact_bytes <= 100000`, and all-raw evidence passes size only when `max_artifact_bytes <= 100000` and `oversized_artifact_count == 0`.
+- Selected large replay evidence: the script automatically selects the largest raw replay under `~/sg_stats/raw_replays` by byte size, tie-breaking by lexicographic path, then records selected path, raw bytes, SHA-256, old/new wall times, old-vs-new parity, default artifact bytes, and historical `x3_status`.
+- All-raw evidence: every `*.json` file in `~/sg_stats/raw_replays` is attempted sequentially, the old baseline uses direct legacy `parseReplayInfo` with `HOME=<generated-fake-home> WORKER_COUNT=1` and no legacy skip filters, and the new parser writes default artifacts sequentially.
+- Performance acceptance: current measured performance is accepted by the product owner; `x3_status` and `x10_status` remain report fields, but no longer block Phase 6 by themselves.
+- Failure acceptance: all-raw failures pass when there are zero failed/skipped files, or when failures match a user-approved malformed/non-JSON allowlist and the cached old baseline reports the same failure count.
+- Size acceptance: percentile ratios are reported for trend visibility, but p95 > 10% is accepted; the blocking size criterion is `artifact_size_limit_bytes: 100000`, with selected `artifact_bytes <= 100000`, all-raw `max_artifact_bytes <= 100000`, and `oversized_artifact_count == 0`.
 
-Latest Phase 5.2 gate evidence from quick task `260502-i8w` is structurally valid but is not an acceptance pass. `.planning/generated/phase-05/benchmarks/benchmark-report.json` records selected replay `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`, `artifact_bytes: 40780`, `artifact_size_status: pass`, selected `speedup: 2.8190`, selected `x3_status: fail`, selected `parity_status: human_review`, all-raw old/new coverage of 23473 attempted files, all-raw `speedup: 1.7544`, all-raw `x10_status: fail`, all-raw `size_gate_status: fail` because p95 artifact/raw ratio is `0.12417910447761193`, and all-raw `zero_failure_status: fail` because 4 malformed raw files fail JSON decoding. Phase 6 remains blocked until those statuses pass or the user explicitly accepts the benchmark gap.
+Latest Phase 5.2 all-raw evidence from quick task `260502-jeh` records cached old wall time `501274.528655ms`, new wall time `235598.648803ms`, speedup `2.1277x`, all-raw old/new attempted files `23473`, new successes/failures/skips `23469/4/0`, p95 artifact/raw ratio `0.12417910447761193`, `max_artifact_bytes: 48313`, and `oversized_artifact_count: 0`. The current performance is accepted, the p95 ratio is accepted, and the 4 malformed/non-JSON failures are accepted through `.planning/benchmarks/phase-05-all-raw-accepted-failures.json` as long as old/new failure parity remains unchanged.
 
 Short cargo aliases are also available:
 
@@ -76,7 +76,7 @@ cargo quality-test
 cargo quality-doc
 ```
 
-Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 must wait until Phase 5.2 resolves the minimal artifact and performance acceptance gates.
+Worker mode and full-corpus parity automation are still planned for later phases. Phase 6 can proceed on top of the accepted Phase 5.2 benchmark policy.
 
 ## Product Context
 
@@ -104,7 +104,7 @@ The first release should provide:
 - Legacy-compatible aggregate projections for current SolidGames statistics.
 - No issue #13 vehicle score output in v1; v1 keeps ordinary `vehicleKills`, `killsFromVehicle`, weapon, attacker vehicle, and destroyed-vehicle facts and can reprocess raw replays if that statistic is revisited later.
 - Golden corpus comparisons against `~/sg_stats`.
-- Benchmarks against the pinned legacy parser baseline, targeting at least x3 faster end-to-end CLI parsing on one large representative replay and x10 faster end-to-end parsing across all raw replay files, with artifact-size percentiles and a hard 100 KB (100,000 bytes) maximum default artifact size before the performance claim can pass.
+- Benchmarks against the pinned legacy parser baseline, recording selected and all-raw old/new wall times, historical x3/x10 target status, artifact-size percentiles, failure parity, and a hard 100 KB (100,000 bytes) maximum default artifact size.
 - 100% reachable-code statement, branch, function, and line coverage as a release gate, with behavior-focused tests.
 
 ## Out of Scope
@@ -247,4 +247,4 @@ For project-changing work:
 
 This README is the human-facing entry point for the repository. Keep it useful for SolidGames maintainers, product reviewers, and developers who are not already familiar with the GSD planning history.
 
-Last updated: 2026-05-01 after Phase 5.2 final gates confirmed the benchmark acceptance blocker.
+Last updated: 2026-05-02 after Phase 5.2 benchmark gap acceptance.

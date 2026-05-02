@@ -16,6 +16,7 @@ ALL_RAW_SUMMARY="$OUTPUT_ROOT/all-raw-summary.json"
 ALL_RAW_FAILURES="$OUTPUT_ROOT/all-raw-failures.json"
 ALL_RAW_OVERSIZED="$OUTPUT_ROOT/all-raw-oversized-artifacts.json"
 ALL_RAW_OUTPUT="$OUTPUT_ROOT/all-raw-artifacts"
+ALL_RAW_ACCEPTED_FAILURES="${PHASE5_ALL_RAW_ACCEPTED_FAILURES:-.planning/benchmarks/phase-05-all-raw-accepted-failures.json}"
 OLD_SELECTED_RESPONSE="$COMPARISON_ROOT/old-selected-response.json"
 OLD_SELECTED_ARTIFACT="$COMPARISON_ROOT/old-selected-artifact.json"
 COMPARISON_REPORT="$COMPARISON_ROOT/comparison-report.json"
@@ -826,8 +827,9 @@ python3 - "$REPORT_PATH" "$SELECTED_INFO" "$SELECTED_ARTIFACT" "$selected_new_wa
   "$MAX_DEFAULT_ARTIFACT_BYTES" "$ALL_RAW_FAILURES" "$ALL_RAW_OVERSIZED" "$ALL_RAW_SELECTOR" \
   "${RUN_PHASE5_FULL_CORPUS:-0}" "${RUN_PHASE5_FULL_OLD_BASELINE:-0}" \
   "$old_all_raw_attempted_count" "$old_all_raw_success_count" "$old_all_raw_error_count" "$old_all_raw_skipped_count" \
-  "$old_all_raw_source" <<'PY'
+  "$old_all_raw_source" "$ALL_RAW_ACCEPTED_FAILURES" <<'PY'
 import json
+import os
 import sys
 
 (
@@ -857,6 +859,7 @@ import sys
     old_all_raw_error_count_raw,
     old_all_raw_skipped_count_raw,
     old_all_raw_source,
+    accepted_failures_path,
 ) = sys.argv[1:]
 
 limit = int(limit_raw)
@@ -869,9 +872,9 @@ def nullable_float(raw):
 def gate_triage(scope, reason):
     return (
         f"bottleneck: {scope} cannot pass because {reason}; "
-        f"parity: selected parity must pass and all-raw old coverage must be deterministic; "
-        f"artifact: default artifacts must satisfy median <= 5%, p95 <= 10%, and each artifact <= {limit} bytes; "
-        f"failure: failed/skipped artifacts remain blocking unless an explicit allowlist is accepted by the user."
+        f"parity: selected parity is reported and all-raw malformed-file parity must match accepted evidence; "
+        f"artifact: default artifacts must satisfy max_artifact_bytes <= {limit} and oversized_artifact_count == 0; "
+        f"failure: failed/skipped artifacts remain blocking unless they match an explicit user-accepted allowlist."
     )
 
 selected_info = json.load(open(selected_info_path, encoding="utf-8"))
@@ -952,8 +955,6 @@ if not all_raw_summary.get("ran"):
     all_raw_size_status = "unknown"
 elif (
     all_raw_summary.get("success_count", 0) > 0
-    and median_ratio is not None and median_ratio <= 0.05
-    and p95_ratio is not None and p95_ratio <= 0.10
     and all_raw_summary.get("max_artifact_bytes", 0) <= limit
     and all_raw_summary.get("oversized_artifact_count", 0) == 0
 ):
@@ -961,9 +962,37 @@ elif (
 else:
     all_raw_size_status = "fail"
 
+allowlist_report = None
+failure_parity_accepted = False
+if os.path.exists(accepted_failures_path):
+    accepted_failures = json.load(open(accepted_failures_path, encoding="utf-8"))
+    allowlist_report = {
+        "path": accepted_failures_path,
+        "approval_status": accepted_failures.get("approval_status", "pending_user_approval"),
+    }
+    accepted_paths = sorted(accepted_failures.get("paths", []))
+    observed_failures = json.load(open(all_raw_failures_path, encoding="utf-8"))
+    observed_paths = sorted(
+        failure.get("path")
+        for failure in observed_failures
+        if failure.get("path")
+    )
+    old_error_count = int(old_all_raw_error_count_raw or 0)
+    old_skipped_count = int(old_all_raw_skipped_count_raw or 0)
+    failure_parity_accepted = (
+        allowlist_report["approval_status"] == "accepted_by_user"
+        and old_error_count == len(accepted_paths)
+        and old_skipped_count == 0
+        and all_raw_summary.get("failed_count", 0) == len(accepted_paths)
+        and all_raw_summary.get("skipped_count", 0) == 0
+        and observed_paths == accepted_paths
+    )
+
 if not all_raw_summary.get("ran"):
     zero_failure_status = "unknown"
 elif all_raw_summary.get("failed_count", 0) == 0 and all_raw_summary.get("skipped_count", 0) == 0:
+    zero_failure_status = "pass"
+elif failure_parity_accepted:
     zero_failure_status = "pass"
 else:
     zero_failure_status = "fail"
@@ -988,7 +1017,8 @@ if all_raw_x10_status != "pass" or all_raw_size_status != "pass" or zero_failure
             f"speedup={all_raw_speedup}, median={median_ratio}, p95={p95_ratio}, "
             f"max_artifact_bytes={all_raw_summary.get('max_artifact_bytes')}, "
             f"oversized_artifact_count={all_raw_summary.get('oversized_artifact_count')}, "
-            f"failed_count={all_raw_summary.get('failed_count')}, skipped_count={all_raw_summary.get('skipped_count')}"
+            f"failed_count={all_raw_summary.get('failed_count')}, skipped_count={all_raw_summary.get('skipped_count')}, "
+            f"failure_parity_accepted={failure_parity_accepted}"
         )
     all_raw_triage = gate_triage("all_raw_corpus", reason)
 
@@ -1050,7 +1080,7 @@ report = {
         "zero_failure_status": zero_failure_status,
         "triage": all_raw_triage,
     },
-    "allowlist": None,
+    "allowlist": allowlist_report,
     "rss_note": "RSS is not captured in the portable CI fallback; use an external process monitor for selected or all-raw benchmark runs.",
     "evidence_files": {
         "selected_info": selected_info_path,
@@ -1058,12 +1088,14 @@ report = {
         "all_raw_summary": all_raw_summary_path,
         "all_raw_failures": all_raw_failures_path,
         "all_raw_oversized_artifacts": all_raw_oversized_path,
+        "all_raw_accepted_failures": accepted_failures_path if allowlist_report else None,
         "comparison_report": comparison_report_path if comparison_available_raw == "true" else None,
     },
     "full_acceptance_requires": (
-        "selected_large_replay x3_status=pass, parity_status=passed, artifact_size_status=pass; "
-        "all_raw_corpus x10_status=pass, zero_failure_status=pass, size_gate_status=pass; "
-        "artifact_size_limit_bytes=100000 with max_artifact_bytes <= 100000 and oversized_artifact_count == 0"
+        "selected_large_replay artifact_size_status=pass; "
+        "all_raw_corpus records old/new timing evidence, zero_failure_status=pass via zero failures or accepted malformed-file parity, "
+        "and size_gate_status=pass by max_artifact_bytes <= 100000 and oversized_artifact_count == 0; "
+        "x3_status/x10_status and artifact percentiles are reported but no longer block Phase 05.2 after user acceptance on 2026-05-02"
     ),
 }
 

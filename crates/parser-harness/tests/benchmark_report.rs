@@ -18,17 +18,25 @@ const PARSER_PIPELINE_BENCH: &str = include_str!("../benches/parser_pipeline.rs"
 #[test]
 fn benchmark_report_should_accept_phase_05_2_acceptance_evidence() {
     // Arrange + Act
-    let report = valid_report(selected_large_replay(), all_raw_corpus(), None)
-        .expect("Phase 05.2 benchmark report should pass");
+    let allowlist = accepted_failure_allowlist();
+    let report = valid_report(
+        accepted_current_selected_large_replay(),
+        accepted_current_all_raw_corpus(),
+        Some(allowlist),
+    )
+    .expect("Phase 05.2 benchmark report should pass");
 
     // Assert
     assert_eq!(report.phase, "05.2");
     assert_eq!(report.artifact_size_limit_bytes, 100_000);
     assert_eq!(report.artifact_size_limit_bytes, DEFAULT_ARTIFACT_SIZE_LIMIT_BYTES);
-    assert_eq!(report.selected_large_replay.x3_status, GateStatus::Pass);
-    assert_eq!(report.all_raw_corpus.x10_status, GateStatus::Pass);
+    assert_eq!(report.selected_large_replay.x3_status, GateStatus::Fail);
+    assert_eq!(report.all_raw_corpus.x10_status, GateStatus::Fail);
     assert_eq!(report.all_raw_corpus.size_gate_status, GateStatus::Pass);
-    report.validate_acceptance().expect("passing gates should satisfy acceptance validation");
+    assert_eq!(report.all_raw_corpus.zero_failure_status, GateStatus::Pass);
+    report
+        .validate_acceptance()
+        .expect("user-accepted current performance and hard-size gates should satisfy acceptance validation");
 }
 
 #[test]
@@ -109,31 +117,25 @@ fn benchmark_report_should_reject_all_raw_x10_pass_below_speedup_gate() {
 }
 
 #[test]
-fn benchmark_report_should_reject_median_ratio_above_0_05() {
+fn benchmark_report_should_accept_median_ratio_above_0_05_when_max_size_passes() {
     // Arrange
     let mut all_raw = all_raw_corpus();
     all_raw.median_artifact_raw_ratio = Some(0.0501);
 
-    // Act
-    let error = valid_report(selected_large_replay(), all_raw, None)
-        .expect_err("all-raw size gate should reject median above 0.05");
-
-    // Assert
-    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+    // Act + Assert
+    let _report = valid_report(selected_large_replay(), all_raw, None)
+        .expect("all-raw size gate should ignore percentile ratios when hard max bytes pass");
 }
 
 #[test]
-fn benchmark_report_should_reject_p95_ratio_above_0_10() {
+fn benchmark_report_should_accept_p95_ratio_above_0_10_when_max_size_passes() {
     // Arrange
     let mut all_raw = all_raw_corpus();
     all_raw.p95_artifact_raw_ratio = Some(0.1001);
 
-    // Act
-    let error = valid_report(selected_large_replay(), all_raw, None)
-        .expect_err("all-raw size gate should reject p95 above 0.10");
-
-    // Assert
-    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+    // Act + Assert
+    let _report = valid_report(selected_large_replay(), all_raw, None)
+        .expect("all-raw size gate should ignore percentile ratios when hard max bytes pass");
 }
 
 #[test]
@@ -147,7 +149,7 @@ fn benchmark_report_should_reject_all_raw_max_artifact_size_above_100000() {
         .expect_err("all-raw size gate should reject max artifact bytes above 100000");
 
     // Assert
-    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresMaxBytes);
 }
 
 #[test]
@@ -161,7 +163,7 @@ fn benchmark_report_should_reject_all_raw_oversized_artifact_count() {
         .expect_err("all-raw size gate should reject oversized artifacts");
 
     // Assert
-    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+    assert_eq!(error, BenchmarkReportValidationError::AllRawSizeGatePassRequiresMaxBytes);
 }
 
 #[test]
@@ -299,6 +301,23 @@ fn selected_large_replay() -> SelectedLargeReplay {
     }
 }
 
+fn accepted_current_selected_large_replay() -> SelectedLargeReplay {
+    let mut selected = selected_large_replay();
+    selected.old_wall_time_ms = Some(260.071_354);
+    selected.new_wall_time_ms = Some(92.255_598);
+    selected.speedup = Some(2.819_03);
+    selected.x3_status = GateStatus::Fail;
+    selected.parity_status = ParityStatus::HumanReview;
+    selected.raw_bytes = 19_706_937;
+    selected.artifact_bytes = 40_780;
+    selected.artifact_raw_ratio = 40_780.0 / 19_706_937.0;
+    selected.triage = Some(
+        "selected benchmark bottleneck accepted by user; parity remains human review; artifact size passes; failure triage not applicable"
+            .to_owned(),
+    );
+    selected
+}
+
 fn all_raw_corpus() -> AllRawCorpus {
     AllRawCorpus {
         selector: ALL_RAW_CORPUS_SELECTOR.to_owned(),
@@ -319,5 +338,37 @@ fn all_raw_corpus() -> AllRawCorpus {
         size_gate_status: GateStatus::Pass,
         zero_failure_status: GateStatus::Pass,
         triage: None,
+    }
+}
+
+fn accepted_current_all_raw_corpus() -> AllRawCorpus {
+    let mut all_raw = all_raw_corpus();
+    all_raw.attempted_count = 23_473;
+    all_raw.success_count = 23_469;
+    all_raw.failed_count = 4;
+    all_raw.skipped_count = 0;
+    all_raw.raw_bytes = 25_084_923_867;
+    all_raw.artifact_bytes = 144_487_519;
+    all_raw.old_wall_time_ms = Some(501_274.528_655);
+    all_raw.new_wall_time_ms = Some(235_598.648_803);
+    all_raw.speedup = Some(2.127_663);
+    all_raw.x10_status = GateStatus::Fail;
+    all_raw.median_artifact_raw_ratio = Some(0.029_995_468_962_392_39);
+    all_raw.p95_artifact_raw_ratio = Some(0.124_179_104_477_611_93);
+    all_raw.max_artifact_bytes = 48_313;
+    all_raw.oversized_artifact_count = 0;
+    all_raw.size_gate_status = GateStatus::Pass;
+    all_raw.zero_failure_status = GateStatus::Pass;
+    all_raw.triage = Some(
+        "all-raw bottleneck accepted by user, parity requires matching malformed-file failures, artifact max size passes, and failure allowlist is accepted"
+            .to_owned(),
+    );
+    all_raw
+}
+
+fn accepted_failure_allowlist() -> BenchmarkAllowlist {
+    BenchmarkAllowlist {
+        path: ".planning/benchmarks/phase-05-all-raw-accepted-failures.json".to_owned(),
+        approval_status: AllowlistApprovalStatus::AcceptedByUser,
     }
 }

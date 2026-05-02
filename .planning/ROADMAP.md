@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Event Semantics and Aggregates** - Normalize combat/outcome semantics and derive auditable legacy, bounty, and vehicle score aggregates. (completed 2026-04-28)
 - [ ] **Phase 5: CLI, Golden Parity, Benchmarks, and Coverage Gates** - Make local parsing, schema export, old-vs-new comparison, fixtures, determinism checks, 100% coverage gates, and speed reports executable. (execution complete 2026-04-28; verification gap escalated into Phase 5.1 redesign)
 - [ ] **Phase 5.1: Compact Artifact and Selective Parser Redesign** (INSERTED) - Redesign the default artifact as compact server-facing output, remove full normalized event/entity dumps from ordinary ingestion, make comparison reports human-reviewable, and implement/select a selective parsing path that can meet the 10x target. (execution complete 2026-04-29; benchmark/parity acceptance gap blocks Phase 6)
-- [ ] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and prove x3 selected-replay plus x10 all-raw corpus performance gates before worker integration. Execution is complete, but benchmark acceptance still blocks Phase 6 because selected x3/parity, all-raw x10, all-raw p95 size, and zero-failure gates fail.
+- [x] **Phase 5.2: Minimal Artifact and Performance Acceptance** (INSERTED) - Replace the compact artifact with minimal v1 statistics output, retire issue #13 vehicle score from v1, add debug sidecar output, and record accepted selected/all-raw benchmark evidence before worker integration. Execution is complete; on 2026-05-02 the product owner accepted current performance, p95 > 10% as non-blocking, and the 4 known malformed/non-JSON all-raw failures when old/new error parity matches.
 - [ ] **Phase 6: RabbitMQ/S3 Worker Integration** - Consume parse jobs, fetch objects, verify checksums, publish results, and use safe queue acknowledgement.
 - [ ] **Phase 7: Parallel and Container Hardening** - Prove multi-worker safety and container-ready observability.
 
@@ -179,21 +179,21 @@ Execution outcome:
 - Final code gates passed: format, clippy, workspace tests, docs, coverage smoke, fault report, benchmark report validation, compact boundary grep, and whitespace checks.
 - The compact artifact shape and selective parser boundary are implemented and server-2 compatibility was accepted by the user through `05.1-SERVER-COMPATIBILITY.md`.
 - The generated benchmark report is valid but not a 10x/parity acceptance pass: selected `ten_x_status=unknown`, selected `parity_status=not_run`, whole-list/corpus evidence is unavailable because `RUN_PHASE5_FULL_CORPUS` was not enabled, and selected artifact/raw ratio is `59.97366881` on the tiny CI fixture.
-- Phase 6 remains blocked until whole-list/corpus benchmark and parity evidence pass, or the benchmark/parity gap is explicitly accepted.
+- Phase 5.1 benchmark/parity gap was superseded by Phase 5.2 minimal-artifact work and the 2026-05-02 benchmark acceptance update.
 
 ### Phase 5.2: Minimal Artifact and Performance Acceptance (INSERTED)
-**Goal**: The default parser output is reduced to a minimal v1 statistics artifact, issue #13 vehicle score is removed from v1, and performance acceptance is proven before worker integration.
+**Goal**: The default parser output is reduced to a minimal v1 statistics artifact, issue #13 vehicle score is removed from v1, and accepted benchmark evidence is recorded before worker integration.
 **Depends on**: Phase 5.1
 **Requirements**: OUT-09, OUT-10, OUT-11, OUT-12, PARS-12, AGG-12, TEST-06, TEST-13, TEST-14, TEST-15
-**Status**: Execution complete; code quality gates pass, benchmark acceptance remains blocked.
+**Status**: Execution complete; code quality gates pass, benchmark gaps accepted by product owner on 2026-05-02.
 **Success Criteria** (what must be TRUE):
   1. The default artifact uses compact tables: `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`; player-authored enemy/team kill rows are nested under the killer `players[].kills`, and the artifact does not include full normalized event/entity dumps, source-ref dumps, or vehicle-score sections.
   2. `players[].kills` and `destroyed_vehicles[]` include identity and context needed for current stats and bounty inputs: killer/victim observed player references, enemy/teamkill classification, weapon, attacker vehicle, and destroyed vehicle/entity type. Suicide, null-killer, and unknown deaths remain player counters instead of bounty rows.
   3. Frame/time, event indexes, entity snapshots, source references, rule IDs, and normalized event/entity evidence are emitted only through an explicit debug sidecar mode such as `--debug-artifact <path>`, not through ordinary ingestion output.
   4. GitHub issue #13 vehicle score and `vehicle_score` output are removed from the v1 contract, schema, examples, tests, docs, and planning requirements; v1 still preserves kills-from-vehicle, vehicle-kill, weapon/vehicle context, and destroyed-vehicle facts needed by current stats and future raw replay reprocessing.
-  5. Benchmark reports first capture the current old/new baseline on the chosen workloads, then prove the new end-to-end CLI is at least 3x faster than the old parser on one large representative replay and at least 10x faster across all files in `~/sg_stats/raw_replays`.
-  6. The all-raw corpus gate attempts every file in `~/sg_stats/raw_replays`, requires zero failed/skipped artifacts unless an explicit allowlist is approved, and reports wall time, files/sec, failure/skip counts, and triage for any failed gate.
-  7. Successful all-raw artifacts satisfy the default artifact-size gate: median artifact/raw ratio is <= 5%, p95 artifact/raw ratio is <= 10%, and every successful default artifact is <= 100 KB (100,000 bytes); tiny fixtures may be reported separately but do not define acceptance.
+  5. Benchmark reports capture current old/new baseline evidence on selected and all-raw workloads; historical x3/x10 statuses remain reported, but the current measured performance is accepted by the product owner.
+  6. The all-raw corpus gate attempts every file in `~/sg_stats/raw_replays`, reports wall time, files/sec, failure/skip counts, and passes failure compatibility when there are zero failed/skipped artifacts or when failures match a user-approved malformed/non-JSON allowlist and the cached old baseline reports the same failure count.
+  7. Successful all-raw artifacts satisfy the accepted default artifact-size gate: every successful default artifact is <= 100 KB (100,000 bytes) and `oversized_artifact_count == 0`; median and p95 ratios remain report-only trend evidence.
   8. Product-owner compatibility acceptance is recorded: `server-2` will adapt later to the minimal artifact, while parser still does not own canonical identity, PostgreSQL persistence, public APIs, UI behavior, or bounty payout calculation.
 **Plans**: 7 plans
 **Execution waves**: Wave 1 runs `05.2-00-PLAN.md`; Wave 2 runs `05.2-01-PLAN.md`; Wave 3 runs `05.2-02-PLAN.md`; Wave 4 runs `05.2-03-PLAN.md`; Wave 5 runs `05.2-04-PLAN.md`; Wave 6 runs `05.2-05-PLAN.md`; Wave 7 runs `05.2-06-PLAN.md`.
@@ -202,7 +202,7 @@ Cross-cutting constraints:
 - The default artifact must use `players[]`, `weapons[]`, `destroyed_vehicles[]`, and `diagnostics[]`, with player-authored enemy/team kill rows nested under the killer `players[].kills`; debug-only source refs, rule IDs, frame/time, event indexes, entity snapshots, and normalized event snapshots are not default output.
 - GitHub issue #13 vehicle score is removed from active v1 contract, parser-core, schema, examples, tests, docs, and benchmark/comparison surfaces while ordinary `vehicleKills`, `killsFromVehicle`, weapon, attacker vehicle, and destroyed-vehicle facts remain.
 - Debug sidecar output is explicit internal tooling through `--debug-artifact <path>` and must not contaminate default parser performance or server-facing contract guarantees.
-- Phase 6 remains blocked unless Phase 5.2 records compatibility acceptance plus selected x3, all-raw x10, zero-failure, ratio artifact-size, and hard 100 KB max artifact acceptance.
+- Phase 6 can proceed after Phase 5.2 compatibility acceptance plus accepted benchmark evidence: current performance accepted, hard 100 KB max artifact acceptance, and accepted malformed-file parity for the 4 known bad raw files.
 
 Plans:
 - [x] 05.2-00-PLAN.md - Minimal artifact server compatibility review and approval gate.
@@ -210,13 +210,13 @@ Plans:
 - [x] 05.2-02-PLAN.md - Parser-core minimal row construction, issue #13 implementation removal, and debug sidecar builder.
 - [x] 05.2-03-PLAN.md - CLI minified default output, explicit pretty/debug flags, schema command, and README command updates.
 - [x] 05.2-04-PLAN.md - Derived legacy comparison from minimal tables and vehicle-score parity removal.
-- [x] 05.2-05-PLAN.md - Selected large replay x3, all-raw x10, zero-failure, and artifact-size benchmark gates.
+- [x] 05.2-05-PLAN.md - Selected large replay and all-raw benchmark evidence, failure compatibility, and artifact-size benchmark gates.
 - [x] 05.2-06-PLAN.md - Fault target retune, final quality gates, README/ROADMAP/STATE handoff, and Phase 6 blocker status.
 
 Current final-gate evidence:
 - `05.2-06` fault gate no longer targets removed issue #13 scoring code and now targets minimal artifact behavior.
-- Quick task `260502-i8w` regenerated full benchmark evidence after cleaning `.planning/generated/phase-05` and replacing the legacy all-raw runner with direct `parseReplayInfo` over every raw file. `scripts/benchmark-phase5.sh --ci` and `benchmark-report-check --mode structural` validate the report shape, but the report is not acceptance evidence: selected `artifact_bytes: 40780` passes, selected `x3_status: fail` at 2.8190x, selected `parity_status: human_review`, all-raw old/new coverage both attempt 23473 files, all-raw `x10_status: fail` at 1.7544x, all-raw `size_gate_status: fail` because p95 artifact/raw ratio is 0.12417910447761193, and all-raw `zero_failure_status: fail` because 4 malformed raw files fail JSON decoding.
-- Phase 6 remains blocked unless the selected x3, selected parity, selected size, all-raw x10, all-raw zero-failure, and all-raw size gates all pass or the user explicitly accepts the benchmark gap.
+- Quick task `260502-jeh` optimized the default parser hot path and recorded full all-raw benchmark evidence using the cached old all-raw baseline. The report records cached old wall `501274.528655ms`, new wall `235598.648803ms`, all-raw speedup `2.1277x`, old/new attempted count `23473`, new successes/failures/skips `23469/4/0`, p95 artifact/raw ratio `0.12417910447761193`, max artifact bytes `48313`, and zero oversized artifacts.
+- Product-owner acceptance on 2026-05-02 records that current performance is sufficient, p95 > 10% is acceptable because max artifact size is the primary size criterion, and the 4 malformed/non-JSON all-raw failures are acceptable when the old parser reports the same failure count and new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`.
 
 ### Phase 6: RabbitMQ/S3 Worker Integration
 **Goal**: `server-2` can hand parse jobs to a worker that fetches replay objects, verifies them, writes durable S3 artifacts, and publishes success or failure results.

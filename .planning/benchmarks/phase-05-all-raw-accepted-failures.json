@@ -1,0 +1,16 @@
+{
+  "approval_status": "accepted_by_user",
+  "decision_date": "2026-05-02",
+  "source": "user_acceptance_after_quick_260502_jeh",
+  "policy": "These malformed/non-JSON raw files are acceptable all-raw failures when the old cached all-raw baseline reports the same failure count and the new parser failure paths match this list exactly.",
+  "old_error_count": 4,
+  "old_skipped_count": 0,
+  "new_failed_count": 4,
+  "new_skipped_count": 0,
+  "paths": [
+    "/home/afgan0r/sg_stats/raw_replays/.json",
+    "/home/afgan0r/sg_stats/raw_replays/2020_12_25__20_08_44_ocap.json",
+    "/home/afgan0r/sg_stats/raw_replays/2024_07_16__19_13_00__1_ocap.json",
+    "/home/afgan0r/sg_stats/raw_replays/2025_03_04__23_06_34__1_ocap.json"
+  ]
+}

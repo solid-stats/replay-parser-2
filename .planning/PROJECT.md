@@ -18,7 +18,7 @@ Phase 5 execution produced the local `replay-parser-2` CLI, compact golden behav
 
 Phase 5.1 redesigned the default artifact as a compact server-facing result, moved full event/entity detail out of the default contract, and added a selective parser boundary, but its acceptance evidence is still not sufficient for worker integration.
 
-Phase 5.2 has been inserted before worker integration to make the default artifact minimal rather than merely compact, record the product decision to remove GitHub issue #13 vehicle score from v1, put detailed evidence behind an explicit debug sidecar, and prove the new performance gates: x3 on one large representative replay and x10 across all files in `~/sg_stats/raw_replays`.
+Phase 5.2 was inserted before worker integration to make the default artifact minimal rather than merely compact, record the product decision to remove GitHub issue #13 vehicle score from v1, put detailed evidence behind an explicit debug sidecar, and record accepted benchmark evidence. On 2026-05-02 the product owner accepted the current measured performance, accepted p95 artifact/raw ratio above 10% as non-blocking, and accepted the 4 known malformed/non-JSON all-raw failures when old/new failure parity matches.
 
 ## Requirements
 
@@ -45,7 +45,7 @@ Phase 5.2 has been inserted before worker integration to make the default artifa
 - [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
 - [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
 - [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [ ] Include benchmark evidence that establishes the current parser baseline, proves x3 end-to-end CLI speedup on one large representative replay, proves x10 end-to-end throughput across all raw files in `~/sg_stats/raw_replays`, reports artifact-size percentiles, and proves every successful default artifact is <= 100 KB (100,000 bytes).
+- [x] Include benchmark evidence that establishes the current parser baseline, reports selected/all-raw old/new wall times and historical x3/x10 target status, reports artifact-size percentiles, proves every successful default artifact is <= 100 KB (100,000 bytes), and records accepted malformed-file parity for known bad raw files.
 
 ### Out of Scope
 
@@ -137,7 +137,7 @@ Open implementation details for later phases:
 - **Language**: Rust - chosen for deterministic parsing, performance, and deployable CLI/worker binaries.
 - **Replay format**: OCAP JSON only - supporting other formats is outside v1 scope.
 - **Validation data**: `~/sg_stats` - historical data is the golden/test baseline, not a production import source.
-- **Performance**: At least x3 faster than the current parser for end-to-end CLI parsing on one large representative replay and at least x10 faster across all raw replay files in `~/sg_stats/raw_replays`, with raw-input size, output-artifact size, artifact-size percentiles, max artifact bytes, wall time, throughput, skip/failure counts, parity/triage status, and proof that every successful default artifact is <= 100 KB (100,000 bytes) reported before any performance claim.
+- **Performance**: Benchmark reports record selected and all-raw old/new wall times, historical x3/x10 target status, raw-input size, output-artifact size, artifact-size percentiles, max artifact bytes, wall time, throughput, skip/failure counts, parity/triage status, and proof that every successful default artifact is <= 100 KB (100,000 bytes). Current measured performance is accepted by the product owner as of 2026-05-02.
 - **Runtime modes**: CLI plus worker/container mode - local reproducibility and server integration are both required.
 - **Queue integration**: RabbitMQ - worker mode consumes parse requests and publishes parse results/failures.
 - **File input**: S3-compatible object storage - parser worker reads replay content by object key/checksum.
@@ -172,6 +172,7 @@ Open implementation details for later phases:
 | Use selective parsing before worker integration | Worker mode should not be built on a parser hot path that performs an expensive full JSON-to-JSON translation. | - Pending |
 | Base v1 behavior on old `replays-parser` | The legacy TypeScript parser is the only authoritative implementation of current SolidGames parsing/statistics behavior. | - Pending |
 | Retire vehicle score from issue #13 from v1 | Product decision on 2026-05-01: v1 should stay focused on minimal current statistics and can reprocess raw replays later if this statistic returns. | - Pending |
+| Accept current Phase 5.2 benchmark evidence | Product decision on 2026-05-02: current selected/all-raw performance is sufficient; p95 artifact/raw ratio above 10% is not blocking when hard max artifact size passes; the 4 known malformed/non-JSON raw files are acceptable when old/new failure parity matches. | Phase 6 may proceed without further x3/x10/p95/zero-failure remediation. |
 | Require 100% reachable-code test coverage | Parser trust depends on behavior tests that catch regressions, not only golden parity; coverage gates must be paired with RITE/AAA tests and mutation/fault checks. | - Pending |
 | Maintain README as current public project context | README is the first repository-facing contract for scope, status, commands, and workflow; it must clearly state that development happens only through AI + GSD. | - Pending |
 | Require clean git tree after completed work | Clean status makes handoff and review reliable; intended results should be committed, while ambiguous or user-owned changes require explicit user direction. | - Pending |
@@ -200,4 +201,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-01 after Phase 5.2 insertion for minimal artifact and performance acceptance*
+*Last updated: 2026-05-02 after Phase 5.2 benchmark acceptance update*

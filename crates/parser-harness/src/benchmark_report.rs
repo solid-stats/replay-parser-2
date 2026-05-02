@@ -1,8 +1,8 @@
 //! Serializable Phase 05.2 benchmark report vocabulary and release-gate validation.
 //!
-//! Benchmark reports tie performance claims to selected large-replay evidence,
-//! all-raw corpus coverage, deterministic old baseline evidence, and the hard
-//! default artifact size limit.
+//! Benchmark reports tie performance observations to selected large-replay
+//! evidence, all-raw corpus coverage, deterministic old baseline evidence, and
+//! the hard default artifact size limit.
 
 use serde::{Deserialize, Serialize};
 
@@ -73,7 +73,7 @@ impl BenchmarkAllowlist {
     }
 }
 
-/// Benchmark evidence for the deterministic selected large replay x3 gate.
+/// Benchmark evidence for the deterministic selected large replay performance sample.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SelectedLargeReplay {
     /// Stable selection policy used to choose the replay.
@@ -90,7 +90,7 @@ pub struct SelectedLargeReplay {
     pub new_wall_time_ms: Option<f64>,
     /// Old/new speedup when both timings are available.
     pub speedup: Option<f64>,
-    /// x3 status for the selected replay.
+    /// Historical x3 target status for the selected replay.
     pub x3_status: GateStatus,
     /// Old-vs-new parity status.
     pub parity_status: ParityStatus,
@@ -158,7 +158,7 @@ impl SelectedLargeReplay {
     }
 }
 
-/// Benchmark evidence for the all-raw corpus x10 and size gates.
+/// Benchmark evidence for the all-raw corpus performance and size gates.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AllRawCorpus {
     /// Corpus selector.
@@ -181,7 +181,7 @@ pub struct AllRawCorpus {
     pub new_wall_time_ms: Option<f64>,
     /// Old/new speedup when both timings are available.
     pub speedup: Option<f64>,
-    /// x10 status for the all-raw corpus.
+    /// Historical x10 target status for the all-raw corpus.
     pub x10_status: GateStatus,
     /// Median artifact/raw ratio across successful artifacts.
     pub median_artifact_raw_ratio: Option<f64>,
@@ -191,9 +191,10 @@ pub struct AllRawCorpus {
     pub max_artifact_bytes: u64,
     /// Number of successful default artifacts above the hard byte limit.
     pub oversized_artifact_count: u64,
-    /// Combined size gate status.
+    /// Hard max-artifact-size gate status.
     pub size_gate_status: GateStatus,
-    /// Zero-failed/skipped status.
+    /// Failure compatibility status. This passes for zero failures or for a
+    /// user-approved allowlist of known malformed/non-JSON raw files.
     pub zero_failure_status: GateStatus,
     /// Required triage for failed or unknown all-raw gates.
     pub triage: Option<String>,
@@ -205,7 +206,7 @@ impl AllRawCorpus {
     /// # Errors
     ///
     /// Returns [`BenchmarkReportValidationError`] when count accounting, x10,
-    /// zero-failure, or size-gate status is inconsistent.
+    /// failure compatibility, or size-gate status is inconsistent.
     pub fn validate(
         &self,
         limit_bytes: u64,
@@ -225,12 +226,10 @@ impl AllRawCorpus {
 
         if self.size_gate_status == GateStatus::Pass
             && !(self.success_count > 0
-                && self.median_artifact_raw_ratio.is_some_and(|ratio| ratio <= 0.05)
-                && self.p95_artifact_raw_ratio.is_some_and(|ratio| ratio <= 0.10)
                 && self.max_artifact_bytes <= limit_bytes
                 && self.oversized_artifact_count == 0)
         {
-            return Err(BenchmarkReportValidationError::AllRawSizeGatePassRequiresRatioAndMaxBytes);
+            return Err(BenchmarkReportValidationError::AllRawSizeGatePassRequiresMaxBytes);
         }
 
         if self.zero_failure_status == GateStatus::Pass
@@ -348,15 +347,15 @@ impl BenchmarkReport {
     ///
     /// # Errors
     ///
-    /// Returns [`BenchmarkReportValidationError`] when structural validation fails or when any
-    /// required selected-replay/all-raw acceptance gate is not passing.
+    /// Returns [`BenchmarkReportValidationError`] when structural validation fails or when the
+    /// current accepted Phase 05.2 benchmark gates are not passing.
     pub fn validate_acceptance(&self) -> Result<(), BenchmarkReportValidationError> {
         self.validate()?;
 
-        if self.selected_large_replay.x3_status != GateStatus::Pass
-            || self.selected_large_replay.parity_status != ParityStatus::Passed
-            || self.selected_large_replay.artifact_size_status != GateStatus::Pass
-            || self.all_raw_corpus.x10_status != GateStatus::Pass
+        if self.selected_large_replay.artifact_size_status != GateStatus::Pass
+            || self.all_raw_corpus.old_wall_time_ms.is_none()
+            || self.all_raw_corpus.new_wall_time_ms.is_none()
+            || self.all_raw_corpus.speedup.is_none()
             || self.all_raw_corpus.size_gate_status != GateStatus::Pass
             || self.all_raw_corpus.zero_failure_status != GateStatus::Pass
         {
@@ -445,12 +444,12 @@ pub enum BenchmarkReportValidationError {
     /// All-raw x10 status cannot pass without speedup >= 10.0.
     #[error("all_raw_corpus x10_status=pass requires speedup >= 10.0")]
     AllRawX10PassRequiresSpeedup,
-    /// All-raw size gate cannot pass without median/p95/max/oversized limits.
+    /// All-raw size gate cannot pass without hard max/oversized limits.
     #[error(
-        "all_raw_corpus size_gate_status=pass requires median <= 0.05, p95 <= 0.10, max_artifact_bytes <= limit, and oversized_artifact_count == 0"
+        "all_raw_corpus size_gate_status=pass requires max_artifact_bytes <= limit and oversized_artifact_count == 0"
     )]
-    AllRawSizeGatePassRequiresRatioAndMaxBytes,
-    /// Zero-failure cannot pass without no failures/skips or an accepted allowlist.
+    AllRawSizeGatePassRequiresMaxBytes,
+    /// Failure compatibility cannot pass without no failures/skips or an accepted allowlist.
     #[error(
         "all_raw_corpus zero_failure_status=pass requires failed_count == 0 and skipped_count == 0, unless allowlist.approval_status=accepted_by_user"
     )]
@@ -463,9 +462,9 @@ pub enum BenchmarkReportValidationError {
         /// Report scope needing triage.
         scope: &'static str,
     },
-    /// Structurally valid report does not satisfy Phase 05.2 acceptance gates.
+    /// Structurally valid report does not satisfy accepted Phase 05.2 benchmark gates.
     #[error(
-        "benchmark acceptance requires selected x3/parity/artifact-size and all-raw x10/size/zero-failure gates to pass"
+        "benchmark acceptance requires selected artifact-size pass, all-raw timing evidence, all-raw max-size pass, and accepted all-raw failure compatibility"
     )]
     AcceptanceGatesNotPassed,
 }
