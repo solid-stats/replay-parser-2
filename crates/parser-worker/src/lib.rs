@@ -15,6 +15,8 @@ pub mod config;
 pub mod error;
 /// Cached HTTP liveness and readiness probe state.
 pub mod health;
+/// Stable worker operations log event taxonomy.
+pub mod logging;
 /// End-to-end parse job processing.
 pub mod processor;
 /// Worker runtime entrypoint.
