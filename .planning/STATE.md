@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready
-stopped_at: Completed five-sample year-edge parity follow-up; no new mismatch classes found and Phase 05/05.2 parity follow-up is non-blocking
-last_updated: "2026-05-02T11:42:43Z"
-last_activity: 2026-05-02
+status: Phase 05.2 benchmark performance, p95, and known malformed-file gaps accepted by user
+stopped_at: Phase 6 context gathered
+last_updated: "2026-05-02T12:49:50.638Z"
+last_activity: 2026-05-02 - Recorded user acceptance that current performance is sufficient, p95 > 0.10 is acceptable when max artifact size passes, and 4 known malformed/non-JSON raw files are acceptable when old/new error parity matches
 progress:
   total_phases: 9
   completed_phases: 7
@@ -254,9 +254,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T04:07:16.300Z
-Stopped at: Phase 05.2 benchmark gaps accepted; Phase 6 ready
-Resume file: None
+Last session: 2026-05-02T12:49:50.634Z
+Stopped at: Phase 6 context gathered
+Resume file: .planning/phases/06-rabbitmq-s3-worker-integration/06-CONTEXT.md
 
 **Completed Phase:** 01 (Legacy Baseline and Corpus) — 5 plans — 2026-04-25
 **Completed Phase:** 02 (Versioned Output Contract) — 6 plans — 2026-04-26
