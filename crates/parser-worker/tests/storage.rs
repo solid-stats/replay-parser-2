@@ -17,7 +17,9 @@ use parser_contract::{
 use parser_worker::{
     checksum::verify_source_checksum,
     error::{WorkerError, WorkerFailureKind},
-    storage::{ArtifactWrite, DownloadedObject, ObjectStore, ObjectStoreFuture},
+    storage::{
+        ArtifactPutOutcome, ArtifactWrite, DownloadedObject, ObjectStore, ObjectStoreFuture,
+    },
 };
 
 const ABC_SHA256: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
@@ -28,6 +30,8 @@ struct FakeObjectStore {
     objects: Mutex<BTreeMap<String, Vec<u8>>>,
     get_failures: Mutex<BTreeSet<String>>,
     put_failures: Mutex<BTreeSet<String>>,
+    conditional_put_outcomes: Mutex<BTreeMap<String, ArtifactPutOutcome>>,
+    conditional_put_attempts: Mutex<Vec<String>>,
 }
 
 impl FakeObjectStore {
@@ -37,6 +41,8 @@ impl FakeObjectStore {
             objects: Mutex::new(BTreeMap::new()),
             get_failures: Mutex::new(BTreeSet::new()),
             put_failures: Mutex::new(BTreeSet::new()),
+            conditional_put_outcomes: Mutex::new(BTreeMap::new()),
+            conditional_put_attempts: Mutex::new(Vec::new()),
         }
     }
 
@@ -72,6 +78,23 @@ impl FakeObjectStore {
             .lock()
             .expect("fake put failure set lock should not be poisoned")
             .insert(key.to_owned());
+    }
+
+    fn set_conditional_put_outcome(&self, key: &str, outcome: ArtifactPutOutcome) {
+        let _previous = self
+            .conditional_put_outcomes
+            .lock()
+            .expect("fake conditional put outcome map lock should not be poisoned")
+            .insert(key.to_owned(), outcome);
+    }
+
+    fn conditional_put_attempt_count(&self, key: &str) -> usize {
+        self.conditional_put_attempts
+            .lock()
+            .expect("fake conditional put attempt list lock should not be poisoned")
+            .iter()
+            .filter(|attempted_key| attempted_key.as_str() == key)
+            .count()
     }
 }
 
@@ -135,6 +158,66 @@ impl ObjectStore for FakeObjectStore {
 
             self.insert_object(object_key, bytes);
             Ok(())
+        })
+    }
+
+    fn put_artifact_bytes_if_absent<'a>(
+        &'a self,
+        object_key: &'a str,
+        bytes: &'a [u8],
+        content_type: &'a str,
+    ) -> ObjectStoreFuture<'a, ArtifactPutOutcome> {
+        Box::pin(async move {
+            assert_eq!(content_type, "application/json");
+            self.conditional_put_attempts
+                .lock()
+                .expect("fake conditional put attempt list lock should not be poisoned")
+                .push(object_key.to_owned());
+
+            if self
+                .put_failures
+                .lock()
+                .expect("fake put failure set lock should not be poisoned")
+                .contains(object_key)
+            {
+                return Err(storage_error(
+                    "put_object",
+                    &self.bucket,
+                    object_key,
+                    ParseStage::Output,
+                ));
+            }
+
+            let configured_outcome = self
+                .conditional_put_outcomes
+                .lock()
+                .expect("fake conditional put outcome map lock should not be poisoned")
+                .get(object_key)
+                .copied();
+
+            match configured_outcome {
+                Some(ArtifactPutOutcome::Created) => {
+                    self.insert_object(object_key, bytes);
+                    Ok(ArtifactPutOutcome::Created)
+                }
+                Some(ArtifactPutOutcome::AlreadyExists) => Ok(ArtifactPutOutcome::AlreadyExists),
+                Some(ArtifactPutOutcome::UnsupportedConditionalWrite) => {
+                    Ok(ArtifactPutOutcome::UnsupportedConditionalWrite)
+                }
+                None => {
+                    let object_exists = self
+                        .objects
+                        .lock()
+                        .expect("fake object map lock should not be poisoned")
+                        .contains_key(object_key);
+                    if object_exists {
+                        Ok(ArtifactPutOutcome::AlreadyExists)
+                    } else {
+                        self.insert_object(object_key, bytes);
+                        Ok(ArtifactPutOutcome::Created)
+                    }
+                }
+            }
         })
     }
 }
@@ -203,7 +286,7 @@ async fn storage_downloaded_raw_should_be_verifiable_against_expected_checksum()
 }
 
 #[tokio::test]
-async fn storage_write_artifact_should_put_new_object_with_checksum_and_size() {
+async fn storage_write_artifact_should_use_conditional_create_for_new_object_conditional_put() {
     // Arrange
     let store = FakeObjectStore::new();
     let key = "artifacts/v3/replay-1/source.json";
@@ -224,14 +307,17 @@ async fn storage_write_artifact_should_put_new_object_with_checksum_and_size() {
         false,
     );
     assert_eq!(store.stored_bytes(key).as_deref(), Some(bytes.as_slice()));
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
 }
 
 #[tokio::test]
-async fn storage_write_artifact_should_reuse_matching_existing_object() {
+async fn storage_write_artifact_should_reuse_matching_object_after_conditional_race_artifact_write_existing_match()
+ {
     // Arrange
     let key = "artifacts/v3/replay-1/source.json";
     let bytes = br#"{"ok":true}"#;
     let store = FakeObjectStore::with_object(key, bytes);
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::AlreadyExists);
 
     // Act
     let write = store
@@ -247,13 +333,16 @@ async fn storage_write_artifact_should_reuse_matching_existing_object() {
         11,
         true,
     );
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
 }
 
 #[tokio::test]
-async fn storage_write_artifact_should_return_conflict_for_different_existing_object() {
+async fn storage_write_artifact_should_conflict_after_conditional_race_with_different_bytes_artifact_write_existing_conflict()
+ {
     // Arrange
     let key = "artifacts/v3/replay-1/source.json";
     let store = FakeObjectStore::with_object(key, br#"{"ok":false}"#);
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::AlreadyExists);
 
     // Act
     let error = store
@@ -269,6 +358,34 @@ async fn storage_write_artifact_should_return_conflict_for_different_existing_ob
             "unexpected error: {other}"
         ),
     }
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
+}
+
+#[tokio::test]
+async fn storage_write_artifact_should_fallback_to_get_then_put_when_conditional_write_unsupported()
+{
+    // Arrange
+    let store = FakeObjectStore::new();
+    let key = "artifacts/v3/replay-1/source.json";
+    let bytes = br#"{"ok":true}"#;
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::UnsupportedConditionalWrite);
+
+    // Act
+    let write = store
+        .write_artifact_if_absent_or_matching(key, bytes)
+        .await
+        .expect("unsupported conditional write should fall back to normal put");
+
+    // Assert
+    assert_artifact_write(
+        &write,
+        key,
+        "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        11,
+        false,
+    );
+    assert_eq!(store.stored_bytes(key).as_deref(), Some(bytes.as_slice()));
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
 }
 
 #[tokio::test]
