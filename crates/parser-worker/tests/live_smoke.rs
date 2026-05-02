@@ -5,7 +5,12 @@
     reason = "live smoke tests use expect messages as infrastructure diagnostics"
 )]
 
-use std::{env, time::Duration};
+use std::{
+    env,
+    io::{Read, Write},
+    net::TcpStream,
+    time::Duration,
+};
 
 use aws_config::BehaviorVersion;
 use aws_sdk_s3::{config::Region, primitives::ByteStream};
@@ -46,10 +51,14 @@ async fn live_worker_should_process_completed_and_failed_jobs_through_broker_and
     );
 
     let config = WorkerConfig::from_env().expect("live smoke worker config should be valid");
+    let container_smoke = container_smoke_enabled();
+    let setup_only =
+        env::var("REPLAY_PARSER_CONTAINER_SMOKE_SETUP_ONLY").unwrap_or_default() == "1";
     let checksum = source_checksum_from_bytes(VALID_REPLAY)
         .expect("fixture checksum should be internally valid");
     let s3 = s3_client(&config).await;
     ensure_bucket(&s3, &config.s3_bucket).await;
+    delete_smoke_objects(&s3, &config, &checksum).await;
     let _put_object = s3
         .put_object()
         .bucket(&config.s3_bucket)
@@ -64,22 +73,37 @@ async fn live_worker_should_process_completed_and_failed_jobs_through_broker_and
         .expect("RabbitMQ should accept smoke setup connection");
     let channel = amqp.create_channel().await.expect("RabbitMQ setup channel should open");
     prepare_broker(&channel, &config).await;
+    if setup_only {
+        return;
+    }
 
     let shutdown = CancellationToken::new();
-    let worker = spawn_worker(config.clone(), shutdown.clone());
+    let worker = (!container_smoke).then(|| spawn_worker(config.clone(), shutdown.clone()));
+    if container_smoke {
+        assert_container_worker_probes().await;
+    }
 
-    publish_job(&channel, &config.job_queue, "job-smoke-completed", "replay-smoke-001", &checksum)
-        .await;
-    let completed = wait_for_completed(&channel).await;
-    assert_eq!(completed.job_id, "job-smoke-completed");
-    assert_eq!(completed.replay_id, "replay-smoke-001");
-    assert_eq!(completed.source_checksum, checksum);
-    assert_eq!(
-        completed.artifact.key,
-        artifact_key(&config.artifact_prefix, "replay-smoke-001", &checksum)
-            .expect("artifact key should be deterministic")
-    );
-    assert_artifact_exists(&s3, &completed).await;
+    publish_job(
+        &channel,
+        &config.job_queue,
+        "job-smoke-duplicate",
+        "replay-smoke-duplicate",
+        &checksum,
+    )
+    .await;
+    publish_job(
+        &channel,
+        &config.job_queue,
+        "job-smoke-duplicate",
+        "replay-smoke-duplicate",
+        &checksum,
+    )
+    .await;
+    let first_completed = wait_for_completed(&channel).await;
+    let second_completed = wait_for_completed(&channel).await;
+    assert_duplicate_completed_results(&config, &checksum, &first_completed, &second_completed);
+    assert_artifact_exists(&s3, &first_completed).await;
+    assert_single_artifact_key(&s3, &first_completed).await;
     assert_queue_empty(&channel, &config.job_queue).await;
 
     let bad_checksum =
@@ -92,12 +116,36 @@ async fn live_worker_should_process_completed_and_failed_jobs_through_broker_and
     assert_eq!(failed.failure.retryability, Retryability::NotRetryable);
     assert_queue_empty(&channel, &config.job_queue).await;
 
-    shutdown.cancel();
-    timeout(Duration::from_secs(10), worker)
-        .await
-        .expect("worker should stop after cancellation")
-        .expect("worker task should not panic")
-        .expect("worker should exit cleanly");
+    let conflict_key = put_conflicting_artifact(&s3, &config, &checksum).await;
+    publish_job(
+        &channel,
+        &config.job_queue,
+        "job-smoke-conflict",
+        "replay-smoke-conflict",
+        &checksum,
+    )
+    .await;
+    let failed = wait_for_failed(&channel).await;
+    assert_eq!(failed.failure.error_code.as_str(), "output.artifact_conflict");
+    assert_eq!(failed.failure.stage, ParseStage::Output);
+    assert_eq!(
+        conflict_key,
+        artifact_key(&config.artifact_prefix, "replay-smoke-conflict", &checksum)
+            .expect("artifact key should be deterministic")
+    );
+    assert_queue_empty(&channel, &config.job_queue).await;
+
+    if container_smoke {
+        assert_container_worker_probes().await;
+    }
+    if let Some(worker) = worker {
+        shutdown.cancel();
+        timeout(Duration::from_secs(10), worker)
+            .await
+            .expect("worker should stop after cancellation")
+            .expect("worker task should not panic")
+            .expect("worker should exit cleanly");
+    }
 }
 
 async fn s3_client(config: &WorkerConfig) -> aws_sdk_s3::Client {
@@ -113,9 +161,16 @@ async fn s3_client(config: &WorkerConfig) -> aws_sdk_s3::Client {
     aws_sdk_s3::Client::from_conf(s3_config)
 }
 
+fn container_smoke_enabled() -> bool {
+    env::var("REPLAY_PARSER_CONTAINER_SMOKE").unwrap_or_default() == "1"
+}
+
 async fn ensure_bucket(client: &aws_sdk_s3::Client, bucket: &str) {
     let result = client.create_bucket().bucket(bucket).send().await;
     if let Err(error) = result {
+        if client.head_bucket().bucket(bucket).send().await.is_ok() {
+            return;
+        }
         let message = error.to_string();
         assert!(
             message.contains("BucketAlreadyOwnedByYou")
@@ -124,6 +179,20 @@ async fn ensure_bucket(client: &aws_sdk_s3::Client, bucket: &str) {
                 || message.contains("Your previous request to create the named bucket succeeded"),
             "bucket creation failed unexpectedly: {message}"
         );
+    }
+}
+
+async fn delete_smoke_objects(
+    client: &aws_sdk_s3::Client,
+    config: &WorkerConfig,
+    checksum: &SourceChecksum,
+) {
+    let duplicate_key = artifact_key(&config.artifact_prefix, "replay-smoke-duplicate", checksum)
+        .expect("duplicate artifact key should be deterministic");
+    let conflict_key = artifact_key(&config.artifact_prefix, "replay-smoke-conflict", checksum)
+        .expect("conflict artifact key should be deterministic");
+    for key in [RAW_KEY.to_owned(), duplicate_key, conflict_key] {
+        let _delete_result = client.delete_object().bucket(&config.s3_bucket).key(key).send().await;
     }
 }
 
@@ -228,6 +297,44 @@ async fn publish_job(
     assert!(confirm.is_ack(), "parse job publish should be acked by RabbitMQ");
 }
 
+fn assert_duplicate_completed_results(
+    config: &WorkerConfig,
+    checksum: &SourceChecksum,
+    first: &ParseCompletedMessage,
+    second: &ParseCompletedMessage,
+) {
+    let expected_key = artifact_key(&config.artifact_prefix, "replay-smoke-duplicate", checksum)
+        .expect("artifact key should be deterministic");
+    for completed in [first, second] {
+        assert_eq!(completed.job_id, "job-smoke-duplicate");
+        assert_eq!(completed.replay_id, "replay-smoke-duplicate");
+        assert_eq!(&completed.source_checksum, checksum);
+        assert_eq!(completed.artifact.key, expected_key);
+    }
+    assert_eq!(first.artifact.key, second.artifact.key);
+    assert_eq!(first.artifact_checksum, second.artifact_checksum);
+    assert_eq!(first.artifact_size_bytes, second.artifact_size_bytes);
+}
+
+async fn put_conflicting_artifact(
+    client: &aws_sdk_s3::Client,
+    config: &WorkerConfig,
+    checksum: &SourceChecksum,
+) -> String {
+    let key = artifact_key(&config.artifact_prefix, "replay-smoke-conflict", checksum)
+        .expect("conflict artifact key should be deterministic");
+    let _put_object = client
+        .put_object()
+        .bucket(&config.s3_bucket)
+        .key(&key)
+        .content_type("application/json")
+        .body(ByteStream::from(br#"{"phase_07":"conflict"}"#.to_vec()))
+        .send()
+        .await
+        .expect("conflicting artifact should pre-seed");
+    key
+}
+
 async fn wait_for_completed(channel: &Channel) -> ParseCompletedMessage {
     let delivery = wait_for_delivery(channel, COMPLETED_QUEUE).await;
     let message: ParseCompletedMessage =
@@ -282,6 +389,72 @@ async fn assert_artifact_exists(client: &aws_sdk_s3::Client, completed: &ParseCo
         u64::try_from(bytes.len()).expect("artifact length should fit u64"),
         completed.artifact_size_bytes
     );
+}
+
+async fn assert_single_artifact_key(
+    client: &aws_sdk_s3::Client,
+    completed: &ParseCompletedMessage,
+) {
+    let listed = client
+        .list_objects_v2()
+        .bucket(&completed.artifact.bucket)
+        .prefix(&completed.artifact.key)
+        .send()
+        .await
+        .expect("artifact prefix should list");
+    let matching_count = listed
+        .contents()
+        .iter()
+        .filter(|object| object.key() == Some(completed.artifact.key.as_str()))
+        .count();
+    assert_eq!(matching_count, 1, "exact deterministic artifact key should exist once");
+}
+
+async fn assert_container_worker_probes() {
+    for port in [
+        probe_port_from_env("WORKER_A_PROBE_PORT", 18_081),
+        probe_port_from_env("WORKER_B_PROBE_PORT", 18_082),
+    ] {
+        wait_for_probe(port, "/livez").await;
+        wait_for_probe(port, "/readyz").await;
+    }
+}
+
+fn probe_port_from_env(name: &str, default: u16) -> u16 {
+    env::var(name).ok().and_then(|value| value.parse::<u16>().ok()).unwrap_or(default)
+}
+
+async fn wait_for_probe(port: u16, path: &str) {
+    let result = timeout(Duration::from_secs(45), async {
+        loop {
+            if probe_http_ok(port, path) {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(250)).await;
+        }
+    })
+    .await;
+    assert!(result.is_ok(), "probe {path} on port {port} should return HTTP 200");
+}
+
+fn probe_http_ok(port: u16, path: &str) -> bool {
+    let Ok(mut stream) = TcpStream::connect(("127.0.0.1", port)) else {
+        return false;
+    };
+    let timeout = Some(Duration::from_secs(2));
+    if stream.set_read_timeout(timeout).and_then(|()| stream.set_write_timeout(timeout)).is_err() {
+        return false;
+    }
+    let request =
+        format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n");
+    if stream.write_all(request.as_bytes()).is_err() {
+        return false;
+    }
+    let mut response = [0_u8; 128];
+    let Ok(read) = stream.read(&mut response) else {
+        return false;
+    };
+    response[..read].starts_with(b"HTTP/1.1 200") || response[..read].starts_with(b"HTTP/1.0 200")
 }
 
 async fn assert_queue_empty(channel: &Channel, queue: &str) {

@@ -19,3 +19,57 @@ services:
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
+
+  worker-a:
+    image: "${WORKER_IMAGE:-replay-parser-2-worker-smoke:latest}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      REPLAY_PARSER_AMQP_URL: "${REPLAY_PARSER_CONTAINER_AMQP_URL}"
+      REPLAY_PARSER_JOB_QUEUE: "${REPLAY_PARSER_JOB_QUEUE:-parse.jobs}"
+      REPLAY_PARSER_RESULT_EXCHANGE: "${REPLAY_PARSER_RESULT_EXCHANGE:-parse.results}"
+      REPLAY_PARSER_COMPLETED_ROUTING_KEY: "${REPLAY_PARSER_COMPLETED_ROUTING_KEY:-parse.completed}"
+      REPLAY_PARSER_FAILED_ROUTING_KEY: "${REPLAY_PARSER_FAILED_ROUTING_KEY:-parse.failed}"
+      REPLAY_PARSER_S3_BUCKET: "${MINIO_BUCKET:-replay-parser-smoke}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      REPLAY_PARSER_S3_ENDPOINT: "http://minio:9000"
+      REPLAY_PARSER_S3_FORCE_PATH_STYLE: "true"
+      REPLAY_PARSER_PREFETCH: "1"
+      REPLAY_PARSER_PROBE_BIND: "0.0.0.0"
+      REPLAY_PARSER_PROBE_PORT: "8080"
+      REPLAY_PARSER_WORKER_ID: "worker-a"
+      RUST_LOG: "info"
+      AWS_ACCESS_KEY_ID: "${MINIO_ROOT_USER:-minioadmin}"
+      AWS_SECRET_ACCESS_KEY: "${MINIO_ROOT_PASSWORD:-minioadmin}"
+    ports:
+      - "${WORKER_A_PROBE_PORT:-18081}:8080"
+
+  worker-b:
+    image: "${WORKER_IMAGE:-replay-parser-2-worker-smoke:latest}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      REPLAY_PARSER_AMQP_URL: "${REPLAY_PARSER_CONTAINER_AMQP_URL}"
+      REPLAY_PARSER_JOB_QUEUE: "${REPLAY_PARSER_JOB_QUEUE:-parse.jobs}"
+      REPLAY_PARSER_RESULT_EXCHANGE: "${REPLAY_PARSER_RESULT_EXCHANGE:-parse.results}"
+      REPLAY_PARSER_COMPLETED_ROUTING_KEY: "${REPLAY_PARSER_COMPLETED_ROUTING_KEY:-parse.completed}"
+      REPLAY_PARSER_FAILED_ROUTING_KEY: "${REPLAY_PARSER_FAILED_ROUTING_KEY:-parse.failed}"
+      REPLAY_PARSER_S3_BUCKET: "${MINIO_BUCKET:-replay-parser-smoke}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      REPLAY_PARSER_S3_ENDPOINT: "http://minio:9000"
+      REPLAY_PARSER_S3_FORCE_PATH_STYLE: "true"
+      REPLAY_PARSER_PREFETCH: "1"
+      REPLAY_PARSER_PROBE_BIND: "0.0.0.0"
+      REPLAY_PARSER_PROBE_PORT: "8080"
+      REPLAY_PARSER_WORKER_ID: "worker-b"
+      RUST_LOG: "info"
+      AWS_ACCESS_KEY_ID: "${MINIO_ROOT_USER:-minioadmin}"
+      AWS_SECRET_ACCESS_KEY: "${MINIO_ROOT_PASSWORD:-minioadmin}"
+    ports:
+      - "${WORKER_B_PROBE_PORT:-18082}:8080"
