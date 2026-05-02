@@ -1,6 +1,6 @@
 //! End-to-end worker job processor.
 
-use std::pin::Pin;
+use std::{pin::Pin, time::Instant};
 
 use parser_contract::{
     artifact::ParseStatus,
@@ -18,7 +18,11 @@ use crate::{
     checksum::verify_source_checksum,
     config::WorkerConfig,
     error::{WorkerError, WorkerFailureKind},
-    storage::ObjectStore,
+    logging::{
+        OUTCOME_COMPLETED, OUTCOME_FAILED, WORKER_ARTIFACT_CONFLICT, WORKER_JOB_COMPLETED,
+        WORKER_JOB_FAILED, WORKER_PARSE_FINISHED, WORKER_PARSE_STARTED, duration_ms,
+    },
+    storage::{ArtifactWrite, ObjectStore},
 };
 
 /// Boxed future returned by result-publisher operations.
@@ -67,7 +71,7 @@ pub async fn process_job_body(
         Ok(job) => process_decoded_job(job, config, store, publisher, parser_info).await,
         Err(error) => {
             let failed = malformed_job_failed_message(body, &error, parser_info)?;
-            publish_failed_action(publisher, &failed).await
+            publish_failed_action(config, publisher, &failed).await
         }
     }
 }
@@ -91,7 +95,7 @@ async fn process_decoded_job(
             source_cause,
         )?;
         let failed = context.failed_message(failure, parser_info);
-        return publish_failed_action(publisher, &failed).await;
+        return publish_failed_action(config, publisher, &failed).await;
     }
 
     if job.parser_contract_version != ContractVersion::current() {
@@ -104,20 +108,20 @@ async fn process_decoded_job(
             parser_info,
         )
         .map_err(|source| internal_error("internal.failure_payload", source.to_string()))?;
-        return publish_failed_action(publisher, &failed).await;
+        return publish_failed_action(config, publisher, &failed).await;
     }
 
     let downloaded = match store.download_raw(&job.object_key).await {
         Ok(downloaded) => downloaded,
         Err(error) => {
             let failed = storage_failed_message(&context, error, parser_info)?;
-            return publish_failed_action(publisher, &failed).await;
+            return publish_failed_action(config, publisher, &failed).await;
         }
     };
 
     if let Err(kind) = verify_source_checksum(&downloaded.bytes, &job.checksum) {
         let failed = worker_failure_message(&context, &kind, parser_info)?;
-        return publish_failed_action(publisher, &failed).await;
+        return publish_failed_action(config, publisher, &failed).await;
     }
 
     let source = ReplaySource {
@@ -125,16 +129,19 @@ async fn process_decoded_job(
         source_file: job.object_key.clone(),
         checksum: FieldPresence::Present { value: job.checksum.clone(), source: None },
     };
+    log_parse_started(config, &job);
+    let parse_start = Instant::now();
     let artifact = public_parse_replay(ParserInput {
         bytes: &downloaded.bytes,
         source,
         parser: parser_info.clone(),
         options: ParserOptions::default(),
     });
+    log_parse_finished(config, &job, parse_start);
 
     if artifact.status == ParseStatus::Failed {
         let failed = parser_failed_message(&context, artifact.failure, parser_info)?;
-        return publish_failed_action(publisher, &failed).await;
+        return publish_failed_action(config, publisher, &failed).await;
     }
 
     let mut artifact_bytes = serde_json::to_vec(&artifact)?;
@@ -143,15 +150,20 @@ async fn process_decoded_job(
         Ok(key) => key,
         Err(error) => {
             let failed = storage_failed_message(&context, error, parser_info)?;
-            return publish_failed_action(publisher, &failed).await;
+            return publish_failed_action(config, publisher, &failed).await;
         }
     };
 
+    let artifact_write_start = Instant::now();
     let write = match store.write_artifact_if_absent_or_matching(&key, &artifact_bytes).await {
-        Ok(write) => write,
+        Ok(write) => {
+            log_artifact_write(config, &job, &write, artifact_write_start);
+            write
+        }
         Err(error) => {
+            log_artifact_conflict(config, &job, &error, artifact_write_start);
             let failed = storage_failed_message(&context, error, parser_info)?;
-            return publish_failed_action(publisher, &failed).await;
+            return publish_failed_action(config, publisher, &failed).await;
         }
     };
 
@@ -165,7 +177,78 @@ async fn process_decoded_job(
         write.size_bytes,
         parser_info,
     );
-    publish_completed_action(publisher, &completed).await
+    publish_completed_action(config, publisher, &completed).await
+}
+
+fn log_parse_started(config: &WorkerConfig, job: &ParseJobMessage) {
+    tracing::info!(
+        event = WORKER_PARSE_STARTED,
+        worker_id = %config.worker_id,
+        job_id = %job.job_id,
+        replay_id = %job.replay_id,
+        stage = "parse",
+        "worker_parse_started"
+    );
+}
+
+fn log_parse_finished(config: &WorkerConfig, job: &ParseJobMessage, start: Instant) {
+    tracing::info!(
+        event = WORKER_PARSE_FINISHED,
+        worker_id = %config.worker_id,
+        job_id = %job.job_id,
+        replay_id = %job.replay_id,
+        stage = "parse",
+        duration_ms = duration_ms(start),
+        "worker_parse_finished"
+    );
+}
+
+fn log_artifact_write(
+    config: &WorkerConfig,
+    job: &ParseJobMessage,
+    write: &ArtifactWrite,
+    start: Instant,
+) {
+    tracing::info!(
+        event = write.log_event_name(),
+        worker_id = %config.worker_id,
+        job_id = %job.job_id,
+        replay_id = %job.replay_id,
+        artifact_key = %write.reference.key,
+        artifact_size_bytes = write.size_bytes,
+        duration_ms = duration_ms(start),
+        "worker_artifact_decision"
+    );
+}
+
+fn log_artifact_conflict(
+    config: &WorkerConfig,
+    job: &ParseJobMessage,
+    error: &WorkerError,
+    start: Instant,
+) {
+    let WorkerError::Failure(WorkerFailureKind::ArtifactConflict {
+        key,
+        existing_size_bytes,
+        new_size_bytes,
+        ..
+    }) = error
+    else {
+        return;
+    };
+
+    tracing::warn!(
+        event = WORKER_ARTIFACT_CONFLICT,
+        worker_id = %config.worker_id,
+        job_id = %job.job_id,
+        replay_id = %job.replay_id,
+        artifact_key = %key,
+        artifact_size_bytes = *new_size_bytes,
+        existing_artifact_size_bytes = *existing_size_bytes,
+        error_type = "output.artifact_conflict",
+        duration_ms = duration_ms(start),
+        "worker_artifact_conflict"
+    );
 }
 
 fn validate_job_fields(job: &ParseJobMessage) -> Option<String> {
@@ -182,34 +265,43 @@ fn validate_job_fields(job: &ParseJobMessage) -> Option<String> {
 }
 
 async fn publish_completed_action(
+    config: &WorkerConfig,
     publisher: &impl ResultPublisher,
     message: &ParseCompletedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
     let publish_result = publisher.publish_completed(message).await;
     match &publish_result {
         Ok(PublishedOutcome::Completed) => tracing::info!(
-            event = "worker_job_completed",
+            event = WORKER_JOB_COMPLETED,
+            worker_id = %config.worker_id,
             job_id = %message.job_id,
             replay_id = %message.replay_id,
             artifact_key = %message.artifact.key,
+            outcome = OUTCOME_COMPLETED,
             "worker_job_completed"
         ),
         Ok(PublishedOutcome::Failed) => tracing::warn!(
-            event = "worker_job_failed",
+            event = WORKER_JOB_FAILED,
+            worker_id = %config.worker_id,
             job_id = %message.job_id,
             replay_id = %message.replay_id,
             artifact_key = %message.artifact.key,
             error_code = "internal.unexpected_publish_outcome",
+            error_type = "internal.unexpected_publish_outcome",
             retryability = ?Retryability::Unknown,
+            outcome = OUTCOME_FAILED,
             "worker_job_failed"
         ),
         Err(error) => tracing::warn!(
-            event = "worker_job_failed",
+            event = WORKER_JOB_FAILED,
+            worker_id = %config.worker_id,
             job_id = %message.job_id,
             replay_id = %message.replay_id,
             artifact_key = %message.artifact.key,
             error_code = "output.rabbitmq_publish",
+            error_type = "output.rabbitmq_publish",
             retryability = ?Retryability::Unknown,
+            outcome = OUTCOME_FAILED,
             error = %error,
             "worker_job_failed"
         ),
@@ -218,6 +310,7 @@ async fn publish_completed_action(
 }
 
 async fn publish_failed_action(
+    config: &WorkerConfig,
     publisher: &impl ResultPublisher,
     message: &ParseFailedMessage,
 ) -> Result<DeliveryAction, WorkerError> {
@@ -227,30 +320,39 @@ async fn publish_failed_action(
     let object_key = field_presence_value(&message.object_key);
     match &publish_result {
         Ok(PublishedOutcome::Failed) => tracing::info!(
-            event = "worker_job_failed",
+            event = WORKER_JOB_FAILED,
+            worker_id = %config.worker_id,
             job_id = ?job_id,
             replay_id = ?replay_id,
             object_key = ?object_key,
             error_code = %message.failure.error_code.as_str(),
+            error_type = %message.failure.error_code.as_str(),
             retryability = ?message.failure.retryability,
+            outcome = OUTCOME_FAILED,
             "worker_job_failed"
         ),
         Ok(PublishedOutcome::Completed) => tracing::warn!(
-            event = "worker_job_failed",
+            event = WORKER_JOB_FAILED,
+            worker_id = %config.worker_id,
             job_id = ?job_id,
             replay_id = ?replay_id,
             object_key = ?object_key,
             error_code = "internal.unexpected_publish_outcome",
+            error_type = "internal.unexpected_publish_outcome",
             retryability = ?Retryability::Unknown,
+            outcome = OUTCOME_FAILED,
             "worker_job_failed"
         ),
         Err(error) => tracing::warn!(
-            event = "worker_job_failed",
+            event = WORKER_JOB_FAILED,
+            worker_id = %config.worker_id,
             job_id = ?job_id,
             replay_id = ?replay_id,
             object_key = ?object_key,
             error_code = "output.rabbitmq_publish",
+            error_type = "output.rabbitmq_publish",
             retryability = ?Retryability::Unknown,
+            outcome = OUTCOME_FAILED,
             error = %error,
             "worker_job_failed"
         ),

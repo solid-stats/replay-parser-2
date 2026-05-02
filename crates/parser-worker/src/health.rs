@@ -77,6 +77,12 @@ impl HealthState {
         }
     }
 
+    /// Returns the operator-visible worker identity.
+    #[must_use]
+    pub fn worker_id(&self) -> &str {
+        &self.worker_id
+    }
+
     fn store(&self, state: ReadinessState, reason: Option<String>) {
         let mut guard = self.inner.write().unwrap_or_else(std::sync::PoisonError::into_inner);
         *guard = HealthInner::new(state, reason);

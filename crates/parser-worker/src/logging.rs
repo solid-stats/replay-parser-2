@@ -1,5 +1,7 @@
 //! Stable worker operations log event taxonomy.
 
+use std::time::Instant;
+
 /// Worker runtime is starting.
 pub const WORKER_STARTING: &str = "worker_starting";
 /// Worker connected to dependencies and can consume jobs.
@@ -84,3 +86,9 @@ pub const OUTCOMES: [&str; 7] = [
     OUTCOME_DEGRADED,
     OUTCOME_DRAINING,
 ];
+
+/// Converts an elapsed operation duration to a log-safe millisecond value.
+#[must_use]
+pub fn duration_ms(start: Instant) -> u64 {
+    u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX)
+}

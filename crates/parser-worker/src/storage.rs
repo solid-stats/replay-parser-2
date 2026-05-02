@@ -47,6 +47,19 @@ pub struct ArtifactWrite {
     pub reused_existing: bool,
 }
 
+impl ArtifactWrite {
+    /// Returns the worker log event name for this artifact decision:
+    /// `worker_artifact_written` or `worker_artifact_reused`.
+    #[must_use]
+    pub const fn log_event_name(&self) -> &'static str {
+        if self.reused_existing {
+            crate::logging::WORKER_ARTIFACT_REUSED
+        } else {
+            crate::logging::WORKER_ARTIFACT_WRITTEN
+        }
+    }
+}
+
 /// Outcome of attempting an atomic artifact create.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArtifactPutOutcome {

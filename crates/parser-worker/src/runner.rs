@@ -10,6 +10,12 @@ use crate::{
     config::WorkerConfig,
     error::WorkerError,
     health::{HealthState, spawn_probe_server},
+    logging::{
+        OUTCOME_DEGRADED, OUTCOME_DRAINING, OUTCOME_READY, WORKER_CONNECTED,
+        WORKER_DEPENDENCY_DEGRADED, WORKER_DEPENDENCY_READY, WORKER_JOB_RECEIVED,
+        WORKER_READINESS_CHANGED, WORKER_SHUTDOWN_COMPLETE, WORKER_SHUTDOWN_REQUESTED,
+        WORKER_STARTING,
+    },
     processor::process_job_body,
     storage::S3ObjectStore,
 };
@@ -60,7 +66,8 @@ async fn run_with_shutdown(
         spawn_ctrl_c_listener(shutdown.clone(), health.clone());
     }
     tracing::info!(
-        event = "worker_starting",
+        event = WORKER_STARTING,
+        worker_id = %config.worker_id,
         config = ?config.redacted(),
         "worker_starting"
     );
@@ -83,21 +90,27 @@ async fn run_with_shutdown(
     };
     if let Err(error) = store.check_ready().await {
         health.mark_degraded("s3_ready");
+        log_dependency_degraded(&config, "s3", "s3_ready", &error);
         stop_probe_server(shutdown, probe_server).await?;
         return Err(error);
     }
+    log_dependency_ready(&config, "s3");
 
     let mut rabbit = match RabbitMqClient::connect(&config).await {
         Ok(rabbit) => rabbit,
         Err(error) => {
             health.mark_degraded("amqp_connect");
+            log_dependency_degraded(&config, "rabbitmq", "amqp_connect", &error);
             stop_probe_server(shutdown, probe_server).await?;
             return Err(error);
         }
     };
     health.mark_ready();
+    log_dependency_ready(&config, "rabbitmq");
+    log_readiness_changed(&config, OUTCOME_READY, "ready");
     tracing::info!(
-        event = "worker_connected",
+        event = WORKER_CONNECTED,
+        worker_id = %config.worker_id,
         job_queue = %config.job_queue,
         result_exchange = %config.result_exchange,
         prefetch = config.prefetch,
@@ -130,13 +143,13 @@ async fn consume_until_shutdown(
 ) -> Result<(), WorkerError> {
     loop {
         if shutdown.is_cancelled() {
-            health.mark_draining();
+            mark_draining_and_log(config, &health);
             break;
         }
 
         let delivery = tokio::select! {
             () = shutdown.cancelled() => {
-                health.mark_draining();
+                mark_draining_and_log(config, &health);
                 break;
             }
             delivery = rabbit.consumer_mut().next() => delivery,
@@ -148,25 +161,75 @@ async fn consume_until_shutdown(
         let delivery = delivery?;
         let fields = log_fields(&delivery.data);
         tracing::info!(
-            event = "worker_job_received",
+            event = WORKER_JOB_RECEIVED,
+            worker_id = %config.worker_id,
             job_id = ?fields.job_id.as_deref(),
             replay_id = ?fields.replay_id.as_deref(),
             object_key = ?fields.object_key.as_deref(),
+            "messaging.destination.name" = %config.job_queue,
+            "messaging.rabbitmq.message.delivery_tag" = delivery.delivery_tag,
+            "messaging.rabbitmq.destination.routing_key" = %delivery.routing_key,
             "worker_job_received"
         );
 
         let action =
             process_job_body(&delivery.data, config, store, rabbit, parser.clone()).await?;
-        apply_lapin_delivery_action(&delivery, action).await?;
+        apply_lapin_delivery_action(&delivery, action, &config.worker_id).await?;
 
         if shutdown.is_cancelled() {
-            health.mark_draining();
+            mark_draining_and_log(config, &health);
             break;
         }
     }
 
-    tracing::info!(event = "worker_shutdown_complete", "worker_shutdown_complete");
+    tracing::info!(
+        event = WORKER_SHUTDOWN_COMPLETE,
+        worker_id = %config.worker_id,
+        "worker_shutdown_complete"
+    );
     Ok(())
+}
+
+fn log_dependency_ready(config: &WorkerConfig, dependency: &str) {
+    tracing::info!(
+        event = WORKER_DEPENDENCY_READY,
+        worker_id = %config.worker_id,
+        dependency = %dependency,
+        outcome = OUTCOME_READY,
+        "worker_dependency_ready"
+    );
+}
+
+fn log_dependency_degraded(
+    config: &WorkerConfig,
+    dependency: &str,
+    error_type: &str,
+    error: &WorkerError,
+) {
+    tracing::warn!(
+        event = WORKER_DEPENDENCY_DEGRADED,
+        worker_id = %config.worker_id,
+        dependency = %dependency,
+        outcome = OUTCOME_DEGRADED,
+        error_type = %error_type,
+        error = %error,
+        "worker_dependency_degraded"
+    );
+}
+
+fn mark_draining_and_log(config: &WorkerConfig, health: &HealthState) {
+    health.mark_draining();
+    log_readiness_changed(config, OUTCOME_DRAINING, "draining");
+}
+
+fn log_readiness_changed(config: &WorkerConfig, outcome: &str, state: &str) {
+    tracing::info!(
+        event = WORKER_READINESS_CHANGED,
+        worker_id = %config.worker_id,
+        outcome = %outcome,
+        state = %state,
+        "worker_readiness_changed"
+    );
 }
 
 async fn stop_probe_server(
@@ -187,13 +250,18 @@ fn spawn_ctrl_c_listener(shutdown: CancellationToken, health: HealthState) {
     let _shutdown_task = tokio::spawn(async move {
         match tokio::signal::ctrl_c().await {
             Ok(()) => {
-                tracing::info!(event = "worker_shutdown_requested", "worker_shutdown_requested");
+                tracing::info!(
+                    event = WORKER_SHUTDOWN_REQUESTED,
+                    worker_id = %health.worker_id(),
+                    "worker_shutdown_requested"
+                );
                 health.mark_draining();
                 shutdown.cancel();
             }
             Err(error) => {
                 tracing::warn!(
-                    event = "worker_shutdown_requested",
+                    event = WORKER_SHUTDOWN_REQUESTED,
+                    worker_id = %health.worker_id(),
                     error = %error,
                     "worker_shutdown_requested"
                 );

@@ -1,6 +1,6 @@
 //! `RabbitMQ` adapter for parse-job consumption and parse-result publication.
 
-use std::pin::Pin;
+use std::{pin::Pin, time::Instant};
 
 use lapin::{
     BasicProperties, Channel, Confirmation, Connection, ConnectionProperties, Consumer,
@@ -13,6 +13,10 @@ use parser_contract::worker::{ParseCompletedMessage, ParseFailedMessage};
 use crate::{
     config::WorkerConfig,
     error::{WorkerError, WorkerFailureKind},
+    logging::{
+        OUTCOME_ACK, OUTCOME_COMPLETED, OUTCOME_FAILED, OUTCOME_NACK_REQUEUE, WORKER_DELIVERY_ACK,
+        WORKER_DELIVERY_NACK_REQUEUE, WORKER_RESULT_PUBLISHED, duration_ms,
+    },
 };
 
 const RESULT_CONTENT_TYPE: &str = "application/json";
@@ -114,9 +118,27 @@ pub async fn apply_delivery_action(
 pub async fn apply_lapin_delivery_action(
     delivery: &Delivery,
     action: DeliveryAction,
+    worker_id: &str,
 ) -> Result<(), WorkerError> {
     let mut acker = LapinDeliveryAcker::new(delivery);
-    apply_delivery_action(&mut acker, action).await
+    apply_delivery_action(&mut acker, action).await?;
+    match action {
+        DeliveryAction::Ack => tracing::info!(
+            event = WORKER_DELIVERY_ACK,
+            worker_id = %worker_id,
+            outcome = OUTCOME_ACK,
+            "messaging.rabbitmq.message.delivery_tag" = delivery.delivery_tag,
+            "worker_delivery_ack"
+        ),
+        DeliveryAction::NackRequeue => tracing::info!(
+            event = WORKER_DELIVERY_NACK_REQUEUE,
+            worker_id = %worker_id,
+            outcome = OUTCOME_NACK_REQUEUE,
+            "messaging.rabbitmq.message.delivery_tag" = delivery.delivery_tag,
+            "worker_delivery_nack_requeue"
+        ),
+    }
+    Ok(())
 }
 
 /// `RabbitMQ` client with separate channels for consuming jobs and publishing results.
@@ -191,7 +213,20 @@ impl RabbitMqClient {
         &self,
         message: &ParseCompletedMessage,
     ) -> Result<(), WorkerError> {
-        self.publish_prepared(prepare_completed_publish(&self.config, message)?).await
+        let start = Instant::now();
+        let routing_key = self.config.completed_routing_key.clone();
+        self.publish_prepared(prepare_completed_publish(&self.config, message)?).await?;
+        tracing::info!(
+            event = WORKER_RESULT_PUBLISHED,
+            worker_id = %self.config.worker_id,
+            job_id = %message.job_id,
+            replay_id = %message.replay_id,
+            outcome = OUTCOME_COMPLETED,
+            routing_key = %routing_key,
+            duration_ms = duration_ms(start),
+            "worker_result_published"
+        );
+        Ok(())
     }
 
     /// Publishes a confirmed `parse.failed` result.
@@ -200,7 +235,20 @@ impl RabbitMqClient {
     ///
     /// Returns [`WorkerError`] if serialization, publishing, or broker confirmation fails.
     pub async fn publish_failed(&self, message: &ParseFailedMessage) -> Result<(), WorkerError> {
-        self.publish_prepared(prepare_failed_publish(&self.config, message)?).await
+        let start = Instant::now();
+        let routing_key = self.config.failed_routing_key.clone();
+        self.publish_prepared(prepare_failed_publish(&self.config, message)?).await?;
+        tracing::info!(
+            event = WORKER_RESULT_PUBLISHED,
+            worker_id = %self.config.worker_id,
+            job_id = ?message.job_id,
+            replay_id = ?message.replay_id,
+            outcome = OUTCOME_FAILED,
+            routing_key = %routing_key,
+            duration_ms = duration_ms(start),
+            "worker_result_published"
+        );
+        Ok(())
     }
 
     async fn publish_prepared(&self, publish: PreparedResultPublish) -> Result<(), WorkerError> {
