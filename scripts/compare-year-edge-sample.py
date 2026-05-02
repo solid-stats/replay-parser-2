@@ -19,7 +19,6 @@ from typing import Any
 
 
 GAME_TYPES = ("sg", "mace", "sm")
-LEGACY_FORBIDDEN_WEAPONS = {"throw", "binoculars", "бинокль", "pdu", "vector"}
 DEFAULT_REAL_HOME = pathlib.Path("/home/afgan0r")
 DEFAULT_OLD_REPO = pathlib.Path("/home/afgan0r/Projects/SolidGames/replays-parser")
 DEFAULT_OUTPUT = pathlib.Path(
@@ -557,7 +556,7 @@ def new_stats_view(root: dict[str, Any]) -> dict[str, Any]:
             if not victim:
                 continue
             classification = kill.get("c")
-            weapon_name = legacy_weapon_stat_name(weapons.get(kill.get("w")))
+            weapon_name = weapon_stat_name(weapons.get(kill.get("w")))
             if classification == "enemy_kill":
                 relationships.append(
                     {
@@ -708,7 +707,7 @@ def strip_legacy_tag(raw_name: str) -> str:
 
 
 def append_weapon_stat(stats: list[dict[str, Any]], player: str, weapon_name: Any, kills: Any) -> None:
-    normalized_name = legacy_weapon_stat_name(weapon_name)
+    normalized_name = weapon_stat_name(weapon_name)
     if normalized_name is None:
         return
     stats.append(
@@ -720,11 +719,11 @@ def append_weapon_stat(stats: list[dict[str, Any]], player: str, weapon_name: An
     )
 
 
-def legacy_weapon_stat_name(weapon_name: Any) -> str | None:
+def weapon_stat_name(weapon_name: Any) -> str | None:
     if not isinstance(weapon_name, str):
         return None
     normalized = weapon_name.strip()
-    if not normalized or normalized.lower() in LEGACY_FORBIDDEN_WEAPONS:
+    if not normalized:
         return None
     return normalized
 

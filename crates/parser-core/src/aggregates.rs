@@ -319,7 +319,7 @@ fn weapon_dictionary(
         };
         if emits_row
             && let Some(weapon_name) = observed_string(&combat.weapon)
-            && is_legacy_weapon_stat_name(weapon_name)
+            && is_weapon_stat_name(weapon_name)
         {
             let _inserted = weapon_names.insert(weapon_name.to_owned());
         }
@@ -343,7 +343,7 @@ fn weapon_dictionary_from_killed_events(
         match classify_minimal_killed_event(observation, entity_index, vehicle_name_index) {
             MinimalEventEffect::PlayerKill { weapon: Some(weapon), .. }
             | MinimalEventEffect::VehicleDestroyed { weapon: Some(weapon), .. } => {
-                if is_legacy_weapon_stat_name(weapon) {
+                if is_weapon_stat_name(weapon) {
                     let _inserted = weapon_names.insert(weapon.to_owned());
                 }
             }
@@ -362,11 +362,8 @@ fn weapon_dictionary_from_killed_events(
         .collect()
 }
 
-fn is_legacy_weapon_stat_name(weapon: &str) -> bool {
-    !matches!(
-        weapon.to_lowercase().as_str(),
-        "" | "throw" | "binoculars" | "бинокль" | "pdu" | "vector"
-    )
+fn is_weapon_stat_name(weapon: &str) -> bool {
+    !weapon.trim().is_empty()
 }
 
 fn entity_index(entities: &[ObservedEntity]) -> BTreeMap<i64, &ObservedEntity> {

@@ -279,9 +279,9 @@ fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_as_min
 }
 
 #[test]
-fn combat_event_semantics_should_filter_legacy_forbidden_weapon_statistics() {
+fn combat_event_semantics_should_preserve_non_empty_weapon_statistics() {
     let fixture = br#"{
-      "missionName": "sg forbidden weapon",
+      "missionName": "sg binocular weapon",
       "worldName": "Altis",
       "missionAuthor": "SolidGames",
       "playersCount": [0, 2],
@@ -318,7 +318,8 @@ fn combat_event_semantics_should_filter_legacy_forbidden_weapon_statistics() {
     let spotter = player_by_id(&artifact, 1);
 
     assert_eq!(spotter.kills, 1);
-    assert!(artifact.weapons.is_empty());
+    assert_eq!(artifact.weapons.len(), 1);
+    assert_eq!(artifact.weapons[0].name, "Binoculars");
     assert_eq!(spotter.kill_rows.len(), 1);
-    assert_eq!(spotter.kill_rows[0].weapon_id, None);
+    assert_eq!(spotter.kill_rows[0].weapon_id, Some(1));
 }

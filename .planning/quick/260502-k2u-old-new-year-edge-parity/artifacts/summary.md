@@ -7,8 +7,8 @@
 - Old parser successes: 58
 - Comparisons run: 58
 - JSON-surface failed/non-compatible comparisons: 73
-- Stats-only matches: 55
-- Stats-only mismatches: 3
+- Stats-only matches: 40
+- Stats-only mismatches: 18
 - Stats-only old skipped: 15
 - Stats-only new failed: 0
 - All comparable statistics compatible: false
@@ -98,6 +98,7 @@
 
 - mace-2020-end-f93c084b 2020_12_31__00_17_04_ocap (mace 2020 end): old_skipped diffs=1
 - mace-2020-end-8826c2bd 2020_12_31__00_32_33_ocap (mace 2020 end): old_skipped diffs=1
+- mace-2020-start-62c9bab1 2020_10_07__21_10_34_ocap (mace 2020 start): mismatch diffs=1
 - mace-2021-start-69646dc4 2021_01_09__12_59_04_ocap (mace 2021 start): old_skipped diffs=1
 - mace-2021-start-6286cbe0 2021_01_28__20_17_33_ocap (mace 2021 start): old_skipped diffs=1
 - mace-2022-end-fc071849 2022_12_30__16_45_51__1_ocap (mace 2022 end): old_skipped diffs=1
@@ -111,6 +112,20 @@
 - mace-2025-end-f03657b2 2025_12_30__11_53_31__1_ocap (mace 2025 end): old_skipped diffs=1
 - mace-2026-end-1d2ebe8d 2026_04_20__20_49_38__1_ocap (mace 2026 end): old_skipped diffs=1
 - mace-2026-end-fb82f256 2026_04_21__21_01_40__1_ocap (mace 2026 end): old_skipped diffs=1
+- sg-2020-end-f5bc13b5 2020_12_05__22_39_27_ocap (sg 2020 end): mismatch diffs=2
+- sg-2020-start-54838cf5 2020_09_12__00_37_09_ocap (sg 2020 start): mismatch diffs=1
+- sg-2021-end-7fa5cf8c 2021_12_18__21_14_52__2_ocap (sg 2021 end): mismatch diffs=1
+- sg-2021-end-cb5d8aaf 2021_12_26__01_06_51__1_ocap (sg 2021 end): mismatch diffs=1
+- sg-2022-end-e4fa593a 2022_12_23__23_51_55__1_ocap (sg 2022 end): mismatch diffs=1
+- sg-2023-end-115fb864 2023_12_30__23_18_59__1_ocap (sg 2023 end): mismatch diffs=2
+- sg-2023-start-14672344 2023_01_13__23_11_24__1_ocap (sg 2023 start): mismatch diffs=4
+- sg-2023-start-93d560d8 2023_01_14__22_30_58__1_ocap (sg 2023 start): mismatch diffs=1
+- sg-2024-end-c17e70e0 2024_12_21__22_30_43__2_ocap (sg 2024 end): mismatch diffs=1
+- sg-2024-start-7c67419f 2024_01_19__22_31_55__2_ocap (sg 2024 start): mismatch diffs=2
 - sg-2025-end-4ff4d4a0 2025_12_26__22_43_15__2_ocap (sg 2025 end): mismatch diffs=1
 - sg-2026-end-31556f1b 2026_04_18__00_23_02__2_ocap (sg 2026 end): mismatch diffs=1
+- sm-2023-start-89b317d8 2023_08_06__21_15_25__1_ocap (sm 2023 start): mismatch diffs=1
+- sm-2024-start-19b95dc4 2024_02_18__20_05_45__1_ocap (sm 2024 start): mismatch diffs=1
+- sm-2024-start-4ed733bf 2024_03_17__20_25_59__1_ocap (sm 2024 start): mismatch diffs=1
+- sm-2025-start-26bccbbc 2025_01_19__21_05_34__1_ocap (sm 2025 start): mismatch diffs=1
 - sm-2026-start-747cf162 2026_03_22__20_36_14__1_ocap (sm 2026 start): mismatch diffs=1

@@ -2,7 +2,7 @@
 status: complete
 quick_id: 260502-k2u
 date: 2026-05-02
-result: parity_improved
+result: parity_improved_with_unfiltered_weapons
 ---
 
 # Summary: Old/New Year-Edge Replay Parity
@@ -41,14 +41,17 @@ and player counter rows. The large exact JSON comparison also remains
 ## Follow-up Fix Result
 
 After tightening the stats-only comparator and parser v1 compatibility rules,
-the same deterministic sample now reports:
+the same deterministic sample first improved to 55 matches and 3 mismatches.
+After the follow-up product decision to keep non-empty weapon names such as
+`Binoculars` and `Throw` in the minimal artifact instead of applying the old
+parser's forbidden-weapon filter, the current run reports:
 
 - Selected replays: 73
 - New parser successes: 73
 - Old parser successes: 58
 - Old parser skipped: 15
-- Stats-only matches: 55
-- Stats-only mismatches: 3
+- Stats-only matches: 40
+- Stats-only mismatches: 18
 - New parser failures: 0
 - All comparable statistics compatible: false
 
@@ -60,8 +63,10 @@ Implemented compatibility fixes:
   disagree with the original duplicate entity name.
 - Compared old vehicle statistics together with old weapon statistics, matching
   the new minimal artifact's compact weapon dictionary surface.
-- Filtered old-parser forbidden weapon statistic names such as `throw`,
-  `binoculars`, `бинокль`, `pdu`, and `vector`.
+- Preserved non-empty weapon statistic names, including old-parser forbidden
+  names such as `throw`, `binoculars`, `бинокль`, `pdu`, and `vector`, because
+  they can carry raw delayed ordnance/context evidence even when the old parser
+  suppresses them from public weapon stats.
 - Preserved `unknown_deaths` diagnostics without counting unknown deaths as
   ordinary v1 deaths.
 - Recorded old-parser skip reasons in generated old-runner results.
@@ -75,12 +80,19 @@ Implemented compatibility fixes:
 
 ## Follow-up Notable Findings
 
-- `mace`: 28 selected, 13 stats-only matches, 15 old-parser skipped rows.
-- `sg`: 28 selected, 26 stats-only matches, 2 mismatches.
-- `sm`: 17 selected, 16 stats-only matches, 1 mismatch.
+- `mace`: 28 selected, 12 stats-only matches, 1 mismatch, 15 old-parser
+  skipped rows.
+- `sg`: 28 selected, 16 stats-only matches, 12 mismatches.
+- `sm`: 17 selected, 12 stats-only matches, 5 mismatches.
 
-Remaining stats-only mismatches are limited to three old-parser teamkill edge
-cases:
+Current stats-only mismatches are mostly intentional weapon-surface differences
+caused by retaining names the old parser suppresses:
+
+- 21 `weapon_extra_in_new` rows, mostly `Throw` and `Binoculars`.
+- 2 `isDeadByTeamkill` rows caused by old-parser overwrite behavior.
+- 1 extra `teamkillers` relationship caused by old-parser merge behavior.
+
+The three non-weapon mismatches are old-parser teamkill edge cases:
 
 - `sg-2025-end-4ff4d4a0`: `Loza.isDeadByTeamkill` differs because the old parser
   later overwrites the prior teamkill-death flag with a non-teamkill death.
@@ -110,4 +122,5 @@ Original example mismatch classes recorded in the generated per-replay reports:
   `cargo test -p parser-core --test legacy_entity_compatibility`.
 - Follow-up `python3 scripts/compare-year-edge-sample.py` ran outside the
   sandbox because old-parser `tsx` needs an IPC socket; it exited 1 by design
-  because the stats-only parity gate now finds 3 mismatches.
+  because the stats-only parity gate now finds 18 mismatches after preserving
+  old-parser forbidden weapon names.

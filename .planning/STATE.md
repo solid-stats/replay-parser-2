@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-stopped_at: Improved quick old/new year-edge replay parity comparison; 55 of 58 comparable stats now match
+stopped_at: Improved quick old/new year-edge replay parity comparison; 40 of 58 comparable stats now match with unfiltered weapon names
 last_updated: "2026-05-02T08:08:00Z"
 last_activity: 2026-05-02
 progress:
@@ -29,7 +29,7 @@ Phase: 06 (RabbitMQ/S3 Worker Integration) — READY
 Plan: not started
 Status: Phase 05.2 benchmark performance, p95, and known malformed-file gaps accepted by user
 Last activity: 2026-05-02 - Recorded user acceptance that current performance is sufficient, p95 > 0.10 is acceptable when max artifact size passes, and 4 known malformed/non-JSON raw files are acceptable when old/new error parity matches
-Last quick task: 2026-05-02 - Improved deterministic year-edge `sg`/`mace`/`sm` old/new parity after comparator and parser compatibility fixes; new parser succeeded on all 73 selected replays, old parser succeeded on 58 and skipped 15, and stats-only parity now matches 55 of 58 comparable replays with 3 remaining old teamkill edge-case mismatches.
+Last quick task: 2026-05-02 - Improved deterministic year-edge `sg`/`mace`/`sm` old/new parity after comparator and parser compatibility fixes; new parser succeeded on all 73 selected replays, old parser succeeded on 58 and skipped 15, and stats-only parity now matches 40 of 58 comparable replays after the follow-up decision to preserve old-parser forbidden weapon names.
 
 Progress: [██████████] 100%
 
@@ -173,7 +173,7 @@ Recent decisions affecting current work:
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted the current benchmark performance, so historical selected x3 and all-raw x10 statuses remain reported but no longer block Phase 6 by themselves.
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted p95 artifact/raw ratio above `0.10`; all-raw size acceptance now focuses on hard max artifact size `<= 100000` and `oversized_artifact_count == 0`, while median/p95 remain trend evidence.
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted the 4 malformed/non-JSON all-raw failures when the old cached baseline reports the same failure count and new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`.
-- [Quick 260502-k2u]: Deterministic year-edge old/new parity sample selected 73 replays across `sg`, `mace`, and `sm`. New parser produced 73 artifacts, old parser produced 58 successful artifacts and 15 skipped rows. Follow-up compatibility fixes improved stats-only parity from 12 matches / 46 mismatches to 55 matches / 3 mismatches among comparable old-parser successes. The remaining mismatches are old-parser teamkill edge cases where `isDeadByTeamkill` or `teamkillers` depends on legacy overwrite behavior. Full evidence is under `.planning/generated/quick/260502-k2u-old-new-year-edge-parity/`, with lightweight summary artifacts committed under `.planning/quick/260502-k2u-old-new-year-edge-parity/`.
+- [Quick 260502-k2u]: Deterministic year-edge old/new parity sample selected 73 replays across `sg`, `mace`, and `sm`. New parser produced 73 artifacts, old parser produced 58 successful artifacts and 15 skipped rows. Compatibility fixes first improved stats-only parity from 12 matches / 46 mismatches to 55 matches / 3 mismatches among comparable old-parser successes. After the follow-up decision to preserve old-parser forbidden weapon names such as `Throw` and `Binoculars`, current stats-only parity is 40 matches / 18 mismatches; 21 mismatch rows are expected `weapon_extra_in_new` differences, with 3 remaining old teamkill edge-case rows. Full evidence is under `.planning/generated/quick/260502-k2u-old-new-year-edge-parity/`, with lightweight summary artifacts committed under `.planning/quick/260502-k2u-old-new-year-edge-parity/`.
 
 ### Roadmap Evolution
 
