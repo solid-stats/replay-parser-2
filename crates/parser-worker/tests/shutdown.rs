@@ -186,8 +186,8 @@ async fn shutdown_publish_failure_action_should_apply_nack_requeue() {
 }
 
 #[test]
-fn shutdown_should_not_add_http_probe_surface() {
-    let source = [include_str!("../src/runner.rs"), include_str!("../src/shutdown.rs")].join("\n");
+fn shutdown_drain_helpers_should_remain_probe_free() {
+    let source = include_str!("../src/shutdown.rs");
     for needle in [
         concat!("he", "alth"),
         concat!("read", "iness"),

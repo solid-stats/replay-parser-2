@@ -189,6 +189,25 @@ impl S3ObjectStore {
     pub fn new(client: Client, bucket: impl Into<String>) -> Self {
         Self { client, bucket: bucket.into() }
     }
+
+    /// Checks whether the configured bucket is reachable.
+    #[must_use]
+    pub fn check_ready(&self) -> ObjectStoreFuture<'_, ()> {
+        Box::pin(async move {
+            let _head_bucket_output =
+                self.client.head_bucket().bucket(&self.bucket).send().await.map_err(|error| {
+                    s3_error(
+                        "head_bucket",
+                        &self.bucket,
+                        "",
+                        ParseStage::Input,
+                        Retryability::Retryable,
+                        error,
+                    )
+                })?;
+            Ok(())
+        })
+    }
 }
 
 impl fmt::Debug for S3ObjectStore {
@@ -263,17 +282,19 @@ impl ObjectStore for S3ObjectStore {
 
             match result {
                 Ok(_put_output) => Ok(ArtifactPutOutcome::Created),
-                Err(error) => match classify_conditional_put_error(&error) {
-                    Some(outcome) => Ok(outcome),
-                    None => Err(s3_error(
-                        "put_object",
-                        &self.bucket,
-                        object_key,
-                        ParseStage::Output,
-                        Retryability::Retryable,
-                        error,
-                    )),
-                },
+                Err(error) => classify_conditional_put_error(&error).map_or_else(
+                    || {
+                        Err(s3_error(
+                            "put_object",
+                            &self.bucket,
+                            object_key,
+                            ParseStage::Output,
+                            Retryability::Retryable,
+                            error,
+                        ))
+                    },
+                    Ok,
+                ),
             }
         })
     }

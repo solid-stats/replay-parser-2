@@ -9,6 +9,7 @@ use crate::{
     amqp::{RabbitMqClient, apply_lapin_delivery_action},
     config::WorkerConfig,
     error::WorkerError,
+    health::{HealthState, spawn_probe_server},
     processor::process_job_body,
     storage::S3ObjectStore,
 };
@@ -24,8 +25,7 @@ use crate::{
 /// operations fail.
 pub async fn run(config: WorkerConfig) -> Result<(), WorkerError> {
     let shutdown = CancellationToken::new();
-    spawn_ctrl_c_listener(shutdown.clone());
-    run_until_cancelled(config, shutdown).await
+    run_with_shutdown(config, shutdown, true).await
 }
 
 /// Starts the worker runtime and exits when the supplied cancellation token is cancelled.
@@ -41,16 +41,61 @@ pub async fn run_until_cancelled(
     config: WorkerConfig,
     shutdown: CancellationToken,
 ) -> Result<(), WorkerError> {
+    run_with_shutdown(config, shutdown, false).await
+}
+
+async fn run_with_shutdown(
+    config: WorkerConfig,
+    shutdown: CancellationToken,
+    listen_for_ctrl_c: bool,
+) -> Result<(), WorkerError> {
     init_tracing();
-    config.validate()?;
+    let health = HealthState::new(config.worker_id.clone());
+    if let Err(error) = config.validate() {
+        health.mark_fatal("config_validation");
+        return Err(error);
+    }
+    health.mark_starting();
+    if listen_for_ctrl_c {
+        spawn_ctrl_c_listener(shutdown.clone(), health.clone());
+    }
     tracing::info!(
         event = "worker_starting",
         config = ?config.redacted(),
         "worker_starting"
     );
 
-    let store = S3ObjectStore::from_config(&config).await?;
-    let mut rabbit = RabbitMqClient::connect(&config).await?;
+    let probe_server = match spawn_probe_server(&config, health.clone(), shutdown.clone()).await {
+        Ok(handle) => handle,
+        Err(error) => {
+            health.mark_fatal("probe_bind");
+            return Err(error);
+        }
+    };
+
+    let store = match S3ObjectStore::from_config(&config).await {
+        Ok(store) => store,
+        Err(error) => {
+            health.mark_fatal("config_validation");
+            stop_probe_server(shutdown, probe_server).await?;
+            return Err(error);
+        }
+    };
+    if let Err(error) = store.check_ready().await {
+        health.mark_degraded("s3_ready");
+        stop_probe_server(shutdown, probe_server).await?;
+        return Err(error);
+    }
+
+    let mut rabbit = match RabbitMqClient::connect(&config).await {
+        Ok(rabbit) => rabbit,
+        Err(error) => {
+            health.mark_degraded("amqp_connect");
+            stop_probe_server(shutdown, probe_server).await?;
+            return Err(error);
+        }
+    };
+    health.mark_ready();
     tracing::info!(
         event = "worker_connected",
         job_queue = %config.job_queue,
@@ -59,7 +104,20 @@ pub async fn run_until_cancelled(
         "worker_connected"
     );
 
-    consume_until_shutdown(&config, &mut rabbit, &store, shutdown, parser_info()?).await
+    let result = consume_until_shutdown(
+        &config,
+        &mut rabbit,
+        &store,
+        shutdown.clone(),
+        health.clone(),
+        parser_info()?,
+    )
+    .await;
+    if result.is_err() {
+        health.mark_fatal("worker_runtime");
+    }
+    stop_probe_server(shutdown, probe_server).await?;
+    result
 }
 
 async fn consume_until_shutdown(
@@ -67,15 +125,18 @@ async fn consume_until_shutdown(
     rabbit: &mut RabbitMqClient,
     store: &S3ObjectStore,
     shutdown: CancellationToken,
+    health: HealthState,
     parser: ParserInfo,
 ) -> Result<(), WorkerError> {
     loop {
         if shutdown.is_cancelled() {
+            health.mark_draining();
             break;
         }
 
         let delivery = tokio::select! {
             () = shutdown.cancelled() => {
+                health.mark_draining();
                 break;
             }
             delivery = rabbit.consumer_mut().next() => delivery,
@@ -99,6 +160,7 @@ async fn consume_until_shutdown(
         apply_lapin_delivery_action(&delivery, action).await?;
 
         if shutdown.is_cancelled() {
+            health.mark_draining();
             break;
         }
     }
@@ -107,11 +169,26 @@ async fn consume_until_shutdown(
     Ok(())
 }
 
-fn spawn_ctrl_c_listener(shutdown: CancellationToken) {
+async fn stop_probe_server(
+    shutdown: CancellationToken,
+    probe_server: Option<tokio::task::JoinHandle<Result<(), WorkerError>>>,
+) -> Result<(), WorkerError> {
+    shutdown.cancel();
+    let Some(probe_server) = probe_server else {
+        return Ok(());
+    };
+
+    probe_server.await.map_err(|source| {
+        WorkerError::ParserMetadata(format!("probe server task failed: {source}"))
+    })?
+}
+
+fn spawn_ctrl_c_listener(shutdown: CancellationToken, health: HealthState) {
     let _shutdown_task = tokio::spawn(async move {
         match tokio::signal::ctrl_c().await {
             Ok(()) => {
                 tracing::info!(event = "worker_shutdown_requested", "worker_shutdown_requested");
+                health.mark_draining();
                 shutdown.cancel();
             }
             Err(error) => {
@@ -120,6 +197,7 @@ fn spawn_ctrl_c_listener(shutdown: CancellationToken) {
                     error = %error,
                     "worker_shutdown_requested"
                 );
+                health.mark_draining();
                 shutdown.cancel();
             }
         }

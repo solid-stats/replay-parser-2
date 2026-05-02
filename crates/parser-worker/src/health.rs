@@ -78,12 +78,12 @@ impl HealthState {
     }
 
     fn store(&self, state: ReadinessState, reason: Option<String>) {
-        let mut guard = self.inner.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut guard = self.inner.write().unwrap_or_else(std::sync::PoisonError::into_inner);
         *guard = HealthInner::new(state, reason);
     }
 
     fn load(&self) -> HealthInner {
-        self.inner.read().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
+        self.inner.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
     }
 }
 
@@ -136,7 +136,6 @@ impl HealthInner {
 }
 
 /// Builds the HTTP probe router.
-#[must_use]
 pub fn probe_router(state: HealthState) -> Router {
     Router::new().route("/livez", get(livez)).route("/readyz", get(readyz)).with_state(state)
 }

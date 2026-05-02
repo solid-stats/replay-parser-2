@@ -99,4 +99,51 @@ mod health {
         assert_eq!(body["state"], "fatal");
         assert_eq!(body["reason"], "probe_bind");
     }
+
+    #[tokio::test]
+    async fn runner_readiness_should_start_false_before_dependency_checks_pass() {
+        // Arrange
+        let state = HealthState::new("worker-health-test");
+        state.mark_starting();
+
+        // Act
+        let (status, body) = get_json(probe_router(state), "/readyz").await;
+
+        // Assert
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(body["ready"], Value::Bool(false));
+        assert_eq!(body["state"], "starting");
+    }
+
+    #[tokio::test]
+    async fn runner_readiness_should_flip_true_after_dependency_ready_transition() {
+        // Arrange
+        let state = HealthState::new("worker-health-test");
+        state.mark_starting();
+        state.mark_ready();
+
+        // Act
+        let (status, body) = get_json(probe_router(state), "/readyz").await;
+
+        // Assert
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["ready"], Value::Bool(true));
+        assert_eq!(body["state"], "ready");
+    }
+
+    #[tokio::test]
+    async fn readiness_should_flip_false_when_shutdown_is_requested() {
+        // Arrange
+        let state = HealthState::new("worker-health-test");
+        state.mark_ready();
+        state.mark_draining();
+
+        // Act
+        let (status, body) = get_json(probe_router(state), "/readyz").await;
+
+        // Assert
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(body["ready"], Value::Bool(false));
+        assert_eq!(body["state"], "draining");
+    }
 }
