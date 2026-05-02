@@ -24,6 +24,7 @@ use parser_harness::{
     comparison::{ComparisonError, compare_artifacts},
     summary_report::render_markdown_summary,
 };
+use parser_worker::config::{WorkerConfig, WorkerConfigOverrides};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
@@ -81,6 +82,42 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CompareFormat::Markdown)]
         format: CompareFormat,
     },
+    /// Run the RabbitMQ/S3 parser worker.
+    Worker {
+        /// RabbitMQ AMQP URL.
+        #[arg(long)]
+        amqp_url: Option<String>,
+        /// RabbitMQ parse job queue.
+        #[arg(long)]
+        job_queue: Option<String>,
+        /// RabbitMQ exchange for parse results.
+        #[arg(long)]
+        result_exchange: Option<String>,
+        /// Routing key for successful parse results.
+        #[arg(long)]
+        completed_routing_key: Option<String>,
+        /// Routing key for failed parse results.
+        #[arg(long)]
+        failed_routing_key: Option<String>,
+        /// S3 bucket containing raw replays and parser artifacts.
+        #[arg(long)]
+        s3_bucket: Option<String>,
+        /// S3 region.
+        #[arg(long)]
+        s3_region: Option<String>,
+        /// Optional S3-compatible endpoint URL.
+        #[arg(long)]
+        s3_endpoint: Option<String>,
+        /// Force path-style S3 addressing.
+        #[arg(long, value_name = "BOOL", num_args = 0..=1, default_missing_value = "true")]
+        s3_force_path_style: Option<bool>,
+        /// Artifact object key prefix.
+        #[arg(long)]
+        artifact_prefix: Option<String>,
+        /// RabbitMQ prefetch count.
+        #[arg(long)]
+        prefetch: Option<u16>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
@@ -99,6 +136,8 @@ enum CliError {
     ParserInfo(serde_json::Error),
     Checksum(parser_contract::source_ref::ChecksumValueError),
     Compare(ComparisonError),
+    Worker(parser_worker::error::WorkerError),
+    WorkerRuntime(io::Error),
     CompareRequiresInput,
     CompareConflictingInput,
     CompareJsonDetailOutput,
@@ -132,6 +171,12 @@ impl Display for CliError {
             Self::Compare(source) => {
                 write!(formatter, "could not compare artifacts: {source}")
             }
+            Self::Worker(source) => {
+                write!(formatter, "worker failed: {source}")
+            }
+            Self::WorkerRuntime(source) => {
+                write!(formatter, "could not build worker runtime: {source}")
+            }
             Self::CompareRequiresInput => {
                 formatter.write_str("compare requires --replay or --new-artifact")
             }
@@ -160,6 +205,8 @@ impl Error for CliError {
             Self::Serialize(source) | Self::ParserInfo(source) => Some(source),
             Self::Checksum(source) => Some(source),
             Self::Compare(source) => Some(source),
+            Self::Worker(source) => Some(source),
+            Self::WorkerRuntime(source) => Some(source),
             Self::CompareRequiresInput
             | Self::CompareConflictingInput
             | Self::CompareJsonDetailOutput
@@ -191,6 +238,31 @@ fn run() -> Result<ExitCode, CliError> {
                 format,
             )
         }
+        Commands::Worker {
+            amqp_url,
+            job_queue,
+            result_exchange,
+            completed_routing_key,
+            failed_routing_key,
+            s3_bucket,
+            s3_region,
+            s3_endpoint,
+            s3_force_path_style,
+            artifact_prefix,
+            prefetch,
+        } => worker_command(WorkerConfigOverrides {
+            amqp_url,
+            job_queue,
+            result_exchange,
+            completed_routing_key,
+            failed_routing_key,
+            s3_bucket,
+            s3_region,
+            s3_endpoint,
+            s3_force_path_style,
+            artifact_prefix,
+            prefetch,
+        }),
     }
 }
 
@@ -366,6 +438,17 @@ fn compare_command(
     Ok(ExitCode::SUCCESS)
 }
 
+fn worker_command(overrides: WorkerConfigOverrides) -> Result<ExitCode, CliError> {
+    let config = WorkerConfig::from_env_and_overrides(|name| std::env::var(name).ok(), overrides)
+        .map_err(CliError::Worker)?;
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .map_err(CliError::WorkerRuntime)?;
+    runtime.block_on(parser_worker::runner::run(config)).map_err(CliError::Worker)?;
+    Ok(ExitCode::SUCCESS)
+}
+
 fn read_file(path: &Path) -> Result<Vec<u8>, CliError> {
     fs::read(path).map_err(|source| CliError::ReadInput { path: path.to_path_buf(), source })
 }
@@ -496,6 +579,18 @@ mod tests {
             (CliError::ParserInfo(parser_info_error), "could not build parser metadata", true),
             (CliError::Checksum(checksum_error), "could not build source checksum", true),
             (CliError::Compare(compare_error), "could not compare artifacts", true),
+            (
+                CliError::Worker(parser_worker::error::WorkerError::ConfigValidation(
+                    "missing required REPLAY_PARSER_S3_BUCKET".to_owned(),
+                )),
+                "worker failed",
+                true,
+            ),
+            (
+                CliError::WorkerRuntime(io::Error::other("runtime unavailable")),
+                "could not build worker runtime",
+                true,
+            ),
             (CliError::CompareRequiresInput, "compare requires --replay or --new-artifact", false),
             (
                 CliError::CompareConflictingInput,

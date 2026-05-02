@@ -18,10 +18,12 @@ path = "src/main.rs"
 parser-contract = { path = "../parser-contract" }
 parser-core = { path = "../parser-core" }
 parser-harness = { path = "../parser-harness" }
+parser-worker = { path = "../parser-worker" }
 clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 serde_json = "1"
 sha2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread"] }
 
 [dev-dependencies]
 assert_cmd = "2"
