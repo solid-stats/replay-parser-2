@@ -25,7 +25,7 @@ use parser_worker::{
     config::{WorkerConfig, WorkerConfigOverrides},
     error::{WorkerError, WorkerFailureKind},
     processor::{PublisherFuture, ResultPublisher, process_job_body},
-    storage::{ObjectStore, ObjectStoreFuture},
+    storage::{ArtifactPutOutcome, ObjectStore, ObjectStoreFuture},
 };
 use serde_json::json;
 
@@ -33,6 +33,13 @@ const VALID_REPLAY: &[u8] =
     include_bytes!("../../parser-core/tests/fixtures/valid-minimal.ocap.json");
 const INVALID_REPLAY: &[u8] =
     include_bytes!("../../parser-core/tests/fixtures/invalid-json.ocap.json");
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FakeArtifactWriteOutcome {
+    Created,
+    Reused,
+    Conflicted,
+}
 
 #[derive(Debug, Default)]
 struct FakeObjectStore {
@@ -42,6 +49,7 @@ struct FakeObjectStore {
     put_calls: Mutex<Vec<String>>,
     get_failures: Mutex<BTreeSet<String>>,
     put_failures: Mutex<BTreeSet<String>>,
+    artifact_write_outcomes: Mutex<Vec<FakeArtifactWriteOutcome>>,
 }
 
 impl FakeObjectStore {
@@ -83,6 +91,20 @@ impl FakeObjectStore {
 
     fn put_call_count(&self) -> usize {
         self.put_calls.lock().expect("fake put calls lock should not be poisoned").len()
+    }
+
+    fn artifact_write_outcomes(&self) -> Vec<FakeArtifactWriteOutcome> {
+        self.artifact_write_outcomes
+            .lock()
+            .expect("fake artifact write outcomes lock should not be poisoned")
+            .clone()
+    }
+
+    fn record_artifact_write_outcome(&self, outcome: FakeArtifactWriteOutcome) {
+        self.artifact_write_outcomes
+            .lock()
+            .expect("fake artifact write outcomes lock should not be poisoned")
+            .push(outcome);
     }
 }
 
@@ -157,6 +179,59 @@ impl ObjectStore for FakeObjectStore {
 
             self.insert_object(object_key, bytes);
             Ok(())
+        })
+    }
+
+    fn put_artifact_bytes_if_absent<'a>(
+        &'a self,
+        object_key: &'a str,
+        bytes: &'a [u8],
+        content_type: &'a str,
+    ) -> ObjectStoreFuture<'a, ArtifactPutOutcome> {
+        Box::pin(async move {
+            assert_eq!(content_type, "application/json");
+            if self
+                .put_failures
+                .lock()
+                .expect("fake put failure set lock should not be poisoned")
+                .contains(object_key)
+            {
+                return Err(WorkerError::S3 {
+                    operation: "put_object",
+                    bucket: self.bucket.clone(),
+                    key: object_key.to_owned(),
+                    stage: ParseStage::Output,
+                    retryability: Retryability::Retryable,
+                    message: "configured fake put failure".to_owned(),
+                });
+            }
+
+            let existing = self
+                .objects
+                .lock()
+                .expect("fake object map lock should not be poisoned")
+                .get(object_key)
+                .cloned();
+
+            match existing {
+                Some(existing) if existing == bytes => {
+                    self.record_artifact_write_outcome(FakeArtifactWriteOutcome::Reused);
+                    Ok(ArtifactPutOutcome::AlreadyExists)
+                }
+                Some(_different) => {
+                    self.record_artifact_write_outcome(FakeArtifactWriteOutcome::Conflicted);
+                    Ok(ArtifactPutOutcome::AlreadyExists)
+                }
+                None => {
+                    self.put_calls
+                        .lock()
+                        .expect("fake put calls lock should not be poisoned")
+                        .push(object_key.to_owned());
+                    self.insert_object(object_key, bytes);
+                    self.record_artifact_write_outcome(FakeArtifactWriteOutcome::Created);
+                    Ok(ArtifactPutOutcome::Created)
+                }
+            }
         })
     }
 }
@@ -309,6 +384,35 @@ async fn processor_valid_job_should_write_artifact_and_publish_completed() {
         u64::try_from(stored.len()).expect("stored bytes length should fit u64")
     );
     assert_eq!(completed[0].source_checksum, job.checksum);
+    assert_eq!(store.artifact_write_outcomes(), vec![FakeArtifactWriteOutcome::Created]);
+    assert!(publisher.failed_messages().is_empty());
+}
+
+#[tokio::test]
+async fn processor_duplicate_redelivery_should_reuse_matching_artifact_and_publish_completed() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = FakeObjectStore::new();
+    store.insert_object(&job.object_key, VALID_REPLAY);
+    let publisher = FakePublisher::default();
+
+    // Act
+    let first_action = process(&body, &store, &publisher).await;
+    let second_action = process(&body, &store, &publisher).await;
+    let completed = publisher.completed_messages();
+
+    // Assert
+    assert_eq!(first_action, DeliveryAction::Ack);
+    assert_eq!(second_action, DeliveryAction::Ack);
+    assert_eq!(
+        store.artifact_write_outcomes(),
+        vec![FakeArtifactWriteOutcome::Created, FakeArtifactWriteOutcome::Reused]
+    );
+    assert_eq!(completed.len(), 2);
+    assert_eq!(completed[0].artifact.key, completed[1].artifact.key);
+    assert_eq!(completed[0].artifact_checksum, completed[1].artifact_checksum);
+    assert_eq!(completed[0].artifact_size_bytes, completed[1].artifact_size_bytes);
     assert!(publisher.failed_messages().is_empty());
 }
 
@@ -487,7 +591,7 @@ async fn processor_parser_failure_should_publish_failed_without_artifact_write()
 }
 
 #[tokio::test]
-async fn processor_s3_artifact_conflict_should_publish_failed() {
+async fn processor_artifact_conflict_should_publish_failed_and_ack() {
     // Arrange
     let job = job_message(VALID_REPLAY);
     let body = job_body(&job);
@@ -505,8 +609,10 @@ async fn processor_s3_artifact_conflict_should_publish_failed() {
     // Assert
     assert_eq!(action, DeliveryAction::Ack);
     assert_eq!(store.put_call_count(), 0);
+    assert_eq!(store.artifact_write_outcomes(), vec![FakeArtifactWriteOutcome::Conflicted]);
     assert_eq!(failed.len(), 1);
     assert_eq!(failure_code(&failed[0]), "output.artifact_conflict");
+    assert_eq!(failed[0].failure.stage, ParseStage::Output);
     assert!(publisher.completed_messages().is_empty());
 }
 
