@@ -127,8 +127,7 @@ fn combat_event_semantics_should_classify_enemy_kill_as_bounty_eligible() {
 
     assert_eq!(enemy_kill.killer_source_entity_id, Some(1));
     assert_eq!(enemy_kill.victim_source_entity_id, Some(2));
-    assert!(enemy_kill.bounty_eligible);
-    assert!(enemy_kill.bounty_exclusion_reasons.is_empty());
+    assert_eq!(enemy_kill.classification, KillClassification::EnemyKill);
 }
 
 #[test]
@@ -138,9 +137,9 @@ fn combat_event_semantics_should_classify_teamkill_suicide_and_null_killer_as_ex
     let suicide = kill_by_classification(&artifact, KillClassification::Suicide);
     let null_killer = kill_by_classification(&artifact, KillClassification::NullKiller);
 
-    assert_eq!(teamkill.bounty_exclusion_reasons, vec!["teamkill"]);
-    assert_eq!(suicide.bounty_exclusion_reasons, vec!["suicide"]);
-    assert_eq!(null_killer.bounty_exclusion_reasons, vec!["null_killer"]);
+    assert_eq!(teamkill.classification, KillClassification::Teamkill);
+    assert_eq!(suicide.classification, KillClassification::Suicide);
+    assert_eq!(null_killer.classification, KillClassification::NullKiller);
 }
 
 #[test]
@@ -163,7 +162,7 @@ fn combat_event_semantics_should_emit_unknown_player_death_and_partial_status_fo
 
     assert_eq!(artifact.status, ParseStatus::Partial);
     assert_eq!(unknown.victim_source_entity_id, Some(2));
-    assert_eq!(unknown.bounty_exclusion_reasons, vec!["unknown_actor"]);
+    assert_eq!(unknown.classification, KillClassification::Unknown);
     assert!(diagnostic_codes.contains(&"event.killed_actor_unknown"));
 }
 

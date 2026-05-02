@@ -59,7 +59,7 @@ fn parser_core_api_should_return_success_shell_when_root_object_is_valid() {
     assert!(artifact.replay.is_some());
     assert!(artifact.diagnostics.is_empty());
     assert!(artifact.players.is_empty());
-    assert!(artifact.player_stats.is_empty());
+    assert!(artifact.weapons.is_empty());
     assert!(artifact.kills.is_empty());
     assert!(artifact.destroyed_vehicles.is_empty());
     assert_eq!(artifact.failure, None);

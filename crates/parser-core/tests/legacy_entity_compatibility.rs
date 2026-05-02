@@ -135,7 +135,7 @@ fn legacy_entity_compatibility_should_add_duplicate_slot_key_without_merging_sam
     let duplicate_players = artifact
         .players
         .iter()
-        .filter(|player| player.compatibility_key == "legacy_name:SameName")
+        .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:SameName"))
         .collect::<Vec<_>>();
 
     assert_eq!(artifact.players.len(), 3);

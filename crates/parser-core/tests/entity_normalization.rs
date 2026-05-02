@@ -72,7 +72,7 @@ fn entity_normalization_should_extract_legacy_player_identity() {
     assert_eq!(unit.side, Some(EntitySide::West));
     assert_eq!(unit.group.as_deref(), Some("Alpha 1-1"));
     assert_eq!(unit.role.as_deref(), Some("Rifleman"));
-    assert_eq!(unit.player_id, "entity:10");
+    assert_eq!(unit.source_entity_id, 10);
 }
 
 #[test]

@@ -63,8 +63,7 @@ fn fault_injection_regressions_should_catch_same_side_kills_counted_as_enemy_kil
 
     assert_eq!(teamkill.killer_source_entity_id, Some(1));
     assert_eq!(teamkill.victim_source_entity_id, Some(3));
-    assert!(!teamkill.bounty_eligible);
-    assert_eq!(teamkill.bounty_exclusion_reasons, vec!["teamkill"]);
+    assert_eq!(teamkill.classification, KillClassification::Teamkill);
 }
 
 #[test]
@@ -76,9 +75,9 @@ fn fault_injection_regressions_should_catch_null_killer_deaths_producing_bounty_
         .find(|row| row.classification == KillClassification::NullKiller)
         .expect("null-killer row should exist");
 
+    assert_eq!(null_killer.killer_source_entity_id, None);
     assert_eq!(null_killer.victim_source_entity_id, Some(5));
-    assert!(!null_killer.bounty_eligible);
-    assert_eq!(null_killer.bounty_exclusion_reasons, vec!["null_killer"]);
+    assert_eq!(null_killer.classification, KillClassification::NullKiller);
 }
 
 #[test]
@@ -90,12 +89,11 @@ fn fault_injection_regressions_should_catch_vehicle_context_loss_in_minimal_rows
         .find(|row| row.classification == KillClassification::EnemyKill)
         .expect("enemy kill from vehicle should exist");
     let stats = artifact
-        .player_stats
+        .players
         .iter()
         .find(|row| row.source_entity_id == 1)
         .expect("attacker stats should exist");
 
-    assert_eq!(vehicle_kill.attacker_vehicle_name.as_deref(), Some("T-72"));
     assert_eq!(vehicle_kill.attacker_vehicle_class.as_deref(), Some("rhs_t72ba_tv"));
     assert!(stats.kills_from_vehicle > 0);
 }

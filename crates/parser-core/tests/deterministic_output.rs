@@ -97,22 +97,21 @@ fn deterministic_output_should_serialize_minimal_artifact_identically() {
 
     assert_eq!(first_serialized, second_serialized);
     assert!(!first_artifact.players.is_empty());
-    assert!(!first_artifact.player_stats.is_empty());
     assert!(!first_artifact.kills.is_empty());
     assert!(!first_artifact.destroyed_vehicles.is_empty());
     assert!(first_artifact.produced_at.is_none());
 }
 
 #[test]
-fn deterministic_output_should_keep_player_stats_sorted_by_source_entity_id() {
+fn deterministic_output_should_keep_players_sorted_by_source_entity_id() {
     let artifact = parse_aggregate_fixture();
-    let stat_ids =
-        artifact.player_stats.iter().map(|stats| stats.source_entity_id).collect::<Vec<_>>();
-    let mut sorted_stat_ids = stat_ids.clone();
-    sorted_stat_ids.sort_unstable();
+    let player_ids =
+        artifact.players.iter().map(|player| player.source_entity_id).collect::<Vec<_>>();
+    let mut sorted_player_ids = player_ids.clone();
+    sorted_player_ids.sort_unstable();
 
-    assert!(!stat_ids.is_empty());
-    assert_eq!(stat_ids, sorted_stat_ids);
+    assert!(!player_ids.is_empty());
+    assert_eq!(player_ids, sorted_player_ids);
 }
 
 #[test]
@@ -122,9 +121,9 @@ fn deterministic_output_should_omit_full_detail_and_old_compact_sections() {
     let root = serialized.as_object().expect("artifact should serialize as an object");
 
     assert!(root.contains_key("players"));
-    assert!(root.contains_key("player_stats"));
     assert!(root.contains_key("kills"));
     assert!(root.contains_key("destroyed_vehicles"));
+    assert!(!root.contains_key("player_stats"));
     assert!(!root.contains_key("participants"));
     assert!(!root.contains_key("facts"));
     assert!(!root.contains_key("summaries"));

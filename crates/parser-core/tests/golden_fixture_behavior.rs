@@ -82,7 +82,7 @@ fn golden_fixture_behavior_should_return_failed_artifact_when_fixture_is_malform
     assert_eq!(artifact.status, ParseStatus::Failed);
     assert!(artifact.failure.is_some());
     assert!(artifact.players.is_empty());
-    assert!(artifact.player_stats.is_empty());
+    assert!(artifact.weapons.is_empty());
     assert!(artifact.kills.is_empty());
     assert!(artifact.destroyed_vehicles.is_empty());
 }
@@ -129,8 +129,7 @@ fn golden_fixture_behavior_should_exclude_teamkill_from_bounty_awards() {
         .find(|row| row.classification == KillClassification::Teamkill)
         .expect("teamkill row should exist");
 
-    assert!(!teamkill_row.bounty_eligible);
-    assert_eq!(teamkill_row.bounty_exclusion_reasons, vec!["teamkill"]);
+    assert_eq!(teamkill_row.classification, KillClassification::Teamkill);
 }
 
 #[test]
@@ -150,7 +149,7 @@ fn golden_fixture_behavior_should_preserve_null_killer_semantics() {
     let artifact = parse_manifest_category("null_killer");
 
     assert!(artifact.kills.iter().any(|row| row.classification == KillClassification::NullKiller
-        && row.bounty_exclusion_reasons == vec!["null_killer"]));
+        && row.killer_source_entity_id.is_none()));
 }
 
 #[test]
@@ -159,7 +158,7 @@ fn golden_fixture_behavior_should_preserve_duplicate_slot_players() {
     let duplicate_players = artifact
         .players
         .iter()
-        .filter(|player| player.compatibility_key == "legacy_name:SameName")
+        .filter(|player| player.compatibility_key.as_deref() == Some("legacy_name:SameName"))
         .count();
 
     assert_eq!(artifact.status, ParseStatus::Success);
