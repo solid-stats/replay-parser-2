@@ -137,6 +137,7 @@ fn combat_event_semantics_should_partition_player_deaths_and_destroyed_vehicles(
     assert!(classifications.contains(&KillClassification::Teamkill));
     assert_eq!(delta.suicides, 1);
     assert_eq!(echo.null_killer_deaths, 1);
+    assert_eq!(bravo.deaths, 1);
     assert_eq!(bravo.unknown_deaths, 1);
 }
 
@@ -180,6 +181,7 @@ fn combat_event_semantics_should_emit_unknown_player_death_and_partial_status_fo
         artifact.diagnostics.iter().map(|diagnostic| diagnostic.code.as_str()).collect::<Vec<_>>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
+    assert_eq!(bravo.deaths, 1);
     assert_eq!(bravo.unknown_deaths, 1);
     assert!(diagnostic_codes.contains(&"event.killed_actor_unknown"));
 }
@@ -262,9 +264,11 @@ fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_as_min
 
     let artifact = parse_fixture(fixture);
     let unknown_deaths = artifact.players.iter().map(|player| player.unknown_deaths).sum::<u64>();
+    let deaths = artifact.players.iter().map(|player| player.deaths).sum::<u64>();
 
     assert_eq!(artifact.status, ParseStatus::Partial);
     assert_eq!(unknown_deaths, 2);
+    assert_eq!(deaths, 0);
     assert!(player_kill_rows(&artifact).is_empty());
     assert_eq!(artifact.destroyed_vehicles.len(), 1);
     assert!(
@@ -272,4 +276,49 @@ fn combat_event_semantics_should_keep_ambiguous_or_non_player_actor_cases_as_min
             .message
             .contains("not auditable as a player combat event"))
     );
+}
+
+#[test]
+fn combat_event_semantics_should_filter_legacy_forbidden_weapon_statistics() {
+    let fixture = br#"{
+      "missionName": "sg forbidden weapon",
+      "worldName": "Altis",
+      "missionAuthor": "SolidGames",
+      "playersCount": [0, 2],
+      "captureDelay": 0.5,
+      "endFrame": 120,
+      "entities": [
+        {
+          "id": 1,
+          "type": "unit",
+          "name": "Spotter",
+          "group": "Alpha",
+          "side": "WEST",
+          "description": "Rifleman",
+          "isPlayer": 1
+        },
+        {
+          "id": 2,
+          "type": "unit",
+          "name": "Target",
+          "group": "Bravo",
+          "side": "EAST",
+          "description": "Rifleman",
+          "isPlayer": 1
+        }
+      ],
+      "events": [
+        [10, "killed", 2, [1, "Binoculars"], 100]
+      ],
+      "Markers": [],
+      "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_fixture(fixture);
+    let spotter = player_by_id(&artifact, 1);
+
+    assert_eq!(spotter.kills, 1);
+    assert!(artifact.weapons.is_empty());
+    assert_eq!(spotter.kill_rows.len(), 1);
+    assert_eq!(spotter.kill_rows[0].weapon_id, None);
 }

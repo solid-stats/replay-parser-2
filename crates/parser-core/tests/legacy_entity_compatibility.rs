@@ -145,6 +145,102 @@ fn legacy_entity_compatibility_should_merge_same_name_slot_entities_like_legacy_
 }
 
 #[test]
+fn legacy_entity_compatibility_should_strip_tags_from_duplicate_slot_compatibility_keys() {
+    let fixture = br#"{
+        "missionName": "sg tagged duplicate slot same name",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 2],
+        "captureDelay": 0.5,
+        "endFrame": 90,
+        "entities": [
+            {
+                "id": 31,
+                "type": "unit",
+                "name": "[TAG]TaggedName",
+                "group": "Alpha 1-1",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": 1,
+                "positions": []
+            },
+            {
+                "id": 32,
+                "type": "unit",
+                "name": "[TAG]TaggedName",
+                "group": "Alpha 1-2",
+                "side": "WEST",
+                "description": "Autorifleman",
+                "isPlayer": 1,
+                "positions": []
+            }
+        ],
+        "events": [],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_fixture(fixture, "fixtures/tagged-duplicate-slot-same-name.ocap.json");
+    let player = player_by_id(&artifact, 32);
+
+    assert_eq!(artifact.players.len(), 1);
+    assert_eq!(player.observed_name.as_deref(), Some("TaggedName"));
+    assert_eq!(player.observed_tag.as_deref(), Some("[TAG]"));
+    assert_eq!(player.compatibility_key.as_deref(), Some("legacy_name:TaggedName"));
+}
+
+#[test]
+fn legacy_entity_compatibility_should_not_override_connected_names_with_stale_duplicate_slot_names()
+{
+    let fixture = br#"{
+        "missionName": "sg stale duplicate observed name",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 2],
+        "captureDelay": 0.5,
+        "endFrame": 90,
+        "entities": [
+            {
+                "id": 41,
+                "type": "unit",
+                "name": "[SKIF]Gre4a",
+                "group": "Alpha 1-1",
+                "side": "WEST",
+                "description": "Rifleman",
+                "isPlayer": 1,
+                "positions": []
+            },
+            {
+                "id": 42,
+                "type": "unit",
+                "name": "[SKIF]Gre4a",
+                "group": "Alpha 1-2",
+                "side": "WEST",
+                "description": "Autorifleman",
+                "isPlayer": 1,
+                "positions": []
+            }
+        ],
+        "events": [
+            [1, "connected", "[SKIF]QuadRat", 41],
+            [2, "connected", "[SKIF]Gre4a", 42]
+        ],
+        "Markers": [],
+        "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_fixture(fixture, "fixtures/stale-duplicate-observed-name.ocap.json");
+    let quadrat = player_by_id(&artifact, 41);
+    let gre4a = player_by_id(&artifact, 42);
+
+    assert_eq!(artifact.players.len(), 2);
+    assert_eq!(quadrat.observed_name.as_deref(), Some("QuadRat"));
+    assert_eq!(quadrat.compatibility_key, None);
+    assert_eq!(gre4a.observed_name.as_deref(), Some("Gre4a"));
+    assert_eq!(gre4a.compatibility_key.as_deref(), Some("legacy_name:Gre4a"));
+}
+
+#[test]
 fn legacy_entity_compatibility_should_keep_success_status_when_duplicate_slot_hint_has_no_conflict()
 {
     let artifact = duplicate_artifact();

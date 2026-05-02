@@ -103,7 +103,6 @@ pub fn derive_minimal_tables(
             CombatSemantic::Unknown => {
                 if victim_is_or_may_be_player(combat, &entity_index) {
                     increment_victim(&mut players, combat, |player| {
-                        player.deaths += 1;
                         player.unknown_deaths += 1;
                     });
                 }
@@ -200,7 +199,6 @@ pub fn derive_minimal_tables_from_killed_events(
             MinimalEventEffect::UnknownPlayerDeath { victim_entity_id, diagnostic } => {
                 push_minimal_event_diagnostic(diagnostics, context, observation, diagnostic);
                 increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
-                    player.deaths += 1;
                     player.unknown_deaths += 1;
                 });
             }
@@ -319,7 +317,10 @@ fn weapon_dictionary(
             }
             CombatSemantic::VehicleDestroyed => vehicle_or_static_victim(combat, entity_index),
         };
-        if emits_row && let Some(weapon_name) = observed_string(&combat.weapon) {
+        if emits_row
+            && let Some(weapon_name) = observed_string(&combat.weapon)
+            && is_legacy_weapon_stat_name(weapon_name)
+        {
             let _inserted = weapon_names.insert(weapon_name.to_owned());
         }
     }
@@ -342,7 +343,9 @@ fn weapon_dictionary_from_killed_events(
         match classify_minimal_killed_event(observation, entity_index, vehicle_name_index) {
             MinimalEventEffect::PlayerKill { weapon: Some(weapon), .. }
             | MinimalEventEffect::VehicleDestroyed { weapon: Some(weapon), .. } => {
-                let _inserted = weapon_names.insert(weapon.to_owned());
+                if is_legacy_weapon_stat_name(weapon) {
+                    let _inserted = weapon_names.insert(weapon.to_owned());
+                }
             }
             MinimalEventEffect::PlayerKill { weapon: None, .. }
             | MinimalEventEffect::VehicleDestroyed { weapon: None, .. }
@@ -357,6 +360,13 @@ fn weapon_dictionary_from_killed_events(
         .enumerate()
         .map(|(index, name)| (name, u32::try_from(index + 1).unwrap_or(u32::MAX)))
         .collect()
+}
+
+fn is_legacy_weapon_stat_name(weapon: &str) -> bool {
+    !matches!(
+        weapon.to_lowercase().as_str(),
+        "" | "throw" | "binoculars" | "бинокль" | "pdu" | "vector"
+    )
 }
 
 fn entity_index(entities: &[ObservedEntity]) -> BTreeMap<i64, &ObservedEntity> {
@@ -865,12 +875,16 @@ fn destroyed_vehicle_classification(
 }
 
 fn compatibility_key_override(entity: &ObservedEntity) -> Option<String> {
-    entity
+    let hint_name = entity
         .compatibility_hints
         .iter()
         .find(|hint| hint.kind == EntityCompatibilityHintKind::DuplicateSlotSameName)
         .and_then(|hint| observed_string(&hint.observed_name))
-        .map(|name| format!("legacy_name:{name}"))
+        .map(split_legacy_player_name)?;
+    let current_name = player_name(entity).map(|name| split_legacy_player_name(&name))?;
+
+    (!hint_name.name.is_empty() && hint_name.name == current_name.name)
+        .then(|| format!("legacy_name:{}", hint_name.name))
 }
 
 fn player_name(entity: &ObservedEntity) -> Option<String> {

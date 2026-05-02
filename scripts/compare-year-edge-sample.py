@@ -19,6 +19,7 @@ from typing import Any
 
 
 GAME_TYPES = ("sg", "mace", "sm")
+LEGACY_FORBIDDEN_WEAPONS = {"throw", "binoculars", "бинокль", "pdu", "vector"}
 DEFAULT_REAL_HOME = pathlib.Path("/home/afgan0r")
 DEFAULT_OLD_REPO = pathlib.Path("/home/afgan0r/Projects/SolidGames/replays-parser")
 DEFAULT_OUTPUT = pathlib.Path(
@@ -345,6 +346,7 @@ def old_runner_source() -> str:
             const identitiesByName = identitiesByObservedName(players);
             const artifact = {
               status: response.status === 'success' ? 'success' : response.status,
+              reason: response.status === 'success' ? null : response.reason ?? null,
               replay: {
                 filename: sample.filename,
                 date: sample.date,
@@ -367,6 +369,7 @@ def old_runner_source() -> str:
               sampleId: sample.sampleId,
               ok: response.status === 'success',
               status: response.status,
+              reason: response.status === 'success' ? null : response.reason ?? null,
               wall_time_ms: wallTimeMs,
               artifact: sample.artifactPath,
             });
@@ -453,7 +456,8 @@ def compare_stats_only(
         if not new_result.get("ok"):
             result = stats_result("new_failed", report_path, ["new parser did not produce an artifact"])
         elif not old_result.get("ok"):
-            result = stats_result("old_skipped", report_path, ["old parser returned skipped/no statistics"])
+            reason = old_result.get("reason") or "no_statistics"
+            result = stats_result("old_skipped", report_path, [f"old parser returned skipped/no statistics: {reason}"])
         else:
             old_view = old_stats_view(json.loads(pathlib.Path(old_result["artifact"]).read_text(encoding="utf-8")))
             new_view = new_stats_view(json.loads(pathlib.Path(new_result["artifact"]).read_text(encoding="utf-8")))
@@ -515,13 +519,10 @@ def old_stats_view(root: dict[str, Any]) -> dict[str, Any]:
         }
 
         for weapon in player.get("weapons") or []:
-            weapon_stats.append(
-                {
-                    "player": key,
-                    "weapon": weapon.get("name"),
-                    "kills": int(weapon.get("kills") or 0),
-                }
-            )
+            append_weapon_stat(weapon_stats, key, weapon.get("name"), weapon.get("kills"))
+
+        for vehicle in player.get("vehicles") or []:
+            append_weapon_stat(weapon_stats, key, vehicle.get("name"), vehicle.get("kills"))
 
         for relation in ("killed", "killers", "teamkilled", "teamkillers"):
             for target in player.get(relation) or []:
@@ -556,7 +557,7 @@ def new_stats_view(root: dict[str, Any]) -> dict[str, Any]:
             if not victim:
                 continue
             classification = kill.get("c")
-            weapon_name = weapons.get(kill.get("w"))
+            weapon_name = legacy_weapon_stat_name(weapons.get(kill.get("w")))
             if classification == "enemy_kill":
                 relationships.append(
                     {
@@ -634,9 +635,9 @@ def new_player_refs(players: list[dict[str, Any]]) -> dict[int, str]:
 
 def new_player_key(player: dict[str, Any]) -> str:
     if player.get("ck"):
-        return str(player["ck"])
+        return normalize_compatibility_key(str(player["ck"]))
     if player.get("n"):
-        return f"legacy_name:{player['n']}"
+        return compatibility_key_from_name(player["n"]) or f"legacy_name:{player['n']}"
     return f"entity:{player.get('eid')}"
 
 
@@ -685,6 +686,12 @@ def compatibility_key_from_name(raw_name: Any) -> str | None:
     return f"legacy_name:{name}" if name else None
 
 
+def normalize_compatibility_key(key: str) -> str:
+    if not key.startswith("legacy_name:"):
+        return key
+    return compatibility_key_from_name(key.removeprefix("legacy_name:")) or key
+
+
 def strip_legacy_tag(raw_name: str) -> str:
     result = []
     in_tag = False
@@ -698,6 +705,28 @@ def strip_legacy_tag(raw_name: str) -> str:
         if not in_tag:
             result.append(char)
     return "".join(result).strip()
+
+
+def append_weapon_stat(stats: list[dict[str, Any]], player: str, weapon_name: Any, kills: Any) -> None:
+    normalized_name = legacy_weapon_stat_name(weapon_name)
+    if normalized_name is None:
+        return
+    stats.append(
+        {
+            "player": player,
+            "weapon": normalized_name,
+            "kills": int(kills or 0),
+        }
+    )
+
+
+def legacy_weapon_stat_name(weapon_name: Any) -> str | None:
+    if not isinstance(weapon_name, str):
+        return None
+    normalized = weapon_name.strip()
+    if not normalized or normalized.lower() in LEGACY_FORBIDDEN_WEAPONS:
+        return None
+    return normalized
 
 
 def sort_mapping(mapping: dict[str, Any]) -> dict[str, Any]:
