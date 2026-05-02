@@ -5,6 +5,7 @@ members = [
     "crates/parser-core",
     "crates/parser-cli",
     "crates/parser-harness",
+    "crates/parser-worker",
 ]
 
 [workspace.package]
