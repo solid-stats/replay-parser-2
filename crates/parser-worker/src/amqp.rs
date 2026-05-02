@@ -1,8 +1,10 @@
 //! RabbitMQ adapter for parse-job consumption and parse-result publication.
 
+use std::pin::Pin;
+
 use lapin::{
     BasicProperties, Channel, Confirmation, Connection, ConnectionProperties, Consumer,
-    message::BasicReturnMessage,
+    message::{BasicReturnMessage, Delivery},
     options::{BasicConsumeOptions, BasicPublishOptions, BasicQosOptions, ConfirmSelectOptions},
     types::FieldTable,
 };
@@ -14,6 +16,107 @@ use crate::{
 };
 
 const RESULT_CONTENT_TYPE: &str = "application/json";
+
+/// Delivery acknowledgement decision after the worker outcome path is known.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeliveryAction {
+    /// Acknowledge the input parse job.
+    Ack,
+    /// Requeue the input parse job because no durable outcome was published.
+    NackRequeue,
+}
+
+/// Result kind whose publish confirmation completed successfully.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublishedOutcome {
+    /// A confirmed `parse.completed` outcome.
+    Completed,
+    /// A confirmed `parse.failed` outcome, including malformed jobs represented as failures.
+    Failed,
+}
+
+/// Maps outcome publication to the AMQP delivery action.
+#[must_use]
+pub fn delivery_action_after_publish(
+    published: Result<PublishedOutcome, WorkerError>,
+) -> DeliveryAction {
+    match published {
+        Ok(PublishedOutcome::Completed | PublishedOutcome::Failed) => DeliveryAction::Ack,
+        Err(_error) => DeliveryAction::NackRequeue,
+    }
+}
+
+/// Boxed acknowledgement future used by testable acker adapters.
+pub type AckerFuture<'a> = Pin<Box<dyn Future<Output = Result<(), WorkerError>> + 'a>>;
+
+/// Minimal acknowledgement interface used to test ack policy without a live broker.
+pub trait DeliveryAcker {
+    /// Acknowledge a delivery.
+    fn ack(&mut self, options: lapin::options::BasicAckOptions) -> AckerFuture<'_>;
+
+    /// Negatively acknowledge and optionally requeue a delivery.
+    fn nack(&mut self, options: lapin::options::BasicNackOptions) -> AckerFuture<'_>;
+}
+
+/// `lapin` delivery-backed acker adapter.
+#[derive(Debug)]
+pub struct LapinDeliveryAcker<'a> {
+    delivery: &'a Delivery,
+}
+
+impl<'a> LapinDeliveryAcker<'a> {
+    /// Builds an acker around a `lapin` delivery.
+    #[must_use]
+    pub const fn new(delivery: &'a Delivery) -> Self {
+        Self { delivery }
+    }
+}
+
+impl DeliveryAcker for LapinDeliveryAcker<'_> {
+    fn ack(&mut self, options: lapin::options::BasicAckOptions) -> AckerFuture<'_> {
+        Box::pin(async move {
+            _ = self.delivery.ack(options).await?;
+            Ok(())
+        })
+    }
+
+    fn nack(&mut self, options: lapin::options::BasicNackOptions) -> AckerFuture<'_> {
+        Box::pin(async move {
+            _ = self.delivery.nack(options).await?;
+            Ok(())
+        })
+    }
+}
+
+/// Applies a delivery action through a testable acker adapter.
+///
+/// # Errors
+///
+/// Returns [`WorkerError`] when RabbitMQ rejects the ack/nack operation.
+pub async fn apply_delivery_action(
+    acker: &mut impl DeliveryAcker,
+    action: DeliveryAction,
+) -> Result<(), WorkerError> {
+    match action {
+        DeliveryAction::Ack => acker.ack(lapin::options::BasicAckOptions::default()).await,
+        DeliveryAction::NackRequeue => {
+            acker.nack(lapin::options::BasicNackOptions { multiple: false, requeue: true }).await
+        }
+    }
+}
+
+/// Applies a delivery action to a `lapin` delivery.
+///
+/// # Errors
+///
+/// Returns [`WorkerError`] when RabbitMQ rejects the ack/nack operation.
+pub async fn apply_lapin_delivery_action(
+    delivery: &Delivery,
+    action: DeliveryAction,
+) -> Result<(), WorkerError> {
+    let mut acker = LapinDeliveryAcker::new(delivery);
+    apply_delivery_action(&mut acker, action).await
+}
 
 /// RabbitMQ client with separate channels for consuming jobs and publishing results.
 #[derive(Debug)]
