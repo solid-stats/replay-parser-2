@@ -70,6 +70,27 @@ fn assert_committed_schema_rejects(candidate: &Value) {
     );
 }
 
+fn assert_committed_parse_job_schema_rejects(candidate: &Value) {
+    let schema = read_json(committed_parse_job_schema_path());
+    let validator = jsonschema::draft202012::new(&schema).expect("parse job schema should compile");
+
+    assert!(
+        validator.validate(candidate).is_err(),
+        "parse job candidate should be rejected by committed schema"
+    );
+}
+
+fn assert_committed_parse_result_schema_rejects(candidate: &Value) {
+    let schema = read_json(committed_parse_result_schema_path());
+    let validator =
+        jsonschema::draft202012::new(&schema).expect("parse result schema should compile");
+
+    assert!(
+        validator.validate(candidate).is_err(),
+        "parse result candidate should be rejected by committed schema"
+    );
+}
+
 fn freshly_generated_schema_text() -> String {
     format!(
         "{}\n",
@@ -314,6 +335,28 @@ fn schema_contract_parse_result_schema_should_reject_inline_parse_artifact_paylo
         parse_result_validator.validate(&parse_completed).is_err(),
         "completed result should reject inline artifact payload"
     );
+}
+
+#[test]
+fn schema_contract_parse_job_schema_should_reject_empty_identity_fields() {
+    for field_name in ["job_id", "replay_id", "object_key"] {
+        let mut parse_job = read_json(parse_job_example_path());
+        parse_job[field_name] = json!("");
+
+        assert_committed_parse_job_schema_rejects(&parse_job);
+    }
+}
+
+#[test]
+fn schema_contract_parse_result_schema_should_reject_swapped_message_type() {
+    let mut parse_completed = read_json(parse_completed_example_path());
+    parse_completed["message_type"] = json!("parse.failed");
+
+    let mut parse_failed = read_json(parse_failed_example_path());
+    parse_failed["message_type"] = json!("parse.completed");
+
+    assert_committed_parse_result_schema_rejects(&parse_completed);
+    assert_committed_parse_result_schema_rejects(&parse_failed);
 }
 
 #[test]

@@ -10,11 +10,13 @@
     },
     "job_id": {
       "description": "Durable parse-job identifier owned by `server-2`.",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "object_key": {
       "description": "S3-compatible raw replay object key.",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "parser_contract_version": {
       "description": "Parser artifact contract version requested by the job.",
@@ -22,7 +24,8 @@
     },
     "replay_id": {
       "description": "Replay identifier owned by `server-2`.",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     }
   },
   "required": [

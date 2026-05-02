@@ -26,6 +26,7 @@ pub fn parse_artifact_schema() -> Schema {
 #[must_use]
 pub fn parse_job_schema() -> Schema {
     let mut schema = schemars::schema_for!(ParseJobMessage);
+    enforce_parse_job_non_empty_fields(&mut schema);
     close_top_level_schema(&mut schema);
     schema
 }
@@ -34,6 +35,7 @@ pub fn parse_job_schema() -> Schema {
 #[must_use]
 pub fn parse_result_schema() -> Schema {
     let mut schema = schemars::schema_for!(ParseResultMessage);
+    enforce_parse_result_kind_consts(&mut schema);
     close_top_level_schema(&mut schema);
     schema
 }
@@ -65,6 +67,52 @@ fn close_schema_definition(schema: &mut Schema, definition_name: &str) {
     };
 
     drop(definition.insert("additionalProperties".to_string(), json!(false)));
+}
+
+fn enforce_parse_job_non_empty_fields(schema: &mut Schema) {
+    let Some(Value::Object(properties)) = schema.get_mut("properties") else {
+        return;
+    };
+
+    for field_name in ["job_id", "replay_id", "object_key"] {
+        let Some(Value::Object(field_schema)) = properties.get_mut(field_name) else {
+            continue;
+        };
+        drop(field_schema.insert("minLength".to_string(), json!(1)));
+    }
+}
+
+fn enforce_parse_result_kind_consts(schema: &mut Schema) {
+    for (definition_name, message_type) in
+        [("ParseCompletedMessage", "parse.completed"), ("ParseFailedMessage", "parse.failed")]
+    {
+        let Some(Value::Object(properties)) = definition_properties(schema, definition_name) else {
+            continue;
+        };
+        let Some(Value::Object(message_type_schema)) = properties.get_mut("message_type") else {
+            continue;
+        };
+
+        message_type_schema.clear();
+        drop(
+            message_type_schema
+                .insert("description".to_string(), json!("Result message routing kind.")),
+        );
+        drop(message_type_schema.insert("type".to_string(), json!("string")));
+        drop(message_type_schema.insert("const".to_string(), json!(message_type)));
+    }
+}
+
+fn definition_properties<'a>(
+    schema: &'a mut Schema,
+    definition_name: &str,
+) -> Option<&'a mut Value> {
+    schema
+        .get_mut("$defs")
+        .and_then(Value::as_object_mut)
+        .and_then(|defs| defs.get_mut(definition_name))
+        .and_then(Value::as_object_mut)
+        .and_then(|definition| definition.get_mut("properties"))
 }
 
 fn add_aggregate_value_helper_definitions(schema: &mut Schema) {

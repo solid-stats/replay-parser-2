@@ -144,3 +144,22 @@ fn config_debug_should_redact_amqp_credentials_and_omit_aws_secrets() {
     assert!(!debug.contains("redacted-test-password"));
     assert!(!debug.contains("AWS_SECRET_ACCESS_KEY"));
 }
+
+#[test]
+fn config_debug_should_redact_amqp_password_containing_at_sign() {
+    // Arrange
+    let amqp_url = credentialed_amqp_url("p@ss");
+    let config = config_from_pairs([
+        ("REPLAY_PARSER_AMQP_URL", amqp_url.as_str()),
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+    ])
+    .expect("required bucket should build config");
+
+    // Act
+    let debug = format!("{config:?}");
+
+    // Assert
+    assert!(debug.contains("amqp://***@rabbitmq:5672/%2f"));
+    assert!(!debug.contains("p@ss"));
+    assert!(!debug.contains("ss@rabbitmq"));
+}

@@ -1,7 +1,7 @@
 //! RabbitMQ worker request and result message contract types.
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
     failure::{ErrorCode, ErrorCodeError, ParseFailure, ParseStage, Retryability},
@@ -46,7 +46,7 @@ pub enum ParseResultKind {
 }
 
 /// Successful parser-worker result message.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct ParseCompletedMessage {
     /// Result message routing kind.
     pub message_type: ParseResultKind,
@@ -66,6 +66,45 @@ pub struct ParseCompletedMessage {
     pub artifact_size_bytes: u64,
     /// Parser binary metadata.
     pub parser: ParserInfo,
+}
+
+#[derive(Deserialize)]
+struct ParseCompletedMessageWire {
+    message_type: ParseResultKind,
+    job_id: String,
+    replay_id: String,
+    parser_contract_version: ContractVersion,
+    source_checksum: SourceChecksum,
+    artifact: ArtifactReference,
+    artifact_checksum: SourceChecksum,
+    artifact_size_bytes: u64,
+    parser: ParserInfo,
+}
+
+impl<'de> Deserialize<'de> for ParseCompletedMessage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wire = ParseCompletedMessageWire::deserialize(deserializer)?;
+        if wire.message_type != ParseResultKind::Completed {
+            return Err(serde::de::Error::custom(
+                "completed result must use message_type parse.completed",
+            ));
+        }
+
+        Ok(Self {
+            message_type: wire.message_type,
+            job_id: wire.job_id,
+            replay_id: wire.replay_id,
+            parser_contract_version: wire.parser_contract_version,
+            source_checksum: wire.source_checksum,
+            artifact: wire.artifact,
+            artifact_checksum: wire.artifact_checksum,
+            artifact_size_bytes: wire.artifact_size_bytes,
+            parser: wire.parser,
+        })
+    }
 }
 
 impl ParseCompletedMessage {
@@ -100,7 +139,7 @@ impl ParseCompletedMessage {
 }
 
 /// Failed parser-worker result message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, JsonSchema)]
 pub struct ParseFailedMessage {
     /// Result message routing kind.
     pub message_type: ParseResultKind,
@@ -118,6 +157,43 @@ pub struct ParseFailedMessage {
     pub failure: ParseFailure,
     /// Parser binary metadata.
     pub parser: ParserInfo,
+}
+
+#[derive(Deserialize)]
+struct ParseFailedMessageWire {
+    message_type: ParseResultKind,
+    job_id: FieldPresence<String>,
+    replay_id: FieldPresence<String>,
+    object_key: FieldPresence<String>,
+    parser_contract_version: FieldPresence<ContractVersion>,
+    source_checksum: FieldPresence<SourceChecksum>,
+    failure: ParseFailure,
+    parser: ParserInfo,
+}
+
+impl<'de> Deserialize<'de> for ParseFailedMessage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wire = ParseFailedMessageWire::deserialize(deserializer)?;
+        if wire.message_type != ParseResultKind::Failed {
+            return Err(serde::de::Error::custom(
+                "failed result must use message_type parse.failed",
+            ));
+        }
+
+        Ok(Self {
+            message_type: wire.message_type,
+            job_id: wire.job_id,
+            replay_id: wire.replay_id,
+            object_key: wire.object_key,
+            parser_contract_version: wire.parser_contract_version,
+            source_checksum: wire.source_checksum,
+            failure: wire.failure,
+            parser: wire.parser,
+        })
+    }
 }
 
 impl ParseFailedMessage {

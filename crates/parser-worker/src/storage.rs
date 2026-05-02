@@ -55,6 +55,11 @@ pub trait ObjectStore: Sync {
     /// Gets object bytes by key.
     fn get_object_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>>;
 
+    /// Gets artifact object bytes by key.
+    fn get_artifact_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+        self.get_object_bytes(object_key)
+    }
+
     /// Writes object bytes with the supplied content type.
     fn put_object_bytes<'a>(
         &'a self,
@@ -83,7 +88,7 @@ pub trait ObjectStore: Sync {
             let new_size_bytes = byte_len(bytes)?;
             let bucket = self.bucket().to_owned();
 
-            match self.get_object_bytes(key).await {
+            match self.get_artifact_bytes(key).await {
                 Ok(existing_bytes) => {
                     let existing_checksum = source_checksum_from_bytes(&existing_bytes)?;
                     let existing_size_bytes = byte_len(&existing_bytes)?;
@@ -169,32 +174,11 @@ impl ObjectStore for S3ObjectStore {
     }
 
     fn get_object_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
-        Box::pin(async move {
-            let response = self
-                .client
-                .get_object()
-                .bucket(&self.bucket)
-                .key(object_key)
-                .send()
-                .await
-                .map_err(|error| {
-                    if is_no_such_key(&error) {
-                        return object_not_found("get_object", &self.bucket, object_key);
-                    }
-                    s3_error("get_object", &self.bucket, object_key, error)
-                })?;
+        self.get_s3_object_bytes(object_key, ParseStage::Input)
+    }
 
-            let bytes = response.body.collect().await.map_err(|error| WorkerError::S3 {
-                operation: "get_object_body",
-                bucket: self.bucket.clone(),
-                key: object_key.to_owned(),
-                stage: ParseStage::Input,
-                retryability: Retryability::Retryable,
-                message: error.to_string(),
-            })?;
-
-            Ok(bytes.into_bytes().to_vec())
-        })
+    fn get_artifact_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+        self.get_s3_object_bytes(object_key, ParseStage::Output)
     }
 
     fn put_object_bytes<'a>(
@@ -213,8 +197,61 @@ impl ObjectStore for S3ObjectStore {
                 .body(ByteStream::from(bytes.to_vec()))
                 .send()
                 .await
-                .map_err(|error| s3_error("put_object", &self.bucket, object_key, error))?;
+                .map_err(|error| {
+                    s3_error(
+                        "put_object",
+                        &self.bucket,
+                        object_key,
+                        ParseStage::Output,
+                        Retryability::Retryable,
+                        error,
+                    )
+                })?;
             Ok(())
+        })
+    }
+}
+
+impl S3ObjectStore {
+    fn get_s3_object_bytes<'a>(
+        &'a self,
+        object_key: &'a str,
+        stage: ParseStage,
+    ) -> ObjectStoreFuture<'a, Vec<u8>> {
+        Box::pin(async move {
+            let response = self
+                .client
+                .get_object()
+                .bucket(&self.bucket)
+                .key(object_key)
+                .send()
+                .await
+                .map_err(|error| {
+                    if is_no_such_key(&error) {
+                        return object_not_found("get_object", &self.bucket, object_key, stage);
+                    }
+                    s3_error(
+                        "get_object",
+                        &self.bucket,
+                        object_key,
+                        stage,
+                        Retryability::Retryable,
+                        error,
+                    )
+                })?;
+
+            let bytes = response.body.collect().await.map_err(|error| {
+                s3_error(
+                    "get_object_body",
+                    &self.bucket,
+                    object_key,
+                    stage,
+                    Retryability::Retryable,
+                    error,
+                )
+            })?;
+
+            Ok(bytes.into_bytes().to_vec())
         })
     }
 }
@@ -244,12 +281,17 @@ fn is_no_such_key(error: &SdkError<GetObjectError>) -> bool {
     error.as_service_error().is_some_and(GetObjectError::is_no_such_key)
 }
 
-fn object_not_found(operation: &'static str, bucket: &str, key: &str) -> WorkerError {
+fn object_not_found(
+    operation: &'static str,
+    bucket: &str,
+    key: &str,
+    stage: ParseStage,
+) -> WorkerError {
     WorkerError::ObjectNotFound {
         operation,
         bucket: bucket.to_owned(),
         key: key.to_owned(),
-        stage: ParseStage::Input,
+        stage,
         retryability: Retryability::Unknown,
     }
 }
@@ -258,14 +300,16 @@ fn s3_error(
     operation: &'static str,
     bucket: &str,
     key: &str,
+    stage: ParseStage,
+    retryability: Retryability,
     source: impl std::error::Error,
 ) -> WorkerError {
     WorkerError::S3 {
         operation,
         bucket: bucket.to_owned(),
         key: key.to_owned(),
-        stage: ParseStage::Output,
-        retryability: Retryability::Retryable,
+        stage,
+        retryability,
         message: source.to_string(),
     }
 }

@@ -16,6 +16,7 @@ use crate::{
 };
 
 const RESULT_CONTENT_TYPE: &str = "application/json";
+const PERSISTENT_DELIVERY_MODE: u8 = 2;
 
 /// Delivery acknowledgement decision after the worker outcome path is known.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -210,7 +211,9 @@ impl RabbitMqClient {
                 publish.routing_key.into(),
                 BasicPublishOptions { mandatory: true, ..Default::default() },
                 &publish.body,
-                BasicProperties::default().with_content_type(publish.content_type.into()),
+                BasicProperties::default()
+                    .with_content_type(publish.content_type.into())
+                    .with_delivery_mode(publish.delivery_mode),
             )
             .await
             .map_err(|source| rabbitmq_publish_error(source.to_string()))?;
@@ -234,6 +237,8 @@ pub struct PreparedResultPublish {
     pub content_type: &'static str,
     /// Whether the publish requires routing to a queue.
     pub mandatory: bool,
+    /// AMQP delivery mode. `2` means persistent.
+    pub delivery_mode: u8,
 }
 
 /// Builds a publish request for a `parse.completed` result.
@@ -279,6 +284,7 @@ fn prepare_result_publish(
         body,
         content_type: RESULT_CONTENT_TYPE,
         mandatory: true,
+        delivery_mode: PERSISTENT_DELIVERY_MODE,
     }
 }
 

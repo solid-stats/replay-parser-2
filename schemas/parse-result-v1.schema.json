@@ -587,7 +587,8 @@
         },
         "message_type": {
           "description": "Result message routing kind.",
-          "$ref": "#/$defs/ParseResultKind"
+          "type": "string",
+          "const": "parse.completed"
         },
         "parser": {
           "description": "Parser binary metadata.",
@@ -632,7 +633,8 @@
         },
         "message_type": {
           "description": "Result message routing kind.",
-          "$ref": "#/$defs/ParseResultKind"
+          "type": "string",
+          "const": "parse.failed"
         },
         "object_key": {
           "description": "S3-compatible raw replay object key, when it could be read from the job.",

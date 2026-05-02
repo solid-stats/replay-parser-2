@@ -280,7 +280,7 @@ fn redact_amqp_url(url: &str) -> String {
 }
 
 fn redact_userinfo(value: &str) -> String {
-    value.find('@').map_or_else(
+    value.rfind('@').map_or_else(
         || value.to_owned(),
         |userinfo_end| format!("***@{}", &value[userinfo_end + 1..]),
     )

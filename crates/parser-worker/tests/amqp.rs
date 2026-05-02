@@ -119,6 +119,7 @@ fn amqp_completed_publish_uses_default_completed_routing_key() {
     assert_eq!(publish.routing_key, DEFAULT_COMPLETED_ROUTING_KEY);
     assert_eq!(publish.content_type, "application/json");
     assert!(publish.mandatory);
+    assert_eq!(publish.delivery_mode, 2);
     assert_eq!(decoded_body(&publish.body)["message_type"], "parse.completed");
 }
 
@@ -132,6 +133,7 @@ fn amqp_failed_publish_uses_default_failed_routing_key() {
     assert_eq!(publish.routing_key, DEFAULT_FAILED_ROUTING_KEY);
     assert_eq!(publish.content_type, "application/json");
     assert!(publish.mandatory);
+    assert_eq!(publish.delivery_mode, 2);
     assert_eq!(decoded_body(&publish.body)["message_type"], "parse.failed");
 }
 

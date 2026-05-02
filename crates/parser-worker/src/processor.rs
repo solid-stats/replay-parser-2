@@ -81,6 +81,19 @@ async fn process_decoded_job(
 ) -> Result<DeliveryAction, WorkerError> {
     let context = JobContext::from_job(&job);
 
+    if let Some(source_cause) = validate_job_fields(&job) {
+        let failure = build_parse_failure(
+            &context,
+            ParseStage::Schema,
+            "schema.parse_job",
+            "parse job JSON did not match the worker contract",
+            Retryability::NotRetryable,
+            source_cause,
+        )?;
+        let failed = context.failed_message(failure, parser_info);
+        return publish_failed_action(publisher, &failed).await;
+    }
+
     if job.parser_contract_version != ContractVersion::current() {
         let failed = ParseFailedMessage::unsupported_contract_version(
             context.job_id.clone(),
@@ -153,6 +166,19 @@ async fn process_decoded_job(
         parser_info,
     );
     publish_completed_action(publisher, &completed).await
+}
+
+fn validate_job_fields(job: &ParseJobMessage) -> Option<String> {
+    for (field_name, value) in [
+        ("job_id", job.job_id.as_str()),
+        ("replay_id", job.replay_id.as_str()),
+        ("object_key", job.object_key.as_str()),
+    ] {
+        if value.trim().is_empty() {
+            return Some(format!("parse job field {field_name} must not be empty"));
+        }
+    }
+    None
 }
 
 async fn publish_completed_action(

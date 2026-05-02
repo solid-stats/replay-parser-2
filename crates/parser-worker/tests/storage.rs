@@ -88,7 +88,12 @@ impl ObjectStore for FakeObjectStore {
                 .expect("fake get failure set lock should not be poisoned")
                 .contains(object_key)
             {
-                return Err(storage_error("get_object", &self.bucket, object_key));
+                return Err(storage_error(
+                    "get_object",
+                    &self.bucket,
+                    object_key,
+                    ParseStage::Input,
+                ));
             }
 
             self.objects
@@ -120,7 +125,12 @@ impl ObjectStore for FakeObjectStore {
                 .expect("fake put failure set lock should not be poisoned")
                 .contains(object_key)
             {
-                return Err(storage_error("put_object", &self.bucket, object_key));
+                return Err(storage_error(
+                    "put_object",
+                    &self.bucket,
+                    object_key,
+                    ParseStage::Output,
+                ));
             }
 
             self.insert_object(object_key, bytes);
@@ -129,12 +139,17 @@ impl ObjectStore for FakeObjectStore {
     }
 }
 
-fn storage_error(operation: &'static str, bucket: &str, key: &str) -> WorkerError {
+fn storage_error(
+    operation: &'static str,
+    bucket: &str,
+    key: &str,
+    stage: ParseStage,
+) -> WorkerError {
     WorkerError::S3 {
         operation,
         bucket: bucket.to_owned(),
         key: key.to_owned(),
-        stage: ParseStage::Output,
+        stage,
         retryability: Retryability::Retryable,
         message: "configured fake storage failure".to_owned(),
     }
@@ -290,8 +305,9 @@ async fn storage_download_raw_should_return_retryable_get_failure_without_panick
 
     // Assert
     match error {
-        WorkerError::S3 { operation, retryability, .. } => {
+        WorkerError::S3 { operation, stage, retryability, .. } => {
             assert_eq!(operation, "get_object");
+            assert_eq!(stage, ParseStage::Input);
             assert_eq!(retryability, Retryability::Retryable);
         }
         other => {
@@ -315,8 +331,9 @@ async fn storage_write_artifact_should_return_retryable_put_failure_without_pani
 
     // Assert
     match error {
-        WorkerError::S3 { operation, retryability, .. } => {
+        WorkerError::S3 { operation, stage, retryability, .. } => {
             assert_eq!(operation, "put_object");
+            assert_eq!(stage, ParseStage::Output);
             assert_eq!(retryability, Retryability::Retryable);
         }
         other => {

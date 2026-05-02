@@ -10,7 +10,10 @@ use parser_contract::{
     presence::{FieldPresence, UnknownReason},
     source_ref::{RuleId, SourceChecksum, SourceRef, SourceRefs},
     version::{ContractVersion, ParserInfo},
-    worker::{ArtifactReference, ParseCompletedMessage, ParseFailedMessage, ParseJobMessage},
+    worker::{
+        ArtifactReference, ParseCompletedMessage, ParseFailedMessage, ParseJobMessage,
+        ParseResultMessage,
+    },
 };
 use semver::Version;
 use serde_json::{Value, json};
@@ -156,6 +159,25 @@ fn worker_message_contract_completed_constructor_should_serialize_artifact_refer
 }
 
 #[test]
+fn worker_message_contract_completed_should_reject_failed_message_type() {
+    let message = ParseCompletedMessage::new(
+        "job-0001".to_owned(),
+        "replay-0001".to_owned(),
+        ContractVersion::current(),
+        source_checksum(),
+        artifact_reference(),
+        artifact_checksum(),
+        1234,
+        parser_info(),
+    );
+    let mut serialized = serde_json::to_value(message).expect("completed message should serialize");
+    serialized["message_type"] = json!("parse.failed");
+
+    assert!(serde_json::from_value::<ParseCompletedMessage>(serialized.clone()).is_err());
+    assert!(serde_json::from_value::<ParseResultMessage>(serialized).is_err());
+}
+
+#[test]
 fn worker_message_contract_failed_constructor_should_preserve_unknown_malformed_job_fields() {
     let message = ParseFailedMessage::new(
         unknown(),
@@ -175,6 +197,24 @@ fn worker_message_contract_failed_constructor_should_preserve_unknown_malformed_
         assert_eq!(serialized[field]["state"], "unknown");
         assert_eq!(serialized[field]["reason"], "source_field_absent");
     }
+}
+
+#[test]
+fn worker_message_contract_failed_should_reject_completed_message_type() {
+    let message = ParseFailedMessage::new(
+        present("job-0001".to_owned()),
+        present("replay-0001".to_owned()),
+        present("raw/replay-0001.ocap.json".to_owned()),
+        present(ContractVersion::current()),
+        present(source_checksum()),
+        schema_failure(),
+        parser_info(),
+    );
+    let mut serialized = serde_json::to_value(message).expect("failed message should serialize");
+    serialized["message_type"] = json!("parse.completed");
+
+    assert!(serde_json::from_value::<ParseFailedMessage>(serialized.clone()).is_err());
+    assert!(serde_json::from_value::<ParseResultMessage>(serialized).is_err());
 }
 
 #[test]

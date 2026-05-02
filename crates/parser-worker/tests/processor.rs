@@ -40,6 +40,7 @@ struct FakeObjectStore {
     objects: Mutex<BTreeMap<String, Vec<u8>>>,
     get_calls: Mutex<Vec<String>>,
     put_calls: Mutex<Vec<String>>,
+    get_failures: Mutex<BTreeSet<String>>,
     put_failures: Mutex<BTreeSet<String>>,
 }
 
@@ -61,6 +62,14 @@ impl FakeObjectStore {
             .put_failures
             .lock()
             .expect("fake put failure set lock should not be poisoned")
+            .insert(key.to_owned());
+    }
+
+    fn fail_get(&self, key: &str) {
+        let _inserted = self
+            .get_failures
+            .lock()
+            .expect("fake get failure set lock should not be poisoned")
             .insert(key.to_owned());
     }
 
@@ -88,6 +97,21 @@ impl ObjectStore for FakeObjectStore {
                 .lock()
                 .expect("fake get calls lock should not be poisoned")
                 .push(object_key.to_owned());
+            if self
+                .get_failures
+                .lock()
+                .expect("fake get failure set lock should not be poisoned")
+                .contains(object_key)
+            {
+                return Err(WorkerError::S3 {
+                    operation: "get_object",
+                    bucket: self.bucket.clone(),
+                    key: object_key.to_owned(),
+                    stage: ParseStage::Input,
+                    retryability: Retryability::Retryable,
+                    message: "configured fake get failure".to_owned(),
+                });
+            }
             self.objects
                 .lock()
                 .expect("fake object map lock should not be poisoned")
@@ -374,6 +398,29 @@ async fn processor_missing_job_field_should_publish_failed_with_unknown_presence
 }
 
 #[tokio::test]
+async fn processor_empty_job_field_should_publish_failed_without_storage() {
+    // Arrange
+    let mut job = job_message(VALID_REPLAY);
+    job.object_key.clear();
+    let body = job_body(&job);
+    let store = FakeObjectStore::new();
+    let publisher = FakePublisher::default();
+
+    // Act
+    let action = process(&body, &store, &publisher).await;
+    let failed = publisher.failed_messages();
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(store.get_call_count(), 0);
+    assert_eq!(store.put_call_count(), 0);
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failure_code(&failed[0]), "schema.parse_job");
+    assert_eq!(failed[0].failure.stage, ParseStage::Schema);
+    assert_eq!(failed[0].failure.retryability, Retryability::NotRetryable);
+}
+
+#[tokio::test]
 async fn processor_checksum_mismatch_should_publish_failed_without_artifact_write() {
     // Arrange
     let job = job_message(VALID_REPLAY);
@@ -392,6 +439,30 @@ async fn processor_checksum_mismatch_should_publish_failed_without_artifact_writ
     assert_eq!(failed.len(), 1);
     assert_eq!(failure_code(&failed[0]), "checksum.mismatch");
     assert_eq!(failed[0].failure.stage, ParseStage::Checksum);
+}
+
+#[tokio::test]
+async fn processor_s3_raw_get_failure_should_publish_input_read_failure() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = FakeObjectStore::new();
+    store.fail_get(&job.object_key);
+    let publisher = FakePublisher::default();
+
+    // Act
+    let action = process(&body, &store, &publisher).await;
+    let failed = publisher.failed_messages();
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(store.get_call_count(), 1);
+    assert_eq!(store.put_call_count(), 0);
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failure_code(&failed[0]), "io.s3_read");
+    assert_eq!(failed[0].failure.stage, ParseStage::Input);
+    assert_eq!(failed[0].failure.retryability, Retryability::Retryable);
+    assert!(publisher.completed_messages().is_empty());
 }
 
 #[tokio::test]
