@@ -5,9 +5,11 @@ use std::{
     error::Error,
     fmt::{self, Display},
     fs,
-    io::{self, Write},
+    io::{self, Read, Write},
+    net::TcpStream,
     path::{Path, PathBuf},
     process::ExitCode,
+    time::Duration,
 };
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -128,6 +130,13 @@ enum Commands {
         /// Operator-visible worker identity.
         #[arg(long)]
         worker_id: Option<String>,
+    },
+    /// Internal Docker health check command.
+    #[command(hide = true)]
+    Healthcheck {
+        /// Probe URL to check.
+        #[arg(long, default_value = "http://127.0.0.1:8080/readyz")]
+        url: String,
     },
 }
 
@@ -282,6 +291,7 @@ fn run() -> Result<ExitCode, CliError> {
             probes_enabled,
             worker_id,
         }),
+        Commands::Healthcheck { url } => Ok(healthcheck_command(&url)),
     }
 }
 
@@ -438,6 +448,73 @@ fn worker_command(overrides: WorkerConfigOverrides) -> Result<ExitCode, CliError
         .map_err(CliError::WorkerRuntime)?;
     runtime.block_on(parser_worker::runner::run(config)).map_err(CliError::Worker)?;
     Ok(ExitCode::SUCCESS)
+}
+
+fn healthcheck_command(url: &str) -> ExitCode {
+    match healthcheck_status(url) {
+        Ok(200) => ExitCode::SUCCESS,
+        Ok(_status) => ExitCode::FAILURE,
+        Err(_error) => ExitCode::from(2),
+    }
+}
+
+fn healthcheck_status(url: &str) -> Result<u16, HealthcheckError> {
+    let target = parse_http_healthcheck_url(url)?;
+    let mut stream = TcpStream::connect((target.host.as_str(), target.port))
+        .map_err(|_source| HealthcheckError::Unavailable)?;
+    let timeout = Some(Duration::from_secs(5));
+    stream
+        .set_read_timeout(timeout)
+        .and_then(|()| stream.set_write_timeout(timeout))
+        .map_err(|_source| HealthcheckError::Unavailable)?;
+
+    let request = format!(
+        "GET {} HTTP/1.1\r\nHost: {}:{}\r\nUser-Agent: replay-parser-2-healthcheck\r\nConnection: close\r\n\r\n",
+        target.path, target.host, target.port
+    );
+    stream.write_all(request.as_bytes()).map_err(|_source| HealthcheckError::Unavailable)?;
+
+    let mut response = [0_u8; 256];
+    let read = stream.read(&mut response).map_err(|_source| HealthcheckError::Unavailable)?;
+    let response =
+        std::str::from_utf8(&response[..read]).map_err(|_source| HealthcheckError::Unavailable)?;
+    parse_http_status(response).ok_or(HealthcheckError::Unavailable)
+}
+
+fn parse_http_healthcheck_url(url: &str) -> Result<HttpHealthcheckUrl, HealthcheckError> {
+    let rest = url.strip_prefix("http://").ok_or(HealthcheckError::InvalidUrl)?;
+    let (authority, path) = rest.split_once('/').ok_or(HealthcheckError::InvalidUrl)?;
+    let (host, port) = authority.rsplit_once(':').ok_or(HealthcheckError::InvalidUrl)?;
+    if host.is_empty() || host.contains('@') || port.is_empty() {
+        return Err(HealthcheckError::InvalidUrl);
+    }
+    let port = port.parse::<u16>().map_err(|_source| HealthcheckError::InvalidUrl)?;
+    if port == 0 {
+        return Err(HealthcheckError::InvalidUrl);
+    }
+
+    Ok(HttpHealthcheckUrl { host: host.to_owned(), port, path: format!("/{path}") })
+}
+
+fn parse_http_status(response: &str) -> Option<u16> {
+    let status_line = response.lines().next()?;
+    let mut parts = status_line.split_ascii_whitespace();
+    let version = parts.next()?;
+    let status = parts.next()?;
+    version.starts_with("HTTP/").then(|| status.parse::<u16>().ok()).flatten()
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct HttpHealthcheckUrl {
+    host: String,
+    port: u16,
+    path: String,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum HealthcheckError {
+    InvalidUrl,
+    Unavailable,
 }
 
 fn read_file(path: &Path) -> Result<Vec<u8>, CliError> {

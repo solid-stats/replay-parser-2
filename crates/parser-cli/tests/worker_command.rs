@@ -5,11 +5,16 @@
     reason = "integration tests use expect messages as assertion context"
 )]
 
-use std::process::Output;
+use std::{
+    io::{Read, Write},
+    net::TcpListener,
+    process::Output,
+    thread,
+};
 
 use assert_cmd::Command;
 
-fn run_worker(args: &[&str]) -> Output {
+fn replay_parser_command() -> Command {
     let mut command =
         Command::cargo_bin("replay-parser-2").expect("replay-parser-2 binary should build");
     for env_name in [
@@ -32,6 +37,15 @@ fn run_worker(args: &[&str]) -> Output {
     ] {
         _ = command.env_remove(env_name);
     }
+    command
+}
+
+fn run_cli(args: &[&str]) -> Output {
+    replay_parser_command().args(args).output().expect("CLI command should run")
+}
+
+fn run_worker(args: &[&str]) -> Output {
+    let mut command = replay_parser_command();
     command.arg("worker").args(args).output().expect("worker command should run")
 }
 
@@ -79,4 +93,62 @@ fn worker_command_missing_s3_bucket_should_fail_without_printing_secrets() {
     assert!(!stderr.contains("AWS_SECRET_ACCESS_KEY"));
     assert!(!stderr.contains(&amqp_url));
     assert!(!stderr.contains("redacted-test-password"));
+}
+
+#[test]
+fn healthcheck_command_should_be_hidden_from_top_level_help() {
+    // Act
+    let command_output = run_cli(&["--help"]);
+    let stdout =
+        String::from_utf8(command_output.stdout).expect("stdout should be valid UTF-8 text");
+
+    // Assert
+    assert!(command_output.status.success());
+    assert!(!stdout.contains("healthcheck"));
+}
+
+#[test]
+fn healthcheck_command_should_exit_success_for_http_200() {
+    // Arrange
+    let url = one_response_probe_url("HTTP/1.1 200 OK");
+
+    // Act
+    let command_output = run_cli(&["healthcheck", "--url", &url]);
+
+    // Assert
+    assert!(command_output.status.success());
+}
+
+#[test]
+fn healthcheck_command_should_exit_failure_for_non_200() {
+    // Arrange
+    let url = one_response_probe_url("HTTP/1.1 503 Service Unavailable");
+
+    // Act
+    let command_output = run_cli(&["healthcheck", "--url", &url]);
+
+    // Assert
+    assert_eq!(command_output.status.code(), Some(1));
+}
+
+#[test]
+fn healthcheck_command_bad_url_should_exit_two() {
+    // Act
+    let command_output = run_cli(&["healthcheck", "--url", "https://127.0.0.1:8080/readyz"]);
+
+    // Assert
+    assert_eq!(command_output.status.code(), Some(2));
+}
+
+fn one_response_probe_url(status_line: &'static str) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("probe listener should bind");
+    let address = listener.local_addr().expect("probe listener should have a local address");
+    let _server = thread::spawn(move || {
+        let (mut stream, _peer) = listener.accept().expect("healthcheck should connect");
+        let mut request = [0_u8; 512];
+        let _read = stream.read(&mut request);
+        let response = format!("{status_line}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        stream.write_all(response.as_bytes()).expect("probe response should write");
+    });
+    format!("http://{}:{}/readyz", address.ip(), address.port())
 }

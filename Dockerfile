@@ -18,6 +18,8 @@ RUN apt-get update \
 
 COPY --from=builder /app/target/release/replay-parser-2 /usr/local/bin/replay-parser-2
 
+EXPOSE 8080
 USER 65532:65532
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["replay-parser-2", "healthcheck", "--url", "http://127.0.0.1:8080/readyz"]
 ENTRYPOINT ["replay-parser-2"]
 CMD ["worker"]
