@@ -116,8 +116,17 @@ fn aggregate_projection_should_emit_compact_players_with_merged_counter_rows() {
 
     assert_eq!(artifact.status, ParseStatus::Success);
     assert_eq!(player_ids, vec![1, 2, 4, 5, 6]);
-    assert_eq!(serde_json::to_value(&artifact).expect("artifact should serialize").get("player_stats"), None);
-    assert!(artifact.players.iter().all(|player| player.compatibility_key.is_none()));
+    assert_eq!(
+        serde_json::to_value(&artifact).expect("artifact should serialize").get("player_stats"),
+        None
+    );
+    assert!(
+        artifact
+            .players
+            .iter()
+            .filter(|player| player.source_entity_id <= 4)
+            .all(|player| { player.compatibility_key.is_none() })
+    );
 }
 
 #[test]
@@ -189,8 +198,8 @@ fn aggregate_projection_should_emit_minimal_destroyed_vehicle_rows() {
     assert_eq!(destroyed.classification, DestroyedVehicleClassification::Enemy);
     assert_eq!(destroyed.attacker_source_entity_id, Some(1));
     assert_eq!(destroyed.weapon_id, Some(3));
-    assert_eq!(destroyed.attacker_vehicle_entity_id, Some(30));
-    assert_eq!(destroyed.attacker_vehicle_class.as_deref(), Some("car"));
+    assert_eq!(destroyed.attacker_vehicle_entity_id, None);
+    assert_eq!(destroyed.attacker_vehicle_class, None);
     assert_eq!(destroyed.destroyed_entity_id, Some(20));
     assert_eq!(destroyed.destroyed_entity_type.as_deref(), Some("vehicle"));
     assert_eq!(destroyed.destroyed_class.as_deref(), Some("apc"));

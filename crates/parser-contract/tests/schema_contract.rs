@@ -232,12 +232,8 @@ fn schema_contract_success_example_should_expose_minimal_tables_only() {
 #[test]
 fn schema_contract_success_example_should_use_compact_short_keys_and_omit_zero_defaults() {
     let success_example = read_json(success_example_path());
-    let player = success_example["players"][0]
-        .as_object()
-        .expect("player row should be an object");
-    let kill = success_example["kills"][0]
-        .as_object()
-        .expect("kill row should be an object");
+    let player = success_example["players"][0].as_object().expect("player row should be an object");
+    let kill = success_example["kills"][0].as_object().expect("kill row should be an object");
     let destroyed = success_example["destroyed_vehicles"][0]
         .as_object()
         .expect("destroyed vehicle row should be an object");
@@ -302,10 +298,12 @@ fn schema_contract_gap_regression_should_reject_invalid_checksum_algorithm_and_v
 #[test]
 fn schema_contract_gap_regression_should_reject_failed_artifact_without_failure() {
     let mut failure_example = read_json(failure_example_path());
-    drop(failure_example
-        .as_object_mut()
-        .expect("failure example should be an object")
-        .remove("failure"));
+    drop(
+        failure_example
+            .as_object_mut()
+            .expect("failure example should be an object")
+            .remove("failure"),
+    );
 
     assert_committed_schema_rejects(&failure_example);
 }

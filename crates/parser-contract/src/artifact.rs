@@ -8,9 +8,7 @@ use crate::{
     diagnostic::MinimalDiagnosticRow,
     failure::ParseFailure,
     metadata::ReplayMetadata,
-    minimal::{
-        MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalWeaponRow,
-    },
+    minimal::{MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow, MinimalWeaponRow},
     side_facts::ReplaySideFacts,
     source_ref::ReplaySource,
     version::{ContractVersion, ParserInfo},
