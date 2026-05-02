@@ -275,7 +275,7 @@ Plans:
 - [x] 07-00-PLAN.md - S3 artifact race and duplicate redelivery hardening.
 - [x] 07-01-PLAN.md - HTTP liveness/readiness probes, cached runtime state, and worker identity config.
 - [x] 07-02-PLAN.md - Stable structured worker log taxonomy and secret-safe operations fields.
-- [ ] 07-03-PLAN.md - Two-worker container smoke, Docker health wiring, and Timeweb S3 compatibility hooks.
+- [x] 07-03-PLAN.md - Two-worker container smoke, Docker health wiring, and Timeweb S3 compatibility hooks.
 - [ ] 07-04-PLAN.md - Final Phase 7 gates, UAT evidence, README/ROADMAP/STATE handoff.
 
 ## Progress
