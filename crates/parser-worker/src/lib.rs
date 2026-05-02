@@ -3,6 +3,8 @@
 //! Runtime concerns live here so `parser-core` and `parser-contract` remain
 //! transport-free and deterministic.
 
+/// RabbitMQ consumer, result publishing, and acknowledgement helpers.
+pub mod amqp;
 /// Deterministic parser artifact object keys.
 pub mod artifact_key;
 /// Local checksum helpers for raw replay and artifact bytes.

@@ -39,6 +39,12 @@ pub enum WorkerFailureKind {
         /// Newly produced artifact byte size.
         new_size_bytes: u64,
     },
+    /// RabbitMQ result publication could not be confirmed as durable.
+    #[error("output.rabbitmq_publish: {message}")]
+    RabbitMqPublish {
+        /// Safe publish failure detail.
+        message: String,
+    },
     /// Internal worker failure with a stable error-code string.
     #[error("{code}: {message}")]
     Internal {
@@ -56,6 +62,7 @@ impl WorkerFailureKind {
         match self {
             Self::ChecksumMismatch { .. } => "checksum.mismatch",
             Self::ArtifactConflict { .. } => "output.artifact_conflict",
+            Self::RabbitMqPublish { .. } => "output.rabbitmq_publish",
             Self::Internal { code, .. } => code,
         }
     }
@@ -65,7 +72,7 @@ impl WorkerFailureKind {
     pub const fn stage(&self) -> ParseStage {
         match self {
             Self::ChecksumMismatch { .. } => ParseStage::Checksum,
-            Self::ArtifactConflict { .. } => ParseStage::Output,
+            Self::ArtifactConflict { .. } | Self::RabbitMqPublish { .. } => ParseStage::Output,
             Self::Internal { .. } => ParseStage::Internal,
         }
     }
@@ -75,7 +82,9 @@ impl WorkerFailureKind {
     pub const fn retryability(&self) -> Retryability {
         match self {
             Self::ChecksumMismatch { .. } => Retryability::NotRetryable,
-            Self::ArtifactConflict { .. } | Self::Internal { .. } => Retryability::Unknown,
+            Self::ArtifactConflict { .. }
+            | Self::RabbitMqPublish { .. }
+            | Self::Internal { .. } => Retryability::Unknown,
         }
     }
 }
