@@ -92,21 +92,20 @@ fn assert_no_key_recursive(value: &Value, forbidden_key: &str) {
     }
 }
 
-fn assert_no_null_recursive(value: &Value) {
+fn contains_null_recursive(value: &Value) -> bool {
     match value {
-        Value::Object(map) => {
-            for nested in map.values() {
-                assert_no_null_recursive(nested);
-            }
-        }
-        Value::Array(items) => {
-            for nested in items {
-                assert_no_null_recursive(nested);
-            }
-        }
-        Value::Null => panic!("default artifact should not contain JSON null values"),
-        Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+        Value::Object(map) => map.values().any(contains_null_recursive),
+        Value::Array(items) => items.iter().any(contains_null_recursive),
+        Value::Null => true,
+        Value::Bool(_) | Value::Number(_) | Value::String(_) => false,
     }
+}
+
+fn assert_no_null_recursive(value: &Value) {
+    assert!(
+        !contains_null_recursive(value),
+        "default artifact should not contain JSON null values"
+    );
 }
 
 #[test]

@@ -143,6 +143,10 @@ pub struct MinimalWeaponRow {
     pub name: String,
 }
 
+#[expect(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde skip_serializing_if predicates receive borrowed field values"
+)]
 const fn is_zero_u64(value: &u64) -> bool {
     *value == 0
 }

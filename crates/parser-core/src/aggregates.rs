@@ -173,10 +173,10 @@ fn weapon_dictionary(
             | CombatSemantic::Unknown => victim_is_or_may_be_player(combat, entity_index),
             CombatSemantic::VehicleDestroyed => vehicle_or_static_victim(combat, entity_index),
         };
-        if emits_row {
-            if let Some(weapon_name) = observed_string(&combat.weapon) {
-                let _inserted = weapon_names.insert(weapon_name.to_owned());
-            }
+        if emits_row
+            && let Some(weapon_name) = observed_string(&combat.weapon)
+        {
+            let _inserted = weapon_names.insert(weapon_name.to_owned());
         }
     }
 
