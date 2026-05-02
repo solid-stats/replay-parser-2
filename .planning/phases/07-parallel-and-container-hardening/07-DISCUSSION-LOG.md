@@ -174,6 +174,15 @@
 - Exact Docker Compose topology and smoke-script layout.
 - Lightweight resource-limit docs/examples, if useful, while keeping production orchestration out of scope.
 
+## Late Captured Context
+
+- User clarified after the initial discussion that the server and S3 are deployed
+  in Timeweb Cloud.
+- CONTEXT.md now records Timeweb Cloud as the actual deployment/storage target
+  for Phase 7 planning.
+- Planner should verify Timeweb Cloud S3 endpoint/path-style/signature behavior
+  and conditional-write support instead of assuming AWS-only behavior.
+
 ## Deferred Ideas
 
 - Full-corpus or sustained multi-worker load/stress benchmarking.

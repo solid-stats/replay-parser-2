@@ -73,6 +73,12 @@ calculation, production Kubernetes manifests, or annual/yearly statistics.
 - **D-12:** Extend the smoke path to build/run the container image, run 2 worker
   instances, verify probes, assert useful structured logs, and exercise duplicate
   job/redelivery plus artifact reuse/conflict behavior.
+- **D-13:** The actual deployment target is Timeweb Cloud: the server host and
+  S3-compatible storage are deployed there. Phase 7 planning must validate worker
+  config, endpoint/path-style behavior, probe exposure, and conditional-write
+  support against Timeweb Cloud instead of assuming AWS-only behavior. If
+  Timeweb S3 does not support conditional write headers reliably, keep the
+  tested compare/reuse/conflict fallback.
 
 ### the agent's Discretion
 
@@ -189,6 +195,14 @@ calculation, production Kubernetes manifests, or annual/yearly statistics.
   messaging field vocabulary useful for stable log-field naming without adding
   an OpenTelemetry exporter in this phase.
 - `https://tokio.rs/tokio/topics/shutdown` - Tokio graceful shutdown pattern.
+- `https://timeweb.cloud/docs/s3-storage` - Timeweb Cloud S3 storage overview;
+  confirms the deployment storage is S3-compatible and API-accessible.
+- `https://timeweb.cloud/docs/s3-storage/manage-storage/s3-guide` - Timeweb
+  Cloud S3 request/signature guide, including the `s3.twcstorage.ru` endpoint
+  style and Signature V2/V4 support.
+- `https://timeweb.cloud/docs/s3-storage/supported-features` - Timeweb Cloud S3
+  supported-features index; planner should check provider behavior for
+  conditional writes before relying on AWS-specific headers.
 
 </canonical_refs>
 
@@ -240,6 +254,9 @@ calculation, production Kubernetes manifests, or annual/yearly statistics.
   durations.
 - Extend `Dockerfile` with health wiring and update `scripts/worker-smoke.sh` to
   build/run the image and assert two-worker behavior.
+- Add Timeweb Cloud-oriented config examples/tests that keep secrets external:
+  S3 endpoint, region/signature compatibility, path-style mode, probe bind/port,
+  and worker identity.
 
 </code_context>
 
@@ -254,6 +271,9 @@ calculation, production Kubernetes manifests, or annual/yearly statistics.
   normal idempotent completion path, not a special operator error.
 - Do not add an OpenTelemetry exporter in Phase 7. Use OpenTelemetry RabbitMQ
   naming only as a reference for stable log field vocabulary.
+- Deployment-specific note: the server and S3-compatible storage are in Timeweb
+  Cloud. Treat Timeweb S3 as the provider to verify for endpoint configuration,
+  path-style behavior, and conditional write support.
 
 </specifics>
 
