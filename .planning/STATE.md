@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
+status: executing
 stopped_at: Phase 6 context gathered
-last_updated: "2026-05-02T13:00:33.790Z"
-last_activity: 2026-05-02 -- Phase 06 planning complete
+last_updated: "2026-05-02T13:04:53.921Z"
+last_activity: 2026-05-02 -- Phase 06 execution started
 progress:
   total_phases: 9
   completed_phases: 7
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 06 — RabbitMQ/S3 Worker Integration
+**Current focus:** Phase 06 — rabbitmq-s3-worker-integration
 
 ## Current Position
 
-Phase: 06 (RabbitMQ/S3 Worker Integration) — READY
-Plan: not started
-Status: Ready to execute
-Last activity: 2026-05-02 -- Phase 06 planning complete
+Phase: 06 (rabbitmq-s3-worker-integration) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 06
+Last activity: 2026-05-02 -- Phase 06 execution started
 Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
 
 Progress: [████████░░] 88%

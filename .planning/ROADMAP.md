@@ -237,7 +237,7 @@ Cross-cutting constraints:
 - Manual ack is allowed only after confirmed `parse.completed` or confirmed `parse.failed`; RabbitMQ requeue is reserved for inability to publish a durable outcome.
 - Phase 6 defaults to one in-flight job with prefetch `1`; Phase 7 owns multi-worker safety, health/readiness, and container hardening.
 Plans:
-- [ ] 06-00-PLAN.md - Worker request/result contract, schemas, and examples.
+- [x] 06-00-PLAN.md - Worker request/result contract, schemas, and examples.
 - [ ] 06-01-PLAN.md - `parser-worker` crate foundation, worker config, and CLI worker subcommand.
 - [ ] 06-02-PLAN.md - S3-compatible raw download, checksum verification, deterministic artifact keys, and artifact write/reuse policy.
 - [ ] 06-03-PLAN.md - RabbitMQ consumer, result publisher confirms, and manual ack/nack policy.
