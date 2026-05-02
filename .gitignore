@@ -1,3 +1,4 @@
 .planning/generated/
 target/
 .codex
+__pycache__/

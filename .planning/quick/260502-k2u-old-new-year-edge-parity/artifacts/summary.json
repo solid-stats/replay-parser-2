@@ -1,0 +1,2376 @@
+{
+  "selection_policy": {
+    "game_types": [
+      "sg",
+      "mace",
+      "sm"
+    ],
+    "edge_window": 20,
+    "per_edge": 2,
+    "random_seed": "game_type:year:bucket:260502-k2u",
+    "dedupe": "filename"
+  },
+  "result": {
+    "selected_replays": 73,
+    "new_successes": 73,
+    "old_successes": 58,
+    "comparisons_run": 58,
+    "json_surface_failed_comparisons": 73,
+    "stats_only_matches": 12,
+    "stats_only_mismatches": 46,
+    "stats_only_old_skipped": 15,
+    "stats_only_new_failed": 0,
+    "all_comparable_statistics_compatible": false
+  },
+  "counts": {
+    "by_game_type": {
+      "mace": 28,
+      "sg": 28,
+      "sm": 17
+    },
+    "by_game_type_year": {
+      "mace:2020": 4,
+      "mace:2021": 4,
+      "mace:2022": 4,
+      "mace:2023": 4,
+      "mace:2024": 4,
+      "mace:2025": 4,
+      "mace:2026": 4,
+      "sg:2020": 4,
+      "sg:2021": 4,
+      "sg:2022": 4,
+      "sg:2023": 4,
+      "sg:2024": 4,
+      "sg:2025": 4,
+      "sg:2026": 4,
+      "sm:2020": 1,
+      "sm:2023": 4,
+      "sm:2024": 4,
+      "sm:2025": 4,
+      "sm:2026": 4
+    },
+    "comparison_findings_by_category": {
+      "compatible": 28,
+      "human_review": 262
+    },
+    "stats_only_by_status": {
+      "match": 12,
+      "mismatch": 46,
+      "old_skipped": 15
+    }
+  },
+  "failing_samples": [
+    {
+      "sample_id": "mace-2020-end-f93c084b",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_31__00_17_04_ocap",
+      "date": "2020-12-30T23:15:04.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2020-end-f93c084b.json"
+    },
+    {
+      "sample_id": "mace-2020-end-8826c2bd",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_31__00_32_33_ocap",
+      "date": "2020-12-30T23:31:18.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2020-end-8826c2bd.json"
+    },
+    {
+      "sample_id": "mace-2020-start-75b45469",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_09__23_21_36_ocap",
+      "date": "2020-09-09T20:56:26.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2020-start-75b45469.json"
+    },
+    {
+      "sample_id": "mace-2020-start-62c9bab1",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_07__21_10_34_ocap",
+      "date": "2020-10-07T18:47:39.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2020-start-62c9bab1.json"
+    },
+    {
+      "sample_id": "mace-2021-end-8ff3c458",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_22__23_54_41__1_ocap",
+      "date": "2021-12-22T22:52:26.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2021-end-8ff3c458.json"
+    },
+    {
+      "sample_id": "mace-2021-end-3f42fedd",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_29__20_06_13__1_ocap",
+      "date": "2021-12-29T18:44:38.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2021-end-3f42fedd.json"
+    },
+    {
+      "sample_id": "mace-2021-start-69646dc4",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_09__12_59_04_ocap",
+      "date": "2021-01-09T11:50:29.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2021-start-69646dc4.json"
+    },
+    {
+      "sample_id": "mace-2021-start-6286cbe0",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_28__20_17_33_ocap",
+      "date": "2021-01-28T19:14:58.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2021-start-6286cbe0.json"
+    },
+    {
+      "sample_id": "mace-2022-end-fc071849",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_30__16_45_51__1_ocap",
+      "date": "2022-12-30T16:40:46.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2022-end-fc071849.json"
+    },
+    {
+      "sample_id": "mace-2022-end-739db3bc",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_31__00_08_28__1_ocap",
+      "date": "2022-12-31T00:04:43.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2022-end-739db3bc.json"
+    },
+    {
+      "sample_id": "mace-2022-start-51831022",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_03__20_03_51__1_ocap",
+      "date": "2022-01-03T18:58:26.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2022-start-51831022.json"
+    },
+    {
+      "sample_id": "mace-2022-start-4022c6f1",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_05__18_07_21__1_ocap",
+      "date": "2022-01-05T17:05:41.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2022-start-4022c6f1.json"
+    },
+    {
+      "sample_id": "mace-2023-end-f0f33d24",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_31__19_45_52__1_ocap",
+      "date": "2023-12-31T16:36:00.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2023-end-f0f33d24.json"
+    },
+    {
+      "sample_id": "mace-2023-end-07225bcf",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_31__21_51_33__1_ocap",
+      "date": "2023-12-31T18:44:29.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2023-end-07225bcf.json"
+    },
+    {
+      "sample_id": "mace-2023-start-3b9a43d8",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__13_55_07__1_ocap",
+      "date": "2023-01-04T13:33:57.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2023-start-3b9a43d8.json"
+    },
+    {
+      "sample_id": "mace-2023-start-89142334",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__17_12_13__1_ocap",
+      "date": "2023-01-04T17:08:58.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2023-start-89142334.json"
+    },
+    {
+      "sample_id": "mace-2024-end-c958360c",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_30__19_25_21__1_ocap",
+      "date": "2024-12-30T16:17:01.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2024-end-c958360c.json"
+    },
+    {
+      "sample_id": "mace-2024-end-91ab4a4a",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_31__01_13_51__1_ocap",
+      "date": "2024-12-30T22:03:47.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2024-end-91ab4a4a.json"
+    },
+    {
+      "sample_id": "mace-2024-start-87b5ae49",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_01__16_43_00__1_ocap",
+      "date": "2024-01-01T13:37:02.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2024-start-87b5ae49.json"
+    },
+    {
+      "sample_id": "mace-2024-start-8fe81163",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_01__17_23_26__1_ocap",
+      "date": "2024-01-01T14:16:50.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2024-start-8fe81163.json"
+    },
+    {
+      "sample_id": "mace-2025-end-cea65bbb",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__09_04_54__1_ocap",
+      "date": "2025-12-30T16:59:40.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2025-end-cea65bbb.json"
+    },
+    {
+      "sample_id": "mace-2025-end-f03657b2",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__11_53_31__1_ocap",
+      "date": "2025-12-30T19:46:40.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2025-end-f03657b2.json"
+    },
+    {
+      "sample_id": "mace-2025-start-3bd9a1c5",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_01__19_44_40__1_ocap",
+      "date": "2025-01-01T16:42:28.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2025-start-3bd9a1c5.json"
+    },
+    {
+      "sample_id": "mace-2025-start-d713405e",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_02__16_40_52__1_ocap",
+      "date": "2025-01-02T13:38:09.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2025-start-d713405e.json"
+    },
+    {
+      "sample_id": "mace-2026-end-1d2ebe8d",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__20_49_38__1_ocap",
+      "date": "2026-04-20T17:45:21.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2026-end-1d2ebe8d.json"
+    },
+    {
+      "sample_id": "mace-2026-end-fb82f256",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_21__21_01_40__1_ocap",
+      "date": "2026-04-21T18:00:29.000Z",
+      "new_ok": true,
+      "old_ok": false,
+      "comparison_ok": false,
+      "categories": {},
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2026-end-fb82f256.json"
+    },
+    {
+      "sample_id": "mace-2026-start-9b8fedaf",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_05__11_28_35__1_ocap",
+      "date": "2026-01-05T19:26:49.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2026-start-9b8fedaf.json"
+    },
+    {
+      "sample_id": "mace-2026-start-102b362b",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_05__11_32_41__1_ocap",
+      "date": "2026-01-05T19:31:01.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/mace-2026-start-102b362b.json"
+    },
+    {
+      "sample_id": "sg-2020-end-f5bc13b5",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_05__22_39_27_ocap",
+      "date": "2020-12-05T20:08:32.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2020-end-f5bc13b5.json"
+    },
+    {
+      "sample_id": "sg-2020-end-aae85a7f",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_18__23_58_15_ocap",
+      "date": "2020-12-18T21:39:25.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2020-end-aae85a7f.json"
+    },
+    {
+      "sample_id": "sg-2020-start-7d416ec4",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_05__23_08_42_ocap",
+      "date": "2020-09-05T19:34:32.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2020-start-7d416ec4.json"
+    },
+    {
+      "sample_id": "sg-2020-start-54838cf5",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_12__00_37_09_ocap",
+      "date": "2020-09-11T21:31:39.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2020-start-54838cf5.json"
+    },
+    {
+      "sample_id": "sg-2021-end-7fa5cf8c",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_18__21_14_52__2_ocap",
+      "date": "2021-12-18T19:07:32.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2021-end-7fa5cf8c.json"
+    },
+    {
+      "sample_id": "sg-2021-end-cb5d8aaf",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_26__01_06_51__1_ocap",
+      "date": "2021-12-25T22:24:21.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2021-end-cb5d8aaf.json"
+    },
+    {
+      "sample_id": "sg-2021-start-39713e43",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_10__00_11_57_ocap",
+      "date": "2021-01-09T22:08:47.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2021-start-39713e43.json"
+    },
+    {
+      "sample_id": "sg-2021-start-4247d272",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_02_12__22_57_50_ocap",
+      "date": "2021-02-12T20:13:05.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2021-start-4247d272.json"
+    },
+    {
+      "sample_id": "sg-2022-end-e4fa593a",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__23_51_55__1_ocap",
+      "date": "2022-12-23T22:45:15.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2022-end-e4fa593a.json"
+    },
+    {
+      "sample_id": "sg-2022-end-c8e50edc",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_24__22_39_54__1_ocap",
+      "date": "2022-12-24T21:08:34.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2022-end-c8e50edc.json"
+    },
+    {
+      "sample_id": "sg-2022-start-2d0e0d43",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_07__23_13_23__2_ocap",
+      "date": "2022-01-07T20:58:23.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2022-start-2d0e0d43.json"
+    },
+    {
+      "sample_id": "sg-2022-start-4da96d19",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_22__00_39_46__1_ocap",
+      "date": "2022-01-21T22:10:46.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2022-start-4da96d19.json"
+    },
+    {
+      "sample_id": "sg-2023-end-d8ad5f67",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_29__22_25_02__2_ocap",
+      "date": "2023-12-29T18:05:03.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2023-end-d8ad5f67.json"
+    },
+    {
+      "sample_id": "sg-2023-end-115fb864",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_30__23_18_59__1_ocap",
+      "date": "2023-12-30T18:13:30.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2023-end-115fb864.json"
+    },
+    {
+      "sample_id": "sg-2023-start-14672344",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_13__23_11_24__1_ocap",
+      "date": "2023-01-13T21:04:14.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2023-start-14672344.json"
+    },
+    {
+      "sample_id": "sg-2023-start-93d560d8",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_14__22_30_58__1_ocap",
+      "date": "2023-01-14T18:05:58.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2023-start-93d560d8.json"
+    },
+    {
+      "sample_id": "sg-2024-end-b1a67d0d",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_20__23_34_33__2_ocap",
+      "date": "2024-12-20T19:29:20.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2024-end-b1a67d0d.json"
+    },
+    {
+      "sample_id": "sg-2024-end-c17e70e0",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_21__22_30_43__2_ocap",
+      "date": "2024-12-21T18:10:44.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2024-end-c17e70e0.json"
+    },
+    {
+      "sample_id": "sg-2024-start-ac8adc8a",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_13__22_48_40__1_ocap",
+      "date": "2024-01-13T18:33:38.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2024-start-ac8adc8a.json"
+    },
+    {
+      "sample_id": "sg-2024-start-7c67419f",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_19__22_31_55__2_ocap",
+      "date": "2024-01-19T18:08:08.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2024-start-7c67419f.json"
+    },
+    {
+      "sample_id": "sg-2025-end-0f91d87a",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_26__11_45_43__1_ocap",
+      "date": "2025-12-26T18:09:54.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2025-end-0f91d87a.json"
+    },
+    {
+      "sample_id": "sg-2025-end-4ff4d4a0",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_26__22_43_15__2_ocap",
+      "date": "2025-12-26T18:10:16.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2025-end-4ff4d4a0.json"
+    },
+    {
+      "sample_id": "sg-2025-start-81e934b3",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_04__22_45_45__2_ocap",
+      "date": "2025-01-04T18:04:50.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2025-start-81e934b3.json"
+    },
+    {
+      "sample_id": "sg-2025-start-2d921ece",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_11__23_36_14__1_ocap",
+      "date": "2025-01-11T19:16:05.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2025-start-2d921ece.json"
+    },
+    {
+      "sample_id": "sg-2026-end-a98e671e",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_11__00_32_42__2_ocap",
+      "date": "2026-04-10T19:57:22.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2026-end-a98e671e.json"
+    },
+    {
+      "sample_id": "sg-2026-end-31556f1b",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_18__00_23_02__2_ocap",
+      "date": "2026-04-17T19:39:43.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2026-end-31556f1b.json"
+    },
+    {
+      "sample_id": "sg-2026-start-cee5e6bc",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_02__23_30_35__2_ocap",
+      "date": "2026-01-02T19:15:14.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2026-start-cee5e6bc.json"
+    },
+    {
+      "sample_id": "sg-2026-start-b813f337",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_02__13_00_59__1_ocap",
+      "date": "2026-01-02T19:55:18.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sg-2026-start-b813f337.json"
+    },
+    {
+      "sample_id": "sm-2020-end-bc6b9d09",
+      "game_type": "sm",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_08_26__22_50_59_ocap",
+      "date": "2020-08-26T20:31:24.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2020-end-bc6b9d09.json"
+    },
+    {
+      "sample_id": "sm-2023-end-ed643b6e",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_08_27__21_07_57__1_ocap",
+      "date": "2023-08-27T17:31:35.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2023-end-ed643b6e.json"
+    },
+    {
+      "sample_id": "sm-2023-end-efff9eda",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_10_08__21_26_07__1_ocap",
+      "date": "2023-10-08T17:28:31.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2023-end-efff9eda.json"
+    },
+    {
+      "sample_id": "sm-2023-start-89b317d8",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_08_06__21_15_25__1_ocap",
+      "date": "2023-08-06T17:24:49.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2023-start-89b317d8.json"
+    },
+    {
+      "sample_id": "sm-2023-start-feece92c",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_08_13__21_17_28__1_ocap",
+      "date": "2023-08-13T17:47:44.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2023-start-feece92c.json"
+    },
+    {
+      "sample_id": "sm-2024-end-46aaf473",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_11_17__21_50_44__1_ocap",
+      "date": "2024-11-17T17:56:29.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2024-end-46aaf473.json"
+    },
+    {
+      "sample_id": "sm-2024-end-fa91e1da",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_15__22_10_21__1_ocap",
+      "date": "2024-12-15T18:03:42.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2024-end-fa91e1da.json"
+    },
+    {
+      "sample_id": "sm-2024-start-19b95dc4",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_02_18__20_05_45__1_ocap",
+      "date": "2024-02-18T16:29:09.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2024-start-19b95dc4.json"
+    },
+    {
+      "sample_id": "sm-2024-start-4ed733bf",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_03_17__20_25_59__1_ocap",
+      "date": "2024-03-17T16:33:47.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2024-start-4ed733bf.json"
+    },
+    {
+      "sample_id": "sm-2025-end-531650b8",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_11_02__11_10_09__1_ocap",
+      "date": "2025-11-02T18:26:53.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2025-end-531650b8.json"
+    },
+    {
+      "sample_id": "sm-2025-end-2d7581be",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_11_09__11_03_28__1_ocap",
+      "date": "2025-11-09T18:03:39.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2025-end-2d7581be.json"
+    },
+    {
+      "sample_id": "sm-2025-start-26bccbbc",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_19__21_05_34__1_ocap",
+      "date": "2025-01-19T16:39:20.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2025-start-26bccbbc.json"
+    },
+    {
+      "sample_id": "sm-2025-start-6ab68893",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_19__22_45_51__1_ocap",
+      "date": "2025-01-19T18:26:45.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2025-start-6ab68893.json"
+    },
+    {
+      "sample_id": "sm-2026-end-41e06eab",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_13__23_22_13__1_ocap",
+      "date": "2026-04-13T20:16:51.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 2,
+        "human_review": 3
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2026-end-41e06eab.json"
+    },
+    {
+      "sample_id": "sm-2026-end-c15e6801",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_19__20_37_16__1_ocap",
+      "date": "2026-04-19T16:33:43.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2026-end-c15e6801.json"
+    },
+    {
+      "sample_id": "sm-2026-start-3709a7bb",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_02_22__10_12_18__1_ocap",
+      "date": "2026-02-24T11:17:39.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "compatible": 1,
+        "human_review": 4
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2026-start-3709a7bb.json"
+    },
+    {
+      "sample_id": "sm-2026-start-747cf162",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_03_22__20_36_14__1_ocap",
+      "date": "2026-03-22T16:32:15.000Z",
+      "new_ok": true,
+      "old_ok": true,
+      "comparison_ok": true,
+      "categories": {
+        "human_review": 5
+      },
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/comparison-reports/sm-2026-start-747cf162.json"
+    }
+  ],
+  "stats_mismatch_samples": [
+    {
+      "sample_id": "mace-2020-end-f93c084b",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_31__00_17_04_ocap",
+      "date": "2020-12-30T23:15:04.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2020-end-f93c084b.json"
+    },
+    {
+      "sample_id": "mace-2020-end-8826c2bd",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_31__00_32_33_ocap",
+      "date": "2020-12-30T23:31:18.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2020-end-8826c2bd.json"
+    },
+    {
+      "sample_id": "mace-2020-start-75b45469",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_09__23_21_36_ocap",
+      "date": "2020-09-09T20:56:26.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "players.legacy_name:shketus: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2020-start-75b45469.json"
+    },
+    {
+      "sample_id": "mace-2020-start-62c9bab1",
+      "game_type": "mace",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_10_07__21_10_34_ocap",
+      "date": "2020-10-07T18:47:39.000Z",
+      "status": "mismatch",
+      "diff_count": 1,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Vorobushek', 'weapon': 'Binoculars', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2020-start-62c9bab1.json"
+    },
+    {
+      "sample_id": "mace-2021-start-69646dc4",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_09__12_59_04_ocap",
+      "date": "2021-01-09T11:50:29.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2021-start-69646dc4.json"
+    },
+    {
+      "sample_id": "mace-2021-start-6286cbe0",
+      "game_type": "mace",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_28__20_17_33_ocap",
+      "date": "2021-01-28T19:14:58.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2021-start-6286cbe0.json"
+    },
+    {
+      "sample_id": "mace-2022-end-fc071849",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_30__16_45_51__1_ocap",
+      "date": "2022-12-30T16:40:46.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2022-end-fc071849.json"
+    },
+    {
+      "sample_id": "mace-2022-start-51831022",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_03__20_03_51__1_ocap",
+      "date": "2022-01-03T18:58:26.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2022-start-51831022.json"
+    },
+    {
+      "sample_id": "mace-2022-start-4022c6f1",
+      "game_type": "mace",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_05__18_07_21__1_ocap",
+      "date": "2022-01-05T17:05:41.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2022-start-4022c6f1.json"
+    },
+    {
+      "sample_id": "mace-2023-end-07225bcf",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_31__21_51_33__1_ocap",
+      "date": "2023-12-31T18:44:29.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2023-end-07225bcf.json"
+    },
+    {
+      "sample_id": "mace-2023-start-3b9a43d8",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__13_55_07__1_ocap",
+      "date": "2023-01-04T13:33:57.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2023-start-3b9a43d8.json"
+    },
+    {
+      "sample_id": "mace-2023-start-89142334",
+      "game_type": "mace",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_04__17_12_13__1_ocap",
+      "date": "2023-01-04T17:08:58.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2023-start-89142334.json"
+    },
+    {
+      "sample_id": "mace-2024-start-87b5ae49",
+      "game_type": "mace",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_01__16_43_00__1_ocap",
+      "date": "2024-01-01T13:37:02.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2024-start-87b5ae49.json"
+    },
+    {
+      "sample_id": "mace-2025-end-cea65bbb",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__09_04_54__1_ocap",
+      "date": "2025-12-30T16:59:40.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2025-end-cea65bbb.json"
+    },
+    {
+      "sample_id": "mace-2025-end-f03657b2",
+      "game_type": "mace",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_30__11_53_31__1_ocap",
+      "date": "2025-12-30T19:46:40.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2025-end-f03657b2.json"
+    },
+    {
+      "sample_id": "mace-2026-end-1d2ebe8d",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_20__20_49_38__1_ocap",
+      "date": "2026-04-20T17:45:21.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2026-end-1d2ebe8d.json"
+    },
+    {
+      "sample_id": "mace-2026-end-fb82f256",
+      "game_type": "mace",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_21__21_01_40__1_ocap",
+      "date": "2026-04-21T18:00:29.000Z",
+      "status": "old_skipped",
+      "diff_count": 1,
+      "diffs": [
+        "old parser returned skipped/no statistics"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/mace-2026-end-fb82f256.json"
+    },
+    {
+      "sample_id": "sg-2020-end-f5bc13b5",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_05__22_39_27_ocap",
+      "date": "2020-12-05T20:08:32.000Z",
+      "status": "mismatch",
+      "diff_count": 24,
+      "diffs": [
+        "players.legacy_name:AndreyCamper: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Bylvark: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:HERETICUS: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:IIIOK: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Mozzy: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Nerdan: old={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 2, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:TeyAran: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SKIF]Nerdan: old=None new={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 2, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Nerdan', 'target': 'legacy_name:JustDave', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Nerdan', 'target': 'legacy_name:Rex', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2020-end-f5bc13b5.json"
+    },
+    {
+      "sample_id": "sg-2020-end-aae85a7f",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_12_18__23_58_15_ocap",
+      "date": "2020-12-18T21:39:25.000Z",
+      "status": "mismatch",
+      "diff_count": 42,
+      "diffs": [
+        "players.legacy_name:Cremik: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Jahsta: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Kotik: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Lydlos: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Monster: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Pain: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Rosha: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Skywalker: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:T1BeR: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Zhud: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2020-end-aae85a7f.json"
+    },
+    {
+      "sample_id": "sg-2020-start-7d416ec4",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_05__23_08_42_ocap",
+      "date": "2020-09-05T19:34:32.000Z",
+      "status": "mismatch",
+      "diff_count": 14,
+      "diffs": [
+        "players.legacy_name:Ambre: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:KiFir: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Kron: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Mozzy: old={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:OldMan: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Phonk: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Rodnoj: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Sadowken: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[TAG]abudabi: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:abudabi: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2020-start-7d416ec4.json"
+    },
+    {
+      "sample_id": "sg-2020-start-54838cf5",
+      "game_type": "sg",
+      "year": "2020",
+      "bucket": "start",
+      "filename": "2020_09_12__00_37_09_ocap",
+      "date": "2020-09-11T21:31:39.000Z",
+      "status": "mismatch",
+      "diff_count": 37,
+      "diffs": [
+        "players.legacy_name:Doomish: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Gagarin: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:German: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:HE4TO: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Maloy: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Natrii: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Nerdan: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Romb1k: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Sarazin: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Smerch: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2020-start-54838cf5.json"
+    },
+    {
+      "sample_id": "sg-2021-end-7fa5cf8c",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_18__21_14_52__2_ocap",
+      "date": "2021-12-18T19:07:32.000Z",
+      "status": "mismatch",
+      "diff_count": 19,
+      "diffs": [
+        "players.legacy_name:Daimeron: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[Falcon]Daimeron: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Orfen', 'target': 'legacy_name:Daimeron', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Daimeron', 'target': 'legacy_name:Orfen', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:Orfen', 'target': 'legacy_name:[Falcon]Daimeron', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[Falcon]Daimeron', 'target': 'legacy_name:Orfen', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:ADeKvaT', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:GreyGoo', 'weapon': 'Mi-24V', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Ryazanec', 'weapon': 'Mi-24V', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:abudabi', 'weapon': 'Mi-24V', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2021-end-7fa5cf8c.json"
+    },
+    {
+      "sample_id": "sg-2021-end-cb5d8aaf",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "end",
+      "filename": "2021_12_26__01_06_51__1_ocap",
+      "date": "2021-12-25T22:24:21.000Z",
+      "status": "mismatch",
+      "diff_count": 20,
+      "diffs": [
+        "players.legacy_name:Disciple: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "players.legacy_name:Gre4a: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[RSA]Disciple: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:[SKIF]Gre4a: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:beda', 'target': 'legacy_name:Gre4a', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Gre4a', 'target': 'legacy_name:beda', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkilled', 'source': 'legacy_name:Aced', 'target': 'legacy_name:Disciple', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkillers', 'source': 'legacy_name:Disciple', 'target': 'legacy_name:Aced', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:beda', 'target': 'legacy_name:[SKIF]Gre4a', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[SKIF]Gre4a', 'target': 'legacy_name:beda', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2021-end-cb5d8aaf.json"
+    },
+    {
+      "sample_id": "sg-2021-start-39713e43",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_01_10__00_11_57_ocap",
+      "date": "2021-01-09T22:08:47.000Z",
+      "status": "mismatch",
+      "diff_count": 10,
+      "diffs": [
+        "players.legacy_name:Mafe: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[FNX]Mafe: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "weapons: extra in new {'player': 'legacy_name:Exile', 'weapon': 'M2A2ODS', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:HE4TO', 'weapon': 'BTR-40 (SPG-9)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:HERETICUS', 'weapon': 'M2A2ODS', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Major', 'weapon': 'Ural-4320 (ZU-23-2)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Murphy', 'weapon': 'BTR-40 (SPG-9)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Gusteau', 'weapon': 'T-55', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Puma', 'weapon': 'AH-6M Little Bird', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Gektor', 'weapon': '[ACE] 2B14 Podnos', 'kills': 3}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2021-start-39713e43.json"
+    },
+    {
+      "sample_id": "sg-2021-start-4247d272",
+      "game_type": "sg",
+      "year": "2021",
+      "bucket": "start",
+      "filename": "2021_02_12__22_57_50_ocap",
+      "date": "2021-02-12T20:13:05.000Z",
+      "status": "mismatch",
+      "diff_count": 17,
+      "diffs": [
+        "players.legacy_name:Jerex: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "players.legacy_name:Nerdan: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:Sarhat: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[Falcon]Sarhat: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'teamkilled', 'source': 'legacy_name:Cremik', 'target': 'legacy_name:Jerex', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkillers', 'source': 'legacy_name:Jerex', 'target': 'legacy_name:Cremik', 'count': 1}",
+        "relationships: extra in new {'relationship': 'teamkilled', 'source': 'legacy_name:Cremik', 'target': 'legacy_name:Nerdan', 'count': 1}",
+        "relationships: extra in new {'relationship': 'teamkillers', 'source': 'legacy_name:Nerdan', 'target': 'legacy_name:Cremik', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Bobqa', 'weapon': 'T-90A (obr. 2006g.)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Brom', 'weapon': 'UH-1N (MG)', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2021-start-4247d272.json"
+    },
+    {
+      "sample_id": "sg-2022-end-e4fa593a",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_23__23_51_55__1_ocap",
+      "date": "2022-12-23T22:45:15.000Z",
+      "status": "mismatch",
+      "diff_count": 20,
+      "diffs": [
+        "players.legacy_name:Midas: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Zohan: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[AS]Midas: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[Wagner]Zohan: old=None new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Kohai', 'target': 'legacy_name:Midas', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Zohan', 'target': 'legacy_name:Astolfo', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Zohan', 'target': 'legacy_name:Markovnik', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Astolfo', 'target': 'legacy_name:Zohan', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Markovnik', 'target': 'legacy_name:Zohan', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Midas', 'target': 'legacy_name:Kohai', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2022-end-e4fa593a.json"
+    },
+    {
+      "sample_id": "sg-2022-end-c8e50edc",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "end",
+      "filename": "2022_12_24__22_39_54__1_ocap",
+      "date": "2022-12-24T21:08:34.000Z",
+      "status": "mismatch",
+      "diff_count": 18,
+      "diffs": [
+        "players.legacy_name:Loony: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[VTR]Loony: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Discreto', 'target': 'legacy_name:Loony', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Loony', 'target': 'legacy_name:Discreto', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:Discreto', 'target': 'legacy_name:[VTR]Loony', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[VTR]Loony', 'target': 'legacy_name:Discreto', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:HE4TO', 'weapon': 'M2A2ODS', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Kashtan', 'weapon': 'GAZ-66 (ZU-23-2)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Ryazanec', 'weapon': 'T-72B (obr. 1984g.)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Turbo', 'weapon': 'GAZ-66 (ZU-23-2)', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2022-end-c8e50edc.json"
+    },
+    {
+      "sample_id": "sg-2022-start-2d0e0d43",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_07__23_13_23__2_ocap",
+      "date": "2022-01-07T20:58:23.000Z",
+      "status": "mismatch",
+      "diff_count": 21,
+      "diffs": [
+        "players.legacy_name:Tiger: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[YKZ]Tiger: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Fhiop', 'target': 'legacy_name:Tiger', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Tiger', 'target': 'legacy_name:Crew', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Crew', 'target': 'legacy_name:Tiger', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Tiger', 'target': 'legacy_name:Fhiop', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:Fhiop', 'target': 'legacy_name:[YKZ]Tiger', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:[YKZ]Tiger', 'target': 'legacy_name:Crew', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:Crew', 'target': 'legacy_name:[YKZ]Tiger', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[YKZ]Tiger', 'target': 'legacy_name:Fhiop', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2022-start-2d0e0d43.json"
+    },
+    {
+      "sample_id": "sg-2022-start-4da96d19",
+      "game_type": "sg",
+      "year": "2022",
+      "bucket": "start",
+      "filename": "2022_01_22__00_39_46__1_ocap",
+      "date": "2022-01-21T22:10:46.000Z",
+      "status": "mismatch",
+      "diff_count": 34,
+      "diffs": [
+        "players.legacy_name:Gre4a: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:QuadRat: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Rralist: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Werwolf: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[GROM]Rralist: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SKIF]Gre4a: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[WHS]Werwolf: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Alegro', 'target': 'legacy_name:Gre4a', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Baralex', 'target': 'legacy_name:QuadRat', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:BouH', 'target': 'legacy_name:Werwolf', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2022-start-4da96d19.json"
+    },
+    {
+      "sample_id": "sg-2023-end-d8ad5f67",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_29__22_25_02__2_ocap",
+      "date": "2023-12-29T18:05:03.000Z",
+      "status": "mismatch",
+      "diff_count": 14,
+      "diffs": [
+        "players.legacy_name:Deonk: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[SGYR]Deonk: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:LONDOR', 'target': 'legacy_name:Deonk', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Deonk', 'target': 'legacy_name:LONDOR', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:LONDOR', 'target': 'legacy_name:[SGYR]Deonk', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[SGYR]Deonk', 'target': 'legacy_name:LONDOR', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:DonMiguel', 'weapon': 'GAZ-233014 ARMED', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:HE4TO', 'weapon': '[ACE] AGS-30 (6P17)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Advocat', 'weapon': 'Strf 90C', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Shelban', 'weapon': 'Strv 121', 'kills': 2}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2023-end-d8ad5f67.json"
+    },
+    {
+      "sample_id": "sg-2023-end-115fb864",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_12_30__23_18_59__1_ocap",
+      "date": "2023-12-30T18:13:30.000Z",
+      "status": "mismatch",
+      "diff_count": 66,
+      "diffs": [
+        "players.legacy_name:CHYPAKABRA: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Fraer: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Logan: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Medb: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Skandinav: old={'kills': 4, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[MSF]Fraer: old=None new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[MSF]Skandinav: old=None new={'kills': 4, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[UNS]CHYPAKABRA: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Kagan', 'target': 'legacy_name:CHYPAKABRA', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Medb', 'target': 'legacy_name:Svarog', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2023-end-115fb864.json"
+    },
+    {
+      "sample_id": "sg-2023-start-14672344",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_13__23_11_24__1_ocap",
+      "date": "2023-01-13T21:04:14.000Z",
+      "status": "mismatch",
+      "diff_count": 30,
+      "diffs": [
+        "players.legacy_name:Dobro: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Jimmy: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[AV]Jimmy: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SKAT]Dobro: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Jimmy', 'target': 'legacy_name:Noa', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:MoonLight', 'target': 'legacy_name:Dobro', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:NPIG', 'target': 'legacy_name:Jimmy', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Dobro', 'target': 'legacy_name:MoonLight', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Jimmy', 'target': 'legacy_name:NPIG', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Noa', 'target': 'legacy_name:Jimmy', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2023-start-14672344.json"
+    },
+    {
+      "sample_id": "sg-2023-start-93d560d8",
+      "game_type": "sg",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_01_14__22_30_58__1_ocap",
+      "date": "2023-01-14T18:05:58.000Z",
+      "status": "mismatch",
+      "diff_count": 8,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Dora', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:TakeOff', 'weapon': 'LAV-25A2', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:BadBoy', 'weapon': 'Land Cruiser KADDB (NSV)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:NPIG', 'weapon': 'LAV-25A2', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Holly', 'weapon': 'AH-6M Little Bird', 'kills': 4}",
+        "weapons: extra in new {'player': 'legacy_name:Britiy', 'weapon': 'AH-6M Little Bird', 'kills': 6}",
+        "weapons: extra in new {'player': 'legacy_name:bestdream', 'weapon': 'AH-6M Little Bird', 'kills': 7}",
+        "weapons: extra in new {'player': 'legacy_name:Fin', 'weapon': 'LAV-25A2', 'kills': 8}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2023-start-93d560d8.json"
+    },
+    {
+      "sample_id": "sg-2024-end-b1a67d0d",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_20__23_34_33__2_ocap",
+      "date": "2024-12-20T19:29:20.000Z",
+      "status": "mismatch",
+      "diff_count": 46,
+      "diffs": [
+        "players.legacy_name:Duwich: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Platon: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "players.legacy_name:[PS]Duwich: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RAF]malodec: old=None new={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SaF]Platon: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:malodec: old={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:DON', 'target': 'legacy_name:Duwich', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:malodec', 'target': 'legacy_name:Borw', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:malodec', 'target': 'legacy_name:chifkif', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:malodec', 'target': 'legacy_name:m1lder', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2024-end-b1a67d0d.json"
+    },
+    {
+      "sample_id": "sg-2024-end-c17e70e0",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_21__22_30_43__2_ocap",
+      "date": "2024-12-21T18:10:44.000Z",
+      "status": "mismatch",
+      "diff_count": 28,
+      "diffs": [
+        "players.legacy_name:[CBR]lukam: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RT]panka: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:lukam: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:panka: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Qvakiy', 'target': 'legacy_name:panka', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Shmat', 'target': 'legacy_name:lukam', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:lukam', 'target': 'legacy_name:Safim', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Safim', 'target': 'legacy_name:lukam', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:lukam', 'target': 'legacy_name:Shmat', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:panka', 'target': 'legacy_name:Qvakiy', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2024-end-c17e70e0.json"
+    },
+    {
+      "sample_id": "sg-2024-start-ac8adc8a",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_13__22_48_40__1_ocap",
+      "date": "2024-01-13T18:33:38.000Z",
+      "status": "mismatch",
+      "diff_count": 10,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Abotur', 'weapon': 'M1220 (O-GPK/M2)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:G-Virus', 'weapon': 'M2A3 (BUSK III)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Fun', 'weapon': 'M2A2ODS (BUSK I)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Kiker', 'weapon': '[ACE] 120mm 2B11', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:MadiS', 'weapon': 'M1220 (CROWS/M2)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:MarolFox', 'weapon': 'BTR-82A', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Renno', 'weapon': '[ACE] Mortar M252', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:lemfy', 'weapon': 'BMD-4M', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:NPIG', 'weapon': 'Patria AMV XA-360', 'kills': 5}",
+        "weapons: extra in new {'player': 'legacy_name:beda', 'weapon': 'BMP-3 (Vesna-K/A)', 'kills': 7}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2024-start-ac8adc8a.json"
+    },
+    {
+      "sample_id": "sg-2024-start-7c67419f",
+      "game_type": "sg",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_01_19__22_31_55__2_ocap",
+      "date": "2024-01-19T18:08:08.000Z",
+      "status": "mismatch",
+      "diff_count": 12,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Michman', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Murtazaa', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:varekai', 'weapon': 'AH-1S(MC)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:BepTyxau', 'weapon': 'M2 Early', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Dobro', 'weapon': '[ACE] 9K115 Metis', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:DonMiguel', 'weapon': 'M2 Early', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:VENnOMx', 'weapon': 'BMP-2 (obr. 1980g.)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Adert', 'weapon': 'M2 Early', 'kills': 3}",
+        "weapons: extra in new {'player': 'legacy_name:Remen', 'weapon': '[ACE] SPG-9M', 'kills': 6}",
+        "weapons: extra in new {'player': 'legacy_name:Kasad', 'weapon': 'BMP-2 (obr. 1980g.)', 'kills': 7}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2024-start-7c67419f.json"
+    },
+    {
+      "sample_id": "sg-2025-end-0f91d87a",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_26__11_45_43__1_ocap",
+      "date": "2025-12-26T18:09:54.000Z",
+      "status": "mismatch",
+      "diff_count": 43,
+      "diffs": [
+        "players.legacy_name:Makaka: old={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[GROM]yosya: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:[RL]Makaka: old=None new={'kills': 3, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:yosya: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Kramola', 'target': 'legacy_name:Makaka', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Makaka', 'target': 'legacy_name:Abonent', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Makaka', 'target': 'legacy_name:Borw', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Makaka', 'target': 'legacy_name:MuHoP', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Omegon', 'target': 'legacy_name:Makaka', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Abonent', 'target': 'legacy_name:Makaka', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2025-end-0f91d87a.json"
+    },
+    {
+      "sample_id": "sg-2025-end-4ff4d4a0",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_12_26__22_43_15__2_ocap",
+      "date": "2025-12-26T18:10:16.000Z",
+      "status": "mismatch",
+      "diff_count": 34,
+      "diffs": [
+        "players.legacy_name:Chypep: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:HeVa: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Loza: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:Pinchar: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[ESP]ashes: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[FREAK]Pinchar: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RAF]HeVa: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RBK]Chypep: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:ashes: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Pinchar', 'target': 'legacy_name:Verden', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2025-end-4ff4d4a0.json"
+    },
+    {
+      "sample_id": "sg-2025-start-81e934b3",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_04__22_45_45__2_ocap",
+      "date": "2025-01-04T18:04:50.000Z",
+      "status": "mismatch",
+      "diff_count": 64,
+      "diffs": [
+        "players.legacy_name:Babay: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:G-Virus: old={'kills': 4, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:KA3AX: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Ramis: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[AS]KA3AX: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[CU]Ramis: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[WD]G-Virus: old=None new={'kills': 4, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Cheezh', 'target': 'legacy_name:KA3AX', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:G-Virus', 'target': 'legacy_name:Kvas', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:G-Virus', 'target': 'legacy_name:Lesick', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2025-start-81e934b3.json"
+    },
+    {
+      "sample_id": "sg-2025-start-2d921ece",
+      "game_type": "sg",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_11__23_36_14__1_ocap",
+      "date": "2025-01-11T19:16:05.000Z",
+      "status": "mismatch",
+      "diff_count": 27,
+      "diffs": [
+        "players.legacy_name:Akela: old={'kills': 1, 'killsFromVehicle': 1, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[DSHB]s1zar: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[TRUM]Akela: old=None new={'kills': 1, 'killsFromVehicle': 1, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:s1zar: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Akela', 'target': 'legacy_name:Tihich', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Baralex', 'target': 'legacy_name:Akela', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:beda', 'target': 'legacy_name:s1zar', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Akela', 'target': 'legacy_name:Baralex', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Tihich', 'target': 'legacy_name:Akela', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:s1zar', 'target': 'legacy_name:beda', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2025-start-2d921ece.json"
+    },
+    {
+      "sample_id": "sg-2026-end-a98e671e",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_11__00_32_42__2_ocap",
+      "date": "2026-04-10T19:57:22.000Z",
+      "status": "mismatch",
+      "diff_count": 28,
+      "diffs": [
+        "players.legacy_name:Pincet: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[PS]Pincet: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Azivus', 'target': 'legacy_name:Pincet', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Pincet', 'target': 'legacy_name:Azivus', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:Azivus', 'target': 'legacy_name:[PS]Pincet', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[PS]Pincet', 'target': 'legacy_name:Azivus', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Darude', 'weapon': 'Land Cruiser KADDB (NSV)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Evrei', 'weapon': '[ACE] KORD Optics (6U16)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Felix', 'weapon': 'M113A3 (Mk19)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:GOT', 'weapon': '[ACE] HILUX GRAD', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2026-end-a98e671e.json"
+    },
+    {
+      "sample_id": "sg-2026-end-31556f1b",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_18__00_23_02__2_ocap",
+      "date": "2026-04-17T19:39:43.000Z",
+      "status": "mismatch",
+      "diff_count": 64,
+      "diffs": [
+        "players.legacy_name:Death: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:GRiNCH: old={'kills': 1, 'killsFromVehicle': 1, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Pincet: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Shtora: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[DD]GRiNCH: old=None new={'kills': 1, 'killsFromVehicle': 1, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[FDB]xinzz: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[PS]Pincet: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SHK]Shtora: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[SWR]Death: old=None new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:xinzz: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2026-end-31556f1b.json"
+    },
+    {
+      "sample_id": "sg-2026-start-cee5e6bc",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_02__23_30_35__2_ocap",
+      "date": "2026-01-02T19:15:14.000Z",
+      "status": "mismatch",
+      "diff_count": 76,
+      "diffs": [
+        "players.legacy_name:BaiK0NUR: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Bylvark: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Loza: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Merc: old={'kills': 3, 'killsFromVehicle': 3, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Morok: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:MrBadman: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Pilur: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Sopka: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Tarkon: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:Vitalya: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': False, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2026-start-cee5e6bc.json"
+    },
+    {
+      "sample_id": "sg-2026-start-b813f337",
+      "game_type": "sg",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_01_02__13_00_59__1_ocap",
+      "date": "2026-01-02T19:55:18.000Z",
+      "status": "mismatch",
+      "diff_count": 65,
+      "diffs": [
+        "players.legacy_name:Hartmann: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Latynb: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Maver: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Nova: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:PABLO: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[DD]Latynb: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[KSK]Nova: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RL]PABLO: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[Wagner]Hartmann: old=None new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[Wagner]Maver: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2026-start-b813f337.json"
+    },
+    {
+      "sample_id": "sm-2020-end-bc6b9d09",
+      "game_type": "sm",
+      "year": "2020",
+      "bucket": "end",
+      "filename": "2020_08_26__22_50_59_ocap",
+      "date": "2020-08-26T20:31:24.000Z",
+      "status": "mismatch",
+      "diff_count": 8,
+      "diffs": [
+        "players.legacy_name:Shatoi: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[ZN]Shatoi: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Shatoi', 'target': 'legacy_name:shketus', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:shketus', 'target': 'legacy_name:Shatoi', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:[ZN]Shatoi', 'target': 'legacy_name:shketus', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:shketus', 'target': 'legacy_name:[ZN]Shatoi', 'count': 1}",
+        "weapons: missing in new {'player': 'legacy_name:Shatoi', 'weapon': 'M249 PIP (Short/Savit)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:[ZN]Shatoi', 'weapon': 'M249 PIP (Short/Savit)', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2020-end-bc6b9d09.json"
+    },
+    {
+      "sample_id": "sm-2023-end-ed643b6e",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_08_27__21_07_57__1_ocap",
+      "date": "2023-08-27T17:31:35.000Z",
+      "status": "mismatch",
+      "diff_count": 28,
+      "diffs": [
+        "players.legacy_name:CAT: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "players.legacy_name:Disciple: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[FB]CAT: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:[TAG]Disciple: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Disciple', 'target': 'legacy_name:Dampick', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Maralles', 'target': 'legacy_name:Disciple', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Dampick', 'target': 'legacy_name:Disciple', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Disciple', 'target': 'legacy_name:Maralles', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkilled', 'source': 'legacy_name:CAT', 'target': 'legacy_name:soopart', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkilled', 'source': 'legacy_name:soopart', 'target': 'legacy_name:CAT', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2023-end-ed643b6e.json"
+    },
+    {
+      "sample_id": "sm-2023-end-efff9eda",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "end",
+      "filename": "2023_10_08__21_26_07__1_ocap",
+      "date": "2023-10-08T17:28:31.000Z",
+      "status": "mismatch",
+      "diff_count": 16,
+      "diffs": [
+        "players.legacy_name:Pover: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[DKK]Pover: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Surlaw', 'target': 'legacy_name:Pover', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Pover', 'target': 'legacy_name:Surlaw', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:Surlaw', 'target': 'legacy_name:[DKK]Pover', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[DKK]Pover', 'target': 'legacy_name:Surlaw', 'count': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Fighter', 'weapon': '[ACE] 9K111-1 Konkurs-M', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:HisTOry', 'weapon': 'BTR-82A', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Mance', 'weapon': 'KamAZ-5350-379 (ZU-23-2)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Zero', 'weapon': 'M1043A2 (M2)', 'kills': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2023-end-efff9eda.json"
+    },
+    {
+      "sample_id": "sm-2023-start-89b317d8",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_08_06__21_15_25__1_ocap",
+      "date": "2023-08-06T17:24:49.000Z",
+      "status": "mismatch",
+      "diff_count": 55,
+      "diffs": [
+        "players.legacy_name:CAT: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Frexis: old={'kills': 7, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[FB]CAT: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[TAG]Frexis: old=None new={'kills': 7, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Bator', 'target': 'legacy_name:Frexis', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:CAT', 'target': 'legacy_name:Telek', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Frexis', 'target': 'legacy_name:Abonent', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Frexis', 'target': 'legacy_name:Bidon', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Frexis', 'target': 'legacy_name:Petrucho', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Frexis', 'target': 'legacy_name:Shish', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2023-start-89b317d8.json"
+    },
+    {
+      "sample_id": "sm-2023-start-feece92c",
+      "game_type": "sm",
+      "year": "2023",
+      "bucket": "start",
+      "filename": "2023_08_13__21_17_28__1_ocap",
+      "date": "2023-08-13T17:47:44.000Z",
+      "status": "mismatch",
+      "diff_count": 11,
+      "diffs": [
+        "players.legacy_name:Colt: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[31st]Colt: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 1, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "weapons: extra in new {'player': 'legacy_name:Karniz', 'weapon': '[ACE] M119', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Kova', 'weapon': 'T-80UM', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Telek', 'weapon': 'T-80UM', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:varekai', 'weapon': 'Mi-24G', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Tundra', 'weapon': 'Mi-24G', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Yowa', 'weapon': '[ACE] M119', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:KAMIX', 'weapon': 'Mi-24G', 'kills': 3}",
+        "weapons: extra in new {'player': 'legacy_name:Mora', 'weapon': 'T-90A (obr. 2006g.)', 'kills': 3}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2023-start-feece92c.json"
+    },
+    {
+      "sample_id": "sm-2024-end-46aaf473",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_11_17__21_50_44__1_ocap",
+      "date": "2024-11-17T17:56:29.000Z",
+      "status": "mismatch",
+      "diff_count": 7,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:GeVa', 'weapon': 'Strf 9040 BILL', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Telek', 'weapon': 'T-90 (obr. 1992g.)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:shotnik', 'weapon': 'BMP-3 (Vesna-K)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Sarhat', 'weapon': 'M60A3 ERA', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Aqsud', 'weapon': 'BTR-82', 'kills': 4}",
+        "weapons: extra in new {'player': 'legacy_name:tElore', 'weapon': 'BMP-3 (Vesna-K)', 'kills': 5}",
+        "weapons: extra in new {'player': 'legacy_name:Kiska', 'weapon': 'M2A2ODS', 'kills': 9}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2024-end-46aaf473.json"
+    },
+    {
+      "sample_id": "sm-2024-end-fa91e1da",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "end",
+      "filename": "2024_12_15__22_10_21__1_ocap",
+      "date": "2024-12-15T18:03:42.000Z",
+      "status": "mismatch",
+      "diff_count": 9,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Sota', 'weapon': 'M1A1AIM', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:killovich', 'weapon': 'M1A1AIM', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Trible', 'weapon': 'BMP-2M', 'kills': 10}",
+        "weapons: extra in new {'player': 'legacy_name:FIoster', 'weapon': 'M2A3', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Sladkiy', 'weapon': 'M1A1AIM', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Makarena', 'weapon': 'T-90A (obr. 2006g.)', 'kills': 4}",
+        "weapons: extra in new {'player': 'legacy_name:Storm', 'weapon': '[ACE] 9M133 Kornet-M (No TVP)', 'kills': 5}",
+        "weapons: extra in new {'player': 'legacy_name:Attica', 'weapon': 'BMP-3 (Vesna-K)', 'kills': 8}",
+        "weapons: extra in new {'player': 'legacy_name:Telek', 'weapon': 'M2A3', 'kills': 8}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2024-end-fa91e1da.json"
+    },
+    {
+      "sample_id": "sm-2024-start-19b95dc4",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_02_18__20_05_45__1_ocap",
+      "date": "2024-02-18T16:29:09.000Z",
+      "status": "mismatch",
+      "diff_count": 2,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:bestdream', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:AKRA', 'weapon': 'UAZ-3151 (SPG-9)', 'kills': 15}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2024-start-19b95dc4.json"
+    },
+    {
+      "sample_id": "sm-2024-start-4ed733bf",
+      "game_type": "sm",
+      "year": "2024",
+      "bucket": "start",
+      "filename": "2024_03_17__20_25_59__1_ocap",
+      "date": "2024-03-17T16:33:47.000Z",
+      "status": "mismatch",
+      "diff_count": 6,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:RamaZ', 'weapon': 'Throw', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Telek', 'weapon': 'T-80UM', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Dinosavrik', 'weapon': 'M1151A1 (CROWS/M2)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:KAMIX', 'weapon': 'BMP-2 (obr. 1986g.)', 'kills': 3}",
+        "weapons: extra in new {'player': 'legacy_name:Makakiy', 'weapon': 'M1A1FEP', 'kills': 4}",
+        "weapons: extra in new {'player': 'legacy_name:chifkif', 'weapon': 'BMP-2 (obr. 1986g.)', 'kills': 8}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2024-start-4ed733bf.json"
+    },
+    {
+      "sample_id": "sm-2025-end-531650b8",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_11_02__11_10_09__1_ocap",
+      "date": "2025-11-02T18:26:53.000Z",
+      "status": "mismatch",
+      "diff_count": 46,
+      "diffs": [
+        "players.legacy_name:Ecio: old={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Shark: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[Oz]Ecio: old=None new={'kills': 2, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 1, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[Oz]Shark: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Ecio', 'target': 'legacy_name:Ghoster', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Ecio', 'target': 'legacy_name:ZORG', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Hrust', 'target': 'legacy_name:Ecio', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Hrust', 'target': 'legacy_name:Shark', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Lom', 'target': 'legacy_name:Shark', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Shark', 'target': 'legacy_name:KUCHIDAN', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2025-end-531650b8.json"
+    },
+    {
+      "sample_id": "sm-2025-end-2d7581be",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "end",
+      "filename": "2025_11_09__11_03_28__1_ocap",
+      "date": "2025-11-09T18:03:39.000Z",
+      "status": "mismatch",
+      "diff_count": 21,
+      "diffs": [
+        "players.legacy_name:JoePeach: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[CBR]JoePeach: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:JoePeach', 'target': 'legacy_name:Berserk', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:ZORG', 'target': 'legacy_name:JoePeach', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Berserk', 'target': 'legacy_name:JoePeach', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:JoePeach', 'target': 'legacy_name:ZORG', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:ZORG', 'target': 'legacy_name:[CBR]JoePeach', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:[CBR]JoePeach', 'target': 'legacy_name:Berserk', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:Berserk', 'target': 'legacy_name:[CBR]JoePeach', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killers', 'source': 'legacy_name:[CBR]JoePeach', 'target': 'legacy_name:ZORG', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2025-end-2d7581be.json"
+    },
+    {
+      "sample_id": "sm-2025-start-26bccbbc",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_19__21_05_34__1_ocap",
+      "date": "2025-01-19T16:39:20.000Z",
+      "status": "mismatch",
+      "diff_count": 34,
+      "diffs": [
+        "players.legacy_name:Klonyash: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True} new=None",
+        "players.legacy_name:[SWR]Klonyash: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "players.legacy_name:pako: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Klonyash', 'target': 'legacy_name:Plut', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Xanzik', 'target': 'legacy_name:pako', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:pako', 'target': 'legacy_name:Van', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Plut', 'target': 'legacy_name:Klonyash', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Van', 'target': 'legacy_name:pako', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:pako', 'target': 'legacy_name:Xanzik', 'count': 1}",
+        "relationships: missing in new {'relationship': 'teamkilled', 'source': 'legacy_name:ChuCha', 'target': 'legacy_name:Klonyash', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2025-start-26bccbbc.json"
+    },
+    {
+      "sample_id": "sm-2025-start-6ab68893",
+      "game_type": "sm",
+      "year": "2025",
+      "bucket": "start",
+      "filename": "2025_01_19__22_45_51__1_ocap",
+      "date": "2025-01-19T18:26:45.000Z",
+      "status": "mismatch",
+      "diff_count": 9,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Exster', 'weapon': 'Fuchs 1A4 Infantry', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Kiska', 'weapon': 'BMP-3 (Vesna-K)', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Makaka', 'weapon': 'Ka-52 (mod. 2011)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:NaNtli', 'weapon': 'BMP-3 (Vesna-K)', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Tundra', 'weapon': 'Buran 1 Transporter', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:mag_dog', 'weapon': 'Dingo 2 GE A3.3 (M2)', 'kills': 3}",
+        "weapons: extra in new {'player': 'legacy_name:Bylvark', 'weapon': 'BTR-82A', 'kills': 5}",
+        "weapons: extra in new {'player': 'legacy_name:Trible', 'weapon': 'IFV Puma', 'kills': 5}",
+        "weapons: extra in new {'player': 'legacy_name:Noa', 'weapon': 'IFV Puma', 'kills': 9}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2025-start-6ab68893.json"
+    },
+    {
+      "sample_id": "sm-2026-end-c15e6801",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "end",
+      "filename": "2026_04_19__20_37_16__1_ocap",
+      "date": "2026-04-19T16:33:43.000Z",
+      "status": "mismatch",
+      "diff_count": 5,
+      "diffs": [
+        "weapons: extra in new {'player': 'legacy_name:Bylvark', 'weapon': 'GAZ-233014 ARMED', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:klukva', 'weapon': 'BMP-2M', 'kills': 1}",
+        "weapons: extra in new {'player': 'legacy_name:Makaka', 'weapon': 'T-80BV', 'kills': 10}",
+        "weapons: extra in new {'player': 'legacy_name:Raiden', 'weapon': 'BTR-80', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:KA3AX', 'weapon': 'BMP-2 (obr. 1986g.)', 'kills': 3}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2026-end-c15e6801.json"
+    },
+    {
+      "sample_id": "sm-2026-start-3709a7bb",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_02_22__10_12_18__1_ocap",
+      "date": "2026-02-24T11:17:39.000Z",
+      "status": "mismatch",
+      "diff_count": 23,
+      "diffs": [
+        "players.legacy_name:Floyd: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:Pilur: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False} new=None",
+        "players.legacy_name:[7th]Floyd: old=None new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False}",
+        "players.legacy_name:[RAF]Pilur: old=None new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': False, 'isDeadByTeamkill': False}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:Floyd', 'target': 'legacy_name:Soap', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killed', 'source': 'legacy_name:SunseT', 'target': 'legacy_name:Floyd', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Floyd', 'target': 'legacy_name:SunseT', 'count': 1}",
+        "relationships: missing in new {'relationship': 'killers', 'source': 'legacy_name:Soap', 'target': 'legacy_name:Floyd', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:SunseT', 'target': 'legacy_name:[7th]Floyd', 'count': 1}",
+        "relationships: extra in new {'relationship': 'killed', 'source': 'legacy_name:[7th]Floyd', 'target': 'legacy_name:Soap', 'count': 1}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2026-start-3709a7bb.json"
+    },
+    {
+      "sample_id": "sm-2026-start-747cf162",
+      "game_type": "sm",
+      "year": "2026",
+      "bucket": "start",
+      "filename": "2026_03_22__20_36_14__1_ocap",
+      "date": "2026-03-22T16:32:15.000Z",
+      "status": "mismatch",
+      "diff_count": 4,
+      "diffs": [
+        "players.legacy_name:Likvidator: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}",
+        "weapons: extra in new {'player': 'legacy_name:Noa', 'weapon': 'Boxer IFV', 'kills': 2}",
+        "weapons: extra in new {'player': 'legacy_name:Sota', 'weapon': 'Freccia', 'kills': 4}",
+        "weapons: extra in new {'player': 'legacy_name:Zaba4', 'weapon': 'Boxer IFV', 'kills': 5}"
+      ],
+      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2026-start-747cf162.json"
+    }
+  ]
+}

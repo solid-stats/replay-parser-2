@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-stopped_at: Recorded Phase 05.2 benchmark gap acceptance; Phase 6 can proceed
-last_updated: "2026-05-02T07:19:43Z"
+stopped_at: Completed quick old/new year-edge replay parity comparison; parity failed on comparable stats
+last_updated: "2026-05-02T08:08:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 9
@@ -29,6 +29,7 @@ Phase: 06 (RabbitMQ/S3 Worker Integration) — READY
 Plan: not started
 Status: Phase 05.2 benchmark performance, p95, and known malformed-file gaps accepted by user
 Last activity: 2026-05-02 - Recorded user acceptance that current performance is sufficient, p95 > 0.10 is acceptable when max artifact size passes, and 4 known malformed/non-JSON raw files are acceptable when old/new error parity matches
+Last quick task: 2026-05-02 - Compared deterministic year-edge `sg`/`mace`/`sm` replay samples between old and new parsers; new parser succeeded on all 73 selected replays, old parser succeeded on 58 and skipped 15, and stats-only parity failed with 46 mismatches.
 
 Progress: [██████████] 100%
 
@@ -172,6 +173,7 @@ Recent decisions affecting current work:
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted the current benchmark performance, so historical selected x3 and all-raw x10 statuses remain reported but no longer block Phase 6 by themselves.
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted p95 artifact/raw ratio above `0.10`; all-raw size acceptance now focuses on hard max artifact size `<= 100000` and `oversized_artifact_count == 0`, while median/p95 remain trend evidence.
 - [Phase 05.2 Acceptance Update 2026-05-02]: Product owner accepted the 4 malformed/non-JSON all-raw failures when the old cached baseline reports the same failure count and new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`.
+- [Quick 260502-k2u]: Deterministic year-edge old/new parity sample selected 73 replays across `sg`, `mace`, and `sm`. New parser produced 73 artifacts, old parser produced 58 successful artifacts and 15 skipped rows, stats-only parity matched 12 comparable replays and mismatched 46. Full evidence is under `.planning/generated/quick/260502-k2u-old-new-year-edge-parity/`, with lightweight summary artifacts committed under `.planning/quick/260502-k2u-old-new-year-edge-parity/`.
 
 ### Roadmap Evolution
 
@@ -230,6 +232,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-gn2 | Ran full Phase 5.2 benchmark and selected old-vs-new stats diff after fixing the legacy all-raw baseline runner | 2026-05-02 | 998c799 | Verified | [260502-gn2-phase-5-2-x3-x10-old-vs-new](./quick/260502-gn2-phase-5-2-x3-x10-old-vs-new/) |
 | 260502-i8w | Fixed old all-raw coverage, merged same-name players, split legacy tags, nested player kills under players, cleaned generated phase output, and reran x10 evidence | 2026-05-02 | committed | Verified | [260502-i8w-phase-5-2-old-baseline-all-raw-coverage-](./quick/260502-i8w-phase-5-2-old-baseline-all-raw-coverage-/) |
 | 260502-jeh | Optimized default minimal parser hot path and reused cached old all-raw baseline for new benchmark comparisons | 2026-05-02 | 3176abb | Verified | [260502-jeh-full-optimize-parser-points-2-3-and-4-di](./quick/260502-jeh-full-optimize-parser-points-2-3-and-4-di/) |
+| 260502-k2u | Compared deterministic year-edge old/new replay statistics; parity failed on comparable stats | 2026-05-02 | committed | Verified - parity failed | [260502-k2u-old-new-year-edge-parity](./quick/260502-k2u-old-new-year-edge-parity/) |
 
 ## Deferred Items
 
