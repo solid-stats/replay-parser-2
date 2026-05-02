@@ -31,6 +31,14 @@ pub const ENV_S3_FORCE_PATH_STYLE: &str = "REPLAY_PARSER_S3_FORCE_PATH_STYLE";
 pub const ENV_ARTIFACT_PREFIX: &str = "REPLAY_PARSER_ARTIFACT_PREFIX";
 /// Environment variable for `RabbitMQ` prefetch.
 pub const ENV_PREFETCH: &str = "REPLAY_PARSER_PREFETCH";
+/// Environment variable for the HTTP probe bind address.
+pub const ENV_PROBE_BIND: &str = "REPLAY_PARSER_PROBE_BIND";
+/// Environment variable for the HTTP probe port.
+pub const ENV_PROBE_PORT: &str = "REPLAY_PARSER_PROBE_PORT";
+/// Environment variable for enabling HTTP probes.
+pub const ENV_PROBES_ENABLED: &str = "REPLAY_PARSER_PROBES_ENABLED";
+/// Environment variable for the operator-visible worker identity.
+pub const ENV_WORKER_ID: &str = "REPLAY_PARSER_WORKER_ID";
 
 /// Default local `RabbitMQ` AMQP URL.
 pub const DEFAULT_AMQP_URL: &str = "amqp://127.0.0.1:5672/%2f";
@@ -48,6 +56,14 @@ pub const DEFAULT_S3_REGION: &str = "us-east-1";
 pub const DEFAULT_ARTIFACT_PREFIX: &str = "artifacts/v3";
 /// Default in-flight `RabbitMQ` job count.
 pub const DEFAULT_PREFETCH: u16 = 1;
+/// Default HTTP probe bind address.
+pub const DEFAULT_PROBE_BIND: &str = "0.0.0.0";
+/// Default HTTP probe port.
+pub const DEFAULT_PROBE_PORT: u16 = 8080;
+/// Default HTTP probe enabled flag.
+pub const DEFAULT_PROBES_ENABLED: bool = true;
+/// Worker identity used when neither env nor hostname is available.
+pub const DEFAULT_WORKER_ID: &str = "replay-parser-worker";
 
 /// Validated worker runtime configuration.
 #[derive(Clone, Eq, PartialEq)]
@@ -74,6 +90,14 @@ pub struct WorkerConfig {
     pub artifact_prefix: String,
     /// `RabbitMQ` prefetch count. Phase 6 defaults this to one in-flight job.
     pub prefetch: u16,
+    /// HTTP probe bind address.
+    pub probe_bind: String,
+    /// HTTP probe port.
+    pub probe_port: u16,
+    /// Whether HTTP probes are enabled.
+    pub probes_enabled: bool,
+    /// Operator-visible worker identity for probes and logs.
+    pub worker_id: String,
 }
 
 /// Explicit configuration values supplied by the CLI.
@@ -101,6 +125,14 @@ pub struct WorkerConfigOverrides {
     pub artifact_prefix: Option<String>,
     /// `RabbitMQ` prefetch count.
     pub prefetch: Option<u16>,
+    /// HTTP probe bind address.
+    pub probe_bind: Option<String>,
+    /// HTTP probe port.
+    pub probe_port: Option<u16>,
+    /// Whether HTTP probes are enabled.
+    pub probes_enabled: Option<bool>,
+    /// Operator-visible worker identity for probes and logs.
+    pub worker_id: Option<String>,
 }
 
 impl WorkerConfig {
@@ -176,6 +208,29 @@ impl WorkerConfig {
                     .transpose()?
                     .unwrap_or(DEFAULT_PREFETCH),
             },
+            probe_bind: overrides
+                .probe_bind
+                .or_else(|| env(ENV_PROBE_BIND))
+                .unwrap_or_else(|| DEFAULT_PROBE_BIND.to_owned()),
+            probe_port: match overrides.probe_port {
+                Some(value) => value,
+                None => env(ENV_PROBE_PORT)
+                    .map(|value| parse_probe_port(&value))
+                    .transpose()?
+                    .unwrap_or(DEFAULT_PROBE_PORT),
+            },
+            probes_enabled: match overrides.probes_enabled {
+                Some(value) => value,
+                None => env(ENV_PROBES_ENABLED)
+                    .map(|value| parse_bool(ENV_PROBES_ENABLED, &value))
+                    .transpose()?
+                    .unwrap_or(DEFAULT_PROBES_ENABLED),
+            },
+            worker_id: overrides
+                .worker_id
+                .or_else(|| env(ENV_WORKER_ID))
+                .or_else(|| env("HOSTNAME"))
+                .unwrap_or_else(|| DEFAULT_WORKER_ID.to_owned()),
         };
         config.validate()?;
         Ok(config)
@@ -196,6 +251,11 @@ impl WorkerConfig {
         validate_non_empty("s3_region", &self.s3_region)?;
         validate_non_empty("artifact_prefix", &self.artifact_prefix)?;
         _ = validate_prefetch(self.prefetch)?;
+        if self.probes_enabled {
+            validate_non_empty("probe_bind", &self.probe_bind)?;
+            validate_probe_port(self.probe_port)?;
+            validate_non_empty("worker_id", &self.worker_id)?;
+        }
         Ok(())
     }
 
@@ -233,6 +293,10 @@ impl fmt::Debug for RedactedWorkerConfig<'_> {
             .field("s3_force_path_style", &self.config.s3_force_path_style)
             .field("artifact_prefix", &self.config.artifact_prefix)
             .field("prefetch", &self.config.prefetch)
+            .field("probe_bind", &self.config.probe_bind)
+            .field("probe_port", &self.config.probe_port)
+            .field("probes_enabled", &self.config.probes_enabled)
+            .field("worker_id", &self.config.worker_id)
             .finish()
     }
 }
@@ -257,6 +321,21 @@ fn validate_prefetch(value: u16) -> Result<u16, WorkerError> {
         return Err(validation_error(format!("{ENV_PREFETCH} must be >= 1")));
     }
     Ok(value)
+}
+
+fn parse_probe_port(value: &str) -> Result<u16, WorkerError> {
+    let parsed = value
+        .parse::<u16>()
+        .map_err(|_source| validation_error(format!("{ENV_PROBE_PORT} must be an integer >= 1")))?;
+    validate_probe_port(parsed)?;
+    Ok(parsed)
+}
+
+fn validate_probe_port(value: u16) -> Result<(), WorkerError> {
+    if value == 0 {
+        return Err(validation_error(format!("{ENV_PROBE_PORT} must be >= 1")));
+    }
+    Ok(())
 }
 
 fn validate_non_empty(name: &str, value: &str) -> Result<(), WorkerError> {

@@ -24,6 +24,11 @@ fn run_worker(args: &[&str]) -> Output {
         "REPLAY_PARSER_S3_FORCE_PATH_STYLE",
         "REPLAY_PARSER_ARTIFACT_PREFIX",
         "REPLAY_PARSER_PREFETCH",
+        "REPLAY_PARSER_PROBE_BIND",
+        "REPLAY_PARSER_PROBE_PORT",
+        "REPLAY_PARSER_PROBES_ENABLED",
+        "REPLAY_PARSER_WORKER_ID",
+        "HOSTNAME",
     ] {
         _ = command.env_remove(env_name);
     }
@@ -43,9 +48,17 @@ fn worker_command_help_should_list_runtime_configuration_flags() {
 
     // Assert
     assert!(command_output.status.success());
-    for expected_flag in
-        ["--amqp-url", "--s3-bucket", "--s3-endpoint", "--artifact-prefix", "--prefetch"]
-    {
+    for expected_flag in [
+        "--amqp-url",
+        "--s3-bucket",
+        "--s3-endpoint",
+        "--artifact-prefix",
+        "--prefetch",
+        "--probe-bind",
+        "--probe-port",
+        "--probes-enabled",
+        "--worker-id",
+    ] {
         assert!(stdout.contains(expected_flag), "worker help should contain {expected_flag}");
     }
 }

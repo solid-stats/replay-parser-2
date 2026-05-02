@@ -116,6 +116,18 @@ enum Commands {
         /// `RabbitMQ` prefetch count.
         #[arg(long)]
         prefetch: Option<u16>,
+        /// HTTP probe bind address.
+        #[arg(long)]
+        probe_bind: Option<String>,
+        /// HTTP probe port.
+        #[arg(long)]
+        probe_port: Option<u16>,
+        /// Enable HTTP probes.
+        #[arg(long, value_name = "BOOL")]
+        probes_enabled: Option<bool>,
+        /// Operator-visible worker identity.
+        #[arg(long)]
+        worker_id: Option<String>,
     },
 }
 
@@ -249,6 +261,10 @@ fn run() -> Result<ExitCode, CliError> {
             s3_force_path_style,
             artifact_prefix,
             prefetch,
+            probe_bind,
+            probe_port,
+            probes_enabled,
+            worker_id,
         } => worker_command(WorkerConfigOverrides {
             amqp_url,
             job_queue,
@@ -261,6 +277,10 @@ fn run() -> Result<ExitCode, CliError> {
             s3_force_path_style,
             artifact_prefix,
             prefetch,
+            probe_bind,
+            probe_port,
+            probes_enabled,
+            worker_id,
         }),
     }
 }
