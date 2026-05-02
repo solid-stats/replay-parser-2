@@ -272,7 +272,7 @@ Cross-cutting constraints:
 - Timeweb Cloud S3 compatibility must be documented and capability-checked when credentials are supplied; conditional writes must retain compare/reuse/conflict fallback.
 
 Plans:
-- [ ] 07-00-PLAN.md - S3 artifact race and duplicate redelivery hardening.
+- [x] 07-00-PLAN.md - S3 artifact race and duplicate redelivery hardening.
 - [ ] 07-01-PLAN.md - HTTP liveness/readiness probes, cached runtime state, and worker identity config.
 - [ ] 07-02-PLAN.md - Stable structured worker log taxonomy and secret-safe operations fields.
 - [ ] 07-03-PLAN.md - Two-worker container smoke, Docker health wiring, and Timeweb S3 compatibility hooks.
