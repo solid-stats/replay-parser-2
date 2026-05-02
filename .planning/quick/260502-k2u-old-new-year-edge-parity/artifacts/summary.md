@@ -7,8 +7,8 @@
 - Old parser successes: 58
 - Comparisons run: 58
 - JSON-surface failed/non-compatible comparisons: 73
-- Stats-only matches: 40
-- Stats-only mismatches: 18
+- Stats-only matches: 42
+- Stats-only mismatches: 16
 - Stats-only old skipped: 15
 - Stats-only new failed: 0
 - All comparable statistics compatible: false
@@ -122,10 +122,8 @@
 - sg-2023-start-93d560d8 2023_01_14__22_30_58__1_ocap (sg 2023 start): mismatch diffs=1
 - sg-2024-end-c17e70e0 2024_12_21__22_30_43__2_ocap (sg 2024 end): mismatch diffs=1
 - sg-2024-start-7c67419f 2024_01_19__22_31_55__2_ocap (sg 2024 start): mismatch diffs=2
-- sg-2025-end-4ff4d4a0 2025_12_26__22_43_15__2_ocap (sg 2025 end): mismatch diffs=1
 - sg-2026-end-31556f1b 2026_04_18__00_23_02__2_ocap (sg 2026 end): mismatch diffs=1
 - sm-2023-start-89b317d8 2023_08_06__21_15_25__1_ocap (sm 2023 start): mismatch diffs=1
 - sm-2024-start-19b95dc4 2024_02_18__20_05_45__1_ocap (sm 2024 start): mismatch diffs=1
 - sm-2024-start-4ed733bf 2024_03_17__20_25_59__1_ocap (sm 2024 start): mismatch diffs=1
 - sm-2025-start-26bccbbc 2025_01_19__21_05_34__1_ocap (sm 2025 start): mismatch diffs=1
-- sm-2026-start-747cf162 2026_03_22__20_36_14__1_ocap (sm 2026 start): mismatch diffs=1

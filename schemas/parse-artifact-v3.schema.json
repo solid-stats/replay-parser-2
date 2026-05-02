@@ -2368,6 +2368,12 @@
             "null"
           ]
         },
+        "td": {
+          "description": "Replay-level marker for a final death caused by a teamkill.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
         "tk": {
           "description": "Teamkill counter.",
           "type": "integer",

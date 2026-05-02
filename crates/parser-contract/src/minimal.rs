@@ -42,6 +42,9 @@ pub struct MinimalPlayerRow {
     /// Death counter.
     #[serde(default, rename = "d", skip_serializing_if = "is_zero_u64")]
     pub deaths: u64,
+    /// Replay-level marker for a final death caused by a teamkill.
+    #[serde(default, rename = "td", skip_serializing_if = "is_zero_u64")]
+    pub teamkill_deaths: u64,
     /// Teamkill counter.
     #[serde(default, rename = "tk", skip_serializing_if = "is_zero_u64")]
     pub teamkills: u64,

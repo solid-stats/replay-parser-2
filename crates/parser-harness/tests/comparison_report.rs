@@ -435,7 +435,8 @@ fn minimal_artifact_json(status: &str) -> Vec<u8> {
                 "g": "Alpha 1-2",
                 "r": "Rifleman",
                 "ck": "legacy_name:Charlie",
-                "d": 1
+                "d": 1,
+                "td": 1
             }
         ],
         "weapons": [

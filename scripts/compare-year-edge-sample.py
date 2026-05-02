@@ -545,7 +545,6 @@ def new_stats_view(root: dict[str, Any]) -> dict[str, Any]:
     players = root.get("players") or []
     weapons = {weapon.get("id"): weapon.get("n") for weapon in root.get("weapons") or []}
     refs = new_player_refs(players)
-    teamkill_deaths = Counter()
     relationships: list[dict[str, Any]] = []
     weapon_stats = Counter()
 
@@ -593,7 +592,6 @@ def new_stats_view(root: dict[str, Any]) -> dict[str, Any]:
                         "count": 1,
                     }
                 )
-                teamkill_deaths[victim] += 1
 
     player_stats = {}
     for player in players:
@@ -604,7 +602,7 @@ def new_stats_view(root: dict[str, Any]) -> dict[str, Any]:
             "vehicleKills": int(player.get("vk") or 0),
             "teamkills": int(player.get("tk") or 0),
             "isDead": int(player.get("d") or 0) > 0,
-            "isDeadByTeamkill": teamkill_deaths[key] > 0,
+            "isDeadByTeamkill": int(player.get("td") or 0) > 0,
         }
 
     return {

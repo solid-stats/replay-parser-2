@@ -130,11 +130,13 @@ fn combat_event_semantics_should_partition_player_deaths_and_destroyed_vehicles(
     let delta = player_by_id(&artifact, 4);
     let echo = player_by_id(&artifact, 5);
     let bravo = player_by_id(&artifact, 2);
+    let charlie = player_by_id(&artifact, 3);
 
     assert_eq!(kill_rows.len(), 2);
     assert_eq!(artifact.destroyed_vehicles.len(), 1);
     assert!(classifications.contains(&KillClassification::EnemyKill));
     assert!(classifications.contains(&KillClassification::Teamkill));
+    assert_eq!(charlie.teamkill_deaths, 1);
     assert_eq!(delta.suicides, 1);
     assert_eq!(echo.null_killer_deaths, 1);
     assert_eq!(bravo.deaths, 1);
@@ -322,4 +324,57 @@ fn combat_event_semantics_should_preserve_non_empty_weapon_statistics() {
     assert_eq!(artifact.weapons[0].name, "Binoculars");
     assert_eq!(spotter.kill_rows.len(), 1);
     assert_eq!(spotter.kill_rows[0].weapon_id, Some(1));
+}
+
+#[test]
+fn combat_event_semantics_should_use_latest_death_for_teamkill_death_marker() {
+    let fixture = br#"{
+      "missionName": "sg respawned after teamkill",
+      "worldName": "Altis",
+      "missionAuthor": "SolidGames",
+      "playersCount": [0, 3],
+      "captureDelay": 0.5,
+      "endFrame": 120,
+      "entities": [
+        {
+          "id": 1,
+          "type": "unit",
+          "name": "Driver",
+          "group": "Alpha",
+          "side": "WEST",
+          "description": "Driver",
+          "isPlayer": 1
+        },
+        {
+          "id": 2,
+          "type": "unit",
+          "name": "Passenger",
+          "group": "Alpha",
+          "side": "WEST",
+          "description": "Passenger",
+          "isPlayer": 1
+        },
+        {
+          "id": 3,
+          "type": "unit",
+          "name": "Enemy",
+          "group": "Bravo",
+          "side": "EAST",
+          "description": "Rifleman",
+          "isPlayer": 1
+        }
+      ],
+      "events": [
+        [10, "killed", 2, [1, "Car"], 100],
+        [80, "killed", 2, [3, "Rifle"], 100]
+      ],
+      "Markers": [],
+      "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_fixture(fixture);
+    let passenger = player_by_id(&artifact, 2);
+
+    assert_eq!(passenger.deaths, 2);
+    assert_eq!(passenger.teamkill_deaths, 0);
 }

@@ -16,8 +16,8 @@
     "old_successes": 58,
     "comparisons_run": 58,
     "json_surface_failed_comparisons": 73,
-    "stats_only_matches": 40,
-    "stats_only_mismatches": 18,
+    "stats_only_matches": 42,
+    "stats_only_mismatches": 16,
     "stats_only_old_skipped": 15,
     "stats_only_new_failed": 0,
     "all_comparable_statistics_compatible": false
@@ -54,8 +54,8 @@
       "human_review": 262
     },
     "stats_only_by_status": {
-      "match": 40,
-      "mismatch": 18,
+      "match": 42,
+      "mismatch": 16,
       "old_skipped": 15
     }
   },
@@ -1525,20 +1525,6 @@
       "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2024-start-7c67419f.json"
     },
     {
-      "sample_id": "sg-2025-end-4ff4d4a0",
-      "game_type": "sg",
-      "year": "2025",
-      "bucket": "end",
-      "filename": "2025_12_26__22_43_15__2_ocap",
-      "date": "2025-12-26T18:10:16.000Z",
-      "status": "mismatch",
-      "diff_count": 1,
-      "diffs": [
-        "players.legacy_name:Loza: old={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new={'kills': 0, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}"
-      ],
-      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sg-2025-end-4ff4d4a0.json"
-    },
-    {
       "sample_id": "sg-2026-end-31556f1b",
       "game_type": "sg",
       "year": "2026",
@@ -1607,20 +1593,6 @@
         "weapons: extra in new {'player': 'legacy_name:Farog', 'weapon': 'Throw', 'kills': 1}"
       ],
       "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2025-start-26bccbbc.json"
-    },
-    {
-      "sample_id": "sm-2026-start-747cf162",
-      "game_type": "sm",
-      "year": "2026",
-      "bucket": "start",
-      "filename": "2026_03_22__20_36_14__1_ocap",
-      "date": "2026-03-22T16:32:15.000Z",
-      "status": "mismatch",
-      "diff_count": 1,
-      "diffs": [
-        "players.legacy_name:Likvidator: old={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': False} new={'kills': 1, 'killsFromVehicle': 0, 'vehicleKills': 0, 'teamkills': 0, 'isDead': True, 'isDeadByTeamkill': True}"
-      ],
-      "report": ".planning/generated/quick/260502-k2u-old-new-year-edge-parity/stats-only-reports/sm-2026-start-747cf162.json"
     }
   ]
 }

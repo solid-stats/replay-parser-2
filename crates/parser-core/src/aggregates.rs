@@ -63,7 +63,10 @@ pub fn derive_minimal_tables(
                         &weapon_ids,
                     );
                     increment_killer(&mut players, combat, |player| player.kills += 1);
-                    increment_victim(&mut players, combat, |player| player.deaths += 1);
+                    increment_victim(&mut players, combat, |player| {
+                        player.deaths += 1;
+                        player.teamkill_deaths = 0;
+                    });
 
                     if combat.vehicle_context.is_kill_from_vehicle {
                         increment_killer(&mut players, combat, |player| {
@@ -81,13 +84,17 @@ pub fn derive_minimal_tables(
                         &weapon_ids,
                     );
                     increment_killer(&mut players, combat, |player| player.teamkills += 1);
-                    increment_victim(&mut players, combat, |player| player.deaths += 1);
+                    increment_victim(&mut players, combat, |player| {
+                        player.deaths += 1;
+                        player.teamkill_deaths = 1;
+                    });
                 }
             }
             CombatSemantic::Suicide => {
                 if victim_is_or_may_be_player(combat, &entity_index) {
                     increment_victim(&mut players, combat, |player| {
                         player.deaths += 1;
+                        player.teamkill_deaths = 0;
                         player.suicides += 1;
                     });
                 }
@@ -96,6 +103,7 @@ pub fn derive_minimal_tables(
                 if victim_is_or_may_be_player(combat, &entity_index) {
                     increment_victim(&mut players, combat, |player| {
                         player.deaths += 1;
+                        player.teamkill_deaths = 0;
                         player.null_killer_deaths += 1;
                     });
                 }
@@ -172,6 +180,7 @@ pub fn derive_minimal_tables_from_killed_events(
                         });
                         increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
                             player.deaths += 1;
+                            player.teamkill_deaths = 0;
                         });
                     }
                     KillClassification::Teamkill => {
@@ -180,6 +189,7 @@ pub fn derive_minimal_tables_from_killed_events(
                         });
                         increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
                             player.deaths += 1;
+                            player.teamkill_deaths = 1;
                         });
                     }
                     KillClassification::Suicide
@@ -190,6 +200,7 @@ pub fn derive_minimal_tables_from_killed_events(
             MinimalEventEffect::PlayerDeath { victim_entity_id, counter } => {
                 increment_player_by_entity_id(&mut players, victim_entity_id, |player| {
                     player.deaths += 1;
+                    player.teamkill_deaths = 0;
                     match counter {
                         MinimalDeathCounter::Suicide => player.suicides += 1,
                         MinimalDeathCounter::NullKiller => player.null_killer_deaths += 1,
@@ -284,6 +295,7 @@ fn minimal_players(entities: &[ObservedEntity]) -> PlayerRows {
                 compatibility_key: compatibility_key_override(representative),
                 kills: 0,
                 deaths: 0,
+                teamkill_deaths: 0,
                 teamkills: 0,
                 suicides: 0,
                 null_killer_deaths: 0,

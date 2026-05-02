@@ -195,7 +195,7 @@ fn nested_player_kills(players: &[MinimalPlayerRow]) -> Vec<MinimalKillRow> {
 
 fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
     let players = player_refs(tables);
-    let deaths_by_teamkills = deaths_by_teamkills(&tables.kills);
+    let deaths_by_teamkills = deaths_by_teamkills(&tables.players);
     let destroyed_vehicle_counts = destroyed_vehicle_counts(&tables.destroyed_vehicles);
 
     Value::Array(
@@ -256,15 +256,12 @@ fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
     )
 }
 
-fn deaths_by_teamkills(kills: &[MinimalKillRow]) -> BTreeMap<i64, u64> {
+fn deaths_by_teamkills(players: &[MinimalPlayerRow]) -> BTreeMap<i64, u64> {
     let mut counts = BTreeMap::<i64, u64>::new();
 
-    for kill in kills {
-        if kill.classification != KillClassification::Teamkill {
-            continue;
-        }
-        if let Some(victim_id) = kill.victim_source_entity_id {
-            *counts.entry(victim_id).or_default() += 1;
+    for player in players {
+        if player.teamkill_deaths > 0 {
+            let _ = counts.insert(player.source_entity_id, player.teamkill_deaths);
         }
     }
 

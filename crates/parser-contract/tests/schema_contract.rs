@@ -244,7 +244,7 @@ fn schema_contract_success_example_should_use_compact_short_keys_and_omit_zero_d
     for expected_key in ["eid", "n", "s", "k", "vk", "kfv", "kills"] {
         assert!(player.contains_key(expected_key), "player row should include {expected_key}");
     }
-    for omitted_zero_key in ["d", "tk", "su", "nkd", "ud"] {
+    for omitted_zero_key in ["d", "td", "tk", "su", "nkd", "ud"] {
         assert!(
             !player.contains_key(omitted_zero_key),
             "player row should omit zero counter {omitted_zero_key}"
