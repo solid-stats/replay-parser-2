@@ -1,0 +1,732 @@
+[
+  {
+    "sample_id": "mace-2020-end-ee68034f",
+    "game_type": "mace",
+    "year": "2020",
+    "bucket": "end",
+    "filename": "2020_12_31__00_04_39_ocap",
+    "date": "2020-12-30T23:03:09.000Z",
+    "mission_name": "mace@15_mik_random_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_12_31__00_04_39_ocap.json"
+  },
+  {
+    "sample_id": "mace-2020-end-7038ca2a",
+    "game_type": "mace",
+    "year": "2020",
+    "bucket": "end",
+    "filename": "2020_12_31__00_11_32_ocap",
+    "date": "2020-12-30T23:10:17.000Z",
+    "mission_name": "mace@18_a_oblava_v6",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_12_31__00_11_32_ocap.json"
+  },
+  {
+    "sample_id": "mace-2020-start-62c9bab1",
+    "game_type": "mace",
+    "year": "2020",
+    "bucket": "start",
+    "filename": "2020_10_07__21_10_34_ocap",
+    "date": "2020-10-07T18:47:39.000Z",
+    "mission_name": "mace@64_bob_dusud_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_10_07__21_10_34_ocap.json"
+  },
+  {
+    "sample_id": "mace-2020-start-487d928d",
+    "game_type": "mace",
+    "year": "2020",
+    "bucket": "start",
+    "filename": "2020_10_21__17_26_35_ocap",
+    "date": "2020-10-21T15:18:00.000Z",
+    "mission_name": "mace@6_a_panzers_lite_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_10_21__17_26_35_ocap.json"
+  },
+  {
+    "sample_id": "mace-2021-end-29753c25",
+    "game_type": "mace",
+    "year": "2021",
+    "bucket": "end",
+    "filename": "2021_12_22__23_30_16__1_ocap",
+    "date": "2021-12-22T22:17:41.000Z",
+    "mission_name": "mace@28_a_logovo_v7",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_12_22__23_30_16__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2021-end-51a0869b",
+    "game_type": "mace",
+    "year": "2021",
+    "bucket": "end",
+    "filename": "2021_12_22__23_59_50__1_ocap",
+    "date": "2021-12-22T22:56:25.000Z",
+    "mission_name": "mace@12_vd_resolution1244_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_12_22__23_59_50__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2021-start-581dcaa2",
+    "game_type": "mace",
+    "year": "2021",
+    "bucket": "start",
+    "filename": "2021_01_02__21_51_06_ocap",
+    "date": "2021-01-02T20:41:06.000Z",
+    "mission_name": "mace@28_ne4_yakuza_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_01_02__21_51_06_ocap.json"
+  },
+  {
+    "sample_id": "mace-2021-start-6286cbe0",
+    "game_type": "mace",
+    "year": "2021",
+    "bucket": "start",
+    "filename": "2021_01_28__20_17_33_ocap",
+    "date": "2021-01-28T19:14:58.000Z",
+    "mission_name": "mace@8_zavod_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_01_28__20_17_33_ocap.json"
+  },
+  {
+    "sample_id": "mace-2022-end-93cd70dd",
+    "game_type": "mace",
+    "year": "2022",
+    "bucket": "end",
+    "filename": "2022_12_30__23_42_49__1_ocap",
+    "date": "2022-12-30T23:41:34.000Z",
+    "mission_name": "mace@20_svalka_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_12_30__23_42_49__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2022-end-2b455133",
+    "game_type": "mace",
+    "year": "2022",
+    "bucket": "end",
+    "filename": "2022_12_31__00_28_38__1_ocap",
+    "date": "2022-12-31T00:26:58.000Z",
+    "mission_name": "mace@12_vd_resolution1244_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_12_31__00_28_38__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2022-start-217d8aa5",
+    "game_type": "mace",
+    "year": "2022",
+    "bucket": "start",
+    "filename": "2022_01_05__18_04_34__1_ocap",
+    "date": "2022-01-05T16:59:04.000Z",
+    "mission_name": "mace@10_bob_jetfighters_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_01_05__18_04_34__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2022-start-4022c6f1",
+    "game_type": "mace",
+    "year": "2022",
+    "bucket": "start",
+    "filename": "2022_01_05__18_07_21__1_ocap",
+    "date": "2022-01-05T17:05:41.000Z",
+    "mission_name": "mace@10_bob_jetfighters_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_01_05__18_07_21__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2023-end-a3c4e27d",
+    "game_type": "mace",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_12_31__20_12_09__1_ocap",
+    "date": "2023-12-31T17:01:36.000Z",
+    "mission_name": "mace@25_bp_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_12_31__20_12_09__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2023-end-89ff14e4",
+    "game_type": "mace",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_12_31__22_31_37__1_ocap",
+    "date": "2023-12-31T19:30:16.000Z",
+    "mission_name": "mace@4_catch_me_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_12_31__22_31_37__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2023-start-fab057a0",
+    "game_type": "mace",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_01_03__21_00_50__1_ocap",
+    "date": "2023-01-03T20:55:15.000Z",
+    "mission_name": "mace@70_raid_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_01_03__21_00_50__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2023-start-df4ba5d5",
+    "game_type": "mace",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_01_04__12_39_28__1_ocap",
+    "date": "2023-01-04T12:18:13.000Z",
+    "mission_name": "mace@6_a_panzers_lite_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_01_04__12_39_28__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2024-end-7a0df065",
+    "game_type": "mace",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_12_30__18_35_23__1_ocap",
+    "date": "2024-12-30T15:31:46.000Z",
+    "mission_name": "mace@24_lesnoy_zames_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_12_30__18_35_23__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2024-end-ba0f9dc4",
+    "game_type": "mace",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_12_30__21_31_33__1_ocap",
+    "date": "2024-12-30T18:18:52.000Z",
+    "mission_name": "mace@48_murad_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_12_30__21_31_33__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2024-start-8fe81163",
+    "game_type": "mace",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_01__17_23_26__1_ocap",
+    "date": "2024-01-01T14:16:50.000Z",
+    "mission_name": "mace@24_bd_Saving_Brother_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_01__17_23_26__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2024-start-a8e6dabb",
+    "game_type": "mace",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_02__17_04_28__1_ocap",
+    "date": "2024-01-02T13:59:39.000Z",
+    "mission_name": "mace@15_random_v8",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_02__17_04_28__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2025-end-76ae838c",
+    "game_type": "mace",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_12_28__12_23_01__1_ocap",
+    "date": "2025-12-28T20:02:16.000Z",
+    "mission_name": "mace@18_nefertiti_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_12_28__12_23_01__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2025-end-fc80bda9",
+    "game_type": "mace",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_12_30__11_23_50__1_ocap",
+    "date": "2025-12-30T19:12:59.000Z",
+    "mission_name": "mace@25_project_combat_tornado_v10",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_12_30__11_23_50__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2025-start-73666052",
+    "game_type": "mace",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_01_02__00_30_30__1_ocap",
+    "date": "2025-01-01T21:08:32.000Z",
+    "mission_name": "mace@50_devil_castle_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_01_02__00_30_30__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2025-start-7d4fa878",
+    "game_type": "mace",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_01_02__01_54_33__1_ocap",
+    "date": "2025-01-01T22:46:51.000Z",
+    "mission_name": "mace@22_savoy_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_01_02__01_54_33__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2026-end-1eda1937",
+    "game_type": "mace",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_21__20_48_17__1_ocap",
+    "date": "2026-04-21T17:48:05.000Z",
+    "mission_name": "mace@15_random_v10",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_21__20_48_17__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2026-end-f276dc73",
+    "game_type": "mace",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_21__20_56_29__1_ocap",
+    "date": "2026-04-21T17:56:49.000Z",
+    "mission_name": "mace@10_birdfight_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_21__20_56_29__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2026-start-9b8fedaf",
+    "game_type": "mace",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_05__11_28_35__1_ocap",
+    "date": "2026-01-05T19:26:49.000Z",
+    "mission_name": "mace@15_random_v10",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_05__11_28_35__1_ocap.json"
+  },
+  {
+    "sample_id": "mace-2026-start-7a6c2858",
+    "game_type": "mace",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_05__12_17_44__1_ocap",
+    "date": "2026-01-05T20:15:27.000Z",
+    "mission_name": "mace@15_random_v10",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_05__12_17_44__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2020-end-37ab698e",
+    "game_type": "sg",
+    "year": "2020",
+    "bucket": "end",
+    "filename": "2020_12_12__00_22_43_ocap",
+    "date": "2020-12-11T22:03:18.000Z",
+    "mission_name": "sg@180_rto_karjala_v8fix",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_12_12__00_22_43_ocap.json"
+  },
+  {
+    "sample_id": "sg-2020-end-82d1ca01",
+    "game_type": "sg",
+    "year": "2020",
+    "bucket": "end",
+    "filename": "2020_12_19__22_57_46_ocap",
+    "date": "2020-12-19T20:07:01.000Z",
+    "mission_name": "sg@185_sw_helicrash_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_12_19__22_57_46_ocap.json"
+  },
+  {
+    "sample_id": "sg-2020-start-a6fb7ed8",
+    "game_type": "sg",
+    "year": "2020",
+    "bucket": "start",
+    "filename": "2020_10_02__23_18_16_ocap",
+    "date": "2020-10-02T19:15:51.000Z",
+    "mission_name": "sg@211_ct_able_archer_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_10_02__23_18_16_ocap.json"
+  },
+  {
+    "sample_id": "sg-2020-start-fc7dae27",
+    "game_type": "sg",
+    "year": "2020",
+    "bucket": "start",
+    "filename": "2020_10_09__22_55_38_ocap",
+    "date": "2020-10-09T19:07:28.000Z",
+    "mission_name": "sg@213_ksd_foreign_land_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_10_09__22_55_38_ocap.json"
+  },
+  {
+    "sample_id": "sg-2021-end-c7831e8a",
+    "game_type": "sg",
+    "year": "2021",
+    "bucket": "end",
+    "filename": "2021_12_24__22_28_24__1_ocap",
+    "date": "2021-12-24T20:06:29.000Z",
+    "mission_name": "sg@187_algr_status_quo_v8",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_12_24__22_28_24__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2021-end-5d716d57",
+    "game_type": "sg",
+    "year": "2021",
+    "bucket": "end",
+    "filename": "2021_12_25__22_58_58__1_ocap",
+    "date": "2021-12-25T20:21:08.000Z",
+    "mission_name": "sg@184_lem_duba_yurt_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_12_25__22_58_58__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2021-start-95b98494",
+    "game_type": "sg",
+    "year": "2021",
+    "bucket": "start",
+    "filename": "2021_01_09__22_52_20_ocap",
+    "date": "2021-01-09T20:09:40.000Z",
+    "mission_name": "sg@185_sw_helicrash_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_01_09__22_52_20_ocap.json"
+  },
+  {
+    "sample_id": "sg-2021-start-f55cf678",
+    "game_type": "sg",
+    "year": "2021",
+    "bucket": "start",
+    "filename": "2021_01_16__23_03_38_ocap",
+    "date": "2021-01-16T20:26:48.000Z",
+    "mission_name": "sg@182_kt_senseless_war_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2021_01_16__23_03_38_ocap.json"
+  },
+  {
+    "sample_id": "sg-2022-end-6de7936d",
+    "game_type": "sg",
+    "year": "2022",
+    "bucket": "end",
+    "filename": "2022_12_11__00_24_19__2_ocap",
+    "date": "2022-12-10T23:08:29.000Z",
+    "mission_name": "sg@199_lachin_v7",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_12_11__00_24_19__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2022-end-71437891",
+    "game_type": "sg",
+    "year": "2022",
+    "bucket": "end",
+    "filename": "2022_12_23__23_21_03__2_ocap",
+    "date": "2022-12-23T22:26:53.000Z",
+    "mission_name": "sg@188_wolf_hunting_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_12_23__23_21_03__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2022-start-c50fed24",
+    "game_type": "sg",
+    "year": "2022",
+    "bucket": "start",
+    "filename": "2022_01_08__21_53_41__2_ocap",
+    "date": "2022-01-08T19:05:56.000Z",
+    "mission_name": "sg@liberation_ep5_server2fix",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_01_08__21_53_41__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2022-start-5c7db78a",
+    "game_type": "sg",
+    "year": "2022",
+    "bucket": "start",
+    "filename": "2022_01_22__21_42_57__2_ocap",
+    "date": "2022-01-22T19:10:27.000Z",
+    "mission_name": "sg@liberation_ep7_server2fix",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2022_01_22__21_42_57__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2023-end-12a31376",
+    "game_type": "sg",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_12_30__22_58_38__2_ocap",
+    "date": "2023-12-30T18:34:31.000Z",
+    "mission_name": "sg@194_rosche_showdown_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_12_30__22_58_38__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2023-end-f049c6a8",
+    "game_type": "sg",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_12_30__23_55_01__2_ocap",
+    "date": "2023-12-30T20:09:53.000Z",
+    "mission_name": "sg@198_pacific_rim_v6",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_12_30__23_55_01__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2023-start-3374727f",
+    "game_type": "sg",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_01_07__22_14_36__2_ocap",
+    "date": "2023-01-07T21:03:31.000Z",
+    "mission_name": "sg@220_logistic_line_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_01_07__22_14_36__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2023-start-14672344",
+    "game_type": "sg",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_01_13__23_11_24__1_ocap",
+    "date": "2023-01-13T21:04:14.000Z",
+    "mission_name": "sg@200_sudden_death_v9",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_01_13__23_11_24__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2024-end-825d864c",
+    "game_type": "sg",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_12_20__22_36_51__1_ocap",
+    "date": "2024-12-20T18:10:17.000Z",
+    "mission_name": "sg@211_sky_shield_ruha_v6",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_12_20__22_36_51__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2024-end-085215e0",
+    "game_type": "sg",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_12_22__00_23_24__2_ocap",
+    "date": "2024-12-21T19:48:36.000Z",
+    "mission_name": "sg@212_rampage_v9",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_12_22__00_23_24__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2024-start-8bf48300",
+    "game_type": "sg",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_12__22_46_32__1_ocap",
+    "date": "2024-01-12T18:07:31.000Z",
+    "mission_name": "sg@195_skirmish_v13",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_12__22_46_32__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2024-start-f7acb07d",
+    "game_type": "sg",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_12__23_38_21__2_ocap",
+    "date": "2024-01-12T19:20:03.000Z",
+    "mission_name": "sg@206_stormtroopers_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_12__23_38_21__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2025-end-d95be4b8",
+    "game_type": "sg",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_12_13__13_04_58__1_ocap",
+    "date": "2025-12-13T19:46:04.000Z",
+    "mission_name": "sg@218_la_division_fantome_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_12_13__13_04_58__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2025-end-225497a5",
+    "game_type": "sg",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_12_19__11_25_32__1_ocap",
+    "date": "2025-12-19T18:10:09.000Z",
+    "mission_name": "sg@207_riverlord_v8",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_12_19__11_25_32__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2025-start-8cc9916e",
+    "game_type": "sg",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_01_04__00_30_16__1_ocap",
+    "date": "2025-01-03T20:02:09.000Z",
+    "mission_name": "sg@214_center_hunt_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_01_04__00_30_16__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2025-start-f3203f9a",
+    "game_type": "sg",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_01_11__22_57_34__2_ocap",
+    "date": "2025-01-11T18:11:08.000Z",
+    "mission_name": "sg@214_center_hunt_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_01_11__22_57_34__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2026-end-f2b5a9c5",
+    "game_type": "sg",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_10__22_33_25__1_ocap",
+    "date": "2026-04-10T18:10:40.000Z",
+    "mission_name": "sg@219_sudden_death_v14",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_10__22_33_25__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2026-end-3f1f3cbe",
+    "game_type": "sg",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_11__23_56_03__2_ocap",
+    "date": "2026-04-11T19:38:26.000Z",
+    "mission_name": "sg@215_lalezar_v9",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_11__23_56_03__2_ocap.json"
+  },
+  {
+    "sample_id": "sg-2026-start-1f7754b6",
+    "game_type": "sg",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_02__11_38_44__1_ocap",
+    "date": "2026-01-02T18:07:38.000Z",
+    "mission_name": "sg@233_hells_highway_v7",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_02__11_38_44__1_ocap.json"
+  },
+  {
+    "sample_id": "sg-2026-start-b813f337",
+    "game_type": "sg",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_02__13_00_59__1_ocap",
+    "date": "2026-01-02T19:55:18.000Z",
+    "mission_name": "sg@210_canadian_bacon_v21",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_02__13_00_59__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2020-end-bc6b9d09",
+    "game_type": "sm",
+    "year": "2020",
+    "bucket": "end",
+    "filename": "2020_08_26__22_50_59_ocap",
+    "date": "2020-08-26T20:31:24.000Z",
+    "mission_name": "sm@140_ykr_hurt_locker_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2020_08_26__22_50_59_ocap.json"
+  },
+  {
+    "sample_id": "sm-2023-end-b7bfd4d1",
+    "game_type": "sm",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_09_24__21_22_25__1_ocap",
+    "date": "2023-09-24T17:37:10.000Z",
+    "mission_name": "sm@126_swedish_gambit_xl_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_09_24__21_22_25__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2023-end-981588ff",
+    "game_type": "sm",
+    "year": "2023",
+    "bucket": "end",
+    "filename": "2023_10_01__20_56_01__1_ocap",
+    "date": "2023-10-01T17:30:40.000Z",
+    "mission_name": "sm@148_storming_of_pecher_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_10_01__20_56_01__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2023-start-035262b0",
+    "game_type": "sm",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_04_30__19_43_53__1_ocap",
+    "date": "2023-04-30T15:50:34.000Z",
+    "mission_name": "sm@133_elektrozavodsk_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_04_30__19_43_53__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2023-start-ea6f9c5b",
+    "game_type": "sm",
+    "year": "2023",
+    "bucket": "start",
+    "filename": "2023_07_09__20_23_33__1_ocap",
+    "date": "2023-07-09T16:32:41.000Z",
+    "mission_name": "sm@142_battle_for_baghdad_2003_v3_fix_fix",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2023_07_09__20_23_33__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2024-end-1ed4011f",
+    "game_type": "sm",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_11_03__20_13_11__1_ocap",
+    "date": "2024-11-03T16:28:21.000Z",
+    "mission_name": "sm@137_falldown_v2",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_11_03__20_13_11__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2024-end-f9580d1b",
+    "game_type": "sm",
+    "year": "2024",
+    "bucket": "end",
+    "filename": "2024_11_03__21_00_03__1_ocap",
+    "date": "2024-11-03T17:29:52.000Z",
+    "mission_name": "sm@152_korazol_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_11_03__21_00_03__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2024-start-682f3bd6",
+    "game_type": "sm",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_21__21_55_50__1_ocap",
+    "date": "2024-01-21T18:06:12.000Z",
+    "mission_name": "sm@143_north_problem_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_21__21_55_50__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2024-start-959afdb9",
+    "game_type": "sm",
+    "year": "2024",
+    "bucket": "start",
+    "filename": "2024_01_28__21_33_09__1_ocap",
+    "date": "2024-01-28T17:50:46.000Z",
+    "mission_name": "sm@141_war_pig_sm_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2024_01_28__21_33_09__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2025-end-cde0a9a5",
+    "game_type": "sm",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_11_23__10_54_42__1_ocap",
+    "date": "2025-11-23T18:07:18.000Z",
+    "mission_name": "sm@156_westrussian_war_v6",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_11_23__10_54_42__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2025-end-2717e77e",
+    "game_type": "sm",
+    "year": "2025",
+    "bucket": "end",
+    "filename": "2025_12_14__09_09_21__1_ocap",
+    "date": "2025-12-14T16:33:30.000Z",
+    "mission_name": "sm@143_oreokastro_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_12_14__09_09_21__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2025-start-06301fc0",
+    "game_type": "sm",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_01_19__19_32_04__1_ocap",
+    "date": "2025-01-19T16:30:13.000Z",
+    "mission_name": "sm@183_bolshevik_v8",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_01_19__19_32_04__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2025-start-58e88db4",
+    "game_type": "sm",
+    "year": "2025",
+    "bucket": "start",
+    "filename": "2025_02_02__22_22_42__1_ocap",
+    "date": "2025-02-02T18:16:59.000Z",
+    "mission_name": "sm@179_language_law_v3",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2025_02_02__22_22_42__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2026-end-38a9e4d6",
+    "game_type": "sm",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_12__20_31_12__1_ocap",
+    "date": "2026-04-12T16:35:34.000Z",
+    "mission_name": "sm@120_neon_rift_v1",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_12__20_31_12__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2026-end-c15e6801",
+    "game_type": "sm",
+    "year": "2026",
+    "bucket": "end",
+    "filename": "2026_04_19__20_37_16__1_ocap",
+    "date": "2026-04-19T16:33:43.000Z",
+    "mission_name": "sm@119_fault_line_v4",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_04_19__20_37_16__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2026-start-8708c040",
+    "game_type": "sm",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_11__10_56_13__1_ocap",
+    "date": "2026-01-11T17:48:47.000Z",
+    "mission_name": "sm@130_zaros_v5",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_11__10_56_13__1_ocap.json"
+  },
+  {
+    "sample_id": "sm-2026-start-fab77171",
+    "game_type": "sm",
+    "year": "2026",
+    "bucket": "start",
+    "filename": "2026_01_18__10_46_53__1_ocap",
+    "date": "2026-01-18T18:02:11.000Z",
+    "mission_name": "sm@185_grinder_v6",
+    "raw_path": "/home/afgan0r/sg_stats/raw_replays/2026_01_18__10_46_53__1_ocap.json"
+  }
+]

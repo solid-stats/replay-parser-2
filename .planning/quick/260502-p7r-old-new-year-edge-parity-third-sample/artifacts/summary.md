@@ -1,0 +1,131 @@
+# Old/New Year-Edge Replay Parity
+
+## Result
+
+- Selected replays: 73
+- New parser successes: 73
+- Old parser successes: 61
+- Comparisons run: 61
+- JSON-surface failed/non-compatible comparisons: 73
+- Stats-only matches: 40
+- Stats-only mismatches: 21
+- Stats-only old skipped: 12
+- Stats-only new failed: 0
+- All comparable statistics compatible: false
+
+## Findings By Category
+
+- compatible: 29
+- human_review: 276
+
+## Failing Samples
+
+- mace-2020-end-ee68034f 2020_12_31__00_04_39_ocap (mace 2020 end): {}
+- mace-2020-end-7038ca2a 2020_12_31__00_11_32_ocap (mace 2020 end): {}
+- mace-2020-start-62c9bab1 2020_10_07__21_10_34_ocap (mace 2020 start): {'compatible': 1, 'human_review': 4}
+- mace-2020-start-487d928d 2020_10_21__17_26_35_ocap (mace 2020 start): {}
+- mace-2021-end-29753c25 2021_12_22__23_30_16__1_ocap (mace 2021 end): {'compatible': 1, 'human_review': 4}
+- mace-2021-end-51a0869b 2021_12_22__23_59_50__1_ocap (mace 2021 end): {'compatible': 1, 'human_review': 4}
+- mace-2021-start-581dcaa2 2021_01_02__21_51_06_ocap (mace 2021 start): {'compatible': 1, 'human_review': 4}
+- mace-2021-start-6286cbe0 2021_01_28__20_17_33_ocap (mace 2021 start): {}
+- mace-2022-end-93cd70dd 2022_12_30__23_42_49__1_ocap (mace 2022 end): {'compatible': 1, 'human_review': 4}
+- mace-2022-end-2b455133 2022_12_31__00_28_38__1_ocap (mace 2022 end): {}
+- mace-2022-start-217d8aa5 2022_01_05__18_04_34__1_ocap (mace 2022 start): {}
+- mace-2022-start-4022c6f1 2022_01_05__18_07_21__1_ocap (mace 2022 start): {}
+- mace-2023-end-a3c4e27d 2023_12_31__20_12_09__1_ocap (mace 2023 end): {'compatible': 1, 'human_review': 4}
+- mace-2023-end-89ff14e4 2023_12_31__22_31_37__1_ocap (mace 2023 end): {}
+- mace-2023-start-fab057a0 2023_01_03__21_00_50__1_ocap (mace 2023 start): {}
+- mace-2023-start-df4ba5d5 2023_01_04__12_39_28__1_ocap (mace 2023 start): {}
+- mace-2024-end-7a0df065 2024_12_30__18_35_23__1_ocap (mace 2024 end): {'compatible': 1, 'human_review': 4}
+- mace-2024-end-ba0f9dc4 2024_12_30__21_31_33__1_ocap (mace 2024 end): {'compatible': 1, 'human_review': 4}
+- mace-2024-start-8fe81163 2024_01_01__17_23_26__1_ocap (mace 2024 start): {'compatible': 1, 'human_review': 4}
+- mace-2024-start-a8e6dabb 2024_01_02__17_04_28__1_ocap (mace 2024 start): {'compatible': 1, 'human_review': 4}
+- mace-2025-end-76ae838c 2025_12_28__12_23_01__1_ocap (mace 2025 end): {'compatible': 1, 'human_review': 4}
+- mace-2025-end-fc80bda9 2025_12_30__11_23_50__1_ocap (mace 2025 end): {'compatible': 1, 'human_review': 4}
+- mace-2025-start-73666052 2025_01_02__00_30_30__1_ocap (mace 2025 start): {'compatible': 1, 'human_review': 4}
+- mace-2025-start-7d4fa878 2025_01_02__01_54_33__1_ocap (mace 2025 start): {'compatible': 1, 'human_review': 4}
+- mace-2026-end-1eda1937 2026_04_21__20_48_17__1_ocap (mace 2026 end): {}
+- mace-2026-end-f276dc73 2026_04_21__20_56_29__1_ocap (mace 2026 end): {}
+- mace-2026-start-9b8fedaf 2026_01_05__11_28_35__1_ocap (mace 2026 start): {'compatible': 1, 'human_review': 4}
+- mace-2026-start-7a6c2858 2026_01_05__12_17_44__1_ocap (mace 2026 start): {'compatible': 1, 'human_review': 4}
+- sg-2020-end-37ab698e 2020_12_12__00_22_43_ocap (sg 2020 end): {'human_review': 5}
+- sg-2020-end-82d1ca01 2020_12_19__22_57_46_ocap (sg 2020 end): {'human_review': 5}
+- sg-2020-start-a6fb7ed8 2020_10_02__23_18_16_ocap (sg 2020 start): {'human_review': 5}
+- sg-2020-start-fc7dae27 2020_10_09__22_55_38_ocap (sg 2020 start): {'human_review': 5}
+- sg-2021-end-c7831e8a 2021_12_24__22_28_24__1_ocap (sg 2021 end): {'human_review': 5}
+- sg-2021-end-5d716d57 2021_12_25__22_58_58__1_ocap (sg 2021 end): {'compatible': 1, 'human_review': 4}
+- sg-2021-start-95b98494 2021_01_09__22_52_20_ocap (sg 2021 start): {'compatible': 1, 'human_review': 4}
+- sg-2021-start-f55cf678 2021_01_16__23_03_38_ocap (sg 2021 start): {'human_review': 5}
+- sg-2022-end-6de7936d 2022_12_11__00_24_19__2_ocap (sg 2022 end): {'human_review': 5}
+- sg-2022-end-71437891 2022_12_23__23_21_03__2_ocap (sg 2022 end): {'human_review': 5}
+- sg-2022-start-c50fed24 2022_01_08__21_53_41__2_ocap (sg 2022 start): {'human_review': 5}
+- sg-2022-start-5c7db78a 2022_01_22__21_42_57__2_ocap (sg 2022 start): {'human_review': 5}
+- sg-2023-end-12a31376 2023_12_30__22_58_38__2_ocap (sg 2023 end): {'human_review': 5}
+- sg-2023-end-f049c6a8 2023_12_30__23_55_01__2_ocap (sg 2023 end): {'human_review': 5}
+- sg-2023-start-3374727f 2023_01_07__22_14_36__2_ocap (sg 2023 start): {'human_review': 5}
+- sg-2023-start-14672344 2023_01_13__23_11_24__1_ocap (sg 2023 start): {'human_review': 5}
+- sg-2024-end-825d864c 2024_12_20__22_36_51__1_ocap (sg 2024 end): {'compatible': 1, 'human_review': 4}
+- sg-2024-end-085215e0 2024_12_22__00_23_24__2_ocap (sg 2024 end): {'compatible': 1, 'human_review': 4}
+- sg-2024-start-8bf48300 2024_01_12__22_46_32__1_ocap (sg 2024 start): {'compatible': 1, 'human_review': 4}
+- sg-2024-start-f7acb07d 2024_01_12__23_38_21__2_ocap (sg 2024 start): {'compatible': 1, 'human_review': 4}
+- sg-2025-end-d95be4b8 2025_12_13__13_04_58__1_ocap (sg 2025 end): {'human_review': 5}
+- sg-2025-end-225497a5 2025_12_19__11_25_32__1_ocap (sg 2025 end): {'compatible': 1, 'human_review': 4}
+- sg-2025-start-8cc9916e 2025_01_04__00_30_16__1_ocap (sg 2025 start): {'human_review': 5}
+- sg-2025-start-f3203f9a 2025_01_11__22_57_34__2_ocap (sg 2025 start): {'human_review': 5}
+- sg-2026-end-f2b5a9c5 2026_04_10__22_33_25__1_ocap (sg 2026 end): {'human_review': 5}
+- sg-2026-end-3f1f3cbe 2026_04_11__23_56_03__2_ocap (sg 2026 end): {'human_review': 5}
+- sg-2026-start-1f7754b6 2026_01_02__11_38_44__1_ocap (sg 2026 start): {'compatible': 1, 'human_review': 4}
+- sg-2026-start-b813f337 2026_01_02__13_00_59__1_ocap (sg 2026 start): {'human_review': 5}
+- sm-2020-end-bc6b9d09 2020_08_26__22_50_59_ocap (sm 2020 end): {'compatible': 1, 'human_review': 4}
+- sm-2023-end-b7bfd4d1 2023_09_24__21_22_25__1_ocap (sm 2023 end): {'human_review': 5}
+- sm-2023-end-981588ff 2023_10_01__20_56_01__1_ocap (sm 2023 end): {'human_review': 5}
+- sm-2023-start-035262b0 2023_04_30__19_43_53__1_ocap (sm 2023 start): {'human_review': 5}
+- sm-2023-start-ea6f9c5b 2023_07_09__20_23_33__1_ocap (sm 2023 start): {'human_review': 5}
+- sm-2024-end-1ed4011f 2024_11_03__20_13_11__1_ocap (sm 2024 end): {'human_review': 5}
+- sm-2024-end-f9580d1b 2024_11_03__21_00_03__1_ocap (sm 2024 end): {'compatible': 1, 'human_review': 4}
+- sm-2024-start-682f3bd6 2024_01_21__21_55_50__1_ocap (sm 2024 start): {'human_review': 5}
+- sm-2024-start-959afdb9 2024_01_28__21_33_09__1_ocap (sm 2024 start): {'human_review': 5}
+- sm-2025-end-cde0a9a5 2025_11_23__10_54_42__1_ocap (sm 2025 end): {'human_review': 5}
+- sm-2025-end-2717e77e 2025_12_14__09_09_21__1_ocap (sm 2025 end): {'human_review': 5}
+- sm-2025-start-06301fc0 2025_01_19__19_32_04__1_ocap (sm 2025 start): {'compatible': 2, 'human_review': 3}
+- sm-2025-start-58e88db4 2025_02_02__22_22_42__1_ocap (sm 2025 start): {'human_review': 5}
+- sm-2026-end-38a9e4d6 2026_04_12__20_31_12__1_ocap (sm 2026 end): {'human_review': 5}
+- sm-2026-end-c15e6801 2026_04_19__20_37_16__1_ocap (sm 2026 end): {'human_review': 5}
+- sm-2026-start-8708c040 2026_01_11__10_56_13__1_ocap (sm 2026 start): {'human_review': 5}
+- sm-2026-start-fab77171 2026_01_18__10_46_53__1_ocap (sm 2026 start): {'compatible': 1, 'human_review': 4}
+
+## Stats-Only Mismatches
+
+- mace-2020-end-ee68034f 2020_12_31__00_04_39_ocap (mace 2020 end): old_skipped diffs=1
+- mace-2020-end-7038ca2a 2020_12_31__00_11_32_ocap (mace 2020 end): old_skipped diffs=1
+- mace-2020-start-62c9bab1 2020_10_07__21_10_34_ocap (mace 2020 start): mismatch diffs=1
+- mace-2020-start-487d928d 2020_10_21__17_26_35_ocap (mace 2020 start): old_skipped diffs=1
+- mace-2021-start-6286cbe0 2021_01_28__20_17_33_ocap (mace 2021 start): old_skipped diffs=1
+- mace-2022-end-2b455133 2022_12_31__00_28_38__1_ocap (mace 2022 end): old_skipped diffs=1
+- mace-2022-start-217d8aa5 2022_01_05__18_04_34__1_ocap (mace 2022 start): old_skipped diffs=1
+- mace-2022-start-4022c6f1 2022_01_05__18_07_21__1_ocap (mace 2022 start): old_skipped diffs=1
+- mace-2023-end-89ff14e4 2023_12_31__22_31_37__1_ocap (mace 2023 end): old_skipped diffs=1
+- mace-2023-start-fab057a0 2023_01_03__21_00_50__1_ocap (mace 2023 start): old_skipped diffs=1
+- mace-2023-start-df4ba5d5 2023_01_04__12_39_28__1_ocap (mace 2023 start): old_skipped diffs=1
+- mace-2024-start-a8e6dabb 2024_01_02__17_04_28__1_ocap (mace 2024 start): mismatch diffs=1
+- mace-2026-end-1eda1937 2026_04_21__20_48_17__1_ocap (mace 2026 end): old_skipped diffs=1
+- mace-2026-end-f276dc73 2026_04_21__20_56_29__1_ocap (mace 2026 end): old_skipped diffs=1
+- sg-2020-end-37ab698e 2020_12_12__00_22_43_ocap (sg 2020 end): mismatch diffs=2
+- sg-2020-end-82d1ca01 2020_12_19__22_57_46_ocap (sg 2020 end): mismatch diffs=3
+- sg-2020-start-a6fb7ed8 2020_10_02__23_18_16_ocap (sg 2020 start): mismatch diffs=3
+- sg-2020-start-fc7dae27 2020_10_09__22_55_38_ocap (sg 2020 start): mismatch diffs=3
+- sg-2021-start-f55cf678 2021_01_16__23_03_38_ocap (sg 2021 start): mismatch diffs=1
+- sg-2022-end-71437891 2022_12_23__23_21_03__2_ocap (sg 2022 end): mismatch diffs=1
+- sg-2023-end-f049c6a8 2023_12_30__23_55_01__2_ocap (sg 2023 end): mismatch diffs=1
+- sg-2023-start-3374727f 2023_01_07__22_14_36__2_ocap (sg 2023 start): mismatch diffs=1
+- sg-2023-start-14672344 2023_01_13__23_11_24__1_ocap (sg 2023 start): mismatch diffs=4
+- sg-2024-end-825d864c 2024_12_20__22_36_51__1_ocap (sg 2024 end): mismatch diffs=1
+- sg-2024-start-8bf48300 2024_01_12__22_46_32__1_ocap (sg 2024 start): mismatch diffs=1
+- sg-2024-start-f7acb07d 2024_01_12__23_38_21__2_ocap (sg 2024 start): mismatch diffs=2
+- sg-2026-end-f2b5a9c5 2026_04_10__22_33_25__1_ocap (sg 2026 end): mismatch diffs=1
+- sm-2023-end-b7bfd4d1 2023_09_24__21_22_25__1_ocap (sm 2023 end): mismatch diffs=1
+- sm-2023-start-ea6f9c5b 2023_07_09__20_23_33__1_ocap (sm 2023 start): mismatch diffs=1
+- sm-2024-start-682f3bd6 2024_01_21__21_55_50__1_ocap (sm 2024 start): mismatch diffs=1
+- sm-2024-start-959afdb9 2024_01_28__21_33_09__1_ocap (sm 2024 start): mismatch diffs=1
+- sm-2026-start-8708c040 2026_01_11__10_56_13__1_ocap (sm 2026 start): mismatch diffs=2
+- sm-2026-start-fab77171 2026_01_18__10_46_53__1_ocap (sm 2026 start): mismatch diffs=1
