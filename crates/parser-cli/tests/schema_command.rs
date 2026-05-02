@@ -46,11 +46,11 @@ fn run_schema(args: &[&str]) -> Output {
 fn assert_schema_contains_minimal_contract_symbols(schema_text: &str) {
     for expected_fragment in [
         "MinimalPlayerRow",
-        "MinimalPlayerStatsRow",
         "MinimalKillRow",
         "MinimalDestroyedVehicleRow",
+        "MinimalWeaponRow",
         "players",
-        "player_stats",
+        "weapons",
         "kills",
         "destroyed_vehicles",
     ] {

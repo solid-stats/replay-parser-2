@@ -17,34 +17,29 @@
       "value": {
         "algorithm": "sha256",
         "value": "0000000000000000000000000000000000000000000000000000000000000000"
-      },
-      "source": null
+      }
     }
   },
   "status": "failed",
   "failure": {
     "job_id": {
       "state": "present",
-      "value": "job-0001",
-      "source": null
+      "value": "job-0001"
     },
     "replay_id": {
       "state": "present",
-      "value": "replay-0001",
-      "source": null
+      "value": "replay-0001"
     },
     "source_file": {
       "state": "present",
-      "value": "2025_04_05__23_27_21__1_ocap.json",
-      "source": null
+      "value": "2025_04_05__23_27_21__1_ocap.json"
     },
     "checksum": {
       "state": "present",
       "value": {
         "algorithm": "sha256",
         "value": "0000000000000000000000000000000000000000000000000000000000000000"
-      },
-      "source": null
+      }
     },
     "stage": "json_decode",
     "error_code": "json.decode",
@@ -52,8 +47,7 @@
     "retryability": "not_retryable",
     "source_cause": {
       "state": "present",
-      "value": "expected value at line 1 column 1",
-      "source": null
+      "value": "expected value at line 1 column 1"
     },
     "source_refs": [
       {

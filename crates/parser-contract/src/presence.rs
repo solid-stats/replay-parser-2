@@ -13,6 +13,7 @@ pub enum FieldPresence<T> {
         /// Present value.
         value: T,
         /// Source reference for the value, when available.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         source: Option<SourceRef>,
     },
     /// Field was explicitly null in the source or domain event.
@@ -20,6 +21,7 @@ pub enum FieldPresence<T> {
         /// Reason the field is null.
         reason: NullReason,
         /// Source reference for the null state, when available.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         source: Option<SourceRef>,
     },
     /// Field value is unknown.
@@ -27,6 +29,7 @@ pub enum FieldPresence<T> {
         /// Reason the field is unknown.
         reason: UnknownReason,
         /// Source reference for the unknown state, when available.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         source: Option<SourceRef>,
     },
     /// Field value was inferred rather than directly observed.
@@ -36,8 +39,10 @@ pub enum FieldPresence<T> {
         /// Human-readable inference reason.
         reason: String,
         /// Optional confidence score for the inference.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         confidence: Option<Confidence>,
         /// Source reference for the inference, when available.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         source: Option<SourceRef>,
         /// Rule that produced the inference.
         rule_id: RuleId,

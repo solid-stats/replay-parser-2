@@ -69,7 +69,7 @@ fn aggregate_only(criterion: &mut Criterion) {
         bencher.iter(|| {
             black_box((
                 artifact.players.clone(),
-                artifact.player_stats.clone(),
+                artifact.weapons.clone(),
                 artifact.kills.clone(),
                 artifact.destroyed_vehicles.clone(),
             ))

@@ -8,6 +8,7 @@ use crate::presence::FieldPresence;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ReplaySource {
     /// Replay identifier when the caller or source provides one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub replay_id: Option<String>,
     /// Source file path or object key.
     pub source_file: String,
@@ -95,20 +96,28 @@ impl SourceChecksum {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct SourceRef {
     /// Replay identifier coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub replay_id: Option<String>,
     /// Source file coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_file: Option<String>,
     /// Source checksum coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checksum: Option<SourceChecksum>,
     /// Frame coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frame: Option<u64>,
     /// Event index coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub event_index: Option<u64>,
     /// Entity identifier coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity_id: Option<i64>,
     /// JSON path coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub json_path: Option<String>,
     /// Rule identifier coordinate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rule_id: Option<RuleId>,
 }
 

@@ -7,7 +7,7 @@ use parser_contract::{
     identity::EntitySide,
     minimal::{
         KillClassification, MinimalDestroyedVehicleRow, MinimalKillRow, MinimalPlayerRow,
-        MinimalPlayerStatsRow,
+        MinimalWeaponRow,
     },
 };
 use serde_json::{Map, Value, json};
@@ -131,7 +131,7 @@ fn derive_legacy_view_from_minimal(root: &Value) -> Option<Map<String, Value>> {
 #[derive(Debug, Clone)]
 struct MinimalComparisonTables {
     players: Vec<MinimalPlayerRow>,
-    player_stats: Vec<MinimalPlayerStatsRow>,
+    weapons: Vec<MinimalWeaponRow>,
     kills: Vec<MinimalKillRow>,
     destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
 }
@@ -140,9 +140,15 @@ impl MinimalComparisonTables {
     fn from_root(root: &Value) -> Option<Self> {
         Some(Self {
             players: rows(root, "players")?,
-            player_stats: rows(root, "player_stats")?,
-            kills: rows(root, "kills")?,
-            destroyed_vehicles: rows(root, "destroyed_vehicles")?,
+            weapons: optional_rows(root, "weapons")?,
+            kills: optional_rows(root, "kills")?,
+            destroyed_vehicles: optional_rows(root, "destroyed_vehicles")?,
+        })
+    }
+
+    fn weapon_name(&self, weapon_id: Option<u32>) -> Option<&str> {
+        weapon_id.and_then(|id| {
+            self.weapons.iter().find(|weapon| weapon.id == id).map(|weapon| weapon.name.as_str())
         })
     }
 }
@@ -154,6 +160,14 @@ where
     serde_json::from_value(root.get(key)?.clone()).ok()
 }
 
+fn optional_rows<T>(root: &Value, key: &str) -> Option<Vec<T>>
+where
+    T: serde::de::DeserializeOwned,
+{
+    root.get(key)
+        .map_or_else(|| Some(Vec::new()), |value| serde_json::from_value(value.clone()).ok())
+}
+
 fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
     let players = player_refs(tables);
     let deaths_by_teamkills = deaths_by_teamkills(&tables.kills);
@@ -161,48 +175,53 @@ fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
 
     Value::Array(
         tables
-            .player_stats
+            .players
             .iter()
-            .map(|stats| {
-                let player = players
-                    .by_player_id
-                    .get(&stats.player_id)
-                    .or_else(|| players.by_source_entity_id.get(&stats.source_entity_id));
-                let player_ref = player.cloned().unwrap_or_else(|| PlayerComparisonRef {
-                    player_id: stats.player_id.clone(),
-                    source_entity_id: stats.source_entity_id,
-                    compatibility_key: stats.player_id.clone(),
-                    observed_entity_ids: vec![stats.source_entity_id],
-                    observed_name: None,
-                    side: None,
-                });
+            .map(|player| {
+                let player_ref = players
+                    .by_source_entity_id
+                    .get(&player.source_entity_id)
+                    .cloned()
+                    .unwrap_or_else(|| PlayerComparisonRef {
+                        player_id: player_id(player.source_entity_id),
+                        source_entity_id: player.source_entity_id,
+                        compatibility_key: player_id(player.source_entity_id),
+                        observed_entity_ids: vec![player.source_entity_id],
+                        observed_name: None,
+                        side: None,
+                    });
                 let deaths_by_teamkill =
-                    *deaths_by_teamkills.get(&stats.source_entity_id).unwrap_or(&0);
-                let vehicle_kills = stats
+                    *deaths_by_teamkills.get(&player_ref.source_entity_id).unwrap_or(&0);
+                let vehicle_kills = player
                     .vehicle_kills
-                    .max(*destroyed_vehicle_counts.get(&stats.source_entity_id).unwrap_or(&0));
+                    .max(*destroyed_vehicle_counts.get(&player_ref.source_entity_id).unwrap_or(&0));
 
                 json!({
                     "compatibility_key": player_ref.compatibility_key,
                     "observed_entity_ids": player_ref.observed_entity_ids,
                     "observed_name": player_ref.observed_name,
                     "side": side_name(player_ref.side),
-                    "kills": stats.kills,
-                    "killsFromVehicle": stats.kills_from_vehicle,
+                    "kills": player.kills,
+                    "killsFromVehicle": player.kills_from_vehicle,
                     "vehicleKills": vehicle_kills,
-                    "teamkills": stats.teamkills,
-                    "isDead": stats.deaths > 0,
+                    "teamkills": player.teamkills,
+                    "isDead": player.deaths > 0,
                     "isDeadByTeamkill": deaths_by_teamkill > 0,
                     "deaths": {
-                        "total": stats.deaths,
+                        "total": player.deaths,
                         "byTeamkills": deaths_by_teamkill,
                     },
-                    "kdRatio": kd_ratio(stats.kills, stats.teamkills, stats.deaths, deaths_by_teamkill),
-                    "killsFromVehicleCoef": kills_from_vehicle_coef(
-                        stats.kills,
-                        stats.kills_from_vehicle,
+                    "kdRatio": kd_ratio(
+                        player.kills,
+                        player.teamkills,
+                        player.deaths,
+                        deaths_by_teamkill,
                     ),
-                    "score": score(1, stats.kills, stats.teamkills, deaths_by_teamkill),
+                    "killsFromVehicleCoef": kills_from_vehicle_coef(
+                        player.kills,
+                        player.kills_from_vehicle,
+                    ),
+                    "score": score(1, player.kills, player.teamkills, deaths_by_teamkill),
                     "totalPlayedGames": 1,
                 })
             })
@@ -369,31 +388,22 @@ fn bounty_inputs(tables: &MinimalComparisonTables) -> Value {
         tables
             .kills
             .iter()
-            .filter(|kill| kill.bounty_eligible)
+            .filter(|kill| kill.classification == KillClassification::EnemyKill)
             .filter_map(|kill| {
-                let killer = player_ref_for_kill_player(
-                    &players,
-                    kill.killer_player_id.as_deref(),
-                    kill.killer_source_entity_id,
-                )?;
-                let victim = player_ref_for_kill_player(
-                    &players,
-                    kill.victim_player_id.as_deref(),
-                    kill.victim_source_entity_id,
-                )?;
+                let killer = player_ref_for_kill_player(&players, kill.killer_source_entity_id)?;
+                let victim = player_ref_for_kill_player(&players, kill.victim_source_entity_id)?;
 
                 Some(json!({
                     "killer_player_id": killer.player_id,
                     "killer_source_entity_id": killer.source_entity_id,
                     "killer_compatibility_key": killer.compatibility_key,
-                    "killer_side": side_name(kill.killer_side),
+                    "killer_side": side_name(killer.side),
                     "victim_player_id": victim.player_id,
                     "victim_source_entity_id": victim.source_entity_id,
                     "victim_compatibility_key": victim.compatibility_key,
-                    "victim_side": side_name(kill.victim_side),
-                    "weapon": kill.weapon,
+                    "victim_side": side_name(victim.side),
+                    "weapon": tables.weapon_name(kill.weapon_id),
                     "attacker_vehicle_entity_id": kill.attacker_vehicle_entity_id,
-                    "attacker_vehicle_name": kill.attacker_vehicle_name,
                     "attacker_vehicle_class": kill.attacker_vehicle_class,
                 }))
             })
@@ -421,15 +431,19 @@ fn player_refs(tables: &MinimalComparisonTables) -> PlayerRefs {
     let mut refs = PlayerRefs::default();
 
     for player in &tables.players {
+        let player_id = player_id(player.source_entity_id);
         let player_ref = PlayerComparisonRef {
-            player_id: player.player_id.clone(),
+            player_id: player_id.clone(),
             source_entity_id: player.source_entity_id,
-            compatibility_key: player.compatibility_key.clone(),
+            compatibility_key: player
+                .compatibility_key
+                .clone()
+                .unwrap_or_else(|| player_id.clone()),
             observed_entity_ids: vec![player.source_entity_id],
             observed_name: player.observed_name.clone(),
             side: player.side,
         };
-        drop(refs.by_player_id.insert(player.player_id.clone(), player_ref.clone()));
+        drop(refs.by_player_id.insert(player_id, player_ref.clone()));
         drop(refs.by_source_entity_id.insert(player.source_entity_id, player_ref));
     }
 
@@ -438,12 +452,13 @@ fn player_refs(tables: &MinimalComparisonTables) -> PlayerRefs {
 
 fn player_ref_for_kill_player(
     players: &PlayerRefs,
-    player_id: Option<&str>,
     source_entity_id: Option<i64>,
 ) -> Option<PlayerComparisonRef> {
-    player_id
-        .and_then(|id| players.by_player_id.get(id).cloned())
-        .or_else(|| source_entity_id.and_then(|id| players.by_source_entity_id.get(&id).cloned()))
+    source_entity_id.and_then(|id| players.by_source_entity_id.get(&id).cloned())
+}
+
+fn player_id(source_entity_id: i64) -> String {
+    format!("entity:{source_entity_id}")
 }
 
 const fn side_name(side: Option<EntitySide>) -> Option<&'static str> {

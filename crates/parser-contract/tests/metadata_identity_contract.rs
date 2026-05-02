@@ -82,8 +82,7 @@ fn field_presence_missing_steam_id_should_serialize_unknown_reason() {
         serialized,
         json!({
             "state": "unknown",
-            "reason": "missing_steam_id",
-            "source": null
+            "reason": "missing_steam_id"
         })
     );
 }
@@ -215,8 +214,7 @@ fn field_presence_null_killer_should_serialize_explicit_null_reason() {
         serialized,
         json!({
             "state": "explicit_null",
-            "reason": "null_killer",
-            "source": null
+            "reason": "null_killer"
         })
     );
 }
@@ -240,7 +238,6 @@ fn field_presence_inferred_value_should_serialize_confidence_and_rule_id() {
             "value": "west",
             "reason": "connected event side backfill",
             "confidence": 0.75,
-            "source": null,
             "rule_id": "identity.side.inferred"
         })
     );
