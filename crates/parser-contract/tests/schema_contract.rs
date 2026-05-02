@@ -339,7 +339,7 @@ fn schema_contract_gap_regression_should_reject_string_counter_in_player_row() {
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_kill_classification() {
     let mut success_example = read_json(success_example_path());
-    success_example["kills"][0]["classification"] = json!("friendly_fire");
+    success_example["kills"][0]["c"] = json!("friendly_fire");
 
     assert_committed_schema_rejects(&success_example);
 }
@@ -347,7 +347,7 @@ fn schema_contract_gap_regression_should_reject_invalid_kill_classification() {
 #[test]
 fn schema_contract_gap_regression_should_reject_invalid_destroyed_vehicle_classification() {
     let mut success_example = read_json(success_example_path());
-    success_example["destroyed_vehicles"][0]["classification"] = json!("neutral");
+    success_example["destroyed_vehicles"][0]["c"] = json!("neutral");
 
     assert_committed_schema_rejects(&success_example);
 }
