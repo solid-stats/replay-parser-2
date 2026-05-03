@@ -18,7 +18,9 @@ Modes:
   --check   resource-limited smoke coverage summary
   --strict  strict postprocessor gate; requires COVERAGE_ALLOW_HEAVY=1
 
-Strict coverage compiles and runs the full workspace with instrumentation.
+Strict coverage compiles and runs workspace bins, tests, and examples with instrumentation.
+Benchmark targets are intentionally excluded from coverage runs.
+The wrapper passes --no-cfg-coverage so ordinary source-level unit tests stay active.
 To run it intentionally:
   COVERAGE_ALLOW_HEAVY=1 COVERAGE_JOBS=1 scripts/coverage-gate.sh --strict
 
@@ -161,7 +163,7 @@ run_check() {
   prepare_coverage_run
 
   run_llvm_cov "$COVERAGE_CHECK_TIMEOUT_SECONDS" \
-    --workspace --all-targets --json --summary-only 2>&1 \
+    --workspace --bins --tests --examples --no-cfg-coverage --json --summary-only 2>&1 \
     | tee "$OUTPUT_ROOT/check-summary.json" >/dev/null
   printf '%s\n' "coverage smoke check passed; summary: $OUTPUT_ROOT/check-summary.json"
 }
@@ -197,7 +199,7 @@ run_strict_gate() {
   fi
 
   run_llvm_cov "$COVERAGE_STRICT_TIMEOUT_SECONDS" \
-    --workspace --all-targets --json --output-path "$coverage_json" 2>&1 \
+    --workspace --bins --tests --examples --no-cfg-coverage --json --output-path "$coverage_json" 2>&1 \
     | tee "$OUTPUT_ROOT/coverage-run.log"
   cargo run -p parser-harness --bin coverage-check -- \
     --allowlist coverage/allowlist.toml \
