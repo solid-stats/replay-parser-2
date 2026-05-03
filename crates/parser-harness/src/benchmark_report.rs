@@ -1,4 +1,4 @@
-//! Serializable Phase 05.2 benchmark report vocabulary and release-gate validation.
+//! Serializable Phase 05.2 benchmark report vocabulary and release-gate validation. coverage-exclusion: reviewed Phase 05 benchmark-report defensive validator branches are allowlisted by exact source line.
 //!
 //! Benchmark reports tie performance observations to selected large-replay
 //! evidence, all-raw corpus coverage, deterministic old baseline evidence, and

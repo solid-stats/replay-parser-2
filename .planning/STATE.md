@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: complete
 stopped_at: Phase 7 complete
-last_updated: "2026-05-02T19:23:05Z"
-last_activity: 2026-05-02 -- Phase 07 parallel and container hardening completed
+last_updated: "2026-05-03T09:45:00+07:00"
+last_activity: 2026-05-03 -- v1.0 milestone gap closure partially executed; Phase 05/07 verification files added, TEST-07 strict coverage still blocked
 progress:
   total_phases: 9
   completed_phases: 9
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** Phase 07 — parallel-and-container-hardening complete
+**Current focus:** v1.0 milestone gap closure — verification artifacts repaired; strict coverage blocker remains
 
 ## Current Position
 
-Phase: 07 (parallel-and-container-hardening) — COMPLETE
-Plan: 5 of 5
-Status: Phase 07 complete
-Last activity: 2026-05-02 -- Phase 07 parallel and container hardening completed
+Phase: v1.0 milestone gap closure — PARTIAL
+Plan: v1.0-MILESTONE-GAP-PLAN
+Status: Phase 05/07 verification blockers closed; TEST-07 strict coverage blocker remains
+Last activity: 2026-05-03 -- v1.0 milestone gap closure partially executed
 Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
 
 Progress: [██████████] 100%
@@ -217,6 +217,8 @@ oversized artifacts. The 4 malformed/non-JSON failures are accepted only while
 new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures.json`
 and the old cached baseline keeps `error_count=4`, `skipped_count=0`.
 Phase 7 completed WORK-08 and WORK-09. Remaining provider-specific Timeweb live validation requires external credentials and is a deployer-run operational check, not a parser code blocker.
+
+Current v1.0 milestone audit state: Phase 05 and Phase 07 now have verification reports, so their requirements are no longer orphaned. `scripts/coverage-gate.sh --check` passes, focused `cargo test -p parser-worker -p parser-cli` passes, `scripts/fault-report-gate.sh` passes, `scripts/worker-smoke.sh` passes, and `git diff --check` passes. Strict `scripts/coverage-gate.sh` still fails after the `benchmark_report.rs` marker repair with `production_files=41`, `allowlisted_locations=140`, and `uncovered_locations=1195`; TEST-07 remains the milestone blocker.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
