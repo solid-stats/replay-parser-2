@@ -106,8 +106,7 @@ async fn process_decoded_job(
             context.parser_contract_version.clone(),
             context.source_checksum.clone(),
             parser_info,
-        )
-        .map_err(|source| internal_error("internal.failure_payload", source.to_string()))?;
+        );
         return publish_failed_action(config, publisher, &failed).await;
     }
 

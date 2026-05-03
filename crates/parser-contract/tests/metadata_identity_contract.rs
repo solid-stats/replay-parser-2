@@ -258,3 +258,21 @@ fn field_presence_inferred_confidence_should_reject_values_outside_zero_to_one()
         assert!(Confidence::new(value).is_err(), "{value:?} should be rejected");
     }
 }
+
+#[test]
+fn field_presence_inferred_confidence_should_deserialize_valid_values() {
+    let confidence: Confidence =
+        serde_json::from_value(json!(0.5)).expect("valid confidence should deserialize");
+
+    assert_eq!(confidence.get().to_bits(), 0.5_f32.to_bits());
+}
+
+#[test]
+fn field_presence_inferred_confidence_should_reject_invalid_deserialized_values() {
+    for invalid_value in [json!(-0.1), json!(1.1), json!("high")] {
+        assert!(
+            serde_json::from_value::<Confidence>(invalid_value).is_err(),
+            "invalid confidence should fail during deserialization"
+        );
+    }
+}

@@ -181,6 +181,12 @@ impl<'de> Deserialize<'de> for SourceRef {
 pub struct SourceRefs(#[schemars(length(min = 1))] Vec<SourceRef>);
 
 impl SourceRefs {
+    /// Creates a source reference list from one known source reference.
+    #[must_use]
+    pub fn single(source_ref: SourceRef) -> Self {
+        Self(vec![source_ref])
+    }
+
     /// Creates a non-empty source reference list.
     ///
     /// # Errors

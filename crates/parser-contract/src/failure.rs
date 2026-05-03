@@ -72,6 +72,10 @@ impl ErrorCode {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub(crate) fn unsupported_contract_version() -> Self {
+        Self("unsupported.contract_version".to_owned())
+    }
 }
 
 fn is_valid_error_code(value: &str) -> bool {

@@ -5,11 +5,15 @@
     reason = "integration tests use expect messages as assertion context"
 )]
 
+use std::collections::BTreeMap;
+
 use parser_contract::{
-    artifact::ParseStatus,
+    artifact::{ParseArtifact, ParseStatus},
     failure::ParseStage,
-    presence::FieldPresence,
-    source_ref::{ReplaySource, SourceChecksum},
+    metadata::{FrameBounds, ReplayMetadata},
+    presence::{Confidence, FieldPresence, NullReason, UnknownReason},
+    side_facts::ReplaySideFacts,
+    source_ref::{ReplaySource, RuleId, SourceChecksum, SourceRef},
     version::ParserInfo,
 };
 use parser_core::{
@@ -38,6 +42,19 @@ fn replay_source() -> ReplaySource {
             .expect("test checksum should be valid"),
             source: None,
         },
+    }
+}
+
+fn source_ref() -> SourceRef {
+    SourceRef {
+        replay_id: Some("replay-0001".to_owned()),
+        source_file: Some("fixtures/replay-0001.ocap.json".to_owned()),
+        checksum: None,
+        frame: None,
+        event_index: None,
+        entity_id: None,
+        json_path: Some("$".to_owned()),
+        rule_id: Some(RuleId::new("metadata.test").expect("test rule ID should be valid")),
     }
 }
 
@@ -97,6 +114,75 @@ fn public_parse_replay_should_strip_replay_metadata_sources() {
 }
 
 #[test]
+fn public_parse_artifact_should_strip_all_source_bearing_metadata_presence_variants() {
+    let source = source_ref();
+    let artifact = ParseArtifact {
+        contract_version: parser_contract::version::ContractVersion::current(),
+        parser: parser_info(),
+        source: replay_source(),
+        status: ParseStatus::Partial,
+        produced_at: None,
+        diagnostics: Vec::new(),
+        replay: Some(ReplayMetadata {
+            mission_name: FieldPresence::Present {
+                value: "Operation Copper".to_owned(),
+                source: Some(source.clone()),
+            },
+            world_name: FieldPresence::ExplicitNull {
+                reason: NullReason::EmptyValue,
+                source: Some(source.clone()),
+            },
+            mission_author: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: Some(source.clone()),
+            },
+            players_count: FieldPresence::Inferred {
+                value: vec![2],
+                reason: "test inference".to_owned(),
+                confidence: Some(Confidence::new(0.5).expect("test confidence should be valid")),
+                source: Some(source.clone()),
+                rule_id: RuleId::new("metadata.players_count.inferred")
+                    .expect("test rule ID should be valid"),
+            },
+            capture_delay: FieldPresence::NotApplicable {
+                reason: "not present in this fixture".to_owned(),
+            },
+            end_frame: FieldPresence::Present { value: 120, source: Some(source.clone()) },
+            time_bounds: FieldPresence::Unknown {
+                reason: UnknownReason::SourceFieldAbsent,
+                source: Some(source.clone()),
+            },
+            frame_bounds: FieldPresence::Inferred {
+                value: FrameBounds { start_frame: 0, end_frame: 120 },
+                reason: "test bounds".to_owned(),
+                confidence: None,
+                source: Some(source),
+                rule_id: RuleId::new("metadata.frame_bounds.inferred")
+                    .expect("test rule ID should be valid"),
+            },
+        }),
+        players: Vec::new(),
+        weapons: Vec::new(),
+        destroyed_vehicles: Vec::new(),
+        side_facts: ReplaySideFacts::default(),
+        failure: None,
+        extensions: BTreeMap::new(),
+    };
+
+    let public_artifact = public_parse_artifact(artifact);
+    let replay = public_artifact.replay.expect("public replay metadata should remain present");
+
+    assert!(!field_has_source(&replay.mission_name));
+    assert!(!field_has_source(&replay.world_name));
+    assert!(!field_has_source(&replay.mission_author));
+    assert!(!field_has_source(&replay.players_count));
+    assert!(!field_has_source(&replay.capture_delay));
+    assert!(!field_has_source(&replay.end_frame));
+    assert!(!field_has_source(&replay.time_bounds));
+    assert!(!field_has_source(&replay.frame_bounds));
+}
+
+#[test]
 fn parser_core_failure_should_return_structured_failure_when_json_is_invalid() {
     let input = parser_input(INVALID_JSON_FIXTURE);
 
@@ -113,10 +199,7 @@ fn parser_core_failure_should_return_structured_failure_when_json_is_invalid() {
     assert_eq!(failure.stage, ParseStage::JsonDecode);
     assert_eq!(failure.error_code.as_str(), "json.decode");
     assert_eq!(source_ref.json_path.as_deref(), Some("$"));
-    assert_eq!(
-        source_ref.rule_id.as_ref().map(parser_contract::source_ref::RuleId::as_str),
-        Some("failure.json.decode")
-    );
+    assert_eq!(source_ref.rule_id.as_ref().map(RuleId::as_str), Some("failure.json.decode"));
     assert!(matches!(failure.source_cause, FieldPresence::Present { .. }));
 }
 
@@ -143,10 +226,7 @@ fn parser_core_failure_should_return_structured_failure_when_root_is_not_object(
         }
     );
     assert_eq!(source_ref.json_path.as_deref(), Some("$"));
-    assert_eq!(
-        source_ref.rule_id.as_ref().map(parser_contract::source_ref::RuleId::as_str),
-        Some("failure.schema.root_object")
-    );
+    assert_eq!(source_ref.rule_id.as_ref().map(RuleId::as_str), Some("failure.schema.root_object"));
 }
 
 #[test]

@@ -112,6 +112,19 @@ fn debug_artifact_should_serialize_identically_when_same_input_is_parsed_twice()
 }
 
 #[test]
+fn debug_artifact_should_return_empty_debug_shell_when_json_is_invalid() {
+    let debug_artifact =
+        parse_replay_debug(parser_input_for(b"{", "fixtures/invalid-json.ocap.json"));
+
+    assert_eq!(debug_artifact.source.source_file, "fixtures/invalid-json.ocap.json");
+    assert!(debug_artifact.replay.is_none());
+    assert!(debug_artifact.entities.is_empty());
+    assert!(debug_artifact.events.is_empty());
+    assert!(debug_artifact.side_facts.commanders.is_empty());
+    assert!(debug_artifact.diagnostics.is_empty());
+}
+
+#[test]
 fn debug_artifact_should_keep_event_rule_ids_consistent_with_source_refs() {
     for (fixture, source_file) in [
         (COMBAT_EVENTS_FIXTURE, "fixtures/combat-events.ocap.json"),

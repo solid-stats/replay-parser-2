@@ -79,7 +79,6 @@ fn failed_message() -> ParseFailedMessage {
         FieldPresence::Present { value: checksum('a'), source: None },
         parser_info(),
     )
-    .expect("failed message should be valid")
 }
 
 fn decoded_body(body: &[u8]) -> Value {

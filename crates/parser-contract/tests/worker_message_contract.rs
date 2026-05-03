@@ -226,8 +226,7 @@ fn worker_message_contract_unsupported_version_helper_should_emit_non_retryable_
         present(ContractVersion::parse("9.0.0").expect("test contract version should parse")),
         present(source_checksum()),
         parser_info(),
-    )
-    .expect("unsupported-version failure should be constructed");
+    );
 
     let serialized = serde_json::to_value(message).expect("failed message should serialize");
 

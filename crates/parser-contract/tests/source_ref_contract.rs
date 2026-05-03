@@ -14,7 +14,7 @@ use parser_contract::{
     presence::FieldPresence,
     source_ref::{ChecksumValue, RuleId, SourceChecksum, SourceRef, SourceRefs},
 };
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
 
 const fn present<T>(value: T) -> FieldPresence<T> {
     FieldPresence::Present { value, source: None }
@@ -81,6 +81,19 @@ fn source_ref_contract_checksum_should_accept_only_sha256_lowercase_hex_when_val
 }
 
 #[test]
+fn source_ref_contract_checksum_should_deserialize_valid_lowercase_sha256_hex() {
+    let checksum: ChecksumValue = serde_json::from_value(json!(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ))
+    .expect("valid checksum value should deserialize");
+
+    assert_eq!(
+        checksum.as_str(),
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    );
+}
+
+#[test]
 fn source_ref_contract_source_ref_should_serialize_replay_frame_event_entity_path_and_rule_coordinates()
  {
     let source_ref = SourceRef {
@@ -128,10 +141,84 @@ fn source_ref_contract_source_ref_should_reject_hollow_evidence_when_deserialize
 }
 
 #[test]
+fn source_ref_contract_source_ref_should_deserialize_with_each_single_evidence_coordinate() {
+    for (field_name, field_value) in [
+        ("replay_id", json!("replay-0001")),
+        ("source_file", json!("raw/replay-0001.ocap.json")),
+        (
+            "checksum",
+            json!({
+                "algorithm": "sha256",
+                "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            }),
+        ),
+        ("frame", json!(12_345)),
+        ("event_index", json!(7)),
+        ("entity_id", json!(99)),
+        ("json_path", json!("$.events[7]")),
+        ("rule_id", json!("event.kill.player")),
+    ] {
+        let mut source_ref = Map::new();
+        drop(source_ref.insert(field_name.to_owned(), field_value));
+
+        let source_ref: SourceRef = serde_json::from_value(Value::Object(source_ref))
+            .expect("single-coordinate source ref should deserialize");
+
+        assert!(source_ref.has_evidence(), "{field_name} should count as evidence");
+    }
+}
+
+#[test]
+fn source_ref_contract_source_refs_should_deserialize_non_empty_arrays() {
+    let source_refs: SourceRefs = serde_json::from_value(json!([
+        {
+            "json_path": "$.events[7]"
+        }
+    ]))
+    .expect("non-empty source refs should deserialize");
+
+    assert_eq!(source_refs.as_slice().len(), 1);
+    assert_eq!(source_refs.as_slice()[0].json_path.as_deref(), Some("$.events[7]"));
+}
+
+#[test]
+fn source_ref_contract_source_refs_should_reject_empty_arrays_when_deserialized() {
+    let result = serde_json::from_value::<SourceRefs>(json!([]));
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn source_ref_contract_source_refs_single_should_create_one_item_list() {
+    let refs = SourceRefs::single(source_ref("event.kill.player"));
+
+    assert_eq!(refs.as_slice().len(), 1);
+    assert_eq!(refs.as_slice()[0].rule_id.as_ref().map(RuleId::as_str), Some("event.kill.player"));
+}
+
+#[test]
 fn source_ref_contract_source_refs_should_reject_empty_arrays_when_created() {
     let result = SourceRefs::new(Vec::new());
 
     assert!(result.is_err());
+}
+
+#[test]
+fn source_ref_contract_rule_id_should_deserialize_valid_namespaced_ids() {
+    let rule_id: RuleId = serde_json::from_value(json!("event.kill.player"))
+        .expect("valid namespaced rule ID should deserialize");
+
+    assert_eq!(rule_id.as_str(), "event.kill.player");
+}
+
+#[test]
+fn source_ref_contract_rule_id_should_reject_invalid_deserialized_ids() {
+    for invalid_rule_id in [json!("event.kill.Player"), json!("event..kill"), json!(null)] {
+        assert!(
+            serde_json::from_value::<RuleId>(invalid_rule_id).is_err(),
+            "invalid rule ID should fail during deserialization"
+        );
+    }
 }
 
 #[test]

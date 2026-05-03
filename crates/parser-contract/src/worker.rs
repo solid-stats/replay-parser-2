@@ -4,9 +4,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
-    failure::{ErrorCode, ErrorCodeError, ParseFailure, ParseStage, Retryability},
+    failure::{ErrorCode, ParseFailure, ParseStage, Retryability},
     presence::{FieldPresence, UnknownReason},
-    source_ref::{SourceChecksum, SourceRef, SourceRefs, SourceRefsError},
+    source_ref::{SourceChecksum, SourceRef, SourceRefs},
     version::{ContractVersion, ParserInfo},
 };
 
@@ -221,11 +221,6 @@ impl ParseFailedMessage {
     }
 
     /// Builds the non-retryable failure emitted for an unsupported contract version.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`UnsupportedContractVersionFailureError`] if the internal structured
-    /// failure code or source-reference list cannot be constructed.
     pub fn unsupported_contract_version(
         job_id: FieldPresence<String>,
         replay_id: FieldPresence<String>,
@@ -233,24 +228,24 @@ impl ParseFailedMessage {
         parser_contract_version: FieldPresence<ContractVersion>,
         source_checksum: FieldPresence<SourceChecksum>,
         parser: ParserInfo,
-    ) -> Result<Self, UnsupportedContractVersionFailureError> {
+    ) -> Self {
         let failure = ParseFailure {
             job_id: job_id.clone(),
             replay_id: replay_id.clone(),
             source_file: object_key.clone(),
             checksum: source_checksum.clone(),
             stage: ParseStage::Schema,
-            error_code: ErrorCode::new("unsupported.contract_version")?,
+            error_code: ErrorCode::unsupported_contract_version(),
             message: "unsupported parser contract version".to_owned(),
             retryability: Retryability::NotRetryable,
             source_cause: FieldPresence::Unknown {
                 reason: UnknownReason::SourceFieldAbsent,
                 source: None,
             },
-            source_refs: schema_message_source_refs()?,
+            source_refs: schema_message_source_refs(),
         };
 
-        Ok(Self::new(
+        Self::new(
             job_id,
             replay_id,
             object_key,
@@ -258,12 +253,12 @@ impl ParseFailedMessage {
             source_checksum,
             failure,
             parser,
-        ))
+        )
     }
 }
 
-fn schema_message_source_refs() -> Result<SourceRefs, SourceRefsError> {
-    SourceRefs::new(vec![SourceRef {
+fn schema_message_source_refs() -> SourceRefs {
+    SourceRefs::single(SourceRef {
         replay_id: None,
         source_file: None,
         checksum: None,
@@ -272,18 +267,7 @@ fn schema_message_source_refs() -> Result<SourceRefs, SourceRefsError> {
         entity_id: None,
         json_path: Some("$".to_owned()),
         rule_id: None,
-    }])
-}
-
-/// Error returned while building an unsupported-contract-version failure message.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-pub enum UnsupportedContractVersionFailureError {
-    /// Unsupported contract-version error code could not be constructed.
-    #[error(transparent)]
-    ErrorCode(#[from] ErrorCodeError),
-    /// Failure source reference list could not be constructed.
-    #[error(transparent)]
-    SourceRefs(#[from] SourceRefsError),
+    })
 }
 
 /// Parser-worker result message envelope.

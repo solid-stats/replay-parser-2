@@ -287,7 +287,13 @@ fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 
+    use crate::source_ref::ReplaySource;
+
     use super::*;
+
+    fn schema_from(value: Value) -> Schema {
+        Schema::try_from(value).expect("test schema value should be valid JSON Schema")
+    }
 
     #[test]
     fn schema_helpers_should_skip_definitions_when_schema_has_no_defs_object() {
@@ -334,5 +340,99 @@ mod tests {
         assert!(!defs.contains_key("AggregateContributionRef"));
         assert!(!defs.contains_key("SourceRef"));
         assert!(!defs.contains_key("MinimalDiagnosticRow"));
+    }
+
+    #[test]
+    fn schema_helpers_should_skip_non_object_definitions_and_properties() {
+        // Arrange
+        let mut schema = schema_from(json!({
+            "$defs": {
+                "MinimalPlayerRow": true,
+                "ParseCompletedMessage": {
+                    "properties": {
+                        "message_type": true
+                    }
+                },
+                "ParseFailedMessage": {
+                    "properties": {}
+                }
+            },
+            "properties": {
+                "job_id": true,
+                "replay_id": {
+                    "type": "string"
+                }
+            }
+        }));
+
+        // Act
+        close_schema_definition(&mut schema, "MinimalPlayerRow");
+        enforce_parse_job_non_empty_fields(&mut schema);
+        enforce_parse_result_kind_consts(&mut schema);
+
+        // Assert
+        let schema_value = schema.as_value();
+        assert_eq!(schema_value["$defs"]["MinimalPlayerRow"], true);
+        assert_eq!(schema_value["properties"]["job_id"], true);
+        assert_eq!(schema_value["properties"]["replay_id"]["minLength"], 1);
+        assert!(schema_value["properties"].get("object_key").is_none());
+        assert_eq!(
+            schema_value["$defs"]["ParseCompletedMessage"]["properties"]["message_type"],
+            true
+        );
+    }
+
+    #[test]
+    fn schema_helpers_should_merge_nested_definitions_when_added_definition_contains_defs() {
+        // Arrange
+        let mut schema = schema_from(json!({
+            "$defs": {}
+        }));
+
+        // Act
+        add_schema_definition::<ReplaySource>(&mut schema, "ReplaySource");
+
+        // Assert
+        let defs =
+            schema.get("$defs").and_then(Value::as_object).expect("definitions should be present");
+        assert!(defs.contains_key("ReplaySource"));
+        assert!(
+            defs.len() > 1,
+            "nested definitions should be merged alongside ReplaySource: {:?}",
+            defs.keys().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn schema_helpers_should_add_conditional_result_kinds_and_source_ref_evidence() {
+        // Arrange
+        let mut schema = parse_result_schema();
+        let mut artifact_schema = parse_artifact_schema();
+
+        // Act
+        enforce_parse_result_kind_consts(&mut schema);
+        enforce_source_ref_evidence_invariants(&mut artifact_schema);
+
+        // Assert
+        let schema_value = schema.as_value();
+        let completed_message_type =
+            schema_value["$defs"]["ParseCompletedMessage"]["properties"]["message_type"]
+                .as_object()
+                .expect("completed message_type should be an object");
+        let failed_message_type =
+            schema_value["$defs"]["ParseFailedMessage"]["properties"]["message_type"]
+                .as_object()
+                .expect("failed message_type should be an object");
+        assert_eq!(completed_message_type["const"], "parse.completed");
+        assert_eq!(failed_message_type["const"], "parse.failed");
+
+        let artifact_schema_value = artifact_schema.as_value();
+        assert!(
+            artifact_schema_value["$defs"]["SourceRef"]["anyOf"]
+                .as_array()
+                .expect("SourceRef evidence invariant should be an array")
+                .iter()
+                .any(|condition| condition["required"] == json!(["rule_id"]))
+        );
     }
 }

@@ -564,6 +564,8 @@ fn write_stderr_line(message: &str) -> io::Result<()> {
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 
+    use std::net::TcpListener;
+
     use super::*;
 
     #[test]
@@ -599,6 +601,66 @@ mod tests {
 
         // Assert
         assert_eq!(exit_code, ExitCode::from(2));
+    }
+
+    #[test]
+    fn parse_http_healthcheck_url_should_parse_valid_http_urls() {
+        // Act
+        let parsed = parse_http_healthcheck_url("http://127.0.0.1:8080/readyz")
+            .expect("valid healthcheck URL should parse");
+
+        // Assert
+        assert_eq!(
+            parsed,
+            HttpHealthcheckUrl {
+                host: "127.0.0.1".to_owned(),
+                port: 8080,
+                path: "/readyz".to_owned(),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_http_healthcheck_url_should_reject_invalid_urls() {
+        // Act + Assert
+        for url in [
+            "https://127.0.0.1:8080/readyz",
+            "http://127.0.0.1:8080",
+            "http://127.0.0.1/readyz",
+            "http://:8080/readyz",
+            "http://user@127.0.0.1:8080/readyz",
+            "http://127.0.0.1:/readyz",
+            "http://127.0.0.1:not-a-port/readyz",
+            "http://127.0.0.1:0/readyz",
+        ] {
+            assert_eq!(parse_http_healthcheck_url(url), Err(HealthcheckError::InvalidUrl));
+        }
+    }
+
+    #[test]
+    fn parse_http_status_should_accept_http_status_lines_and_reject_malformed_responses() {
+        // Act + Assert
+        assert_eq!(parse_http_status("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n"), Some(200));
+        assert_eq!(parse_http_status("HTTP/2 503\r\n"), Some(503));
+        assert_eq!(parse_http_status(""), None);
+        assert_eq!(parse_http_status("NOTHTTP 200 OK\r\n"), None);
+        assert_eq!(parse_http_status("HTTP/1.1\r\n"), None);
+        assert_eq!(parse_http_status("HTTP/1.1 ok\r\n"), None);
+    }
+
+    #[test]
+    fn healthcheck_status_should_report_unavailable_when_connection_fails() {
+        // Arrange
+        let listener = TcpListener::bind("127.0.0.1:0").expect("test listener should bind");
+        let address = listener.local_addr().expect("listener should expose address");
+        drop(listener);
+        let url = format!("http://{}:{}/readyz", address.ip(), address.port());
+
+        // Act
+        let result = healthcheck_status(&url);
+
+        // Assert
+        assert_eq!(result, Err(HealthcheckError::Unavailable));
     }
 
     #[test]
@@ -668,6 +730,11 @@ mod tests {
             (
                 CliError::CompareJsonDetailOutput,
                 "compare --format json cannot be combined with --detail-output",
+                false,
+            ),
+            (
+                CliError::DebugArtifactConflictsWithOutput,
+                "parse --debug-artifact must not be the same path as --output",
                 false,
             ),
         ];
