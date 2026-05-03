@@ -6,6 +6,8 @@ COVERAGE_JOBS="${COVERAGE_JOBS:-1}"
 COVERAGE_NICE="${COVERAGE_NICE:-10}"
 COVERAGE_CHECK_TIMEOUT_SECONDS="${COVERAGE_CHECK_TIMEOUT_SECONDS:-300}"
 COVERAGE_STRICT_TIMEOUT_SECONDS="${COVERAGE_STRICT_TIMEOUT_SECONDS:-1800}"
+COVERAGE_AUTO_CLEAN="${COVERAGE_AUTO_CLEAN:-1}"
+COVERAGE_MIN_FREE_MIB="${COVERAGE_MIN_FREE_MIB:-10240}"
 mkdir -p "$OUTPUT_ROOT"
 
 print_usage() {
@@ -24,6 +26,8 @@ Resource controls:
   COVERAGE_JOBS defaults to 1.
   COVERAGE_CHECK_TIMEOUT_SECONDS defaults to 300.
   COVERAGE_STRICT_TIMEOUT_SECONDS defaults to 1800.
+  COVERAGE_AUTO_CLEAN defaults to 1; set to 0 to keep target/llvm-cov-target.
+  COVERAGE_MIN_FREE_MIB defaults to 10240; set to 0 to skip disk headroom checks.
   COVERAGE_OUTPUT_ROOT overrides generated output directory.
 USAGE
 }
@@ -36,6 +40,79 @@ require_llvm_cov_installed() {
   printf '%s\n' "cargo llvm-cov is required; install cargo-llvm-cov before running the coverage gate." >&2
   printf '%s\n' "Install: cargo install cargo-llvm-cov" >&2
   exit 127
+}
+
+coverage_auto_clean_enabled() {
+  case "$COVERAGE_AUTO_CLEAN" in
+    0|false|FALSE|no|NO)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+available_space_mib() {
+  local path="."
+  if [[ -d target ]]; then
+    path="target"
+  fi
+
+  df -Pm "$path" | awk 'NR == 2 { print $4 }'
+}
+
+clean_coverage_artifacts() {
+  if ! coverage_auto_clean_enabled; then
+    return
+  fi
+
+  printf '%s\n' "cleaning cargo llvm-cov artifacts under target/llvm-cov-target" >&2
+  cargo llvm-cov clean --workspace >/dev/null
+}
+
+ensure_disk_headroom() {
+  if [[ "$COVERAGE_MIN_FREE_MIB" == "0" ]]; then
+    return
+  fi
+
+  local available
+  available=$(available_space_mib)
+  if (( available < COVERAGE_MIN_FREE_MIB )) && coverage_auto_clean_enabled; then
+    printf 'coverage disk headroom is low (%s MiB < %s MiB); cleaning llvm-cov artifacts before run.\n' \
+      "$available" "$COVERAGE_MIN_FREE_MIB" >&2
+    clean_coverage_artifacts
+    available=$(available_space_mib)
+  fi
+
+  if (( available < COVERAGE_MIN_FREE_MIB )); then
+    printf 'coverage disk headroom is still low (%s MiB < %s MiB); free disk space or lower COVERAGE_MIN_FREE_MIB.\n' \
+      "$available" "$COVERAGE_MIN_FREE_MIB" >&2
+    exit 2
+  fi
+}
+
+cleanup_on_exit() {
+  local status=$?
+  trap - EXIT
+
+  if coverage_auto_clean_enabled; then
+    if clean_coverage_artifacts 2>"$OUTPUT_ROOT/cargo-llvm-cov-clean.err"; then
+      rm -f "$OUTPUT_ROOT/cargo-llvm-cov-clean.err"
+      printf '%s\n' "coverage cleanup complete; llvm-cov build artifacts removed." >&2
+    else
+      printf 'warning: cargo llvm-cov cleanup failed; see %s\n' \
+        "$OUTPUT_ROOT/cargo-llvm-cov-clean.err" >&2
+    fi
+  fi
+
+  exit "$status"
+}
+
+prepare_coverage_run() {
+  require_llvm_cov_installed
+  ensure_disk_headroom
+  trap cleanup_on_exit EXIT
 }
 
 run_limited() {
@@ -81,7 +158,7 @@ ERROR
 }
 
 run_check() {
-  require_llvm_cov_installed
+  prepare_coverage_run
 
   run_llvm_cov "$COVERAGE_CHECK_TIMEOUT_SECONDS" \
     --workspace --all-targets --json --summary-only 2>&1 \
@@ -101,7 +178,7 @@ require_threshold_option() {
 
 run_strict_gate() {
   require_strict_opt_in
-  require_llvm_cov_installed
+  prepare_coverage_run
 
   local help_text
   help_text=$(cargo llvm-cov --help 2>&1)

@@ -231,8 +231,10 @@ scripts/benchmark-phase5.sh --ci
 ```
 
 Strict coverage is intentionally opt-in because `cargo llvm-cov --workspace --all-targets`
-is resource-heavy. The wrapper defaults to one build job plus `nice`/`ionice`
-and timeout limits; use `--check` for routine local verification.
+is resource-heavy. The wrapper defaults to one build job, `nice`/`ionice`,
+timeout limits, a 10 GiB free-space preflight, and automatic cleanup of
+`target/llvm-cov-target` after each coverage run. Set `COVERAGE_AUTO_CLEAN=0`
+when intentionally preserving coverage build artifacts for repeated local runs.
 
 Worker integration command:
 
