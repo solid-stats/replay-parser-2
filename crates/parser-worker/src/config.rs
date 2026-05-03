@@ -405,7 +405,9 @@ mod tests {
 
     #[test]
     fn config_validation_should_reject_each_required_empty_runtime_field() {
-        let cases: &[(&str, fn(&mut WorkerConfig))] = &[
+        type ConfigMutation = fn(&mut WorkerConfig);
+
+        let cases: &[(&str, ConfigMutation)] = &[
             ("amqp_url", |config| config.amqp_url.clear()),
             ("job_queue", |config| config.job_queue.clear()),
             ("result_exchange", |config| config.result_exchange.clear()),

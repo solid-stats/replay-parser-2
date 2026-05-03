@@ -76,6 +76,26 @@ impl ShutdownJobProcessor for StaticProcessor {
 }
 
 #[derive(Debug)]
+struct FailingProcessor;
+
+impl ShutdownJobProcessor for FailingProcessor {
+    fn process_job<'a>(&'a self, _body: &'a [u8]) -> ShutdownFuture<'a, DeliveryAction> {
+        Box::pin(async {
+            Err(WorkerError::ParserMetadata("configured processor failure".to_owned()))
+        })
+    }
+}
+
+#[derive(Debug)]
+struct FailingAcker;
+
+impl ShutdownDeliveryAcker for FailingAcker {
+    fn apply(&mut self, _action: DeliveryAction) -> ShutdownFuture<'_, ()> {
+        Box::pin(async { Err(WorkerError::ParserMetadata("configured acker failure".to_owned())) })
+    }
+}
+
+#[derive(Debug)]
 struct DelayedProcessor {
     started: Mutex<Option<oneshot::Sender<()>>>,
     release: Mutex<Option<oneshot::Receiver<DeliveryAction>>>,
@@ -108,6 +128,10 @@ impl ShutdownJobProcessor for DelayedProcessor {
 
 fn delivery(calls: Arc<Mutex<Vec<DeliveryAction>>>, body: &[u8]) -> ShutdownDelivery<FakeAcker> {
     ShutdownDelivery { body: body.to_vec(), acker: FakeAcker::new(calls) }
+}
+
+fn failing_delivery(body: &[u8]) -> ShutdownDelivery<FailingAcker> {
+    ShutdownDelivery { body: body.to_vec(), acker: FailingAcker }
 }
 
 fn acker_calls(calls: &Arc<Mutex<Vec<DeliveryAction>>>) -> Vec<DeliveryAction> {
@@ -240,6 +264,40 @@ async fn shutdown_idle_cancellation_should_stop_pending_drain_without_processing
     // Assert
     assert_eq!(report.processed, 0);
     assert_eq!(report.last_action, None);
+}
+
+#[tokio::test]
+async fn shutdown_processor_failure_should_stop_before_ack() {
+    // Arrange
+    let token = CancellationToken::new();
+    let calls = Arc::new(Mutex::new(Vec::new()));
+    let processor = FailingProcessor;
+    let mut deliveries = stream::iter(vec![delivery(Arc::clone(&calls), b"broken")]);
+
+    // Act
+    let error = drain_until_cancelled(&mut deliveries, token, &processor)
+        .await
+        .expect_err("processor failure should stop drain");
+
+    // Assert
+    assert!(matches!(error, WorkerError::ParserMetadata(_)));
+    assert!(acker_calls(&calls).is_empty());
+}
+
+#[tokio::test]
+async fn shutdown_acker_failure_should_return_error_after_processing() {
+    // Arrange
+    let token = CancellationToken::new();
+    let processor = StaticProcessor { token: None, action: DeliveryAction::Ack };
+    let mut deliveries = stream::iter(vec![failing_delivery(b"ack-fails")]);
+
+    // Act
+    let error = drain_until_cancelled(&mut deliveries, token, &processor)
+        .await
+        .expect_err("acker failure should stop drain");
+
+    // Assert
+    assert!(matches!(error, WorkerError::ParserMetadata(_)));
 }
 
 #[test]

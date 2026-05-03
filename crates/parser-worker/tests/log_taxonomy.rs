@@ -43,7 +43,8 @@ fn assert_no_dynamic_identifier(value: &str) {
 
 #[test]
 fn duration_ms_should_return_elapsed_milliseconds() {
-    let start = Instant::now() - Duration::from_millis(2);
+    let start = Instant::now();
+    std::thread::sleep(Duration::from_millis(2));
 
     assert!(duration_ms(start) >= 2);
 }

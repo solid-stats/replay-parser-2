@@ -137,6 +137,25 @@ fn config_should_reject_zero_prefetch() {
 }
 
 #[test]
+fn config_should_reject_zero_prefetch_override() {
+    // Arrange
+    let overrides = WorkerConfigOverrides {
+        s3_bucket: Some("solid-replays".to_owned()),
+        prefetch: Some(0),
+        ..WorkerConfigOverrides::default()
+    };
+
+    // Act
+    let error = WorkerConfig::from_env_and_overrides(|_| None, overrides)
+        .expect_err("zero prefetch override should fail validation");
+
+    // Assert
+    let message = error.to_string();
+    assert!(message.contains("REPLAY_PARSER_PREFETCH"));
+    assert!(message.contains(">= 1"));
+}
+
+#[test]
 fn config_should_accept_boolean_false_aliases() {
     // Act
     let config = config_from_pairs([
@@ -162,6 +181,21 @@ fn config_should_reject_invalid_boolean_value() {
 
     // Assert
     assert!(error.to_string().contains("must be a boolean"));
+}
+
+#[test]
+fn config_should_reject_invalid_probe_enabled_boolean_value() {
+    // Act
+    let error = config_from_pairs([
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_PROBES_ENABLED", "definitely"),
+    ])
+    .expect_err("invalid probe enabled boolean should fail validation");
+
+    // Assert
+    let message = error.to_string();
+    assert!(message.contains("REPLAY_PARSER_PROBES_ENABLED"));
+    assert!(message.contains("must be a boolean"));
 }
 
 #[test]

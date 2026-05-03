@@ -399,7 +399,7 @@ struct HttpResponse {
 }
 
 impl HttpResponse {
-    fn empty(status: &'static str) -> Self {
+    const fn empty(status: &'static str) -> Self {
         Self { status, body: Vec::new() }
     }
 
@@ -824,6 +824,62 @@ async fn s3_object_store_should_check_ready_download_and_put_against_http_bounda
 }
 
 #[tokio::test]
+async fn s3_object_store_should_map_head_bucket_failure_to_retryable_input_error() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(vec![HttpResponse::xml_error(
+        "500 Internal Server Error",
+        "InternalError",
+    )]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let error = store.check_ready().await.expect_err("head bucket failure should map");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(requests[0].method, "HEAD");
+    match error {
+        WorkerError::S3 { operation, bucket, key, stage, retryability, .. } => {
+            assert_eq!(operation, "head_bucket");
+            assert_eq!(bucket, "solid-replays");
+            assert_eq!(key, "");
+            assert_eq!(stage, ParseStage::Input);
+            assert_eq!(retryability, Retryability::Retryable);
+        }
+        other => assert!(other.to_string().contains("S3 operation failed"), "unexpected: {other}"),
+    }
+}
+
+#[tokio::test]
+async fn s3_object_store_should_map_put_failure_to_retryable_output_error() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(vec![HttpResponse::xml_error(
+        "503 Service Unavailable",
+        "SlowDown",
+    )]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let error = store
+        .put_object_bytes("artifacts/v3/replay/source.json", br#"{"ok":true}"#, "application/json")
+        .await
+        .expect_err("put object failure should map");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(requests[0].method, "PUT");
+    match error {
+        WorkerError::S3 { operation, key, stage, retryability, .. } => {
+            assert_eq!(operation, "put_object");
+            assert_eq!(key, "artifacts/v3/replay/source.json");
+            assert_eq!(stage, ParseStage::Output);
+            assert_eq!(retryability, Retryability::Retryable);
+        }
+        other => assert!(other.to_string().contains("S3 operation failed"), "unexpected: {other}"),
+    }
+}
+
+#[tokio::test]
 async fn s3_object_store_should_classify_conditional_put_responses() {
     // Arrange
     let server = FakeS3HttpServer::spawn(vec![
@@ -875,6 +931,35 @@ async fn s3_object_store_should_classify_conditional_put_responses() {
 }
 
 #[tokio::test]
+async fn s3_object_store_should_return_retryable_error_for_unclassified_conditional_put_failure() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(vec![HttpResponse::xml_error(
+        "500 Internal Server Error",
+        "InternalError",
+    )]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let error = store
+        .put_artifact_bytes_if_absent("artifacts/unclassified.json", b"{}", "application/json")
+        .await
+        .expect_err("unclassified conditional put failure should map to S3 error");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(requests[0].method, "PUT");
+    match error {
+        WorkerError::S3 { operation, key, stage, retryability, .. } => {
+            assert_eq!(operation, "put_object");
+            assert_eq!(key, "artifacts/unclassified.json");
+            assert_eq!(stage, ParseStage::Output);
+            assert_eq!(retryability, Retryability::Retryable);
+        }
+        other => assert!(other.to_string().contains("S3 operation failed"), "unexpected: {other}"),
+    }
+}
+
+#[tokio::test]
 async fn s3_object_store_should_map_no_such_key_to_object_not_found() {
     // Arrange
     let server =
@@ -902,4 +987,49 @@ async fn s3_object_store_should_map_no_such_key_to_object_not_found() {
             assert!(other.to_string().contains("S3 object not found"), "unexpected error: {other}");
         }
     }
+}
+
+#[tokio::test]
+async fn s3_object_store_should_map_missing_artifact_to_output_stage() {
+    // Arrange
+    let server =
+        FakeS3HttpServer::spawn(vec![HttpResponse::xml_error("404 Not Found", "NoSuchKey")]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let error = store
+        .get_artifact_bytes("artifacts/missing.json")
+        .await
+        .expect_err("missing artifact should be mapped");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(requests[0].method, "GET");
+    assert_eq!(requests[0].path_without_query(), "/solid-replays/artifacts/missing.json");
+    match error {
+        WorkerError::ObjectNotFound { operation, key, stage, retryability, .. } => {
+            assert_eq!(operation, "get_object");
+            assert_eq!(key, "artifacts/missing.json");
+            assert_eq!(stage, ParseStage::Output);
+            assert_eq!(retryability, Retryability::Unknown);
+        }
+        other => assert!(other.to_string().contains("S3 object not found"), "unexpected: {other}"),
+    }
+}
+
+#[test]
+fn s3_object_store_debug_should_include_bucket_without_client_details() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(Vec::new());
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let debug = format!("{store:?}");
+    let requests = server.finish();
+
+    // Assert
+    assert!(requests.is_empty());
+    assert!(debug.contains("S3ObjectStore"));
+    assert!(debug.contains("solid-replays"));
+    assert!(debug.contains(".."));
 }

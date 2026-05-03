@@ -127,8 +127,7 @@ fn sha256_hex_should_return_known_sha256_for_abc() {
 #[test]
 fn source_checksum_from_bytes_should_return_sha256_source_checksum() {
     // Act
-    let checksum =
-        source_checksum_from_bytes(b"abc").expect("locally generated checksum should validate");
+    let checksum = source_checksum_from_bytes(b"abc");
 
     // Assert
     assert_eq!(checksum.value.as_str(), ABC_SHA256);

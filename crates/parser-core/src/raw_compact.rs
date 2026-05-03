@@ -674,6 +674,10 @@ mod tests {
     }
 
     #[test]
+    #[allow(
+        clippy::too_many_lines,
+        reason = "fixture keeps compact raw-key coverage in one readable scenario"
+    )]
     fn compact_root_entity_and_shape_helpers_should_cover_source_keys() {
         let root = decode_compact_root(
             br#"{
@@ -816,7 +820,7 @@ mod tests {
 
     #[test]
     fn compact_section_helpers_should_tolerate_missing_and_drifted_arrays() {
-        let missing = decode_compact_root(br#"{}"#).expect("empty root should decode");
+        let missing = decode_compact_root(br"{}").expect("empty root should decode");
         let drifted = decode_compact_root(br#"{"entities": {}, "events": {}}"#)
             .expect("drifted root should decode");
 

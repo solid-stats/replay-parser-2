@@ -52,16 +52,6 @@ fn encode_replay_id(replay_id: &str) -> Result<String, WorkerError> {
         }
     }
 
-    if matches!(encoded.as_str(), "." | "..")
-        || encoded.contains('/')
-        || encoded.contains('\\')
-        || encoded.split('/').any(|segment| matches!(segment, "." | ".."))
-    {
-        return Err(WorkerError::ArtifactKey(
-            "encoded replay_id must be a safe single path segment".to_owned(),
-        ));
-    }
-
     Ok(encoded)
 }
 

@@ -54,8 +54,7 @@ async fn live_worker_should_process_completed_and_failed_jobs_through_broker_and
     let container_smoke = container_smoke_enabled();
     let setup_only =
         env::var("REPLAY_PARSER_CONTAINER_SMOKE_SETUP_ONLY").unwrap_or_default() == "1";
-    let checksum = source_checksum_from_bytes(VALID_REPLAY)
-        .expect("fixture checksum should be internally valid");
+    let checksum = source_checksum_from_bytes(VALID_REPLAY);
     let s3 = s3_client(&config).await;
     ensure_bucket(&s3, &config.s3_bucket).await;
     delete_smoke_objects(&s3, &config, &checksum).await;
@@ -383,7 +382,7 @@ async fn assert_artifact_exists(client: &aws_sdk_s3::Client, completed: &ParseCo
         .await
         .expect("completed artifact should exist in S3-compatible storage");
     let bytes = object.body.collect().await.expect("artifact body should collect").into_bytes();
-    let checksum = source_checksum_from_bytes(&bytes).expect("artifact checksum should validate");
+    let checksum = source_checksum_from_bytes(&bytes);
     assert_eq!(checksum, completed.artifact_checksum);
     assert_eq!(
         u64::try_from(bytes.len()).expect("artifact length should fit u64"),

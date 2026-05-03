@@ -70,7 +70,7 @@ pub async fn process_job_body(
     match serde_json::from_slice::<ParseJobMessage>(body) {
         Ok(job) => process_decoded_job(job, config, store, publisher, parser_info).await,
         Err(error) => {
-            let failed = malformed_job_failed_message(body, &error, parser_info)?;
+            let failed = malformed_job_failed_message(body, &error, parser_info);
             publish_failed_action(config, publisher, &failed).await
         }
     }
@@ -93,7 +93,7 @@ async fn process_decoded_job(
             "parse job JSON did not match the worker contract",
             Retryability::NotRetryable,
             source_cause,
-        )?;
+        );
         let failed = context.failed_message(failure, parser_info);
         return publish_failed_action(config, publisher, &failed).await;
     }
@@ -119,7 +119,7 @@ async fn process_decoded_job(
     };
 
     if let Err(kind) = verify_source_checksum(&downloaded.bytes, &job.checksum) {
-        let failed = worker_failure_message(&context, &kind, parser_info)?;
+        let failed = worker_failure_message(&context, &kind, parser_info);
         return publish_failed_action(config, publisher, &failed).await;
     }
 
@@ -139,7 +139,7 @@ async fn process_decoded_job(
     log_parse_finished(config, &job, parse_start);
 
     if artifact.status == ParseStatus::Failed {
-        let failed = parser_failed_message(&context, artifact.failure, parser_info)?;
+        let failed = parser_failed_message(&context, artifact.failure, parser_info);
         return publish_failed_action(config, publisher, &failed).await;
     }
 
@@ -374,7 +374,7 @@ fn malformed_job_failed_message(
     body: &[u8],
     error: &serde_json::Error,
     parser: ParserInfo,
-) -> Result<ParseFailedMessage, WorkerError> {
+) -> ParseFailedMessage {
     let json = serde_json::from_slice::<serde_json::Value>(body).ok();
     let context = JobContext::from_value(json.as_ref());
     let (stage, code, message) = if json.is_some() {
@@ -389,16 +389,16 @@ fn malformed_job_failed_message(
         message,
         Retryability::NotRetryable,
         error.to_string(),
-    )?;
+    );
 
-    Ok(context.failed_message(failure, parser))
+    context.failed_message(failure, parser)
 }
 
 fn parser_failed_message(
     context: &JobContext,
     failure: Option<ParseFailure>,
     parser: ParserInfo,
-) -> Result<ParseFailedMessage, WorkerError> {
+) -> ParseFailedMessage {
     let failure = failure.map_or_else(
         || {
             build_parse_failure(
@@ -410,17 +410,17 @@ fn parser_failed_message(
                 "missing parser failure payload".to_owned(),
             )
         },
-        |failure| Ok(enrich_parser_failure(context, failure)),
-    )?;
+        |failure| enrich_parser_failure(context, failure),
+    );
 
-    Ok(context.failed_message(failure, parser))
+    context.failed_message(failure, parser)
 }
 
 fn worker_failure_message(
     context: &JobContext,
     kind: &WorkerFailureKind,
     parser: ParserInfo,
-) -> Result<ParseFailedMessage, WorkerError> {
+) -> ParseFailedMessage {
     let failure = build_parse_failure(
         context,
         kind.stage(),
@@ -428,8 +428,8 @@ fn worker_failure_message(
         &kind.to_string(),
         kind.retryability(),
         kind.to_string(),
-    )?;
-    Ok(context.failed_message(failure, parser))
+    );
+    context.failed_message(failure, parser)
 }
 
 fn storage_failed_message(
@@ -438,7 +438,7 @@ fn storage_failed_message(
     parser: ParserInfo,
 ) -> Result<ParseFailedMessage, WorkerError> {
     match error {
-        WorkerError::Failure(kind) => worker_failure_message(context, &kind, parser),
+        WorkerError::Failure(kind) => Ok(worker_failure_message(context, &kind, parser)),
         WorkerError::ObjectNotFound { stage, retryability, key, .. } => {
             let code = storage_error_code(stage);
             let failure = build_parse_failure(
@@ -448,7 +448,7 @@ fn storage_failed_message(
                 "S3 object was not found",
                 retryability,
                 format!("S3 object not found: {key}"),
-            )?;
+            );
             Ok(context.failed_message(failure, parser))
         }
         WorkerError::S3 { stage, retryability, operation, key, message, .. } => {
@@ -460,7 +460,7 @@ fn storage_failed_message(
                 "S3 operation failed",
                 retryability,
                 format!("{operation} failed for {key}: {message}"),
-            )?;
+            );
             Ok(context.failed_message(failure, parser))
         }
         WorkerError::ArtifactKey(message) => {
@@ -471,7 +471,7 @@ fn storage_failed_message(
                 "artifact key construction failed",
                 Retryability::Unknown,
                 message,
-            )?;
+            );
             Ok(context.failed_message(failure, parser))
         }
         WorkerError::ChecksumValidation(message) => {
@@ -482,7 +482,7 @@ fn storage_failed_message(
                 "checksum validation failed",
                 Retryability::Unknown,
                 message,
-            )?;
+            );
             Ok(context.failed_message(failure, parser))
         }
         other => Err(other),
@@ -517,19 +517,18 @@ fn build_parse_failure(
     message: &str,
     retryability: Retryability,
     source_cause: String,
-) -> Result<ParseFailure, WorkerError> {
-    Ok(ParseFailure {
+) -> ParseFailure {
+    ParseFailure {
         job_id: context.job_id.clone(),
         replay_id: context.replay_id.clone(),
         source_file: context.object_key.clone(),
         checksum: context.source_checksum.clone(),
         stage,
-        error_code: ErrorCode::new(error_code)
-            .map_err(|source| internal_error("internal.failure_payload", source.to_string()))?,
+        error_code: checked_error_code(error_code),
         message: message.to_owned(),
         retryability,
         source_cause: FieldPresence::Present { value: source_cause, source: None },
-        source_refs: SourceRefs::new(vec![SourceRef {
+        source_refs: checked_source_refs(vec![SourceRef {
             replay_id: context.replay_id_value.clone(),
             source_file: context.object_key_value.clone(),
             checksum: context.source_checksum_value.clone(),
@@ -538,9 +537,8 @@ fn build_parse_failure(
             entity_id: None,
             json_path: Some("$".to_owned()),
             rule_id: None,
-        }])
-        .map_err(|source| internal_error("internal.failure_payload", source.to_string()))?,
-    })
+        }]),
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -637,6 +635,18 @@ fn checksum_presence(value: Option<&serde_json::Value>) -> FieldPresence<SourceC
     )
 }
 
-const fn internal_error(code: &'static str, message: String) -> WorkerError {
-    WorkerError::Failure(WorkerFailureKind::Internal { code, message })
+#[allow(
+    clippy::expect_used,
+    reason = "processor failure codes are fixed internal constants covered by contract tests"
+)]
+fn checked_error_code(error_code: &str) -> ErrorCode {
+    ErrorCode::new(error_code).expect("processor failure code should be valid")
+}
+
+#[allow(
+    clippy::expect_used,
+    reason = "processor failure source refs always include a JSON path evidence coordinate"
+)]
+fn checked_source_refs(source_refs: Vec<SourceRef>) -> SourceRefs {
+    SourceRefs::new(source_refs).expect("processor failure source refs should be non-empty")
 }

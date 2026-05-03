@@ -108,6 +108,27 @@ impl DeliveryAcker for FakeAcker {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct FailingAcker;
+
+impl DeliveryAcker for FailingAcker {
+    fn ack(&mut self, _options: BasicAckOptions) -> AckerFuture<'_> {
+        Box::pin(async move {
+            Err(WorkerError::Failure(WorkerFailureKind::RabbitMqPublish {
+                message: "configured ack failure".to_owned(),
+            }))
+        })
+    }
+
+    fn nack(&mut self, _options: BasicNackOptions) -> AckerFuture<'_> {
+        Box::pin(async move {
+            Err(WorkerError::Failure(WorkerFailureKind::RabbitMqPublish {
+                message: "configured nack failure".to_owned(),
+            }))
+        })
+    }
+}
+
 #[test]
 fn amqp_completed_publish_uses_default_completed_routing_key() {
     let config = default_config();
@@ -298,4 +319,26 @@ async fn ack_policy_nack_requeue_uses_basic_nack_options() {
         acker.calls,
         vec![FakeAckCall::Nack(BasicNackOptions { multiple: false, requeue: true })]
     );
+}
+
+#[tokio::test]
+async fn ack_policy_ack_failure_should_propagate_error() {
+    let mut acker = FailingAcker;
+
+    let error = apply_delivery_action(&mut acker, DeliveryAction::Ack)
+        .await
+        .expect_err("ack failure should propagate");
+
+    assert!(error.to_string().contains("configured ack failure"));
+}
+
+#[tokio::test]
+async fn ack_policy_nack_failure_should_propagate_error() {
+    let mut acker = FailingAcker;
+
+    let error = apply_delivery_action(&mut acker, DeliveryAction::NackRequeue)
+        .await
+        .expect_err("nack failure should propagate");
+
+    assert!(error.to_string().contains("configured nack failure"));
 }

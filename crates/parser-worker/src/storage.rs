@@ -109,7 +109,7 @@ pub trait ObjectStore: Sync {
     fn download_raw<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, DownloadedObject> {
         Box::pin(async move {
             let bytes = self.get_object_bytes(object_key).await?;
-            let checksum = source_checksum_from_bytes(&bytes)?;
+            let checksum = source_checksum_from_bytes(&bytes);
             Ok(DownloadedObject { bytes, checksum })
         })
     }
@@ -121,7 +121,7 @@ pub trait ObjectStore: Sync {
         bytes: &'a [u8],
     ) -> ObjectStoreFuture<'a, ArtifactWrite> {
         Box::pin(async move {
-            let new_checksum = source_checksum_from_bytes(bytes)?;
+            let new_checksum = source_checksum_from_bytes(bytes);
             let new_size_bytes = byte_len(bytes)?;
             let bucket = self.bucket().to_owned();
 
@@ -379,7 +379,7 @@ fn compare_existing_artifact(
     new_checksum: &SourceChecksum,
     new_size_bytes: u64,
 ) -> Result<ArtifactWrite, WorkerError> {
-    let existing_checksum = source_checksum_from_bytes(existing_bytes)?;
+    let existing_checksum = source_checksum_from_bytes(existing_bytes);
     let existing_size_bytes = byte_len(existing_bytes)?;
     if existing_size_bytes == new_size_bytes && existing_checksum == *new_checksum {
         return Ok(artifact_write(
@@ -567,7 +567,7 @@ mod tests {
                         object_key,
                         ParseStage::Input,
                         Retryability::Retryable,
-                        std::io::Error::new(std::io::ErrorKind::Other, "configured get failure"),
+                        std::io::Error::other("configured get failure"),
                     ));
                 }
 
@@ -596,7 +596,7 @@ mod tests {
                         object_key,
                         ParseStage::Output,
                         Retryability::Retryable,
-                        std::io::Error::new(std::io::ErrorKind::Other, "configured put failure"),
+                        std::io::Error::other("configured put failure"),
                     ));
                 }
 
@@ -612,13 +612,13 @@ mod tests {
             content_type: &'a str,
         ) -> ObjectStoreFuture<'a, ArtifactPutOutcome> {
             Box::pin(async move {
-                if let Some(outcome) = self
+                let conditional_outcome = self
                     .conditional_outcome
                     .lock()
                     .expect("unit outcome lock should not be poisoned")
                     .as_ref()
-                    .copied()
-                {
+                    .copied();
+                if let Some(outcome) = conditional_outcome {
                     return Ok(outcome);
                 }
 
@@ -741,7 +741,7 @@ mod tests {
             "artifact.json",
             ParseStage::Output,
             Retryability::Retryable,
-            std::io::Error::new(std::io::ErrorKind::Other, "boom"),
+            std::io::Error::other("boom"),
         );
         let len = byte_len(b"abc").expect("byte length should fit u64");
 

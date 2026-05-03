@@ -347,6 +347,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::panic, reason = "unit test must exercise Tokio join-panic handling")]
     async fn stop_probe_server_should_cancel_and_report_join_failures() {
         let no_server_shutdown = CancellationToken::new();
         stop_probe_server(no_server_shutdown.clone(), None)

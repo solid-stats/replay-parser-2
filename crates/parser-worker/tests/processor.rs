@@ -240,6 +240,10 @@ impl ObjectStore for FakeObjectStore {
 struct DownloadChecksumFailureStore;
 
 impl ObjectStore for DownloadChecksumFailureStore {
+    #[allow(
+        clippy::unnecessary_literal_bound,
+        reason = "ObjectStore trait fixes the bucket lifetime to self"
+    )]
     fn bucket(&self) -> &str {
         "solid-replays"
     }
@@ -352,7 +356,7 @@ fn parser_info() -> ParserInfo {
 }
 
 fn checksum(bytes: &[u8]) -> SourceChecksum {
-    source_checksum_from_bytes(bytes).expect("test checksum should be valid")
+    source_checksum_from_bytes(bytes)
 }
 
 fn job_message(raw_bytes: &[u8]) -> ParseJobMessage {

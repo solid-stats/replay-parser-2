@@ -221,6 +221,7 @@ impl ParseFailedMessage {
     }
 
     /// Builds the non-retryable failure emitted for an unsupported contract version.
+    #[must_use]
     pub fn unsupported_contract_version(
         job_id: FieldPresence<String>,
         replay_id: FieldPresence<String>,
