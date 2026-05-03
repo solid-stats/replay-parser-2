@@ -10,12 +10,18 @@
 
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
+    events::{
+        BountyExclusionReason, CombatSemantic, CombatVictimKind, NormalizedEvent,
+        NormalizedEventKind,
+    },
     minimal::{DestroyedVehicleClassification, KillClassification, MinimalPlayerKillRow},
     presence::FieldPresence,
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{
+    DebugParseArtifact, ParserInput, ParserOptions, parse_replay, parse_replay_debug,
+};
 use serde_json::json;
 
 const COMBAT_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/combat-events.ocap.json");
@@ -93,6 +99,18 @@ fn combat_artifact() -> ParseArtifact {
 
 fn parse_fixture(bytes: &[u8]) -> ParseArtifact {
     parse_replay(parser_input(bytes))
+}
+
+fn parse_debug_fixture(bytes: &[u8]) -> DebugParseArtifact {
+    parse_replay_debug(parser_input(bytes))
+}
+
+fn debug_event_by_id<'a>(artifact: &'a DebugParseArtifact, event_id: &str) -> &'a NormalizedEvent {
+    artifact
+        .events
+        .iter()
+        .find(|event| event.event_id == event_id)
+        .expect("requested debug event should exist")
 }
 
 fn kill_by_classification(
@@ -202,6 +220,182 @@ fn combat_event_semantics_should_emit_diagnostics_without_stats_for_malformed_ki
         diagnostic_codes.iter().filter(|code| **code == "event.killed_shape_unknown").count(),
         2
     );
+}
+
+#[test]
+fn combat_event_semantics_should_keep_malformed_killed_tuples_as_unknown_debug_events() {
+    let fixture = br#"{
+      "missionName": "sg malformed debug killed events",
+      "worldName": "Altis",
+      "missionAuthor": "SolidGames",
+      "playersCount": [0, 2],
+      "captureDelay": 0.5,
+      "endFrame": 120,
+      "entities": [
+        {
+          "id": 1,
+          "type": "unit",
+          "name": "Alpha",
+          "group": "Alpha 1-1",
+          "side": "WEST",
+          "description": "Rifleman",
+          "isPlayer": 1,
+          "positions": []
+        },
+        {
+          "id": 2,
+          "type": "unit",
+          "name": "Bravo",
+          "group": "Bravo 1-1",
+          "side": "EAST",
+          "description": "Rifleman",
+          "isPlayer": 1,
+          "positions": []
+        }
+      ],
+      "events": [
+        ["late", "killed", 2, [1, "AK-74"], 100],
+        [20, "killed", 2, {"unexpected": true}],
+        [21, "killed", "bad-victim", [1, "AK-74"], 75]
+      ],
+      "Markers": [],
+      "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_debug_fixture(fixture);
+    let shape_diagnostics = artifact
+        .diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.code == "event.killed_shape_unknown")
+        .count();
+
+    assert_eq!(artifact.events.len(), 3);
+    assert_eq!(shape_diagnostics, 3);
+    for event in &artifact.events {
+        let combat = event.combat.as_ref().expect("debug killed event should carry combat data");
+
+        assert_eq!(event.kind, NormalizedEventKind::Unknown);
+        assert_eq!(combat.semantic, CombatSemantic::Unknown);
+        assert_eq!(combat.bounty.exclusion_reasons, vec![BountyExclusionReason::UnknownActor]);
+    }
+
+    let drifted_frame = debug_event_by_id(&artifact, "event.killed.0");
+    let malformed_info = debug_event_by_id(&artifact, "event.killed.1");
+    let missing_victim = debug_event_by_id(&artifact, "event.killed.2");
+
+    assert!(matches!(&drifted_frame.frame, FieldPresence::Unknown { .. }));
+    assert!(matches!(
+        &malformed_info
+            .combat
+            .as_ref()
+            .expect("malformed kill-info event should carry combat data")
+            .distance_meters,
+        FieldPresence::Unknown { .. }
+    ));
+    assert!(matches!(
+        &missing_victim
+            .combat
+            .as_ref()
+            .expect("missing-victim event should carry combat data")
+            .victim,
+        FieldPresence::Unknown { .. }
+    ));
+}
+
+#[test]
+fn combat_event_semantics_should_keep_unknown_actor_context_in_debug_events() {
+    let fixture = br#"{
+      "missionName": "sg unknown actor debug killed events",
+      "worldName": "Altis",
+      "missionAuthor": "SolidGames",
+      "playersCount": [0, 2],
+      "captureDelay": 0.5,
+      "endFrame": 120,
+      "entities": [
+        {
+          "id": 1,
+          "type": "unit",
+          "name": "Known Side",
+          "group": "Alpha 1-1",
+          "side": "WEST",
+          "description": "Rifleman",
+          "isPlayer": 1,
+          "positions": []
+        },
+        {
+          "id": 2,
+          "type": "unit",
+          "name": "No Side",
+          "group": "Bravo 1-1",
+          "description": "Rifleman",
+          "isPlayer": 1,
+          "positions": []
+        },
+        {
+          "id": 3,
+          "type": "vehicle",
+          "name": "Truck",
+          "class": "truck",
+          "side": "EAST",
+          "positions": []
+        }
+      ],
+      "events": [
+        [10, "killed", 99, ["null"], 50],
+        [11, "killed", 3, ["null"], 50],
+        [12, "killed", 1, [3, ""], 15],
+        [13, "killed", 2, [1, "AK-74"], 25]
+      ],
+      "Markers": [],
+      "EditorMarkers": []
+    }"#;
+
+    let artifact = parse_debug_fixture(fixture);
+    let diagnostic_messages = artifact
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(artifact.events.len(), 4);
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| { message.contains("explicit null killer but no known player victim") })
+    );
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| message.contains("explicit null killer and a non-player victim"))
+    );
+    assert!(
+        diagnostic_messages
+            .iter()
+            .any(|message| message.contains("not auditable as a player combat event"))
+    );
+    assert!(
+        diagnostic_messages.iter().any(|message| message.contains("player sides are incomplete"))
+    );
+
+    let missing_victim = debug_event_by_id(&artifact, "event.killed.0")
+        .combat
+        .as_ref()
+        .expect("missing-victim event should carry combat data");
+    let null_vehicle_victim = debug_event_by_id(&artifact, "event.killed.1")
+        .combat
+        .as_ref()
+        .expect("null-killer vehicle event should carry combat data");
+    let vehicle_killer = debug_event_by_id(&artifact, "event.killed.2");
+    let incomplete_sides = debug_event_by_id(&artifact, "event.killed.3");
+
+    assert!(matches!(&missing_victim.killer, FieldPresence::Unknown { .. }));
+    assert!(matches!(&missing_victim.victim, FieldPresence::Unknown { .. }));
+    assert_eq!(missing_victim.victim_kind, CombatVictimKind::Unknown);
+    assert!(matches!(&null_vehicle_victim.victim, FieldPresence::Present { .. }));
+    assert_eq!(null_vehicle_victim.victim_kind, CombatVictimKind::Vehicle);
+    assert_eq!(vehicle_killer.actors.len(), 2);
+    assert_eq!(incomplete_sides.actors.len(), 2);
+    assert_eq!(incomplete_sides.kind, NormalizedEventKind::Unknown);
 }
 
 #[test]

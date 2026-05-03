@@ -19,8 +19,8 @@ use parser_contract::{
 use parser_worker::{
     amqp::{
         AckerFuture, DeliveryAcker, DeliveryAction, LapinDeliveryAcker, PublishedOutcome,
-        apply_delivery_action, delivery_action_after_publish, ensure_publish_confirmed,
-        prepare_completed_publish, prepare_failed_publish,
+        apply_delivery_action, apply_lapin_delivery_action, delivery_action_after_publish,
+        ensure_publish_confirmed, prepare_completed_publish, prepare_failed_publish,
     },
     config::{
         DEFAULT_COMPLETED_ROUTING_KEY, DEFAULT_FAILED_ROUTING_KEY, DEFAULT_PREFETCH,
@@ -211,6 +211,24 @@ fn amqp_lapin_delivery_acker_debug_should_be_safe() {
     let debug = format!("{:?}", LapinDeliveryAcker::new(&delivery));
 
     assert!(debug.contains("LapinDeliveryAcker"));
+}
+
+#[tokio::test]
+async fn amqp_lapin_delivery_action_should_ack_and_nack_mock_deliveries_without_broker() {
+    let ack_delivery =
+        Delivery::mock(8, "parse.jobs".into(), "parse.jobs".into(), false, b"job".to_vec());
+    let nack_delivery =
+        Delivery::mock(9, "parse.jobs".into(), "parse.jobs".into(), true, b"job".to_vec());
+
+    apply_lapin_delivery_action(&ack_delivery, DeliveryAction::Ack, "worker-1")
+        .await
+        .expect("mock delivery ack should apply");
+    apply_lapin_delivery_action(&nack_delivery, DeliveryAction::NackRequeue, "worker-1")
+        .await
+        .expect("mock delivery nack should apply");
+
+    assert_eq!(ack_delivery.delivery_tag, 8);
+    assert_eq!(nack_delivery.delivery_tag, 9);
 }
 
 #[test]

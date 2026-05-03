@@ -7,9 +7,17 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet},
-    sync::Mutex,
+    io::{Read, Write},
+    net::TcpListener,
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
+use aws_sdk_s3::{
+    Client,
+    config::{BehaviorVersion, Credentials, Region},
+};
 use parser_contract::{
     failure::{ParseStage, Retryability},
     source_ref::SourceChecksum,
@@ -21,6 +29,7 @@ use parser_worker::{
     logging::{WORKER_ARTIFACT_REUSED, WORKER_ARTIFACT_WRITTEN},
     storage::{
         ArtifactPutOutcome, ArtifactWrite, DownloadedObject, ObjectStore, ObjectStoreFuture,
+        S3ObjectStore,
     },
 };
 
@@ -316,6 +325,165 @@ fn storage_error(
 
 fn checksum(value: &str) -> SourceChecksum {
     SourceChecksum::sha256(value).expect("test checksum should be valid SHA-256")
+}
+
+#[derive(Debug, Clone)]
+struct RecordedHttpRequest {
+    method: String,
+    path: String,
+    headers: String,
+    body: Vec<u8>,
+}
+
+impl RecordedHttpRequest {
+    fn path_without_query(&self) -> &str {
+        self.path.split_once('?').map_or(self.path.as_str(), |(path, _query)| path)
+    }
+}
+
+#[derive(Debug)]
+struct FakeS3HttpServer {
+    endpoint: String,
+    requests: Arc<Mutex<Vec<RecordedHttpRequest>>>,
+    handle: thread::JoinHandle<()>,
+}
+
+impl FakeS3HttpServer {
+    fn spawn(responses: Vec<HttpResponse>) -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("fake S3 listener should bind");
+        listener.set_nonblocking(false).expect("fake S3 listener should stay blocking");
+        let endpoint = format!(
+            "http://{}",
+            listener.local_addr().expect("fake S3 listener should have address")
+        );
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let captured = Arc::clone(&requests);
+        let handle = thread::spawn(move || {
+            for response in responses {
+                let (mut stream, _peer) =
+                    listener.accept().expect("fake S3 request should connect");
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .expect("fake S3 read timeout should set");
+                let request = read_http_request(&mut stream);
+                captured
+                    .lock()
+                    .expect("fake S3 request list lock should not be poisoned")
+                    .push(request);
+                stream
+                    .write_all(response.to_bytes().as_slice())
+                    .expect("fake S3 response should write");
+            }
+        });
+
+        Self { endpoint, requests, handle }
+    }
+
+    fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+
+    fn finish(self) -> Vec<RecordedHttpRequest> {
+        self.handle.join().expect("fake S3 server thread should finish");
+        Arc::try_unwrap(self.requests)
+            .expect("fake S3 request list should have one owner")
+            .into_inner()
+            .expect("fake S3 request list lock should not be poisoned")
+    }
+}
+
+#[derive(Debug, Clone)]
+struct HttpResponse {
+    status: &'static str,
+    body: Vec<u8>,
+}
+
+impl HttpResponse {
+    fn empty(status: &'static str) -> Self {
+        Self { status, body: Vec::new() }
+    }
+
+    fn xml_error(status: &'static str, code: &str) -> Self {
+        Self {
+            status,
+            body: format!("<Error><Code>{code}</Code><Message>{code}</Message></Error>")
+                .into_bytes(),
+        }
+    }
+
+    fn bytes(status: &'static str, body: &[u8]) -> Self {
+        Self { status, body: body.to_vec() }
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        let content_type = if self.body.starts_with(b"<Error>") {
+            "application/xml"
+        } else {
+            "application/octet-stream"
+        };
+        let mut response = format!(
+            "HTTP/1.1 {}\r\nContent-Length: {}\r\nContent-Type: {content_type}\r\nConnection: close\r\n\r\n",
+            self.status,
+            self.body.len()
+        )
+        .into_bytes();
+        response.extend_from_slice(&self.body);
+        response
+    }
+}
+
+fn read_http_request(stream: &mut impl Read) -> RecordedHttpRequest {
+    let mut bytes = Vec::new();
+    let mut buffer = [0_u8; 1024];
+    loop {
+        let read = stream.read(&mut buffer).expect("fake S3 request should read");
+        assert!(read > 0, "fake S3 request ended before headers");
+        bytes.extend_from_slice(&buffer[..read]);
+        if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+            break;
+        }
+    }
+
+    let header_end = bytes
+        .windows(4)
+        .position(|window| window == b"\r\n\r\n")
+        .expect("fake S3 request should contain header terminator")
+        + 4;
+    let headers = String::from_utf8(bytes[..header_end].to_vec())
+        .expect("fake S3 request headers should be UTF-8");
+    let content_length = headers
+        .lines()
+        .find_map(|line| {
+            line.split_once(':').and_then(|(name, value)| {
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse::<usize>().expect("content-length should parse"))
+            })
+        })
+        .unwrap_or(0);
+    let mut body = bytes[header_end..].to_vec();
+    while body.len() < content_length {
+        let read = stream.read(&mut buffer).expect("fake S3 request body should read");
+        assert!(read > 0, "fake S3 request body ended early");
+        body.extend_from_slice(&buffer[..read]);
+    }
+    body.truncate(content_length);
+
+    let request_line = headers.lines().next().expect("request line should exist");
+    let mut parts = request_line.split_whitespace();
+    let method = parts.next().expect("request method should exist").to_owned();
+    let path = parts.next().expect("request path should exist").to_owned();
+    RecordedHttpRequest { method, path, headers, body }
+}
+
+fn s3_store(endpoint: &str) -> S3ObjectStore {
+    let config = aws_sdk_s3::config::Builder::new()
+        .behavior_version(BehaviorVersion::latest())
+        .region(Region::new("us-east-1"))
+        .credentials_provider(Credentials::new("test", "test", None, None, "test"))
+        .endpoint_url(endpoint)
+        .force_path_style(true)
+        .build();
+    S3ObjectStore::new(Client::from_conf(config), "solid-replays")
 }
 
 fn assert_artifact_write(
@@ -614,6 +782,106 @@ async fn storage_write_artifact_should_return_retryable_put_failure_without_pani
         }
         other => {
             assert!(other.to_string().contains("S3 operation failed"), "unexpected error: {other}");
+        }
+    }
+}
+
+#[tokio::test]
+async fn s3_object_store_should_check_ready_download_and_put_against_http_boundary() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(vec![
+        HttpResponse::empty("200 OK"),
+        HttpResponse::bytes("200 OK", b"abc"),
+        HttpResponse::empty("200 OK"),
+    ]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    store.check_ready().await.expect("head bucket should succeed");
+    let downloaded =
+        store.download_raw("raw/replay.json").await.expect("raw object should download");
+    store
+        .put_object_bytes("artifacts/v3/replay/source.json", br#"{"ok":true}"#, "application/json")
+        .await
+        .expect("artifact put should succeed");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(downloaded.bytes, b"abc");
+    assert_eq!(downloaded.checksum.value.as_str(), ABC_SHA256);
+    assert_eq!(requests[0].method, "HEAD");
+    assert_eq!(requests[0].path_without_query(), "/solid-replays/");
+    assert_eq!(requests[1].method, "GET");
+    assert_eq!(requests[1].path_without_query(), "/solid-replays/raw/replay.json");
+    assert_eq!(requests[2].method, "PUT");
+    assert_eq!(requests[2].path_without_query(), "/solid-replays/artifacts/v3/replay/source.json");
+    assert!(requests[2].headers.to_ascii_lowercase().contains("content-type: application/json"));
+    assert_eq!(requests[2].body, br#"{"ok":true}"#);
+}
+
+#[tokio::test]
+async fn s3_object_store_should_classify_conditional_put_responses() {
+    // Arrange
+    let server = FakeS3HttpServer::spawn(vec![
+        HttpResponse::empty("200 OK"),
+        HttpResponse::xml_error("412 Precondition Failed", "PreconditionFailed"),
+        HttpResponse::xml_error("501 Not Implemented", "NotImplemented"),
+    ]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let created = store
+        .put_artifact_bytes_if_absent("artifacts/created.json", b"{}", "application/json")
+        .await
+        .expect("created conditional put should succeed");
+    let already_exists = store
+        .put_artifact_bytes_if_absent("artifacts/existing.json", b"{}", "application/json")
+        .await
+        .expect("precondition failure should map to existing object");
+    let unsupported = store
+        .put_artifact_bytes_if_absent("artifacts/unsupported.json", b"{}", "application/json")
+        .await
+        .expect("not implemented should map to unsupported conditional write");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(created, ArtifactPutOutcome::Created);
+    assert_eq!(already_exists, ArtifactPutOutcome::AlreadyExists);
+    assert_eq!(unsupported, ArtifactPutOutcome::UnsupportedConditionalWrite);
+    assert_eq!(requests.iter().filter(|request| request.method == "PUT").count(), 3);
+    assert!(
+        requests
+            .iter()
+            .all(|request| { request.headers.to_ascii_lowercase().contains("if-none-match: *") })
+    );
+}
+
+#[tokio::test]
+async fn s3_object_store_should_map_no_such_key_to_object_not_found() {
+    // Arrange
+    let server =
+        FakeS3HttpServer::spawn(vec![HttpResponse::xml_error("404 Not Found", "NoSuchKey")]);
+    let store = s3_store(server.endpoint());
+
+    // Act
+    let error = store
+        .get_object_bytes("raw/missing.json")
+        .await
+        .expect_err("missing object should be mapped");
+    let requests = server.finish();
+
+    // Assert
+    assert_eq!(requests[0].method, "GET");
+    assert_eq!(requests[0].path_without_query(), "/solid-replays/raw/missing.json");
+    match error {
+        WorkerError::ObjectNotFound { operation, key, stage, retryability, .. } => {
+            assert_eq!(operation, "get_object");
+            assert_eq!(key, "raw/missing.json");
+            assert_eq!(stage, ParseStage::Input);
+            assert_eq!(retryability, Retryability::Unknown);
+        }
+        other => {
+            assert!(other.to_string().contains("S3 object not found"), "unexpected error: {other}");
         }
     }
 }
