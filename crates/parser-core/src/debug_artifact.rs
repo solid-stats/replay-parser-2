@@ -1,5 +1,4 @@
 //! Deterministic debug-side artifact construction.
-// coverage-exclusion: reviewed v1.0 debug-sidecar defensive serialization regions are allowlisted by exact source line.
 
 use parser_contract::{
     diagnostic::Diagnostic,

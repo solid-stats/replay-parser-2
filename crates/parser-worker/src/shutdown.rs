@@ -1,5 +1,4 @@
 //! Graceful shutdown drain helpers.
-// coverage-exclusion: reviewed v1.0 shutdown signal adapter regions are allowlisted by exact source line.
 
 use std::pin::Pin;
 

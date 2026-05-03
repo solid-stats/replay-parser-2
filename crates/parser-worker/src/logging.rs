@@ -1,5 +1,4 @@
 //! Stable worker operations log event taxonomy.
-// coverage-exclusion: reviewed v1.0 tracing setup defensive fallback regions are allowlisted by exact source line.
 
 use std::time::Instant;
 

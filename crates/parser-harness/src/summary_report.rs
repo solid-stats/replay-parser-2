@@ -1,5 +1,4 @@
 //! Human-readable summary rendering for comparison reports.
-// coverage-exclusion: reviewed v1.0 report-rendering fallback regions are allowlisted by exact source line.
 
 use std::{collections::BTreeMap, fmt::Write as _};
 

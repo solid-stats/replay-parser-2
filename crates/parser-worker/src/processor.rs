@@ -1,5 +1,4 @@
 //! End-to-end worker job processor.
-// coverage-exclusion: reviewed v1.0 processor transport/error fallback regions are allowlisted by exact source line.
 
 use std::{pin::Pin, time::Instant};
 

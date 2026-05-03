@@ -1,5 +1,4 @@
 //! Cached HTTP liveness and readiness probe state.
-// coverage-exclusion: reviewed v1.0 health server adapter fallback regions are allowlisted by exact source line.
 
 use std::sync::{Arc, RwLock};
 

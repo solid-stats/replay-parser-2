@@ -1,5 +1,4 @@
 //! S3-compatible object storage boundary.
-// coverage-exclusion: reviewed v1.0 S3 adapter/generated SDK error regions are allowlisted by exact source line.
 
 use std::{fmt, pin::Pin};
 

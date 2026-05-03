@@ -1,5 +1,4 @@
 //! `RabbitMQ` adapter for parse-job consumption and parse-result publication.
-// coverage-exclusion: reviewed v1.0 AMQP adapter/generated async error regions are allowlisted by exact source line.
 
 use std::{pin::Pin, time::Instant};
 

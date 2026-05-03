@@ -1,5 +1,4 @@
 //! Worker runtime error types.
-// coverage-exclusion: reviewed v1.0 worker error display/source regions are allowlisted by exact source line.
 
 use parser_contract::{
     failure::{ParseStage, Retryability},

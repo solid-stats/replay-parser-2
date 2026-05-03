@@ -1,5 +1,4 @@
 //! Local SHA-256 checksum helpers.
-// coverage-exclusion: reviewed v1.0 checksum defensive formatting regions are allowlisted by exact source line.
 
 use parser_contract::source_ref::SourceChecksum;
 use sha2::{Digest, Sha256};
