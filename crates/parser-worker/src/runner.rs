@@ -305,3 +305,117 @@ fn log_fields(body: &[u8]) -> LogFields {
         },
     )
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use parser_contract::{source_ref::SourceChecksum, version::ContractVersion};
+
+    use super::*;
+    use crate::config::WorkerConfigOverrides;
+
+    fn valid_config() -> WorkerConfig {
+        WorkerConfig::from_env_and_overrides(
+            |_| None,
+            WorkerConfigOverrides {
+                s3_bucket: Some("solid-replays".to_owned()),
+                probes_enabled: Some(false),
+                worker_id: Some("unit-worker".to_owned()),
+                ..Default::default()
+            },
+        )
+        .expect("worker config should be valid")
+    }
+
+    fn invalid_config() -> WorkerConfig {
+        let mut config = valid_config();
+        config.s3_bucket.clear();
+        config
+    }
+
+    #[tokio::test]
+    async fn runner_entrypoints_should_fail_fast_for_invalid_config_without_dependencies() {
+        let run_error = run(invalid_config()).await.expect_err("invalid config should fail run");
+        let shutdown = CancellationToken::new();
+        let cancelled_error = run_until_cancelled(invalid_config(), shutdown)
+            .await
+            .expect_err("invalid config should fail run until cancelled");
+
+        assert!(matches!(run_error, WorkerError::ConfigValidation(_)));
+        assert!(matches!(cancelled_error, WorkerError::ConfigValidation(_)));
+    }
+
+    #[tokio::test]
+    async fn stop_probe_server_should_cancel_and_report_join_failures() {
+        let no_server_shutdown = CancellationToken::new();
+        stop_probe_server(no_server_shutdown.clone(), None)
+            .await
+            .expect("missing probe server should stop cleanly");
+
+        let clean_shutdown = CancellationToken::new();
+        let clean_handle = tokio::spawn(async { Ok(()) });
+        stop_probe_server(clean_shutdown.clone(), Some(clean_handle))
+            .await
+            .expect("clean probe task should stop");
+
+        let failed_shutdown = CancellationToken::new();
+        let failed_handle = tokio::spawn(async { panic!("probe task panic for unit test") });
+        let failed = stop_probe_server(failed_shutdown.clone(), Some(failed_handle))
+            .await
+            .expect_err("failed probe task should report metadata error");
+
+        assert!(no_server_shutdown.is_cancelled());
+        assert!(clean_shutdown.is_cancelled());
+        assert!(failed_shutdown.is_cancelled());
+        assert!(matches!(failed, WorkerError::ParserMetadata(_)));
+    }
+
+    #[test]
+    fn runner_helpers_should_emit_parser_metadata_logs_and_readiness_state() {
+        let config = valid_config();
+        let health = HealthState::new("unit-worker");
+        let degraded = WorkerError::ConfigValidation("broken dependency".to_owned());
+
+        init_tracing();
+        init_tracing();
+        log_dependency_ready(&config, "s3");
+        log_dependency_degraded(&config, "rabbitmq", "amqp_connect", &degraded);
+        log_readiness_changed(&config, OUTCOME_READY, "ready");
+        mark_draining_and_log(&config, &health);
+        let parser = parser_info().expect("parser metadata should deserialize");
+        let snapshot = serde_json::to_value(health.readyz_snapshot())
+            .expect("health snapshot should serialize");
+
+        assert_eq!(parser.name, "replay-parser-2");
+        assert_eq!(parser.version.to_string(), env!("CARGO_PKG_VERSION"));
+        assert_eq!(snapshot["state"], "draining");
+        assert_eq!(snapshot["ready"], false);
+    }
+
+    #[test]
+    fn log_fields_should_extract_valid_job_identity_and_ignore_malformed_json() {
+        let checksum = SourceChecksum::sha256(
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        )
+        .expect("checksum should parse");
+        let body = serde_json::to_vec(&ParseJobMessage {
+            job_id: "job-1".to_owned(),
+            replay_id: "replay-1".to_owned(),
+            object_key: "raw/replay.json".to_owned(),
+            checksum,
+            parser_contract_version: ContractVersion::current(),
+        })
+        .expect("job message should serialize");
+
+        let valid = log_fields(&body);
+        let malformed = log_fields(b"{");
+
+        assert_eq!(valid.job_id.as_deref(), Some("job-1"));
+        assert_eq!(valid.replay_id.as_deref(), Some("replay-1"));
+        assert_eq!(valid.object_key.as_deref(), Some("raw/replay.json"));
+        assert_eq!(malformed.job_id, None);
+        assert_eq!(malformed.replay_id, None);
+        assert_eq!(malformed.object_key, None);
+    }
+}

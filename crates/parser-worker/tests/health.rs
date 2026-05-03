@@ -176,6 +176,33 @@ mod health {
     }
 
     #[tokio::test]
+    async fn probe_server_should_spawn_and_shutdown_when_probes_are_enabled() {
+        // Arrange
+        let mut config = worker_config(WorkerConfigOverrides {
+            s3_bucket: Some("solid-replays".to_owned()),
+            probes_enabled: Some(false),
+            ..WorkerConfigOverrides::default()
+        });
+        config.probes_enabled = true;
+        config.probe_bind = "127.0.0.1".to_owned();
+        config.probe_port = 0;
+        let state = HealthState::new("worker-health-test");
+        let shutdown = CancellationToken::new();
+
+        // Act
+        let handle = spawn_probe_server(&config, state.clone(), shutdown.clone())
+            .await
+            .expect("enabled probes should bind")
+            .expect("enabled probes should spawn");
+        shutdown.cancel();
+        let server_result = handle.await.expect("probe task should join");
+
+        // Assert
+        assert_eq!(state.worker_id(), "worker-health-test");
+        server_result.expect("probe server should shut down cleanly");
+    }
+
+    #[tokio::test]
     async fn probe_server_should_return_config_error_when_bind_address_is_invalid() {
         // Arrange
         let config = worker_config(WorkerConfigOverrides {

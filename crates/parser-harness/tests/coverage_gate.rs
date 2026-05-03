@@ -255,6 +255,39 @@ expires = "2026-05-28"
     assert_eq!(report.allowlisted_locations, 1);
 }
 
+#[test]
+fn coverage_gate_report_should_ignore_source_unit_test_module_lines() {
+    // Arrange
+    let root =
+        temp_project_root("report_ignores_source_unit_tests").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        r#"pub fn production_path() {}
+
+#[cfg(all(test, not(coverage)))]
+mod tests {
+    #[test]
+    fn source_level_test_helper() {
+        assert_eq!(2 + 2, 4);
+    }
+}
+"#,
+    );
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json =
+        coverage_json_for_segments(&root, "crates/example/src/lib.rs", &[(1, 0), (6, 0)]);
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert_eq!(report.uncovered_locations.len(), 1);
+    assert_eq!(report.uncovered_locations[0].line, 1);
+}
+
 fn temp_project_root(test_name: &str) -> std::io::Result<PathBuf> {
     let root = std::env::temp_dir()
         .join(format!("replay-parser-2-coverage-gate-{}-{test_name}", std::process::id()));
@@ -277,7 +310,16 @@ fn write_project_file(root: &Path, relative_path: &str, contents: &str) {
 }
 
 fn coverage_json_for_file(root: &Path, relative_path: &str, line: u32, count: u32) -> String {
+    coverage_json_for_segments(root, relative_path, &[(line, count)])
+}
+
+fn coverage_json_for_segments(root: &Path, relative_path: &str, segments: &[(u32, u32)]) -> String {
     let filename = root.join(relative_path);
+    let segments = segments
+        .iter()
+        .map(|(line, count)| format!("[{line}, 1, {count}, true, true]"))
+        .collect::<Vec<_>>()
+        .join(", ");
     format!(
         r#"{{
   "data": [
@@ -285,25 +327,21 @@ fn coverage_json_for_file(root: &Path, relative_path: &str, line: u32, count: u3
       "files": [
         {{
           "filename": "{}",
-          "segments": [[{}, 1, {}, true, true]]
+          "segments": [{}]
         }}
       ],
       "functions": [
         {{
-          "count": {},
+          "count": 1,
           "filenames": ["{}"],
-          "regions": [[{}, 1, {}, 10, 0, 0, 0, 0]]
+          "regions": [[1, 1, 1, 10, 1, 0, 0, 0]]
         }}
       ]
     }}
   ]
 }}"#,
         filename.display(),
-        line,
-        count,
-        count,
+        segments,
         filename.display(),
-        line,
-        line
     )
 }

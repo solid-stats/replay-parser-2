@@ -618,6 +618,10 @@ mod tests {
 
     use super::*;
 
+    fn boxed_raw(json: &str) -> Box<RawValue> {
+        serde_json::from_str(json).expect("test raw JSON should decode")
+    }
+
     #[test]
     fn decode_compact_root_should_distinguish_malformed_json_from_non_object_root() {
         assert!(matches!(
@@ -638,7 +642,9 @@ mod tests {
                     [1, "killed", 2, ["null"], 10],
                     [2, "killed", 3, {"bad": true}],
                     [3, "killed", 4, [1, ""]],
-                    [4, "ignored", 1]
+                    [4, "killed", 5, [1, "rifle", "extra"]],
+                    [5, "killed", 6, ["bad", "rifle"]],
+                    [6, "ignored", 1]
                 ]
             }"#,
         )
@@ -646,7 +652,7 @@ mod tests {
 
         let events = compact_killed_events(&root);
 
-        assert_eq!(events.len(), 3);
+        assert_eq!(events.len(), 5);
         assert_eq!(events[0].kill_info, KilledEventKillInfo::NullKiller);
         assert_eq!(
             events[1].kill_info,
@@ -656,6 +662,169 @@ mod tests {
             events[2].kill_info,
             KilledEventKillInfo::Killer { killer_entity_id: 1, weapon: None }
         );
+        assert_eq!(
+            events[3].kill_info,
+            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
+        );
+        assert_eq!(
+            events[4].kill_info,
+            KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() }
+        );
         assert_eq!(events[2].json_path, "$.events[2]");
+    }
+
+    #[test]
+    fn compact_root_entity_and_shape_helpers_should_cover_source_keys() {
+        let root = decode_compact_root(
+            br#"{
+                "missionName": "mission",
+                "worldName": "world",
+                "missionAuthor": "author",
+                "playersCount": 2,
+                "captureDelay": 3,
+                "endFrame": 4,
+                "EditorMarkers": [],
+                "Markers": [],
+                "entities": [
+                    {
+                        "id": 10,
+                        "type": "unit",
+                        "name": "Alpha",
+                        "class": "B_Soldier_F",
+                        "_class": "B_Soldier_F_alt",
+                        "side": "WEST",
+                        "group": "A",
+                        "description": "Rifleman",
+                        "isPlayer": true,
+                        "steam_id": "76561198000000000",
+                        "positions": [[1, 2, 3]],
+                        "ignored": {"nested": true}
+                    },
+                    7
+                ],
+                "events": [
+                    [1, "connected", "Alpha", 10],
+                    {"bad": true},
+                    [2, 5],
+                    [3, "ignored", 1],
+                    [4, "killed", 10],
+                    ["bad", "connected", "Beta", 11],
+                    [5, "connected"],
+                    [6, "connected", "Gamma"],
+                    [7, "killed", 11, [10, "rifle"], 25.5]
+                ],
+                "winner": "WEST",
+                "winningSide": "WEST",
+                "outcome": "victory",
+                "ignoredTopLevel": {"nested": true}
+            }"#,
+        )
+        .expect("test root should decode");
+
+        for key in [
+            "missionName",
+            "worldName",
+            "missionAuthor",
+            "playersCount",
+            "captureDelay",
+            "endFrame",
+            "EditorMarkers",
+            "Markers",
+            "entities",
+            "events",
+            "winner",
+            "winningSide",
+            "outcome",
+        ] {
+            assert!(root.raw_value_at(key).is_some(), "{key} should be captured");
+        }
+        assert!(root.raw_value_at("ignoredTopLevel").is_none());
+
+        let entities = compact_entities(&root);
+        assert_eq!(entities.len(), 2);
+        let entity = entities[0].entity.as_ref().expect("first row should be object");
+        for key in [
+            "id",
+            "type",
+            "name",
+            "class",
+            "_class",
+            "side",
+            "group",
+            "description",
+            "isPlayer",
+            "steamID",
+            "steamId",
+            "steam_id",
+            "positions",
+        ] {
+            assert!(entity.raw_value_at(key).is_some(), "{key} should be captured");
+        }
+        assert!(entity.raw_value_at("ignored").is_none());
+        assert_eq!(entity.raw_steam_id_field().map(|(key, _value)| key), Some("steam_id"));
+        assert!(entity.has_positions());
+        assert_eq!(entities[1].observed_shape.as_deref(), Some("number"));
+
+        assert!(matches!(
+            raw_array_field(root.raw_value_at("entities"), "$.entities".to_owned()),
+            RawField::Present { .. }
+        ));
+        assert!(matches!(
+            raw_array_field(root.raw_value_at("missionName"), "$.missionName".to_owned()),
+            RawField::Drift { observed_shape, .. } if observed_shape == "string"
+        ));
+        assert!(matches!(raw_array_field(None, "$.missing".to_owned()), RawField::Absent { .. }));
+
+        let relevant = compact_relevant_events(&root);
+        assert_eq!(relevant.connected.len(), 1);
+        assert_eq!(relevant.connected[0].name, "Alpha");
+        assert_eq!(relevant.killed.len(), 2);
+        assert_eq!(
+            relevant.killed[0].kill_info,
+            KilledEventKillInfo::Malformed { observed_shape: "absent".to_owned() }
+        );
+        assert_eq!(
+            relevant.killed[1].kill_info,
+            KilledEventKillInfo::Killer { killer_entity_id: 10, weapon: Some("rifle".to_owned()) }
+        );
+        assert_eq!(relevant.killed[1].distance_meters, Some(25.5));
+
+        let boolean = boxed_raw("true");
+        let zero = boxed_raw("0");
+        let one = boxed_raw("1");
+        let other = boxed_raw("2");
+        let integer = boxed_raw("42");
+        let float = boxed_raw("1.25");
+        let string = boxed_raw(r#""value""#);
+        let null = boxed_raw("null");
+        let array = boxed_raw("[1, 2]");
+        let object = boxed_raw(r#"{"key":"value"}"#);
+
+        assert_eq!(parse_raw_bool_or_numeric(&boolean), Some(true));
+        assert_eq!(parse_raw_bool_or_numeric(&zero), Some(false));
+        assert_eq!(parse_raw_bool_or_numeric(&one), Some(true));
+        assert_eq!(parse_raw_bool_or_numeric(&other), None);
+        assert_eq!(parse_raw_u32_vec(&array), Some(vec![1, 2]));
+        assert_eq!(observed_raw_shape(&boolean), "boolean");
+        assert_eq!(observed_raw_shape(&integer), "number");
+        assert_eq!(observed_raw_shape(&float), "number");
+        assert_eq!(observed_raw_shape(&string), "string");
+        assert_eq!(observed_raw_shape(&null), "null");
+        assert_eq!(observed_raw_shape(&array), "array");
+        assert_eq!(observed_raw_shape(&object), "object");
+    }
+
+    #[test]
+    fn compact_section_helpers_should_tolerate_missing_and_drifted_arrays() {
+        let missing = decode_compact_root(br#"{}"#).expect("empty root should decode");
+        let drifted = decode_compact_root(br#"{"entities": {}, "events": {}}"#)
+            .expect("drifted root should decode");
+
+        assert!(compact_entities(&missing).is_empty());
+        assert!(compact_connected_events(&missing).is_empty());
+        assert!(compact_killed_events(&missing).is_empty());
+        assert!(compact_entities(&drifted).is_empty());
+        assert!(compact_relevant_events(&drifted).connected.is_empty());
+        assert!(compact_relevant_events(&drifted).killed.is_empty());
     }
 }

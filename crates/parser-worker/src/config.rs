@@ -364,3 +364,80 @@ fn redact_userinfo(value: &str) -> String {
         |userinfo_end| format!("***@{}", &value[userinfo_end + 1..]),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use super::*;
+
+    fn test_config() -> WorkerConfig {
+        WorkerConfig::from_env_and_overrides(
+            |_| None,
+            WorkerConfigOverrides {
+                s3_bucket: Some("solid-replays".to_owned()),
+                ..Default::default()
+            },
+        )
+        .expect("test config should be valid")
+    }
+
+    #[test]
+    fn config_overrides_should_cover_direct_override_branches_without_env_mutation() {
+        let config = WorkerConfig::from_env_and_overrides(
+            |_| None,
+            WorkerConfigOverrides {
+                s3_bucket: Some("solid-replays".to_owned()),
+                s3_force_path_style: Some(true),
+                prefetch: Some(2),
+                probes_enabled: Some(false),
+                worker_id: Some("unit-worker".to_owned()),
+                ..Default::default()
+            },
+        )
+        .expect("direct overrides should build config");
+
+        assert!(config.s3_force_path_style);
+        assert_eq!(config.prefetch, 2);
+        assert!(!config.probes_enabled);
+        assert_eq!(config.worker_id, "unit-worker");
+    }
+
+    #[test]
+    fn config_validation_should_reject_each_required_empty_runtime_field() {
+        let cases: &[(&str, fn(&mut WorkerConfig))] = &[
+            ("amqp_url", |config| config.amqp_url.clear()),
+            ("job_queue", |config| config.job_queue.clear()),
+            ("result_exchange", |config| config.result_exchange.clear()),
+            ("completed_routing_key", |config| config.completed_routing_key.clear()),
+            ("failed_routing_key", |config| config.failed_routing_key.clear()),
+            ("s3_region", |config| config.s3_region.clear()),
+            ("artifact_prefix", |config| config.artifact_prefix.clear()),
+        ];
+
+        for (field, mutate) in cases {
+            let mut config = test_config();
+            mutate(&mut config);
+            let error = config.validate().expect_err("empty field should fail validation");
+
+            assert!(
+                error.to_string().contains(field),
+                "expected validation error for {field}, got {error}"
+            );
+        }
+    }
+
+    #[test]
+    fn config_validation_should_check_probe_port_only_when_probes_are_enabled() {
+        let mut disabled = test_config();
+        disabled.probes_enabled = false;
+        disabled.probe_port = 0;
+
+        let mut enabled = disabled.clone();
+        enabled.probes_enabled = true;
+
+        disabled.validate().expect("disabled probes should not validate probe port");
+        let error = enabled.validate().expect_err("enabled probes should validate probe port");
+        assert!(error.to_string().contains(ENV_PROBE_PORT));
+    }
+}

@@ -477,3 +477,304 @@ fn s3_error(
         message: source.to_string(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+
+    use std::{
+        collections::BTreeMap,
+        sync::{
+            Mutex,
+            atomic::{AtomicBool, Ordering},
+        },
+    };
+
+    use super::*;
+
+    const ABC_SHA256: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+
+    #[derive(Debug)]
+    struct UnitObjectStore {
+        bucket: String,
+        objects: Mutex<BTreeMap<String, Vec<u8>>>,
+        conditional_outcome: Mutex<Option<ArtifactPutOutcome>>,
+        fail_get_with_s3: AtomicBool,
+        fail_put_with_s3: AtomicBool,
+    }
+
+    impl UnitObjectStore {
+        fn new() -> Self {
+            Self {
+                bucket: "solid-replays".to_owned(),
+                objects: Mutex::new(BTreeMap::new()),
+                conditional_outcome: Mutex::new(None),
+                fail_get_with_s3: AtomicBool::new(false),
+                fail_put_with_s3: AtomicBool::new(false),
+            }
+        }
+
+        fn with_object(key: &str, bytes: &[u8]) -> Self {
+            let store = Self::new();
+            store.insert(key, bytes);
+            store
+        }
+
+        fn insert(&self, key: &str, bytes: &[u8]) {
+            let _previous = self
+                .objects
+                .lock()
+                .expect("unit object map lock should not be poisoned")
+                .insert(key.to_owned(), bytes.to_vec());
+        }
+
+        fn stored(&self, key: &str) -> Option<Vec<u8>> {
+            self.objects
+                .lock()
+                .expect("unit object map lock should not be poisoned")
+                .get(key)
+                .cloned()
+        }
+
+        fn set_conditional_outcome(&self, outcome: ArtifactPutOutcome) {
+            let _previous = self
+                .conditional_outcome
+                .lock()
+                .expect("unit outcome lock should not be poisoned")
+                .replace(outcome);
+        }
+
+        fn fail_get_with_s3(&self) {
+            self.fail_get_with_s3.store(true, Ordering::SeqCst);
+        }
+
+        fn fail_put_with_s3(&self) {
+            self.fail_put_with_s3.store(true, Ordering::SeqCst);
+        }
+    }
+
+    impl ObjectStore for UnitObjectStore {
+        fn bucket(&self) -> &str {
+            &self.bucket
+        }
+
+        fn get_object_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+            Box::pin(async move {
+                if self.fail_get_with_s3.load(Ordering::SeqCst) {
+                    return Err(s3_error(
+                        "get_object",
+                        &self.bucket,
+                        object_key,
+                        ParseStage::Input,
+                        Retryability::Retryable,
+                        std::io::Error::new(std::io::ErrorKind::Other, "configured get failure"),
+                    ));
+                }
+
+                self.objects
+                    .lock()
+                    .expect("unit object map lock should not be poisoned")
+                    .get(object_key)
+                    .cloned()
+                    .ok_or_else(|| {
+                        object_not_found("get_object", &self.bucket, object_key, ParseStage::Input)
+                    })
+            })
+        }
+
+        fn put_object_bytes<'a>(
+            &'a self,
+            object_key: &'a str,
+            bytes: &'a [u8],
+            _content_type: &'a str,
+        ) -> ObjectStoreFuture<'a, ()> {
+            Box::pin(async move {
+                if self.fail_put_with_s3.load(Ordering::SeqCst) {
+                    return Err(s3_error(
+                        "put_object",
+                        &self.bucket,
+                        object_key,
+                        ParseStage::Output,
+                        Retryability::Retryable,
+                        std::io::Error::new(std::io::ErrorKind::Other, "configured put failure"),
+                    ));
+                }
+
+                self.insert(object_key, bytes);
+                Ok(())
+            })
+        }
+
+        fn put_artifact_bytes_if_absent<'a>(
+            &'a self,
+            object_key: &'a str,
+            bytes: &'a [u8],
+            content_type: &'a str,
+        ) -> ObjectStoreFuture<'a, ArtifactPutOutcome> {
+            Box::pin(async move {
+                if let Some(outcome) = self
+                    .conditional_outcome
+                    .lock()
+                    .expect("unit outcome lock should not be poisoned")
+                    .as_ref()
+                    .copied()
+                {
+                    return Ok(outcome);
+                }
+
+                ObjectStore::put_object_bytes(self, object_key, bytes, content_type).await?;
+                Ok(ArtifactPutOutcome::Created)
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn default_object_store_helpers_should_download_put_and_write_created_artifacts() {
+        let store = UnitObjectStore::with_object("raw/replay.json", b"abc");
+
+        let artifact_bytes =
+            store.get_artifact_bytes("raw/replay.json").await.expect("artifact bytes should read");
+        let downloaded =
+            store.download_raw("raw/replay.json").await.expect("raw bytes should download");
+        let put_outcome = ObjectStore::put_artifact_bytes_if_absent(
+            &store,
+            "artifacts/direct.json",
+            br#"{"ok":true}"#,
+            "application/json",
+        )
+        .await
+        .expect("default put should create");
+        let write = store
+            .write_artifact_if_absent_or_matching("artifacts/write.json", b"[]")
+            .await
+            .expect("artifact should write");
+
+        assert_eq!(artifact_bytes, b"abc");
+        assert_eq!(downloaded.bytes, b"abc");
+        assert_eq!(downloaded.checksum.value.as_str(), ABC_SHA256);
+        assert_eq!(put_outcome, ArtifactPutOutcome::Created);
+        assert_eq!(
+            store.stored("artifacts/direct.json").as_deref(),
+            Some(br#"{"ok":true}"#.as_slice())
+        );
+        assert_eq!(store.stored("artifacts/write.json").as_deref(), Some(b"[]".as_slice()));
+        assert_eq!(write.reference.bucket, "solid-replays");
+        assert_eq!(write.reference.key, "artifacts/write.json");
+        assert_eq!(write.size_bytes, 2);
+        assert!(!write.reused_existing);
+    }
+
+    #[tokio::test]
+    async fn artifact_write_helpers_should_cover_existing_fallback_conflict_and_error_paths() {
+        let key = "artifacts/existing.json";
+        let store = UnitObjectStore::with_object(key, b"same");
+        store.set_conditional_outcome(ArtifactPutOutcome::AlreadyExists);
+
+        let reused = store
+            .write_artifact_if_absent_or_matching(key, b"same")
+            .await
+            .expect("same bytes reuse");
+        let conflict = store
+            .write_artifact_if_absent_or_matching(key, b"different")
+            .await
+            .expect_err("different bytes should conflict");
+
+        let fallback_key = "artifacts/fallback.json";
+        let fallback = UnitObjectStore::new();
+        fallback.set_conditional_outcome(ArtifactPutOutcome::UnsupportedConditionalWrite);
+        let fallback_write = fallback
+            .write_artifact_if_absent_or_matching(fallback_key, b"new")
+            .await
+            .expect("unsupported conditional write should fall back to put");
+
+        let failing = UnitObjectStore::new();
+        failing.set_conditional_outcome(ArtifactPutOutcome::UnsupportedConditionalWrite);
+        failing.fail_get_with_s3();
+        let fallback_error = failing
+            .write_artifact_if_absent_or_matching("artifacts/error.json", b"new")
+            .await
+            .expect_err("fallback get error should be returned");
+
+        let put_failing = UnitObjectStore::new();
+        put_failing.fail_put_with_s3();
+        let put_error = put_failing
+            .write_artifact_if_absent_or_matching("artifacts/put-error.json", b"new")
+            .await
+            .expect_err("created write put error should be returned");
+
+        assert!(reused.reused_existing);
+        assert_eq!(fallback.stored(fallback_key).as_deref(), Some(b"new".as_slice()));
+        assert_eq!(fallback_write.reference.key, fallback_key);
+        assert!(matches!(
+            conflict,
+            WorkerError::Failure(WorkerFailureKind::ArtifactConflict { .. })
+        ));
+        assert!(matches!(fallback_error, WorkerError::S3 { operation: "get_object", .. }));
+        assert!(matches!(put_error, WorkerError::S3 { operation: "put_object", .. }));
+    }
+
+    #[test]
+    fn storage_private_helpers_should_shape_worker_errors_and_match_condition_messages() {
+        let checksum = SourceChecksum::sha256(ABC_SHA256).expect("checksum should parse");
+        let write = artifact_write(
+            "bucket".to_owned(),
+            "artifact.json".to_owned(),
+            checksum.clone(),
+            3,
+            true,
+        );
+        let same =
+            compare_existing_artifact("bucket".to_owned(), "artifact.json", b"abc", &checksum, 3)
+                .expect("matching artifact should compare");
+        let conflict = compare_existing_artifact(
+            "bucket".to_owned(),
+            "artifact.json",
+            b"different",
+            &checksum,
+            3,
+        )
+        .expect_err("different artifact should conflict");
+        let missing = object_not_found("get_object", "bucket", "missing.json", ParseStage::Input);
+        let storage = s3_error(
+            "put_object",
+            "bucket",
+            "artifact.json",
+            ParseStage::Output,
+            Retryability::Retryable,
+            std::io::Error::new(std::io::ErrorKind::Other, "boom"),
+        );
+        let len = byte_len(b"abc").expect("byte length should fit u64");
+
+        assert_eq!(write.reference.key, "artifact.json");
+        assert!(write.reused_existing);
+        assert_eq!(same.size_bytes, 3);
+        assert_eq!(len, 3);
+        assert!(matches!(
+            conflict,
+            WorkerError::Failure(WorkerFailureKind::ArtifactConflict { .. })
+        ));
+        assert!(matches!(
+            missing,
+            WorkerError::ObjectNotFound {
+                operation: "get_object",
+                key,
+                stage: ParseStage::Input,
+                retryability: Retryability::Unknown,
+                ..
+            } if key == "missing.json"
+        ));
+        assert!(matches!(
+            storage,
+            WorkerError::S3 {
+                operation: "put_object",
+                stage: ParseStage::Output,
+                retryability: Retryability::Retryable,
+                ..
+            }
+        ));
+        assert!(message_mentions_if_none_match(Some("provider rejects If-None-Match")));
+        assert!(message_mentions_if_none_match(Some("provider rejects if none match")));
+        assert!(!message_mentions_if_none_match(Some("unrelated")));
+        assert!(!message_mentions_if_none_match(None));
+    }
+}

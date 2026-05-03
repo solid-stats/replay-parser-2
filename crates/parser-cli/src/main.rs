@@ -381,13 +381,20 @@ fn read_parser_input(input: &Path, replay_id: Option<String>) -> Result<ReadPars
 }
 
 fn schema_command(output: Option<PathBuf>) -> Result<ExitCode, CliError> {
+    let mut stdout = io::stdout().lock();
+    schema_command_with_writer(output, &mut stdout)
+}
+
+fn schema_command_with_writer(
+    output: Option<PathBuf>,
+    stdout: &mut impl Write,
+) -> Result<ExitCode, CliError> {
     let schema = parse_artifact_schema();
     if let Some(path) = output {
         let schema_bytes = serde_json::to_vec_pretty(&schema).map_err(CliError::Serialize)?;
         write_json_file(&path, schema_bytes)?;
     } else {
-        let mut stdout = io::stdout().lock();
-        serde_json::to_writer_pretty(&mut stdout, &schema).map_err(CliError::Serialize)?;
+        serde_json::to_writer_pretty(&mut *stdout, &schema).map_err(CliError::Serialize)?;
         stdout.write_all(b"\n").map_err(CliError::WriteStdout)?;
     }
 
@@ -564,9 +571,28 @@ fn write_stderr_line(message: &str) -> io::Result<()> {
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 
-    use std::net::TcpListener;
+    use std::{net::TcpListener, thread};
 
     use super::*;
+
+    const VALID_REPLAY: &[u8] =
+        include_bytes!("../../parser-core/tests/fixtures/valid-minimal.ocap.json");
+
+    fn temp_dir(test_name: &str) -> PathBuf {
+        let path = std::env::temp_dir()
+            .join(format!("replay-parser-2-cli-unit-{}-{test_name}", std::process::id()));
+        match fs::remove_dir_all(&path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => panic!("failed to remove test temp dir {}: {error}", path.display()),
+        }
+        fs::create_dir_all(&path).expect("test temp dir should be created");
+        path
+    }
+
+    fn write_replay(path: &Path, bytes: &[u8]) {
+        fs::write(path, bytes).expect("test replay should be written");
+    }
 
     #[test]
     fn parse_failure_summary_should_describe_failed_artifacts_without_failure_payload() {
@@ -592,6 +618,106 @@ mod tests {
 
         // Assert
         assert_eq!(summary.as_deref(), Some("parse failed: no structured failure payload"));
+    }
+
+    #[test]
+    fn parse_command_should_cover_pretty_debug_failure_and_success_paths() {
+        // Arrange
+        let dir = temp_dir("parse_command_paths");
+        let valid_input = dir.join("valid.ocap.json");
+        let invalid_input = dir.join("invalid.ocap.json");
+        let valid_output = dir.join("valid-artifact.json");
+        let invalid_output = dir.join("invalid-artifact.json");
+        let debug_output = dir.join("invalid-debug.json");
+        write_replay(&valid_input, VALID_REPLAY);
+        write_replay(&invalid_input, b"{");
+
+        // Act
+        let valid_exit =
+            parse_command(&valid_input, &valid_output, Some("unit-replay".to_owned()), false, None)
+                .expect("valid parse should succeed");
+        let invalid_exit =
+            parse_command(&invalid_input, &invalid_output, None, true, Some(&debug_output))
+                .expect("invalid parse should write failed artifact");
+
+        // Assert
+        assert_eq!(valid_exit, ExitCode::SUCCESS);
+        assert_eq!(invalid_exit, ExitCode::FAILURE);
+        assert!(fs::read(&valid_output).expect("valid artifact should exist").ends_with(b"\n"));
+        assert!(
+            fs::read_to_string(&invalid_output)
+                .expect("invalid artifact should exist")
+                .contains("\"status\": \"failed\"")
+        );
+        assert!(debug_output.exists());
+    }
+
+    #[test]
+    fn schema_and_compare_commands_should_cover_output_branches() {
+        // Arrange
+        let dir = temp_dir("schema_compare_paths");
+        let replay = dir.join("valid.ocap.json");
+        let old_artifact = dir.join("old.json");
+        let new_artifact = dir.join("new.json");
+        let schema_output = dir.join("schema.json");
+        let markdown_output = dir.join("comparison.md");
+        let detail_output = dir.join("comparison-detail.json");
+        let replay_output = dir.join("comparison-from-replay.md");
+        let json_output = dir.join("comparison.json");
+        write_replay(&replay, VALID_REPLAY);
+        let parse_exit = parse_command(&replay, &old_artifact, None, false, None)
+            .expect("old artifact should be written");
+        let copied_bytes =
+            fs::copy(&old_artifact, &new_artifact).expect("new artifact should be copied");
+
+        // Act
+        let schema_file_exit =
+            schema_command(Some(schema_output.clone())).expect("schema file should write");
+        let mut schema_stdout = Vec::new();
+        let schema_stdout_exit = schema_command_with_writer(None, &mut schema_stdout)
+            .expect("schema stdout should write");
+        let markdown_exit = compare_command(
+            None,
+            Some(&new_artifact),
+            &old_artifact,
+            &markdown_output,
+            Some(&detail_output),
+            CompareFormat::Markdown,
+        )
+        .expect("markdown comparison should write");
+        let replay_exit = compare_command(
+            Some(&replay),
+            None,
+            &old_artifact,
+            &replay_output,
+            None,
+            CompareFormat::Markdown,
+        )
+        .expect("replay comparison should write");
+        let json_exit = compare_command(
+            None,
+            Some(&new_artifact),
+            &old_artifact,
+            &json_output,
+            None,
+            CompareFormat::Json,
+        )
+        .expect("json comparison should write");
+
+        // Assert
+        assert_eq!(schema_file_exit, ExitCode::SUCCESS);
+        assert_eq!(schema_stdout_exit, ExitCode::SUCCESS);
+        assert!(schema_stdout.ends_with(b"\n"));
+        assert_eq!(parse_exit, ExitCode::SUCCESS);
+        assert!(copied_bytes > 0);
+        assert_eq!(markdown_exit, ExitCode::SUCCESS);
+        assert_eq!(replay_exit, ExitCode::SUCCESS);
+        assert_eq!(json_exit, ExitCode::SUCCESS);
+        assert!(schema_output.exists());
+        assert!(markdown_output.exists());
+        assert!(detail_output.exists());
+        assert!(replay_output.exists());
+        assert!(json_output.exists());
     }
 
     #[test]
@@ -661,6 +787,18 @@ mod tests {
 
         // Assert
         assert_eq!(result, Err(HealthcheckError::Unavailable));
+    }
+
+    #[test]
+    fn healthcheck_status_should_read_http_response_from_probe() {
+        // Arrange
+        let url = one_response_probe_url("HTTP/1.1 204 No Content");
+
+        // Act
+        let status = healthcheck_status(&url).expect("healthcheck should read response");
+
+        // Assert
+        assert_eq!(status, 204);
     }
 
     #[test]
@@ -744,5 +882,19 @@ mod tests {
             assert!(error.to_string().contains(expected_text));
             assert_eq!(error.source().is_some(), has_source);
         }
+    }
+
+    fn one_response_probe_url(status_line: &'static str) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("probe listener should bind");
+        let address = listener.local_addr().expect("probe listener should have a local address");
+        let _server = thread::spawn(move || {
+            let (mut stream, _peer) = listener.accept().expect("healthcheck should connect");
+            let mut request = [0_u8; 512];
+            let _read = stream.read(&mut request);
+            let response =
+                format!("{status_line}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            stream.write_all(response.as_bytes()).expect("probe response should write");
+        });
+        format!("http://{}:{}/readyz", address.ip(), address.port())
     }
 }

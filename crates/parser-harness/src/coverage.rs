@@ -222,6 +222,7 @@ pub fn evaluate_coverage_json(
         };
 
         report.production_files += 1;
+        let test_only_lines = test_only_lines(&project_root, &relative_path)?;
         let segments = file.get("segments").and_then(Value::as_array).ok_or(
             CoverageAllowlistError::CoverageJsonShape { message: "missing file segments" },
         )?;
@@ -229,6 +230,9 @@ pub fn evaluate_coverage_json(
             let Some(line) = uncovered_segment_line(segment)? else {
                 continue;
             };
+            if test_only_lines.contains(&line) {
+                continue;
+            }
             insert_or_allow_gap(
                 &mut report,
                 &mut gaps,
@@ -303,6 +307,42 @@ fn production_relative_path(project_root: &Path, path: &str) -> Option<String> {
 
 fn normalize_path(path: &str) -> String {
     path.replace('\\', "/").trim_start_matches("./").to_string()
+}
+
+fn test_only_lines(
+    project_root: &Path,
+    relative_path: &str,
+) -> Result<BTreeSet<u32>, CoverageAllowlistError> {
+    let target_path = resolve_target_path(project_root, relative_path);
+    let contents = fs::read_to_string(&target_path).map_err(|source| {
+        CoverageAllowlistError::TargetRead { path: target_path.clone(), source }
+    })?;
+    let line_count = u32::try_from(contents.lines().count()).map_err(|_source| {
+        CoverageAllowlistError::CoverageJsonShape { message: "source line count does not fit u32" }
+    })?;
+
+    let mut pending_cfg_test = false;
+    for (index, line) in contents.lines().enumerate() {
+        let line_number = u32::try_from(index + 1).map_err(|_source| {
+            CoverageAllowlistError::CoverageJsonShape {
+                message: "source line number does not fit u32",
+            }
+        })?;
+        let trimmed = line.trim();
+        if trimmed.starts_with("#[cfg") && trimmed.contains("test") {
+            pending_cfg_test = true;
+            continue;
+        }
+        if pending_cfg_test && (trimmed.is_empty() || trimmed.starts_with("#[")) {
+            continue;
+        }
+        if pending_cfg_test && trimmed.starts_with("mod tests") {
+            return Ok((line_number..=line_count).collect());
+        }
+        pending_cfg_test = false;
+    }
+
+    Ok(BTreeSet::new())
 }
 
 fn validate_non_empty(
