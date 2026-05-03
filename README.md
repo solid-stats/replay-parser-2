@@ -53,7 +53,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo doc --workspace --no-deps
 scripts/coverage-gate.sh --check
-scripts/coverage-gate.sh
+COVERAGE_ALLOW_HEAVY=1 COVERAGE_JOBS=1 scripts/coverage-gate.sh --strict
 scripts/fault-report-gate.sh
 scripts/benchmark-phase5.sh --ci
 RUN_PHASE5_FULL_CORPUS=1 scripts/benchmark-phase5.sh --ci
@@ -225,10 +225,14 @@ Coverage and fault gates:
 
 ```bash
 scripts/coverage-gate.sh --check
-scripts/coverage-gate.sh
+COVERAGE_ALLOW_HEAVY=1 COVERAGE_JOBS=1 scripts/coverage-gate.sh --strict
 scripts/fault-report-gate.sh
 scripts/benchmark-phase5.sh --ci
 ```
+
+Strict coverage is intentionally opt-in because `cargo llvm-cov --workspace --all-targets`
+is resource-heavy. The wrapper defaults to one build job plus `nice`/`ionice`
+and timeout limits; use `--check` for routine local verification.
 
 Worker integration command:
 

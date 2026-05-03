@@ -5,10 +5,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use parser_contract::{
     diagnostic::{Diagnostic, DiagnosticSeverity},
-    events::{
-        CombatEventAttributes, CombatSemantic, CombatVictimKind, EventActorRef, NormalizedEvent,
-        VehicleContext,
-    },
     identity::{EntityCompatibilityHintKind, EntityKind, EntitySide, ObservedEntity},
     minimal::{
         DestroyedVehicleClassification, KillClassification, MinimalDestroyedVehicleRow,
@@ -34,105 +30,6 @@ pub struct MinimalTables {
     pub weapons: Vec<MinimalWeaponRow>,
     /// Vehicle/static weapon destruction rows.
     pub destroyed_vehicles: Vec<MinimalDestroyedVehicleRow>,
-}
-
-/// Derives minimal default artifact rows from normalized entities and combat events.
-#[must_use]
-pub fn derive_minimal_tables(
-    entities: &[ObservedEntity],
-    events: &[NormalizedEvent],
-) -> MinimalTables {
-    let entity_index =
-        entities.iter().map(|entity| (entity.source_entity_id, entity)).collect::<BTreeMap<_, _>>();
-    let mut players = minimal_players(entities);
-    let weapon_ids = weapon_dictionary(events, &entity_index);
-    let mut destroyed_vehicles = Vec::new();
-
-    for event in events {
-        let Some(combat) = &event.combat else {
-            continue;
-        };
-
-        match combat.semantic {
-            CombatSemantic::EnemyKill => {
-                if victim_is_or_may_be_player(combat, &entity_index) {
-                    add_player_kill(
-                        &mut players,
-                        combat,
-                        KillClassification::EnemyKill,
-                        &weapon_ids,
-                    );
-                    increment_killer(&mut players, combat, |player| player.kills += 1);
-                    increment_victim(&mut players, combat, |player| {
-                        player.deaths += 1;
-                        player.teamkill_deaths = 0;
-                    });
-
-                    if combat.vehicle_context.is_kill_from_vehicle {
-                        increment_killer(&mut players, combat, |player| {
-                            player.kills_from_vehicle += 1;
-                        });
-                    }
-                }
-            }
-            CombatSemantic::Teamkill => {
-                if victim_is_or_may_be_player(combat, &entity_index) {
-                    add_player_kill(
-                        &mut players,
-                        combat,
-                        KillClassification::Teamkill,
-                        &weapon_ids,
-                    );
-                    increment_killer(&mut players, combat, |player| player.teamkills += 1);
-                    increment_victim(&mut players, combat, |player| {
-                        player.deaths += 1;
-                        player.teamkill_deaths = 1;
-                    });
-                }
-            }
-            CombatSemantic::Suicide => {
-                if victim_is_or_may_be_player(combat, &entity_index) {
-                    increment_victim(&mut players, combat, |player| {
-                        player.deaths += 1;
-                        player.teamkill_deaths = 0;
-                        player.suicides += 1;
-                    });
-                }
-            }
-            CombatSemantic::NullKillerDeath => {
-                if victim_is_or_may_be_player(combat, &entity_index) {
-                    increment_victim(&mut players, combat, |player| {
-                        player.deaths += 1;
-                        player.teamkill_deaths = 0;
-                        player.null_killer_deaths += 1;
-                    });
-                }
-            }
-            CombatSemantic::Unknown => {
-                if victim_is_or_may_be_player(combat, &entity_index) {
-                    increment_victim(&mut players, combat, |player| {
-                        player.unknown_deaths += 1;
-                    });
-                }
-            }
-            CombatSemantic::VehicleDestroyed => {
-                if vehicle_or_static_victim(combat, &entity_index) {
-                    destroyed_vehicles.push(minimal_destroyed_vehicle_row(
-                        combat,
-                        &entity_index,
-                        &weapon_ids,
-                    ));
-                    increment_killer(&mut players, combat, |player| player.vehicle_kills += 1);
-                }
-            }
-        }
-    }
-
-    MinimalTables {
-        players: players.rows.into_values().collect(),
-        weapons: weapon_ids.into_iter().map(|(name, id)| MinimalWeaponRow { id, name }).collect(),
-        destroyed_vehicles,
-    }
 }
 
 /// Derives minimal default artifact rows directly from compact killed-event observations.
@@ -308,40 +205,6 @@ fn minimal_players(entities: &[ObservedEntity]) -> PlayerRows {
     }
 
     PlayerRows { rows, entity_to_player_id }
-}
-
-fn weapon_dictionary(
-    events: &[NormalizedEvent],
-    entity_index: &BTreeMap<i64, &ObservedEntity>,
-) -> BTreeMap<String, u32> {
-    let mut weapon_names = BTreeSet::<String>::new();
-
-    for event in events {
-        let Some(combat) = &event.combat else {
-            continue;
-        };
-        let emits_row = match combat.semantic {
-            CombatSemantic::EnemyKill | CombatSemantic::Teamkill => {
-                victim_is_or_may_be_player(combat, entity_index)
-            }
-            CombatSemantic::Suicide | CombatSemantic::NullKillerDeath | CombatSemantic::Unknown => {
-                false
-            }
-            CombatSemantic::VehicleDestroyed => vehicle_or_static_victim(combat, entity_index),
-        };
-        if emits_row
-            && let Some(weapon_name) = observed_string(&combat.weapon)
-            && is_weapon_stat_name(weapon_name)
-        {
-            let _inserted = weapon_names.insert(weapon_name.to_owned());
-        }
-    }
-
-    weapon_names
-        .into_iter()
-        .enumerate()
-        .map(|(index, name)| (name, u32::try_from(index + 1).unwrap_or(u32::MAX)))
-        .collect()
 }
 
 fn weapon_dictionary_from_killed_events(
@@ -754,135 +617,6 @@ fn minimal_event_source_ref(
     )
 }
 
-fn minimal_player_kill_row(
-    combat: &CombatEventAttributes,
-    classification: KillClassification,
-    weapon_ids: &BTreeMap<String, u32>,
-) -> MinimalPlayerKillRow {
-    MinimalPlayerKillRow {
-        victim_source_entity_id: actor_entity_id(&combat.victim),
-        classification,
-        weapon_id: weapon_id(combat, weapon_ids),
-        attacker_vehicle_entity_id: present_i64(&combat.vehicle_context.attacker_vehicle_entity_id),
-        attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
-            .map(ToOwned::to_owned),
-    }
-}
-
-fn minimal_destroyed_vehicle_row(
-    combat: &CombatEventAttributes,
-    entity_index: &BTreeMap<i64, &ObservedEntity>,
-    weapon_ids: &BTreeMap<String, u32>,
-) -> MinimalDestroyedVehicleRow {
-    let destroyed_entity =
-        actor_entity_id(&combat.victim).and_then(|entity_id| entity_index.get(&entity_id).copied());
-
-    MinimalDestroyedVehicleRow {
-        attacker_source_entity_id: actor_entity_id(&combat.killer),
-        classification: destroyed_vehicle_classification(combat),
-        weapon_id: weapon_id(combat, weapon_ids),
-        attacker_vehicle_entity_id: present_i64(&combat.vehicle_context.attacker_vehicle_entity_id),
-        attacker_vehicle_class: observed_string(&combat.vehicle_context.attacker_vehicle_class)
-            .map(ToOwned::to_owned),
-        destroyed_entity_id: destroyed_entity.map(|entity| entity.source_entity_id),
-        destroyed_entity_type: destroyed_entity.map(entity_kind_name).map(ToOwned::to_owned),
-        destroyed_class: destroyed_entity
-            .and_then(|entity| observed_string(&entity.observed_class))
-            .map(ToOwned::to_owned),
-    }
-}
-
-fn increment_killer(
-    players: &mut PlayerRows,
-    combat: &CombatEventAttributes,
-    update: impl FnOnce(&mut MinimalPlayerRow),
-) {
-    if let Some(killer) = actor_entity_id(&combat.killer)
-        .and_then(|entity_id| players.entity_to_player_id.get(&entity_id))
-        .and_then(|player_id| players.rows.get_mut(player_id))
-    {
-        update(killer);
-    }
-}
-
-fn increment_victim(
-    players: &mut PlayerRows,
-    combat: &CombatEventAttributes,
-    update: impl FnOnce(&mut MinimalPlayerRow),
-) {
-    if let Some(victim) = actor_entity_id(&combat.victim)
-        .and_then(|entity_id| players.entity_to_player_id.get(&entity_id))
-        .and_then(|player_id| players.rows.get_mut(player_id))
-    {
-        update(victim);
-    }
-}
-
-fn add_player_kill(
-    players: &mut PlayerRows,
-    combat: &CombatEventAttributes,
-    classification: KillClassification,
-    weapon_ids: &BTreeMap<String, u32>,
-) {
-    let Some(killer_player_id) = actor_entity_id(&combat.killer)
-        .and_then(|entity_id| players.entity_to_player_id.get(&entity_id))
-        .copied()
-    else {
-        return;
-    };
-    let victim_player_id = actor_entity_id(&combat.victim)
-        .and_then(|entity_id| players.entity_to_player_id.get(&entity_id))
-        .copied();
-
-    let mut kill = minimal_player_kill_row(combat, classification, weapon_ids);
-    if victim_player_id.is_some() {
-        kill.victim_source_entity_id = victim_player_id;
-    }
-
-    if let Some(killer) = players.rows.get_mut(&killer_player_id) {
-        killer.kill_rows.push(kill);
-    }
-}
-
-fn victim_is_or_may_be_player(
-    combat: &CombatEventAttributes,
-    entity_index: &BTreeMap<i64, &ObservedEntity>,
-) -> bool {
-    match combat.victim_kind {
-        CombatVictimKind::Player => true,
-        CombatVictimKind::Unknown => actor_entity_id(&combat.victim)
-            .and_then(|entity_id| entity_index.get(&entity_id))
-            .is_none_or(|entity| {
-                !matches!(entity.kind, EntityKind::Vehicle | EntityKind::StaticWeapon)
-            }),
-        CombatVictimKind::Vehicle | CombatVictimKind::StaticWeapon => false,
-    }
-}
-
-fn vehicle_or_static_victim(
-    combat: &CombatEventAttributes,
-    entity_index: &BTreeMap<i64, &ObservedEntity>,
-) -> bool {
-    matches!(combat.victim_kind, CombatVictimKind::Vehicle | CombatVictimKind::StaticWeapon)
-        || actor_entity_id(&combat.victim)
-            .and_then(|entity_id| entity_index.get(&entity_id))
-            .is_some_and(|entity| {
-                matches!(entity.kind, EntityKind::Vehicle | EntityKind::StaticWeapon)
-            })
-}
-
-fn destroyed_vehicle_classification(
-    combat: &CombatEventAttributes,
-) -> DestroyedVehicleClassification {
-    match (actor_side(&combat.killer), actor_side(&combat.victim)) {
-        (Some(killer_side), Some(victim_side)) if killer_side == victim_side => {
-            DestroyedVehicleClassification::Friendly
-        }
-        (Some(_), Some(_)) => DestroyedVehicleClassification::Enemy,
-        _ => DestroyedVehicleClassification::UnknownSide,
-    }
-}
-
 fn compatibility_key_override(entity: &ObservedEntity) -> Option<String> {
     let hint_name = entity
         .compatibility_hints
@@ -968,38 +702,6 @@ fn split_legacy_player_name(raw_name: &str) -> LegacyPlayerNameParts {
     LegacyPlayerNameParts { name, tag: Some(tag.to_owned()) }
 }
 
-const fn actor(field: &FieldPresence<EventActorRef>) -> Option<&EventActorRef> {
-    match field {
-        FieldPresence::Present { value, source: _ } => Some(value),
-        FieldPresence::ExplicitNull { .. }
-        | FieldPresence::Unknown { .. }
-        | FieldPresence::Inferred { .. }
-        | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
-fn actor_entity_id(field: &FieldPresence<EventActorRef>) -> Option<i64> {
-    actor(field).and_then(|actor| present_i64(&actor.source_entity_id))
-}
-
-fn actor_side(field: &FieldPresence<EventActorRef>) -> Option<EntitySide> {
-    actor(field).and_then(|actor| present_side(&actor.side))
-}
-
-fn weapon_id(combat: &CombatEventAttributes, weapon_ids: &BTreeMap<String, u32>) -> Option<u32> {
-    observed_string(&combat.weapon).and_then(|weapon_name| weapon_ids.get(weapon_name).copied())
-}
-
-const fn present_i64(field: &FieldPresence<i64>) -> Option<i64> {
-    match field {
-        FieldPresence::Present { value, source: _ } => Some(*value),
-        FieldPresence::ExplicitNull { .. }
-        | FieldPresence::Unknown { .. }
-        | FieldPresence::Inferred { .. }
-        | FieldPresence::NotApplicable { .. } => None,
-    }
-}
-
 const fn present_side(field: &FieldPresence<EntitySide>) -> Option<EntitySide> {
     match field {
         FieldPresence::Present { value, source: _ } => Some(*value),
@@ -1029,6 +731,3 @@ const fn entity_kind_name(entity: &ObservedEntity) -> &'static str {
         EntityKind::Unknown => "unknown",
     }
 }
-
-#[allow(dead_code, reason = "keeps the vehicle context import exercised in docs and type checks")]
-const fn _vehicle_context_type_marker(_: &VehicleContext) {}
