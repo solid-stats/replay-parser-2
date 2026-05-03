@@ -90,6 +90,32 @@ fn artifact_key_should_reject_empty_and_dot_segment_replay_ids() {
 }
 
 #[test]
+fn artifact_key_should_reject_prefix_that_is_empty_after_trimming() {
+    // Arrange
+    let source_checksum = checksum(ABC_SHA256);
+
+    // Act
+    let error = artifact_key("///", "replay-0001", &source_checksum)
+        .expect_err("empty normalized prefix should fail");
+
+    // Assert
+    assert!(error.to_string().contains("artifact prefix"));
+}
+
+#[test]
+fn artifact_key_should_keep_safe_dot_inside_replay_id_segment() {
+    // Arrange
+    let source_checksum = checksum(ABC_SHA256);
+
+    // Act
+    let key = artifact_key("artifacts/v3", "replay.0001", &source_checksum)
+        .expect("safe dot inside segment should be accepted");
+
+    // Assert
+    assert!(key.contains("/replay.0001/"));
+}
+
+#[test]
 fn sha256_hex_should_return_known_sha256_for_abc() {
     // Act
     let checksum = sha256_hex(b"abc");
@@ -109,6 +135,18 @@ fn source_checksum_from_bytes_should_return_sha256_source_checksum() {
 }
 
 #[test]
+fn verify_source_checksum_should_accept_matching_checksum() {
+    // Arrange
+    let expected = checksum(ABC_SHA256);
+
+    // Act
+    let result = verify_source_checksum(b"abc", &expected);
+
+    // Assert
+    assert!(result.is_ok());
+}
+
+#[test]
 fn verify_source_checksum_should_return_checksum_mismatch_failure() {
     // Arrange
     let expected = checksum(ABC_SHA256);
@@ -120,4 +158,20 @@ fn verify_source_checksum_should_return_checksum_mismatch_failure() {
     // Assert
     assert!(matches!(error, WorkerFailureKind::ChecksumMismatch { .. }));
     assert_eq!(error.error_code(), "checksum.mismatch");
+    assert_eq!(error.stage(), parser_contract::failure::ParseStage::Checksum);
+    assert_eq!(error.retryability(), parser_contract::failure::Retryability::NotRetryable);
+}
+
+#[test]
+fn worker_failure_kind_should_classify_output_and_internal_failures() {
+    let publish = WorkerFailureKind::RabbitMqPublish { message: "nack".to_owned() };
+    let internal =
+        WorkerFailureKind::Internal { code: "internal.example", message: "example".to_owned() };
+
+    assert_eq!(publish.error_code(), "output.rabbitmq_publish");
+    assert_eq!(publish.stage(), parser_contract::failure::ParseStage::Output);
+    assert_eq!(publish.retryability(), parser_contract::failure::Retryability::Unknown);
+    assert_eq!(internal.error_code(), "internal.example");
+    assert_eq!(internal.stage(), parser_contract::failure::ParseStage::Internal);
+    assert_eq!(internal.retryability(), parser_contract::failure::Retryability::Unknown);
 }

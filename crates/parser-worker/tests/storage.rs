@@ -13,10 +13,12 @@ use std::{
 use parser_contract::{
     failure::{ParseStage, Retryability},
     source_ref::SourceChecksum,
+    worker::ArtifactReference,
 };
 use parser_worker::{
     checksum::verify_source_checksum,
     error::{WorkerError, WorkerFailureKind},
+    logging::{WORKER_ARTIFACT_REUSED, WORKER_ARTIFACT_WRITTEN},
     storage::{
         ArtifactPutOutcome, ArtifactWrite, DownloadedObject, ObjectStore, ObjectStoreFuture,
     },
@@ -222,6 +224,80 @@ impl ObjectStore for FakeObjectStore {
     }
 }
 
+#[derive(Debug, Default)]
+struct DirectPutObjectStore {
+    bucket: String,
+    objects: Mutex<BTreeMap<String, Vec<u8>>>,
+    put_content_types: Mutex<Vec<String>>,
+}
+
+impl DirectPutObjectStore {
+    fn new() -> Self {
+        Self { bucket: "solid-replays".to_owned(), ..Default::default() }
+    }
+
+    fn with_object(key: &str, bytes: &[u8]) -> Self {
+        let store = Self::new();
+        store.insert_object(key, bytes);
+        store
+    }
+
+    fn insert_object(&self, key: &str, bytes: &[u8]) {
+        let _previous = self
+            .objects
+            .lock()
+            .expect("direct object map lock should not be poisoned")
+            .insert(key.to_owned(), bytes.to_vec());
+    }
+
+    fn stored_bytes(&self, key: &str) -> Option<Vec<u8>> {
+        self.objects
+            .lock()
+            .expect("direct object map lock should not be poisoned")
+            .get(key)
+            .cloned()
+    }
+}
+
+impl ObjectStore for DirectPutObjectStore {
+    fn bucket(&self) -> &str {
+        &self.bucket
+    }
+
+    fn get_object_bytes<'a>(&'a self, object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+        Box::pin(async move {
+            self.objects
+                .lock()
+                .expect("direct object map lock should not be poisoned")
+                .get(object_key)
+                .cloned()
+                .ok_or_else(|| WorkerError::ObjectNotFound {
+                    operation: "get_object",
+                    bucket: self.bucket.clone(),
+                    key: object_key.to_owned(),
+                    stage: ParseStage::Output,
+                    retryability: Retryability::Unknown,
+                })
+        })
+    }
+
+    fn put_object_bytes<'a>(
+        &'a self,
+        object_key: &'a str,
+        bytes: &'a [u8],
+        content_type: &'a str,
+    ) -> ObjectStoreFuture<'a, ()> {
+        Box::pin(async move {
+            self.put_content_types
+                .lock()
+                .expect("direct put content types lock should not be poisoned")
+                .push(content_type.to_owned());
+            self.insert_object(object_key, bytes);
+            Ok(())
+        })
+    }
+}
+
 fn storage_error(
     operation: &'static str,
     bucket: &str,
@@ -256,6 +332,18 @@ fn assert_artifact_write(
     assert_eq!(write.reused_existing, reused_existing);
 }
 
+fn artifact_write(reused_existing: bool) -> ArtifactWrite {
+    ArtifactWrite {
+        reference: ArtifactReference {
+            bucket: "solid-replays".to_owned(),
+            key: "artifacts/v3/replay-1/source.json".to_owned(),
+        },
+        checksum: checksum(ABC_SHA256),
+        size_bytes: 3,
+        reused_existing,
+    }
+}
+
 #[tokio::test]
 async fn storage_download_raw_should_return_bytes_and_local_sha256() {
     // Arrange
@@ -283,6 +371,51 @@ async fn storage_downloaded_raw_should_be_verifiable_against_expected_checksum()
 
     // Assert
     assert_eq!(error.error_code(), "checksum.mismatch");
+}
+
+#[test]
+fn storage_artifact_write_log_event_should_distinguish_created_and_reused() {
+    assert_eq!(artifact_write(false).log_event_name(), WORKER_ARTIFACT_WRITTEN);
+    assert_eq!(artifact_write(true).log_event_name(), WORKER_ARTIFACT_REUSED);
+}
+
+#[tokio::test]
+async fn storage_default_get_artifact_should_read_object_bytes() {
+    // Arrange
+    let key = "artifacts/v3/replay-1/source.json";
+    let store = DirectPutObjectStore::with_object(key, br#"{"ok":true}"#);
+
+    // Act
+    let bytes = store.get_artifact_bytes(key).await.expect("artifact bytes should read");
+
+    // Assert
+    assert_eq!(bytes, br#"{"ok":true}"#);
+}
+
+#[tokio::test]
+async fn storage_default_conditional_put_should_create_via_plain_put() {
+    // Arrange
+    let store = DirectPutObjectStore::new();
+    let key = "artifacts/v3/replay-1/source.json";
+    let bytes = br#"{"ok":true}"#;
+
+    // Act
+    let outcome = store
+        .put_artifact_bytes_if_absent(key, bytes, "application/json")
+        .await
+        .expect("default conditional put should create");
+
+    // Assert
+    assert_eq!(outcome, ArtifactPutOutcome::Created);
+    assert_eq!(store.stored_bytes(key).as_deref(), Some(bytes.as_slice()));
+    assert_eq!(
+        store
+            .put_content_types
+            .lock()
+            .expect("direct content type lock should not be poisoned")
+            .as_slice(),
+        ["application/json"]
+    );
 }
 
 #[tokio::test]
@@ -386,6 +519,32 @@ async fn storage_write_artifact_should_fallback_to_get_then_put_when_conditional
     );
     assert_eq!(store.stored_bytes(key).as_deref(), Some(bytes.as_slice()));
     assert_eq!(store.conditional_put_attempt_count(key), 1);
+}
+
+#[tokio::test]
+async fn storage_write_artifact_should_return_get_error_when_conditional_write_fallback_get_fails()
+{
+    // Arrange
+    let store = FakeObjectStore::new();
+    let key = "artifacts/v3/replay-1/source.json";
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::UnsupportedConditionalWrite);
+    store.fail_get(key);
+
+    // Act
+    let error = store
+        .write_artifact_if_absent_or_matching(key, br#"{"ok":true}"#)
+        .await
+        .expect_err("fallback get failure should be returned");
+
+    // Assert
+    match error {
+        WorkerError::S3 { operation, stage, retryability, .. } => {
+            assert_eq!(operation, "get_object");
+            assert_eq!(stage, ParseStage::Input);
+            assert_eq!(retryability, Retryability::Retryable);
+        }
+        other => assert!(other.to_string().contains("S3 operation failed"), "unexpected: {other}"),
+    }
 }
 
 #[tokio::test]

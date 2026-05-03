@@ -1,8 +1,9 @@
 //! Worker log taxonomy behavior tests.
 
 use std::collections::BTreeSet;
+use std::time::{Duration, Instant};
 
-use parser_worker::logging::{LOG_EVENTS, OUTCOMES};
+use parser_worker::logging::{LOG_EVENTS, OUTCOMES, duration_ms};
 
 #[test]
 fn log_events_should_be_unique_low_cardinality_snake_case() {
@@ -38,4 +39,11 @@ fn assert_no_dynamic_identifier(value: &str) {
     for forbidden in ["job-", "replay-", "raw/", "artifacts/", "sha256", "checksum"] {
         assert!(!value.contains(forbidden), "taxonomy value contains dynamic fragment: {value}");
     }
+}
+
+#[test]
+fn duration_ms_should_return_elapsed_milliseconds() {
+    let start = Instant::now() - Duration::from_millis(2);
+
+    assert!(duration_ms(start) >= 2);
 }

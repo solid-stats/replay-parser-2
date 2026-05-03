@@ -241,11 +241,21 @@ struct FakePublisher {
     completed: Mutex<Vec<ParseCompletedMessage>>,
     failed: Mutex<Vec<ParseFailedMessage>>,
     fail_publish: bool,
+    completed_outcome: Option<PublishedOutcome>,
+    failed_outcome: Option<PublishedOutcome>,
 }
 
 impl FakePublisher {
     fn failing() -> Self {
         Self { fail_publish: true, ..Default::default() }
+    }
+
+    fn completed_as_failed() -> Self {
+        Self { completed_outcome: Some(PublishedOutcome::Failed), ..Default::default() }
+    }
+
+    fn failed_as_completed() -> Self {
+        Self { failed_outcome: Some(PublishedOutcome::Completed), ..Default::default() }
     }
 
     fn completed_messages(&self) -> Vec<ParseCompletedMessage> {
@@ -273,7 +283,7 @@ impl ResultPublisher for FakePublisher {
                 .lock()
                 .expect("completed messages lock should not be poisoned")
                 .push(message.clone());
-            Ok(PublishedOutcome::Completed)
+            Ok(self.completed_outcome.unwrap_or(PublishedOutcome::Completed))
         })
     }
 
@@ -286,7 +296,7 @@ impl ResultPublisher for FakePublisher {
                 .lock()
                 .expect("failed messages lock should not be poisoned")
                 .push(message.clone());
-            Ok(PublishedOutcome::Failed)
+            Ok(self.failed_outcome.unwrap_or(PublishedOutcome::Failed))
         })
     }
 }
@@ -678,6 +688,24 @@ async fn processor_completed_publish_failure_should_return_nack_requeue() {
 }
 
 #[tokio::test]
+async fn processor_unexpected_completed_publish_outcome_should_still_ack_after_confirm() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = FakeObjectStore::new();
+    store.insert_object(&job.object_key, VALID_REPLAY);
+    let publisher = FakePublisher::completed_as_failed();
+
+    // Act
+    let action = process(&body, &store, &publisher).await;
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(publisher.completed_messages().len(), 1);
+    assert!(publisher.failed_messages().is_empty());
+}
+
+#[tokio::test]
 async fn processor_failed_publish_failure_should_return_nack_requeue() {
     // Arrange
     let store = FakeObjectStore::new();
@@ -689,4 +717,19 @@ async fn processor_failed_publish_failure_should_return_nack_requeue() {
     // Assert
     assert_eq!(action, DeliveryAction::NackRequeue);
     assert_eq!(store.get_call_count(), 0);
+}
+
+#[tokio::test]
+async fn processor_unexpected_failed_publish_outcome_should_still_ack_after_confirm() {
+    // Arrange
+    let store = FakeObjectStore::new();
+    let publisher = FakePublisher::failed_as_completed();
+
+    // Act
+    let action = process(b"{not-json", &store, &publisher).await;
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(publisher.failed_messages().len(), 1);
+    assert!(publisher.completed_messages().is_empty());
 }

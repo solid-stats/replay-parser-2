@@ -185,6 +185,42 @@ async fn shutdown_publish_failure_action_should_apply_nack_requeue() {
     assert_eq!(acker_calls(&calls), vec![DeliveryAction::NackRequeue]);
 }
 
+#[tokio::test]
+async fn shutdown_empty_delivery_stream_should_complete_without_processing() {
+    // Arrange
+    let token = CancellationToken::new();
+    let processor = StaticProcessor { token: None, action: DeliveryAction::Ack };
+    let mut deliveries = stream::iter(Vec::<ShutdownDelivery<FakeAcker>>::new());
+
+    // Act
+    let report = drain_until_cancelled(&mut deliveries, token, &processor)
+        .await
+        .expect("empty drain should finish cleanly");
+
+    // Assert
+    assert_eq!(report.processed, 0);
+    assert_eq!(report.last_action, None);
+}
+
+#[tokio::test]
+async fn shutdown_pre_cancelled_token_should_not_poll_deliveries() {
+    // Arrange
+    let token = CancellationToken::new();
+    token.cancel();
+    let calls = Arc::new(Mutex::new(Vec::new()));
+    let processor = StaticProcessor { token: None, action: DeliveryAction::Ack };
+    let mut deliveries = stream::iter(vec![delivery(Arc::clone(&calls), b"queued")]);
+
+    // Act
+    let report = drain_until_cancelled(&mut deliveries, token, &processor)
+        .await
+        .expect("pre-cancelled drain should finish cleanly");
+
+    // Assert
+    assert_eq!(report.processed, 0);
+    assert!(acker_calls(&calls).is_empty());
+}
+
 #[test]
 fn shutdown_drain_helpers_should_remain_probe_free() {
     let source = include_str!("../src/shutdown.rs");

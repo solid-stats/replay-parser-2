@@ -18,9 +18,9 @@ use parser_contract::{
 };
 use parser_worker::{
     amqp::{
-        AckerFuture, DeliveryAcker, DeliveryAction, PublishedOutcome, apply_delivery_action,
-        delivery_action_after_publish, ensure_publish_confirmed, prepare_completed_publish,
-        prepare_failed_publish,
+        AckerFuture, DeliveryAcker, DeliveryAction, LapinDeliveryAcker, PublishedOutcome,
+        apply_delivery_action, delivery_action_after_publish, ensure_publish_confirmed,
+        prepare_completed_publish, prepare_failed_publish,
     },
     config::{
         DEFAULT_COMPLETED_ROUTING_KEY, DEFAULT_FAILED_ROUTING_KEY, DEFAULT_PREFETCH,
@@ -146,6 +146,13 @@ fn amqp_non_ack_confirm_returns_rabbitmq_publish_error() {
 }
 
 #[test]
+fn amqp_ack_confirm_without_return_is_success() {
+    let result = ensure_publish_confirmed(Confirmation::Ack(None));
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn amqp_returned_mandatory_message_is_publish_failure() {
     let returned = BasicReturnMessage {
         delivery: Delivery::mock(
@@ -165,6 +172,46 @@ fn amqp_returned_mandatory_message_is_publish_failure() {
     let message = error.to_string();
     assert!(message.contains("output.rabbitmq_publish"));
     assert!(message.contains("returned mandatory message"));
+}
+
+#[test]
+fn amqp_nack_returned_mandatory_message_is_publish_failure() {
+    let returned = BasicReturnMessage {
+        delivery: Delivery::mock(
+            2,
+            DEFAULT_RESULT_EXCHANGE.into(),
+            DEFAULT_FAILED_ROUTING_KEY.into(),
+            false,
+            Vec::new(),
+        ),
+        reply_code: 313,
+        reply_text: "NO_CONSUMERS".into(),
+    };
+
+    let error = ensure_publish_confirmed(Confirmation::Nack(Some(returned)))
+        .expect_err("nack with returned message should fail");
+
+    let message = error.to_string();
+    assert!(message.contains("output.rabbitmq_publish"));
+    assert!(message.contains("broker nack included returned mandatory message"));
+}
+
+#[test]
+fn amqp_missing_publish_confirm_is_publish_failure() {
+    let error = ensure_publish_confirmed(Confirmation::NotRequested)
+        .expect_err("missing publisher confirm should fail");
+
+    assert!(error.to_string().contains("publisher confirmation was not requested"));
+}
+
+#[test]
+fn amqp_lapin_delivery_acker_debug_should_be_safe() {
+    let delivery =
+        Delivery::mock(7, "parse.jobs".into(), "parse.jobs".into(), false, b"job".to_vec());
+
+    let debug = format!("{:?}", LapinDeliveryAcker::new(&delivery));
+
+    assert!(debug.contains("LapinDeliveryAcker"));
 }
 
 #[test]

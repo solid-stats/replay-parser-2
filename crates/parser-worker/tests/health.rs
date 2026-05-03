@@ -10,12 +10,21 @@ use axum::{
     body::{Body, to_bytes},
     http::{Request, StatusCode},
 };
-use parser_worker::health::{HealthState, probe_router};
+use parser_worker::{
+    config::{WorkerConfig, WorkerConfigOverrides},
+    health::{HealthState, probe_router, spawn_probe_server},
+};
 use serde_json::Value;
+use tokio_util::sync::CancellationToken;
 use tower::ServiceExt;
 
 mod health {
     use super::*;
+
+    fn worker_config(overrides: WorkerConfigOverrides) -> WorkerConfig {
+        WorkerConfig::from_env_and_overrides(|_| None, overrides)
+            .expect("test worker config should be valid")
+    }
 
     async fn get_json(app: Router, path: &str) -> (StatusCode, Value) {
         let response = app
@@ -145,5 +154,45 @@ mod health {
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(body["ready"], Value::Bool(false));
         assert_eq!(body["state"], "draining");
+    }
+
+    #[tokio::test]
+    async fn probe_server_should_not_spawn_when_probes_are_disabled() {
+        // Arrange
+        let config = worker_config(WorkerConfigOverrides {
+            s3_bucket: Some("solid-replays".to_owned()),
+            probes_enabled: Some(false),
+            ..WorkerConfigOverrides::default()
+        });
+        let state = HealthState::new("worker-health-test");
+
+        // Act
+        let handle = spawn_probe_server(&config, state, CancellationToken::new())
+            .await
+            .expect("disabled probes should not fail");
+
+        // Assert
+        assert!(handle.is_none());
+    }
+
+    #[tokio::test]
+    async fn probe_server_should_return_config_error_when_bind_address_is_invalid() {
+        // Arrange
+        let config = worker_config(WorkerConfigOverrides {
+            s3_bucket: Some("solid-replays".to_owned()),
+            probe_bind: Some("256.256.256.256".to_owned()),
+            probe_port: Some(18080),
+            probes_enabled: Some(true),
+            ..WorkerConfigOverrides::default()
+        });
+        let state = HealthState::new("worker-health-test");
+
+        // Act
+        let error = spawn_probe_server(&config, state, CancellationToken::new())
+            .await
+            .expect_err("invalid bind address should fail");
+
+        // Assert
+        assert!(error.to_string().contains("could not bind probe listener"));
     }
 }

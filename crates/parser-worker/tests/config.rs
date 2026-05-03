@@ -137,6 +137,48 @@ fn config_should_reject_zero_prefetch() {
 }
 
 #[test]
+fn config_should_accept_boolean_false_aliases() {
+    // Act
+    let config = config_from_pairs([
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_S3_FORCE_PATH_STYLE", "no"),
+        ("REPLAY_PARSER_PROBES_ENABLED", "0"),
+    ])
+    .expect("false aliases should build config");
+
+    // Assert
+    assert!(!config.s3_force_path_style);
+    assert!(!config.probes_enabled);
+}
+
+#[test]
+fn config_should_reject_invalid_boolean_value() {
+    // Act
+    let error = config_from_pairs([
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_S3_FORCE_PATH_STYLE", "maybe"),
+    ])
+    .expect_err("invalid boolean should fail validation");
+
+    // Assert
+    assert!(error.to_string().contains("must be a boolean"));
+}
+
+#[test]
+fn config_should_reject_non_integer_prefetch() {
+    // Act
+    let error = config_from_pairs([
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_PREFETCH", "many"),
+    ])
+    .expect_err("non-integer prefetch should fail validation");
+
+    // Assert
+    assert!(error.to_string().contains("REPLAY_PARSER_PREFETCH"));
+    assert!(error.to_string().contains("integer"));
+}
+
+#[test]
 fn config_should_reject_missing_s3_bucket() {
     // Act
     let error = config_from_pairs([]).expect_err("missing S3 bucket should fail validation");
@@ -185,6 +227,41 @@ fn probe_config_should_reject_zero_port_when_probes_are_enabled() {
     let message = error.to_string();
     assert!(message.contains("REPLAY_PARSER_PROBE_PORT"));
     assert!(message.contains(">= 1"));
+}
+
+#[test]
+fn probe_config_should_reject_non_integer_port_when_probes_are_enabled() {
+    // Act
+    let error = config_from_pairs([
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+        ("REPLAY_PARSER_PROBE_PORT", "not-a-port"),
+    ])
+    .expect_err("non-integer probe port should fail validation");
+
+    // Assert
+    assert!(error.to_string().contains("REPLAY_PARSER_PROBE_PORT"));
+    assert!(error.to_string().contains("integer"));
+}
+
+#[test]
+fn probe_config_should_allow_empty_probe_fields_when_probes_are_disabled() {
+    // Arrange
+    let overrides = WorkerConfigOverrides {
+        s3_bucket: Some("solid-replays".to_owned()),
+        probes_enabled: Some(false),
+        probe_bind: Some(" ".to_owned()),
+        worker_id: Some(" ".to_owned()),
+        ..WorkerConfigOverrides::default()
+    };
+
+    // Act
+    let config = WorkerConfig::from_env_and_overrides(|_| None, overrides)
+        .expect("disabled probes should not validate probe-only fields");
+
+    // Assert
+    assert!(!config.probes_enabled);
+    assert_eq!(config.probe_bind, " ");
+    assert_eq!(config.worker_id, " ");
 }
 
 #[test]
@@ -285,4 +362,37 @@ fn config_debug_should_redact_amqp_password_containing_at_sign() {
     assert!(debug.contains("amqp://***@rabbitmq:5672/%2f"));
     assert!(!debug.contains("p@ss"));
     assert!(!debug.contains("ss@rabbitmq"));
+}
+
+#[test]
+fn config_debug_should_redact_userinfo_when_amqp_url_has_no_scheme() {
+    // Arrange
+    let config = config_from_pairs([
+        ("REPLAY_PARSER_AMQP_URL", "worker:p@ss@rabbitmq:5672"),
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+    ])
+    .expect("required bucket should build config");
+
+    // Act
+    let debug = format!("{config:?}");
+
+    // Assert
+    assert!(debug.contains("***@rabbitmq:5672"));
+    assert!(!debug.contains("p@ss"));
+}
+
+#[test]
+fn config_debug_should_keep_amqp_url_without_userinfo_unchanged() {
+    // Arrange
+    let config = config_from_pairs([
+        ("REPLAY_PARSER_AMQP_URL", "amqp://rabbitmq:5672/%2f"),
+        ("REPLAY_PARSER_S3_BUCKET", "solid-replays"),
+    ])
+    .expect("required bucket should build config");
+
+    // Act
+    let debug = format!("{config:?}");
+
+    // Assert
+    assert!(debug.contains("amqp://rabbitmq:5672/%2f"));
 }
