@@ -77,3 +77,14 @@ todo = "deny"
 unimplemented = "deny"
 unwrap_used = "deny"
 wildcard_imports = "deny"
+
+[profile.dev]
+# Keep local debug/test artifacts smaller. Full variable-level debug info in
+# AWS/AMQP worker test binaries was causing target/ to grow by hundreds of MiB
+# per rebuild; line tables keep panic backtraces and file:line debugging useful.
+debug = "line-tables-only"
+incremental = false
+
+[profile.test]
+debug = "line-tables-only"
+incremental = false

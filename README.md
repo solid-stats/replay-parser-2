@@ -238,6 +238,20 @@ timeout limits, a 10 GiB free-space preflight, and automatic cleanup of
 `target/llvm-cov-target` after each coverage run. Set `COVERAGE_AUTO_CLEAN=0`
 when intentionally preserving coverage build artifacts for repeated local runs.
 
+Local Cargo builds are configured with smaller debug/test artifacts and
+incremental compilation disabled to keep `target/` from growing unbounded during
+repeated worker test builds. For heavy local runs, use the budget wrapper:
+
+```bash
+scripts/cargo-budget.sh test -p parser-worker
+CARGO_TARGET_MAX_MIB=6144 CARGO_TARGET_KEEP_MIB=4915 scripts/cargo-budget.sh check --workspace --all-targets
+```
+
+The wrapper runs Cargo normally, then prunes coverage artifacts, incremental
+state, stale hashed test binaries, and oldest dependency artifacts only when
+`target/` exceeds the configured budget. Run `scripts/prune-cargo-target.sh`
+directly to prune without starting another build.
+
 Worker integration command:
 
 ```bash
