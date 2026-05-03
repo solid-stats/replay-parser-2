@@ -10,7 +10,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 
-use futures_util::stream;
+use futures_util::stream::{self, BoxStream, StreamExt};
 use parser_worker::{
     amqp::DeliveryAction,
     error::WorkerError,
@@ -219,6 +219,27 @@ async fn shutdown_pre_cancelled_token_should_not_poll_deliveries() {
     // Assert
     assert_eq!(report.processed, 0);
     assert!(acker_calls(&calls).is_empty());
+}
+
+#[tokio::test]
+async fn shutdown_idle_cancellation_should_stop_pending_drain_without_processing() {
+    // Arrange
+    let token = CancellationToken::new();
+    let processor = StaticProcessor { token: None, action: DeliveryAction::Ack };
+    let mut deliveries: BoxStream<'_, ShutdownDelivery<FakeAcker>> = stream::pending().boxed();
+    let drain_token = token.clone();
+
+    // Act
+    let handle = tokio::spawn(async move {
+        drain_until_cancelled(&mut deliveries, drain_token, &processor).await
+    });
+    token.cancel();
+    let report =
+        handle.await.expect("idle drain task should join").expect("idle drain should pass");
+
+    // Assert
+    assert_eq!(report.processed, 0);
+    assert_eq!(report.last_action, None);
 }
 
 #[test]

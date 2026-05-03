@@ -404,9 +404,13 @@ impl HttpResponse {
     }
 
     fn xml_error(status: &'static str, code: &str) -> Self {
+        Self::xml_error_message(status, code, code)
+    }
+
+    fn xml_error_message(status: &'static str, code: &str, message: &str) -> Self {
         Self {
             status,
-            body: format!("<Error><Code>{code}</Code><Message>{code}</Message></Error>")
+            body: format!("<Error><Code>{code}</Code><Message>{message}</Message></Error>")
                 .into_bytes(),
         }
     }
@@ -826,6 +830,11 @@ async fn s3_object_store_should_classify_conditional_put_responses() {
         HttpResponse::empty("200 OK"),
         HttpResponse::xml_error("412 Precondition Failed", "PreconditionFailed"),
         HttpResponse::xml_error("501 Not Implemented", "NotImplemented"),
+        HttpResponse::xml_error_message(
+            "400 Bad Request",
+            "InvalidRequest",
+            "If-None-Match conditional writes are not supported",
+        ),
     ]);
     let store = s3_store(server.endpoint());
 
@@ -842,13 +851,22 @@ async fn s3_object_store_should_classify_conditional_put_responses() {
         .put_artifact_bytes_if_absent("artifacts/unsupported.json", b"{}", "application/json")
         .await
         .expect("not implemented should map to unsupported conditional write");
+    let unsupported_invalid_request = store
+        .put_artifact_bytes_if_absent(
+            "artifacts/unsupported-invalid-request.json",
+            b"{}",
+            "application/json",
+        )
+        .await
+        .expect("invalid request mentioning if-none-match should map to unsupported write");
     let requests = server.finish();
 
     // Assert
     assert_eq!(created, ArtifactPutOutcome::Created);
     assert_eq!(already_exists, ArtifactPutOutcome::AlreadyExists);
     assert_eq!(unsupported, ArtifactPutOutcome::UnsupportedConditionalWrite);
-    assert_eq!(requests.iter().filter(|request| request.method == "PUT").count(), 3);
+    assert_eq!(unsupported_invalid_request, ArtifactPutOutcome::UnsupportedConditionalWrite);
+    assert_eq!(requests.iter().filter(|request| request.method == "PUT").count(), 4);
     assert!(
         requests
             .iter()

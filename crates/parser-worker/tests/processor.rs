@@ -12,7 +12,7 @@ use std::{
 
 use parser_contract::{
     failure::{ParseStage, Retryability},
-    presence::FieldPresence,
+    presence::{FieldPresence, UnknownReason},
     source_ref::{ReplaySource, SourceChecksum},
     version::{ContractVersion, ParserInfo},
     worker::{ParseCompletedMessage, ParseFailedMessage, ParseJobMessage},
@@ -25,7 +25,7 @@ use parser_worker::{
     config::{WorkerConfig, WorkerConfigOverrides},
     error::{WorkerError, WorkerFailureKind},
     processor::{PublisherFuture, ResultPublisher, process_job_body},
-    storage::{ArtifactPutOutcome, ObjectStore, ObjectStoreFuture},
+    storage::{ArtifactPutOutcome, DownloadedObject, ObjectStore, ObjectStoreFuture},
 };
 use serde_json::json;
 
@@ -232,6 +232,40 @@ impl ObjectStore for FakeObjectStore {
                     Ok(ArtifactPutOutcome::Created)
                 }
             }
+        })
+    }
+}
+
+#[derive(Debug)]
+struct DownloadChecksumFailureStore;
+
+impl ObjectStore for DownloadChecksumFailureStore {
+    fn bucket(&self) -> &str {
+        "solid-replays"
+    }
+
+    fn get_object_bytes<'a>(&'a self, _object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+        Box::pin(async {
+            Err(WorkerError::ChecksumValidation(
+                "configured fake download checksum failure".to_owned(),
+            ))
+        })
+    }
+
+    fn put_object_bytes<'a>(
+        &'a self,
+        _object_key: &'a str,
+        _bytes: &'a [u8],
+        _content_type: &'a str,
+    ) -> ObjectStoreFuture<'a, ()> {
+        Box::pin(async { Ok(()) })
+    }
+
+    fn download_raw<'a>(&'a self, _object_key: &'a str) -> ObjectStoreFuture<'a, DownloadedObject> {
+        Box::pin(async {
+            Err(WorkerError::ChecksumValidation(
+                "configured fake download checksum failure".to_owned(),
+            ))
         })
     }
 }
@@ -512,6 +546,50 @@ async fn processor_missing_job_field_should_publish_failed_with_unknown_presence
 }
 
 #[tokio::test]
+async fn processor_schema_drift_job_json_should_publish_failed_with_schema_drift_presence() {
+    // Arrange
+    let body = br#"{
+      "job_id": 7,
+      "replay_id": true,
+      "object_key": [],
+      "checksum": {"algorithm": "sha256", "value": "not-a-checksum"},
+      "parser_contract_version": "not-semver"
+    }"#;
+    let store = FakeObjectStore::new();
+    let publisher = FakePublisher::default();
+
+    // Act
+    let action = process(body, &store, &publisher).await;
+    let failed = publisher.failed_messages();
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failure_code(&failed[0]), "schema.parse_job");
+    assert!(matches!(
+        failed[0].job_id,
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, .. }
+    ));
+    assert!(matches!(
+        failed[0].replay_id,
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, .. }
+    ));
+    assert!(matches!(
+        failed[0].object_key,
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, .. }
+    ));
+    assert!(matches!(
+        failed[0].parser_contract_version,
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, .. }
+    ));
+    assert!(matches!(
+        failed[0].source_checksum,
+        FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, .. }
+    ));
+    assert_eq!(store.get_call_count(), 0);
+}
+
+#[tokio::test]
 async fn processor_empty_job_field_should_publish_failed_without_storage() {
     // Arrange
     let mut job = job_message(VALID_REPLAY);
@@ -535,6 +613,33 @@ async fn processor_empty_job_field_should_publish_failed_without_storage() {
 }
 
 #[tokio::test]
+async fn processor_missing_raw_object_should_publish_unknown_input_read_failure() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = FakeObjectStore::new();
+    let publisher = FakePublisher::default();
+
+    // Act
+    let action = process(&body, &store, &publisher).await;
+    let failed = publisher.failed_messages();
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(store.get_call_count(), 1);
+    assert_eq!(store.put_call_count(), 0);
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failure_code(&failed[0]), "io.s3_read");
+    assert_eq!(failed[0].failure.stage, ParseStage::Input);
+    assert_eq!(failed[0].failure.retryability, Retryability::Unknown);
+    assert!(matches!(
+        &failed[0].failure.source_cause,
+        FieldPresence::Present { value, .. } if value.contains("raw/replay-1.ocap.json")
+    ));
+    assert!(publisher.completed_messages().is_empty());
+}
+
+#[tokio::test]
 async fn processor_checksum_mismatch_should_publish_failed_without_artifact_write() {
     // Arrange
     let job = job_message(VALID_REPLAY);
@@ -553,6 +658,34 @@ async fn processor_checksum_mismatch_should_publish_failed_without_artifact_writ
     assert_eq!(failed.len(), 1);
     assert_eq!(failure_code(&failed[0]), "checksum.mismatch");
     assert_eq!(failed[0].failure.stage, ParseStage::Checksum);
+}
+
+#[tokio::test]
+async fn processor_download_checksum_failure_should_publish_internal_failed_message() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = DownloadChecksumFailureStore;
+    let publisher = FakePublisher::default();
+
+    // Act
+    let action = process_job_body(&body, &config(), &store, &publisher, parser_info())
+        .await
+        .expect("processor should convert checksum validation into failed message");
+    let failed = publisher.failed_messages();
+
+    // Assert
+    assert_eq!(action, DeliveryAction::Ack);
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failure_code(&failed[0]), "internal.checksum_validation");
+    assert_eq!(failed[0].failure.stage, ParseStage::Internal);
+    assert_eq!(failed[0].failure.retryability, Retryability::Unknown);
+    assert!(matches!(
+        &failed[0].failure.source_cause,
+        FieldPresence::Present { value, .. }
+            if value == "configured fake download checksum failure"
+    ));
+    assert!(publisher.completed_messages().is_empty());
 }
 
 #[tokio::test]

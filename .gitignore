@@ -1,4 +1,5 @@
 .planning/generated/
+.coverage/
 target/
 .codex
 __pycache__/

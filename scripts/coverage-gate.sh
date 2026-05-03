@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_ROOT="${COVERAGE_OUTPUT_ROOT:-.planning/generated/phase-05/coverage}"
+OUTPUT_ROOT="${COVERAGE_OUTPUT_ROOT:-.coverage/reports}"
+COVERAGE_TARGET_DIR="${COVERAGE_TARGET_DIR:-.coverage/target}"
 COVERAGE_JOBS="${COVERAGE_JOBS:-1}"
 COVERAGE_NICE="${COVERAGE_NICE:-10}"
 COVERAGE_CHECK_TIMEOUT_SECONDS="${COVERAGE_CHECK_TIMEOUT_SECONDS:-300}"
@@ -28,7 +29,9 @@ Resource controls:
   COVERAGE_JOBS defaults to 1.
   COVERAGE_CHECK_TIMEOUT_SECONDS defaults to 300.
   COVERAGE_STRICT_TIMEOUT_SECONDS defaults to 1800.
-  COVERAGE_AUTO_CLEAN defaults to 1; set to 0 to keep target/llvm-cov-target.
+  COVERAGE_AUTO_CLEAN defaults to 1; set to 0 to keep .coverage/target.
+  Auto-clean removes the llvm-cov build target after each run.
+  COVERAGE_TARGET_DIR defaults to .coverage/target.
   COVERAGE_MIN_FREE_MIB defaults to 10240; set to 0 to skip disk headroom checks.
   COVERAGE_OUTPUT_ROOT overrides generated output directory.
 USAGE
@@ -56,9 +59,9 @@ coverage_auto_clean_enabled() {
 }
 
 available_space_mib() {
-  local path="."
-  if [[ -d target ]]; then
-    path="target"
+  local path="$COVERAGE_TARGET_DIR"
+  if [[ ! -d "$path" ]]; then
+    path=$(dirname "$path")
   fi
 
   df -Pm "$path" | awk 'NR == 2 { print $4 }'
@@ -69,8 +72,10 @@ clean_coverage_artifacts() {
     return
   fi
 
-  printf '%s\n' "cleaning cargo llvm-cov artifacts under target/llvm-cov-target" >&2
-  cargo llvm-cov clean --workspace >/dev/null
+  mkdir -p "$COVERAGE_TARGET_DIR"
+  printf 'cleaning cargo llvm-cov artifacts under %s\n' "$COVERAGE_TARGET_DIR" >&2
+  CARGO_TARGET_DIR="$COVERAGE_TARGET_DIR" cargo llvm-cov clean --workspace >/dev/null
+  rm -rf "$COVERAGE_TARGET_DIR/llvm-cov-target"
 }
 
 ensure_disk_headroom() {
@@ -114,6 +119,11 @@ cleanup_on_exit() {
 prepare_coverage_run() {
   require_llvm_cov_installed
   ensure_disk_headroom
+  if coverage_auto_clean_enabled; then
+    clean_coverage_artifacts
+    mkdir -p "$COVERAGE_TARGET_DIR/llvm-cov-target/debug/deps" \
+      "$COVERAGE_TARGET_DIR/llvm-cov-target/debug/.fingerprint"
+  fi
   trap cleanup_on_exit EXIT
 }
 
@@ -139,7 +149,12 @@ run_llvm_cov() {
   local timeout_seconds=$1
   shift
 
-  run_limited "$timeout_seconds" cargo llvm-cov --jobs "$COVERAGE_JOBS" "$@"
+  local args=(--jobs "$COVERAGE_JOBS")
+  if coverage_auto_clean_enabled; then
+    args+=(--no-clean)
+  fi
+  run_limited "$timeout_seconds" env CARGO_TARGET_DIR="$COVERAGE_TARGET_DIR" \
+    cargo llvm-cov "${args[@]}" "$@"
 }
 
 require_strict_opt_in() {
