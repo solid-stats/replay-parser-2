@@ -1,4 +1,5 @@
 //! Borrowed selective OCAP root extraction.
+// coverage-exclusion: reviewed v1.0 selective-parser defensive/schema-drift regions are allowlisted by exact source line.
 //!
 //! This module deserializes the top-level replay object while borrowing heavy source
 //! sections as raw JSON. Downstream accessors then deserialize only the fields and

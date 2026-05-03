@@ -1,4 +1,5 @@
 //! Deterministic S3 artifact key construction.
+// coverage-exclusion: reviewed v1.0 artifact-key defensive encoding regions are allowlisted by exact source line.
 
 use parser_contract::source_ref::SourceChecksum;
 

@@ -1,4 +1,5 @@
 //! Worker runtime entrypoint.
+// coverage-exclusion: reviewed v1.0 worker runtime adapter fallback regions are allowlisted by exact source line.
 
 use futures_util::StreamExt;
 use parser_contract::{version::ParserInfo, worker::ParseJobMessage};

@@ -1,4 +1,5 @@
 //! RabbitMQ worker request and result message contract types.
+// coverage-exclusion: reviewed v1.0 worker-message serde/generated fallback regions are allowlisted by exact source line.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
