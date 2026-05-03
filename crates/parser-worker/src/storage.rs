@@ -1,4 +1,4 @@
-//! S3-compatible object storage boundary. coverage-exclusion: reviewed live S3 adapter and defensive object-store regions are allowlisted by exact source line.
+//! S3-compatible object storage boundary.
 
 use std::{fmt, pin::Pin};
 

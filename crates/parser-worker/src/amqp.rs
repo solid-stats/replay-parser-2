@@ -1,4 +1,4 @@
-//! `RabbitMQ` adapter for parse-job consumption and parse-result publication. coverage-exclusion: reviewed live RabbitMQ adapter and tracing macro regions are allowlisted by exact source line.
+//! `RabbitMQ` adapter for parse-job consumption and parse-result publication.
 
 use std::{pin::Pin, time::Instant};
 

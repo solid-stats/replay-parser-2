@@ -1,4 +1,4 @@
-//! Human-readable summary rendering for comparison reports. coverage-exclusion: reviewed summary-report defensive formatter branches are allowlisted by exact source line.
+//! Human-readable summary rendering for comparison reports.
 
 use std::{collections::BTreeMap, fmt::Write as _};
 

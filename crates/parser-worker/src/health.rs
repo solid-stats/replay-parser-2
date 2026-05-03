@@ -1,4 +1,4 @@
-//! Cached HTTP liveness and readiness probe state. coverage-exclusion: reviewed live HTTP probe server and accessor regions are allowlisted by exact source line.
+//! Cached HTTP liveness and readiness probe state.
 
 use std::sync::{Arc, RwLock};
 

@@ -1,4 +1,4 @@
-//! Graceful shutdown drain helpers. coverage-exclusion: reviewed shutdown tracing macro regions are allowlisted by exact source line.
+//! Graceful shutdown drain helpers.
 
 use std::pin::Pin;
 
