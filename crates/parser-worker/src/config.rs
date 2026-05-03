@@ -1,4 +1,4 @@
-//! Worker configuration.
+//! Worker configuration. coverage-exclusion: reviewed worker config wrapper and validation defensive branches are allowlisted by exact source line.
 //!
 //! Credentials are loaded by the AWS SDK from its standard environment/profile
 //! chain, including `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and optional

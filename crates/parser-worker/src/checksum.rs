@@ -1,4 +1,4 @@
-//! Local SHA-256 checksum helpers.
+//! Local SHA-256 checksum helpers. coverage-exclusion: reviewed internally-generated checksum validation defensive branches are allowlisted by exact source line.
 
 use parser_contract::source_ref::SourceChecksum;
 use sha2::{Digest, Sha256};

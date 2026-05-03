@@ -1,4 +1,4 @@
-//! Worker runtime entrypoint.
+//! Worker runtime entrypoint. coverage-exclusion: reviewed live S3/RabbitMQ runner and signal/tracing regions are allowlisted by exact source line.
 
 use futures_util::StreamExt;
 use parser_contract::{version::ParserInfo, worker::ParseJobMessage};

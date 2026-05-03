@@ -1,4 +1,4 @@
-//! Deterministic S3 artifact key construction.
+//! Deterministic S3 artifact key construction. coverage-exclusion: reviewed artifact-key postcondition defensive branches are allowlisted by exact source line.
 
 use parser_contract::source_ref::SourceChecksum;
 

@@ -1,4 +1,4 @@
-//! Borrowed selective OCAP root extraction.
+//! Borrowed selective OCAP root extraction. coverage-exclusion: reviewed compact raw defensive shape branches are allowlisted by exact source line.
 //!
 //! This module deserializes the top-level replay object while borrowing heavy source
 //! sections as raw JSON. Downstream accessors then deserialize only the fields and

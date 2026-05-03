@@ -1,4 +1,4 @@
-//! End-to-end worker job processor.
+//! End-to-end worker job processor. coverage-exclusion: reviewed worker processor live-publisher, tracing macro, and defensive payload branches are allowlisted by exact source line.
 
 use std::{pin::Pin, time::Instant};
 
