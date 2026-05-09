@@ -347,6 +347,22 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn runner_should_fail_fast_when_probe_server_cannot_bind() {
+        let mut config = valid_config();
+        config.probes_enabled = true;
+        config.probe_bind = "256.256.256.256".to_owned();
+        config.probe_port = 18080;
+        let shutdown = CancellationToken::new();
+
+        let error = run_until_cancelled(config, shutdown)
+            .await
+            .expect_err("invalid probe bind should fail before dependencies are created");
+
+        assert!(matches!(error, WorkerError::ConfigValidation(_)));
+        assert!(error.to_string().contains("could not bind probe listener"));
+    }
+
+    #[tokio::test]
     #[allow(clippy::panic, reason = "unit test must exercise Tokio join-panic handling")]
     async fn stop_probe_server_should_cancel_and_report_join_failures() {
         let no_server_shutdown = CancellationToken::new();

@@ -731,3 +731,235 @@ const fn entity_kind_name(entity: &ObservedEntity) -> &'static str {
         EntityKind::Unknown => "unknown",
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used, reason = "unit tests use explicit fixture assertions")]
+
+    use parser_contract::{
+        identity::{EntityCompatibilityHint, ObservedIdentity},
+        presence::UnknownReason,
+        source_ref::ReplaySource,
+    };
+
+    use super::*;
+
+    fn source_refs() -> SourceRefs {
+        SourceRefs::single(SourceRef {
+            replay_id: Some("aggregate-unit-test".to_owned()),
+            source_file: Some("aggregate-unit-test.ocap.json".to_owned()),
+            checksum: None,
+            frame: None,
+            event_index: None,
+            entity_id: Some(1),
+            json_path: Some("$.entities[0]".to_owned()),
+            rule_id: RuleId::new("aggregate.unit_test").ok(),
+        })
+    }
+
+    fn present_string(value: &str) -> FieldPresence<String> {
+        FieldPresence::Present { value: value.to_owned(), source: None }
+    }
+
+    fn present_side_value(side: EntitySide) -> FieldPresence<EntitySide> {
+        FieldPresence::Present { value: side, source: None }
+    }
+
+    fn unit_entity(id: i64, name: &str, side: EntitySide) -> ObservedEntity {
+        ObservedEntity {
+            source_entity_id: id,
+            kind: EntityKind::Unit,
+            observed_name: present_string(name),
+            observed_class: present_string("rifleman"),
+            is_player: FieldPresence::Present { value: true, source: None },
+            identity: ObservedIdentity {
+                nickname: present_string(name),
+                steam_id: FieldPresence::Unknown {
+                    reason: UnknownReason::MissingSteamId,
+                    source: None,
+                },
+                side: present_side_value(side),
+                faction: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                group: present_string("Alpha"),
+                squad: present_string("A1"),
+                role: present_string("Rifleman"),
+                description: present_string("Rifleman"),
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: source_refs(),
+        }
+    }
+
+    fn vehicle_entity(id: i64, name: &str, side: EntitySide, kind: EntityKind) -> ObservedEntity {
+        ObservedEntity {
+            source_entity_id: id,
+            kind,
+            observed_name: present_string(name),
+            observed_class: present_string("vehicle-class"),
+            is_player: FieldPresence::Present { value: false, source: None },
+            identity: ObservedIdentity {
+                nickname: FieldPresence::NotApplicable {
+                    reason: "vehicle has no player nickname".to_owned(),
+                },
+                steam_id: FieldPresence::NotApplicable {
+                    reason: "vehicle has no steam id".to_owned(),
+                },
+                side: present_side_value(side),
+                faction: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                group: FieldPresence::NotApplicable { reason: "vehicle has no group".to_owned() },
+                squad: FieldPresence::NotApplicable { reason: "vehicle has no squad".to_owned() },
+                role: FieldPresence::NotApplicable { reason: "vehicle has no role".to_owned() },
+                description: FieldPresence::NotApplicable {
+                    reason: "vehicle has no description".to_owned(),
+                },
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: source_refs(),
+        }
+    }
+
+    #[test]
+    fn aggregate_helpers_should_parse_legacy_names_and_entity_kind_names() {
+        let tagged = split_legacy_player_name("[SG] Alpha [ignored]");
+        let empty_tag = split_legacy_player_name("[] Alpha");
+        let no_close = split_legacy_player_name("[SG Alpha");
+
+        assert_eq!(tagged.name, "Alpha");
+        assert_eq!(tagged.tag.as_deref(), Some("[SG]"));
+        assert_eq!(tagged.recombined_name(), "[SG]Alpha");
+        assert_eq!(empty_tag.name, "Alpha");
+        assert_eq!(empty_tag.tag, None);
+        assert_eq!(no_close.name, "[SG Alpha");
+        assert_eq!(entity_kind_name(&unit_entity(1, "Alpha", EntitySide::West)), "unit");
+        assert_eq!(
+            entity_kind_name(&vehicle_entity(2, "Truck", EntitySide::West, EntityKind::Vehicle)),
+            "vehicle"
+        );
+        assert_eq!(
+            entity_kind_name(&vehicle_entity(3, "HMG", EntitySide::West, EntityKind::StaticWeapon)),
+            "static_weapon"
+        );
+        assert_eq!(
+            entity_kind_name(&vehicle_entity(
+                4,
+                "Unknown",
+                EntitySide::Unknown,
+                EntityKind::Unknown
+            )),
+            "unknown"
+        );
+    }
+
+    #[test]
+    fn aggregate_helpers_should_ignore_missing_players_and_increment_known_players() {
+        let player = unit_entity(1, "Alpha", EntitySide::West);
+        let mut players = minimal_players(&[player]);
+
+        add_fast_player_kill(
+            &mut players,
+            FastPlayerKill {
+                killer_entity_id: 999,
+                victim_entity_id: 1,
+                classification: KillClassification::EnemyKill,
+                weapon: Some("Rifle"),
+                attacker_vehicle: None,
+            },
+            &BTreeMap::from([("Rifle".to_owned(), 1)]),
+        );
+        increment_player_by_entity_id(&mut players, 999, |row| row.kills += 1);
+
+        assert!(players.rows.get(&1).expect("player row should exist").kill_rows.is_empty());
+        assert_eq!(players.rows.get(&1).expect("player row should exist").kills, 0);
+
+        increment_player_by_entity_id(&mut players, 1, |row| row.kills += 1);
+
+        assert_eq!(players.rows.get(&1).expect("player row should exist").kills, 1);
+    }
+
+    #[test]
+    fn aggregate_helpers_should_classify_unknown_death_or_non_player_as_no_stats() {
+        let player = unit_entity(1, "Alpha", EntitySide::West);
+        let vehicle = vehicle_entity(2, "Truck", EntitySide::West, EntityKind::Vehicle);
+        let diagnostic = actor_unknown_diagnostic("unit test diagnostic");
+
+        let player_effect = unknown_death_or_no_stats(Some(&player), diagnostic);
+        let vehicle_effect = unknown_death_or_no_stats(Some(&vehicle), diagnostic);
+        let missing_effect = unknown_death_or_no_stats(None, diagnostic);
+
+        assert!(matches!(
+            player_effect,
+            MinimalEventEffect::UnknownPlayerDeath { victim_entity_id: 1, .. }
+        ));
+        assert!(matches!(vehicle_effect, MinimalEventEffect::NoStats { diagnostic: Some(_) }));
+        assert!(matches!(missing_effect, MinimalEventEffect::NoStats { diagnostic: Some(_) }));
+    }
+
+    #[test]
+    fn aggregate_helpers_should_build_vehicle_rows_and_duplicate_compatibility_keys() {
+        let mut entity = unit_entity(1, "[SG] Alpha", EntitySide::West);
+        entity.compatibility_hints.push(EntityCompatibilityHint {
+            kind: EntityCompatibilityHintKind::DuplicateSlotSameName,
+            related_entity_ids: vec![1, 2],
+            observed_name: present_string("Alpha"),
+            rule_id: RuleId::new("entity.duplicate_slot_same_name")
+                .expect("rule id should be valid"),
+            source_refs: source_refs(),
+        });
+        let vehicle = vehicle_entity(20, "BTR", EntitySide::East, EntityKind::Vehicle);
+        let attacker_vehicle =
+            vehicle_entity(30, "HMG", EntitySide::West, EntityKind::StaticWeapon);
+        let row = fast_destroyed_vehicle_row(
+            1,
+            &vehicle,
+            DestroyedVehicleClassification::Enemy,
+            Some("HMG"),
+            Some(&attacker_vehicle),
+            &BTreeMap::from([("HMG".to_owned(), 7)]),
+        );
+
+        assert_eq!(compatibility_key_override(&entity).as_deref(), Some("legacy_name:Alpha"));
+        assert_eq!(row.weapon_id, Some(7));
+        assert_eq!(row.attacker_vehicle_entity_id, Some(30));
+        assert_eq!(row.attacker_vehicle_class.as_deref(), Some("vehicle-class"));
+        assert_eq!(row.destroyed_entity_type.as_deref(), Some("vehicle"));
+    }
+
+    #[test]
+    fn aggregate_helpers_should_push_minimal_event_diagnostics() {
+        let context = SourceContext::new(&ReplaySource {
+            replay_id: Some("aggregate-unit-test".to_owned()),
+            source_file: "aggregate-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Unknown {
+                reason: UnknownReason::ChecksumUnavailable,
+                source: None,
+            },
+        });
+        let observation = KilledEventObservation {
+            event_index: 7,
+            frame: Some(120),
+            killed_entity_id: Some(1),
+            kill_info: KilledEventKillInfo::Malformed { observed_shape: "object".to_owned() },
+            distance_meters: None,
+            json_path: "$.events[7]".to_owned(),
+        };
+        let mut diagnostics = DiagnosticAccumulator::new(8);
+
+        push_minimal_event_diagnostic(
+            &mut diagnostics,
+            &context,
+            &observation,
+            actor_unknown_diagnostic("unit test diagnostic"),
+        );
+        let diagnostics = diagnostics.finish(&context).diagnostics;
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "event.killed_actor_unknown");
+        assert_eq!(diagnostics[0].json_path.as_deref(), Some("$.events[7]"));
+    }
+}

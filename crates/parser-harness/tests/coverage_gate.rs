@@ -52,6 +52,30 @@ expires = "2026-05-28"
 }
 
 #[test]
+fn coverage_gate_allowlist_should_reject_exclusion_without_exact_lines() {
+    // Arrange
+    let allowlist = CoverageAllowlist::from_toml_str(
+        r#"
+[[exclusions]]
+path = "crates/example/src/generated.rs"
+pattern = "fallback"
+reason = "defensive unreachable branch kept for parser diagnostics"
+reviewer = "phase-05"
+expires = "2026-05-28"
+"#,
+    )
+    .expect("allowlist without explicit lines should parse with default empty lines");
+    let root = temp_project_root("empty_lines").expect("temp root should be created");
+
+    // Act
+    let error =
+        allowlist.validate_against_root(&root).expect_err("empty lines should fail validation");
+
+    // Assert
+    assert!(matches!(error, CoverageAllowlistError::EmptyLines { .. }));
+}
+
+#[test]
 fn coverage_gate_allowlist_should_reject_invalid_toml() {
     // Arrange + Act
     let error = CoverageAllowlist::from_toml_str("exclusions = ")
@@ -221,6 +245,10 @@ fn coverage_gate_report_should_fail_when_uncovered_production_line_is_not_allowl
     assert!(!report.is_passing());
     assert_eq!(report.uncovered_locations.len(), 1);
     assert_eq!(report.uncovered_locations[0].line, 2);
+    assert_eq!(
+        report.to_text(),
+        "production_files=1\nallowlisted_locations=0\nuncovered_locations=1\nuncovered:\ncrates/example/src/lib.rs:2 region\n"
+    );
 }
 
 #[test]
@@ -286,6 +314,42 @@ mod tests {
     // Assert
     assert_eq!(report.uncovered_locations.len(), 1);
     assert_eq!(report.uncovered_locations[0].line, 1);
+}
+
+#[test]
+fn coverage_gate_report_should_ignore_source_unit_test_module_after_outer_attribute_and_blank_line()
+{
+    // Arrange
+    let root = temp_project_root("report_ignores_source_unit_tests_with_attribute")
+        .expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        r#"pub fn production_path() {}
+
+#[cfg(test)]
+#[allow(clippy::expect_used)]
+
+mod tests {
+    #[test]
+    fn source_level_test_helper() {
+        assert_eq!(2 + 2, 4);
+    }
+}
+"#,
+    );
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json =
+        coverage_json_for_segments(&root, "crates/example/src/lib.rs", &[(1, 1), (8, 0)]);
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(report.is_passing());
+    assert!(report.uncovered_locations.is_empty());
 }
 
 #[test]

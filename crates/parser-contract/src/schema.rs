@@ -435,4 +435,38 @@ mod tests {
                 .any(|condition| condition["required"] == json!(["rule_id"]))
         );
     }
+
+    #[test]
+    fn schema_helpers_should_constrain_aggregate_contribution_value_kinds() {
+        // Arrange
+        let mut schema = schema_from(json!({
+            "$defs": {
+                "AggregateContributionRef": {}
+            }
+        }));
+
+        // Act
+        constrain_aggregate_contribution_values(&mut schema);
+
+        // Assert
+        let schema_value = schema.as_value();
+        let all_of = schema_value["$defs"]["AggregateContributionRef"]["allOf"]
+            .as_array()
+            .expect("AggregateContributionRef should include allOf conditions");
+        for (kind, definition) in [
+            ("legacy_counter", "LegacyCounterContributionValue"),
+            ("relationship", "RelationshipContributionValue"),
+            ("bounty_input", "BountyInputContributionValue"),
+        ] {
+            assert!(
+                all_of.iter().any(|condition| {
+                    condition["if"]["properties"]["kind"]["const"] == kind
+                        && condition["then"]["properties"]["value"]["$ref"]
+                            == format!("#/$defs/{definition}")
+                        && condition["then"]["required"] == json!(["value"])
+                }),
+                "aggregate contribution kind {kind} should require {definition}"
+            );
+        }
+    }
 }
