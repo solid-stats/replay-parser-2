@@ -234,9 +234,12 @@ Strict coverage is intentionally opt-in because instrumented workspace coverage 
 resource-heavy. The wrapper runs bins, tests, and examples, but excludes benchmark
 targets. It also passes `--no-cfg-coverage` so source-level unit tests guarded by
 `not(coverage)` stay active. It defaults to one build job, `nice`/`ionice`,
-timeout limits, a 10 GiB free-space preflight, and automatic cleanup of
-`target/llvm-cov-target` after each coverage run. Set `COVERAGE_AUTO_CLEAN=0`
-when intentionally preserving coverage build artifacts for repeated local runs.
+timeout limits, a 10 GiB `.coverage/target` size budget, and `--no-clean` so
+repeated local coverage runs can reuse build artifacts. Each run still clears
+stale `.profraw` profile data so reports do not accumulate old executions.
+Automatic build-artifact cleanup now only removes `.coverage/target/llvm-cov-target`
+when `.coverage/target` exceeds `COVERAGE_MAX_TARGET_MIB`; set
+`COVERAGE_AUTO_CLEAN=0` to disable even that over-budget cleanup.
 
 Local Cargo builds are configured with smaller debug/test artifacts and
 incremental compilation disabled to keep `target/` from growing unbounded during

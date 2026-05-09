@@ -8,7 +8,7 @@ COVERAGE_NICE="${COVERAGE_NICE:-10}"
 COVERAGE_CHECK_TIMEOUT_SECONDS="${COVERAGE_CHECK_TIMEOUT_SECONDS:-300}"
 COVERAGE_STRICT_TIMEOUT_SECONDS="${COVERAGE_STRICT_TIMEOUT_SECONDS:-1800}"
 COVERAGE_AUTO_CLEAN="${COVERAGE_AUTO_CLEAN:-1}"
-COVERAGE_MIN_FREE_MIB="${COVERAGE_MIN_FREE_MIB:-10240}"
+COVERAGE_MAX_TARGET_MIB="${COVERAGE_MAX_TARGET_MIB:-10240}"
 mkdir -p "$OUTPUT_ROOT"
 
 print_usage() {
@@ -29,10 +29,11 @@ Resource controls:
   COVERAGE_JOBS defaults to 1.
   COVERAGE_CHECK_TIMEOUT_SECONDS defaults to 300.
   COVERAGE_STRICT_TIMEOUT_SECONDS defaults to 1800.
-  COVERAGE_AUTO_CLEAN defaults to 1; set to 0 to keep .coverage/target.
-  Auto-clean removes the llvm-cov build target after each run.
+  Stale profraw coverage profiles are cleared before each run without removing build artifacts.
+  COVERAGE_AUTO_CLEAN defaults to 1; set to 0 to skip over-budget build cleanup.
+  Auto-clean only removes llvm-cov build artifacts when coverage target size is over budget.
   COVERAGE_TARGET_DIR defaults to .coverage/target.
-  COVERAGE_MIN_FREE_MIB defaults to 10240; set to 0 to skip disk headroom checks.
+  COVERAGE_MAX_TARGET_MIB defaults to 10240; set to 0 to skip coverage target budget checks.
   COVERAGE_OUTPUT_ROOT overrides generated output directory.
 USAGE
 }
@@ -58,73 +59,53 @@ coverage_auto_clean_enabled() {
   esac
 }
 
-available_space_mib() {
-  local path="$COVERAGE_TARGET_DIR"
-  if [[ ! -d "$path" ]]; then
-    path=$(dirname "$path")
-  fi
-
-  df -Pm "$path" | awk 'NR == 2 { print $4 }'
-}
-
-clean_coverage_artifacts() {
-  if ! coverage_auto_clean_enabled; then
+coverage_target_size_mib() {
+  if [[ ! -e "$COVERAGE_TARGET_DIR" ]]; then
+    printf '%s\n' "0"
     return
   fi
 
+  du -sm "$COVERAGE_TARGET_DIR" | awk '{ print $1 }'
+}
+
+clean_coverage_artifacts() {
   mkdir -p "$COVERAGE_TARGET_DIR"
   printf 'cleaning cargo llvm-cov artifacts under %s\n' "$COVERAGE_TARGET_DIR" >&2
   CARGO_TARGET_DIR="$COVERAGE_TARGET_DIR" cargo llvm-cov clean --workspace >/dev/null
   rm -rf "$COVERAGE_TARGET_DIR/llvm-cov-target"
 }
 
-ensure_disk_headroom() {
-  if [[ "$COVERAGE_MIN_FREE_MIB" == "0" ]]; then
+clean_coverage_profiles() {
+  mkdir -p "$COVERAGE_TARGET_DIR"
+  printf 'cleaning stale cargo llvm-cov profile data under %s\n' "$COVERAGE_TARGET_DIR" >&2
+  CARGO_TARGET_DIR="$COVERAGE_TARGET_DIR" cargo llvm-cov clean --workspace --profraw-only >/dev/null
+}
+
+ensure_coverage_budget() {
+  if [[ "$COVERAGE_MAX_TARGET_MIB" == "0" ]]; then
     return
   fi
 
-  local available
-  available=$(available_space_mib)
-  if (( available < COVERAGE_MIN_FREE_MIB )) && coverage_auto_clean_enabled; then
-    printf 'coverage disk headroom is low (%s MiB < %s MiB); cleaning llvm-cov artifacts before run.\n' \
-      "$available" "$COVERAGE_MIN_FREE_MIB" >&2
+  local used_mib
+  used_mib=$(coverage_target_size_mib)
+  if (( used_mib > COVERAGE_MAX_TARGET_MIB )) && coverage_auto_clean_enabled; then
+    printf 'coverage target is over budget (%s MiB > %s MiB); cleaning llvm-cov artifacts before run.\n' \
+      "$used_mib" "$COVERAGE_MAX_TARGET_MIB" >&2
     clean_coverage_artifacts
-    available=$(available_space_mib)
+    used_mib=$(coverage_target_size_mib)
   fi
 
-  if (( available < COVERAGE_MIN_FREE_MIB )); then
-    printf 'coverage disk headroom is still low (%s MiB < %s MiB); free disk space or lower COVERAGE_MIN_FREE_MIB.\n' \
-      "$available" "$COVERAGE_MIN_FREE_MIB" >&2
+  if (( used_mib > COVERAGE_MAX_TARGET_MIB )); then
+    printf 'coverage target is still over budget (%s MiB > %s MiB); raise COVERAGE_MAX_TARGET_MIB or enable cleanup.\n' \
+      "$used_mib" "$COVERAGE_MAX_TARGET_MIB" >&2
     exit 2
   fi
 }
 
-cleanup_on_exit() {
-  local status=$?
-  trap - EXIT
-
-  if coverage_auto_clean_enabled; then
-    if clean_coverage_artifacts 2>"$OUTPUT_ROOT/cargo-llvm-cov-clean.err"; then
-      rm -f "$OUTPUT_ROOT/cargo-llvm-cov-clean.err"
-      printf '%s\n' "coverage cleanup complete; llvm-cov build artifacts removed." >&2
-    else
-      printf 'warning: cargo llvm-cov cleanup failed; see %s\n' \
-        "$OUTPUT_ROOT/cargo-llvm-cov-clean.err" >&2
-    fi
-  fi
-
-  exit "$status"
-}
-
 prepare_coverage_run() {
   require_llvm_cov_installed
-  ensure_disk_headroom
-  if coverage_auto_clean_enabled; then
-    clean_coverage_artifacts
-    mkdir -p "$COVERAGE_TARGET_DIR/llvm-cov-target/debug/deps" \
-      "$COVERAGE_TARGET_DIR/llvm-cov-target/debug/.fingerprint"
-  fi
-  trap cleanup_on_exit EXIT
+  clean_coverage_profiles
+  ensure_coverage_budget
 }
 
 run_limited() {
@@ -149,10 +130,7 @@ run_llvm_cov() {
   local timeout_seconds=$1
   shift
 
-  local args=(--jobs "$COVERAGE_JOBS")
-  if coverage_auto_clean_enabled; then
-    args+=(--no-clean)
-  fi
+  local args=(--jobs "$COVERAGE_JOBS" --no-clean)
   run_limited "$timeout_seconds" env CARGO_TARGET_DIR="$COVERAGE_TARGET_DIR" \
     cargo llvm-cov "${args[@]}" "$@"
 }
