@@ -42,12 +42,12 @@ const COMPLETED_QUEUE: &str = "parse.completed.smoke";
 const FAILED_QUEUE: &str = "parse.failed.smoke";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires local RabbitMQ and S3-compatible storage; run scripts/worker-smoke.sh"]
+#[ignore = "requires local RabbitMQ and S3-compatible storage configured through environment variables"]
 async fn live_worker_should_process_completed_and_failed_jobs_through_broker_and_s3() {
     assert_eq!(
         env::var("REPLAY_PARSER_LIVE_SMOKE").unwrap_or_default(),
         "1",
-        "set REPLAY_PARSER_LIVE_SMOKE=1 or use scripts/worker-smoke.sh"
+        "set REPLAY_PARSER_LIVE_SMOKE=1 and provide RabbitMQ/S3 environment variables"
     );
 
     let config = WorkerConfig::from_env().expect("live smoke worker config should be valid");

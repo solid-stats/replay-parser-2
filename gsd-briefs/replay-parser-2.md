@@ -31,7 +31,7 @@ Compatibility checks are risk-based:
 
 ## Core Value
 
-Parse OCAP JSON replays quickly and deterministically into normalized raw events plus aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public statistics.
+Parse OCAP JSON replays quickly and deterministically into compact server-facing parser artifacts that `server-2` can persist, audit, and use for public statistics.
 
 ## Existing Reference Data
 
@@ -49,14 +49,13 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 ### Must-Haves
 
 - Rust parser for OCAP JSON only.
-- CLI that can parse a local OCAP JSON file and write normalized result JSON.
+- CLI that can parse a local OCAP JSON file and write minimal v3 artifact JSON.
 - Worker/container mode that can be used by `server-2` through RabbitMQ/S3 integration.
 - Successful worker parse artifacts stored in S3 and reported by artifact reference.
-- Deterministic normalized event output.
-- Aggregate output for stats that exist today and new stats needed by Solid Stats.
-- Golden tests using `~/sg_stats`.
-- Benchmark harness comparing old/current results against new parser behavior.
-- Target performance: around 10x faster than the current parser, measured through a baseline benchmark.
+- Deterministic minimal v3 artifact output.
+- Player, kill, weapon, destroyed-vehicle, and diagnostic rows needed by current Solid Stats ingestion.
+- Curated regression fixtures derived from `~/sg_stats`.
+- Historical v1 performance, artifact-size, and malformed-file acceptance evidence. The old benchmark/parity harness was retired after v1.0.
 - Structured parse errors tied to replay file/job identifiers.
 - Output schema versioning at the contract level, even though v1 may overwrite derived server results.
 
@@ -83,7 +82,7 @@ Parse OCAP JSON replays quickly and deterministically into normalized raw events
 - Commander-side stats where data is present.
 - Winner information where newer replay data contains it.
 - Bounty point calculation inputs.
-- Raw/normalized event audit.
+- Internal debug sidecar output for raw/normalized event audit when explicitly requested.
 - Future recalculation after moderated corrections.
 
 ## Identity Constraints
@@ -168,7 +167,7 @@ Because `web` consumes generated API types from the `server-2` OpenAPI schema th
 ### Output Contract
 
 - **OUT-01**: CLI writes a stable JSON output contract.
-- **OUT-02**: Output includes raw/normalized events and aggregate summaries.
+- **OUT-02**: Default output includes the compact v3 server-facing tables; raw/normalized event evidence is debug-sidecar-only.
 - **OUT-03**: Output includes parser contract version.
 - **OUT-04**: Output includes enough source references to trace aggregates back to events.
 - **OUT-05**: Parser contract changes that affect `server-2` API payloads include a cross-project compatibility note for the OpenAPI schema and `web` generated types.
@@ -184,8 +183,8 @@ Because `web` consumes generated API types from the `server-2` OpenAPI schema th
 ### Validation
 
 - **TEST-01**: Golden replay fixtures are derived from `~/sg_stats`.
-- **TEST-02**: Existing result comparisons cover comparable fields.
-- **TEST-03**: Benchmark harness reports parse throughput and old-vs-new speed.
+- **TEST-02**: Curated regression fixtures cover known compatibility behavior.
+- **TEST-03**: Historical v1 benchmark evidence was recorded and accepted; no active old-vs-new benchmark harness remains in post-v1 workflow.
 - **TEST-04**: Parser handles malformed/partial replay files with structured failures.
 
 ## Suggested GSD Initialization Settings
@@ -205,7 +204,7 @@ Because `web` consumes generated API types from the `server-2` OpenAPI schema th
 | Language | Rust |
 | Replay format | OCAP JSON only |
 | Validation source | `~/sg_stats` as golden/test baseline |
-| Performance goal | Around 10x faster than current parser |
+| Performance goal | Current v1 performance accepted by product owner on 2026-05-02 |
 | Runtime modes | CLI plus worker/container mode |
 | Queue integration | RabbitMQ |
 | File input | S3-compatible storage object |
@@ -216,8 +215,7 @@ Because `web` consumes generated API types from the `server-2` OpenAPI schema th
 
 ## Follow-Up Details for Implementation Phases
 
-- Exact old parser command used for baseline benchmark.
-- Exact old/new comparison tolerances.
+- New migration/parity work, if requested, should define fresh old-parser command and comparison tolerances outside the retired v1 harness.
 - Final normalized JSON schema names and field types.
 - Exact way parser contract changes flow into the `server-2` OpenAPI schema and `web` `openapi-typescript` generation.
 - Exact deterministic parser artifact key format under S3 `artifacts/`.

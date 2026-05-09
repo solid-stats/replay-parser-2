@@ -4,7 +4,7 @@ members = [
     "crates/parser-contract",
     "crates/parser-core",
     "crates/parser-cli",
-    "crates/parser-harness",
+    "crates/parser-quality",
     "crates/parser-worker",
 ]
 

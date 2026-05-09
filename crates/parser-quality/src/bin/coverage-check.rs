@@ -7,7 +7,7 @@ use std::{
     process::ExitCode,
 };
 
-use parser_harness::coverage::{CoverageAllowlist, evaluate_coverage_json};
+use parser_quality::coverage::{CoverageAllowlist, evaluate_coverage_json};
 
 fn main() -> ExitCode {
     match run() {

@@ -8,12 +8,12 @@ When in doubt, prefer enabling the skill briefly and filtering it out over skipp
 
 ## Project
 
-`replay-parser-2` is a Rust replacement for the legacy SolidGames replay parser. It parses OCAP JSON replay files into deterministic normalized events and aggregate outputs that `server-2` can persist, audit, compare against golden data, and use for public Solid Stats.
+`replay-parser-2` is a Rust replacement for the legacy SolidGames replay parser. It parses OCAP JSON replay files into deterministic compact parser artifacts that `server-2` can persist, audit, and use for public Solid Stats.
 
 Solid Stats is a multi-project product composed of:
 
 - `replays-fetcher` - replay discovery, raw S3 object storage, source metadata, ingestion staging/outbox records.
-- `replay-parser-2` - parser, parse artifact contract, CLI/worker, parity harness.
+- `replay-parser-2` - parser, parse artifact contract, CLI/worker, strict quality gates.
 - `server-2` - backend source of truth, PostgreSQL, APIs, canonical identity, auth, moderation, parse jobs, aggregate/bounty calculation.
 - `web` - browser UI, public stats, authenticated request UX, moderator/admin screens, API consumption.
 
@@ -27,8 +27,8 @@ Read these planning files before planning or implementing:
 
 ## Critical Context
 
-- The old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is the required v1 behavioral reference.
-- Historical data at `~/sg_stats` is the golden/test and benchmark baseline.
+- The old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is the historical v1 behavioral reference. Do not reintroduce active old-vs-new parity tooling unless the user explicitly requests new migration work.
+- Historical data at `~/sg_stats` is the historical v1 validation source and may be used for curated regression fixtures or investigation. It is no longer an active benchmark gate.
 - The new parser must preserve observed replay identity fields only. Canonical player matching belongs to `server-2`.
 - External replay discovery, production raw replay fetching, and ingestion staging belong to `replays-fetcher`; parser worker consumes `server-2` parse jobs and S3 object keys only.
 - PostgreSQL persistence, public UI, Steam OAuth, correction workflow, and final bounty/reward rules are outside this parser.
@@ -37,8 +37,8 @@ Read these planning files before planning or implementing:
 
 ## Current GSD State
 
-- Current focus: v1.0 milestone gap closure after Phase 7 execution.
-- Next work should follow `.planning/STATE.md`; strict coverage remains the tracked blocker.
+- Current focus: awaiting the next milestone after v1.0 archival.
+- Next work should follow `.planning/STATE.md`; v1.0 strict coverage is closed and active post-v1 gates are focused tests, schema checks, coverage smoke/strict opt-in, and fault-report validation.
 - Roadmap has 9 phases and maps 80 v1 requirements.
 
 ## Stack Direction
@@ -51,18 +51,18 @@ Use a Rust 2024 Cargo workspace with a pure parser core and thin adapters:
 - `clap` for CLI.
 - `tokio`, `lapin`, and `aws-sdk-s3` for RabbitMQ/S3 worker mode.
 - `tracing`, `thiserror`, and structured parse failures for diagnostics.
-- `insta`, `assert_cmd`, `criterion`, `hyperfine`, and old-parser comparison harnesses for validation.
+- `assert_cmd` and focused Rust tests for CLI/core/worker validation.
 
-Keep Node/pnpm only as a development dependency for running the legacy parser baseline.
+Do not add Node/pnpm legacy-baseline dependencies back to this repository unless the user explicitly starts new migration/parity work.
 
 ## Engineering Rules
 
-- Start from the planning docs and old parser behavior before inventing new semantics.
-- Treat normalized events and source references as the primary artifact; aggregates are derived projections.
+- Start from the planning docs and accepted v1 contract before inventing new semantics.
+- Treat the minimal v3 parser artifact as the primary server-facing output; full normalized evidence belongs only to explicit debug tooling.
 - Do not collapse observed identity into canonical identity.
 - Do not write parser results directly into `server-2` business tables.
 - Keep CLI and worker modes using the same parser core.
-- Prove parity and determinism before optimizing for speed.
+- Preserve determinism and focused regression coverage before optimizing for speed.
 - Keep root `README.md` current when project scope, current phase, commands, architecture direction, validation data, or development workflow changes.
 - `README.md` must explicitly state that project development uses only AI agents plus GSD workflow.
 - Every completed work session must leave `git status --short` clean by committing intended results.

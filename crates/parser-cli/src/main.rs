@@ -12,7 +12,7 @@ use std::{
     time::Duration,
 };
 
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use parser_contract::{
     artifact::{ParseArtifact, ParseStatus},
     presence::FieldPresence,
@@ -21,10 +21,6 @@ use parser_contract::{
     version::ParserInfo,
 };
 use parser_core::{ParserInput, ParserOptions, parse_replay_debug, public_parse_replay};
-use parser_harness::{
-    comparison::{ComparisonError, compare_artifacts},
-    summary_report::render_markdown_summary,
-};
 use parser_worker::config::{WorkerConfig, WorkerConfigOverrides};
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -61,27 +57,6 @@ enum Commands {
         /// Output schema JSON path. Writes to stdout when omitted.
         #[arg(long)]
         output: Option<PathBuf>,
-    },
-    /// Compare selected old and new parser artifacts.
-    Compare {
-        /// Source replay path selected for comparison.
-        #[arg(long)]
-        replay: Option<PathBuf>,
-        /// New parser artifact path.
-        #[arg(long)]
-        new_artifact: Option<PathBuf>,
-        /// Old parser artifact path.
-        #[arg(long)]
-        old_artifact: PathBuf,
-        /// Output comparison report path.
-        #[arg(long)]
-        output: PathBuf,
-        /// Optional structured JSON detail report path when writing Markdown output.
-        #[arg(long)]
-        detail_output: Option<PathBuf>,
-        /// Comparison report output format.
-        #[arg(long, value_enum, default_value_t = CompareFormat::Markdown)]
-        format: CompareFormat,
     },
     /// Run the RabbitMQ/S3 parser worker.
     Worker {
@@ -140,12 +115,6 @@ enum Commands {
     },
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
-enum CompareFormat {
-    Markdown,
-    Json,
-}
-
 #[derive(Debug)]
 enum CliError {
     ReadInput { path: PathBuf, source: io::Error },
@@ -155,12 +124,8 @@ enum CliError {
     Serialize(serde_json::Error),
     ParserInfo(serde_json::Error),
     Checksum(parser_contract::source_ref::ChecksumValueError),
-    Compare(ComparisonError),
     Worker(parser_worker::error::WorkerError),
     WorkerRuntime(io::Error),
-    CompareRequiresInput,
-    CompareConflictingInput,
-    CompareJsonDetailOutput,
     DebugArtifactConflictsWithOutput,
 }
 
@@ -188,25 +153,11 @@ impl Display for CliError {
             Self::Checksum(source) => {
                 write!(formatter, "could not build source checksum: {source}")
             }
-            Self::Compare(source) => {
-                write!(formatter, "could not compare artifacts: {source}")
-            }
             Self::Worker(source) => {
                 write!(formatter, "worker failed: {source}")
             }
             Self::WorkerRuntime(source) => {
                 write!(formatter, "could not build worker runtime: {source}")
-            }
-            Self::CompareRequiresInput => {
-                formatter.write_str("compare requires --replay or --new-artifact")
-            }
-            Self::CompareConflictingInput => {
-                formatter.write_str("compare accepts only one of --replay or --new-artifact")
-            }
-            Self::CompareJsonDetailOutput => {
-                formatter.write_str(
-                    "compare --format json cannot be combined with --detail-output because --output is already detailed JSON",
-                )
             }
             Self::DebugArtifactConflictsWithOutput => {
                 formatter.write_str("parse --debug-artifact must not be the same path as --output")
@@ -225,12 +176,8 @@ impl Error for CliError {
             | Self::WorkerRuntime(source) => Some(source),
             Self::Serialize(source) | Self::ParserInfo(source) => Some(source),
             Self::Checksum(source) => Some(source),
-            Self::Compare(source) => Some(source),
             Self::Worker(source) => Some(source),
-            Self::CompareRequiresInput
-            | Self::CompareConflictingInput
-            | Self::CompareJsonDetailOutput
-            | Self::DebugArtifactConflictsWithOutput => None,
+            Self::DebugArtifactConflictsWithOutput => None,
         }
     }
 }
@@ -248,16 +195,6 @@ fn run() -> Result<ExitCode, CliError> {
             parse_command(&input, &output, replay_id, pretty, debug_artifact.as_deref())
         }
         Commands::Schema { output } => schema_command(output),
-        Commands::Compare { replay, new_artifact, old_artifact, output, detail_output, format } => {
-            compare_command(
-                replay.as_deref(),
-                new_artifact.as_deref(),
-                &old_artifact,
-                &output,
-                detail_output.as_deref(),
-                format,
-            )
-        }
         Commands::Worker {
             amqp_url,
             job_queue,
@@ -339,14 +276,6 @@ fn parse_failure_summary(artifact: &ParseArtifact) -> Option<String> {
     })
 }
 
-fn parse_artifact_from_input(
-    input: &Path,
-    replay_id: Option<String>,
-) -> Result<ParseArtifact, CliError> {
-    let input_data = read_parser_input(input, replay_id)?;
-    Ok(public_parse_replay(input_data.parser_input()))
-}
-
 struct ReadParserInput {
     bytes: Vec<u8>,
     source: ReplaySource,
@@ -396,51 +325,6 @@ fn schema_command_with_writer(
     } else {
         serde_json::to_writer_pretty(&mut *stdout, &schema).map_err(CliError::Serialize)?;
         stdout.write_all(b"\n").map_err(CliError::WriteStdout)?;
-    }
-
-    Ok(ExitCode::SUCCESS)
-}
-
-fn compare_command(
-    replay: Option<&Path>,
-    new_artifact: Option<&Path>,
-    old_artifact: &Path,
-    output: &Path,
-    detail_output: Option<&Path>,
-    format: CompareFormat,
-) -> Result<ExitCode, CliError> {
-    if format == CompareFormat::Json && detail_output.is_some() {
-        return Err(CliError::CompareJsonDetailOutput);
-    }
-
-    let old_bytes = read_file(old_artifact)?;
-    let old_label = old_artifact.display().to_string();
-    let (new_label, new_bytes) = match (replay, new_artifact) {
-        (None, None) => return Err(CliError::CompareRequiresInput),
-        (Some(_), Some(_)) => return Err(CliError::CompareConflictingInput),
-        (_, Some(path)) => (path.display().to_string(), read_file(path)?),
-        (Some(path), None) => {
-            let artifact = parse_artifact_from_input(path, None)?;
-            let artifact_bytes = serde_json::to_vec(&artifact).map_err(CliError::Serialize)?;
-            (format!("parsed replay: {}", path.display()), artifact_bytes)
-        }
-    };
-
-    let report = compare_artifacts(old_label, &old_bytes, new_label, &new_bytes)
-        .map_err(CliError::Compare)?;
-    match format {
-        CompareFormat::Markdown => {
-            write_text_file(output, render_markdown_summary(&report))?;
-            if let Some(path) = detail_output {
-                let report_bytes =
-                    serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
-                write_json_file(path, report_bytes)?;
-            }
-        }
-        CompareFormat::Json => {
-            let report_bytes = serde_json::to_vec_pretty(&report).map_err(CliError::Serialize)?;
-            write_json_file(output, report_bytes)?;
-        }
     }
 
     Ok(ExitCode::SUCCESS)
@@ -524,10 +408,6 @@ enum HealthcheckError {
     Unavailable,
 }
 
-fn read_file(path: &Path) -> Result<Vec<u8>, CliError> {
-    fs::read(path).map_err(|source| CliError::ReadInput { path: path.to_path_buf(), source })
-}
-
 fn sha256_hex(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
@@ -544,11 +424,6 @@ fn parser_info() -> Result<ParserInfo, CliError> {
 
 fn write_json_file(path: &Path, mut output: Vec<u8>) -> Result<(), CliError> {
     output.push(b'\n');
-    fs::write(path, output)
-        .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
-}
-
-fn write_text_file(path: &Path, output: String) -> Result<(), CliError> {
     fs::write(path, output)
         .map_err(|source| CliError::WriteOutput { path: path.to_path_buf(), source })
 }
@@ -657,22 +532,10 @@ mod tests {
     }
 
     #[test]
-    fn schema_and_compare_commands_should_cover_output_branches() {
+    fn schema_command_should_cover_file_and_stdout_branches() {
         // Arrange
-        let dir = temp_dir("schema_compare_paths");
-        let replay = dir.join("valid.ocap.json");
-        let old_artifact = dir.join("old.json");
-        let new_artifact = dir.join("new.json");
+        let dir = temp_dir("schema_paths");
         let schema_output = dir.join("schema.json");
-        let markdown_output = dir.join("comparison.md");
-        let detail_output = dir.join("comparison-detail.json");
-        let replay_output = dir.join("comparison-from-replay.md");
-        let json_output = dir.join("comparison.json");
-        write_replay(&replay, VALID_REPLAY);
-        let parse_exit = parse_command(&replay, &old_artifact, None, false, None)
-            .expect("old artifact should be written");
-        let copied_bytes =
-            fs::copy(&old_artifact, &new_artifact).expect("new artifact should be copied");
 
         // Act
         let schema_file_exit =
@@ -680,48 +543,12 @@ mod tests {
         let mut schema_stdout = Vec::new();
         let schema_stdout_exit = schema_command_with_writer(None, &mut schema_stdout)
             .expect("schema stdout should write");
-        let markdown_exit = compare_command(
-            None,
-            Some(&new_artifact),
-            &old_artifact,
-            &markdown_output,
-            Some(&detail_output),
-            CompareFormat::Markdown,
-        )
-        .expect("markdown comparison should write");
-        let replay_exit = compare_command(
-            Some(&replay),
-            None,
-            &old_artifact,
-            &replay_output,
-            None,
-            CompareFormat::Markdown,
-        )
-        .expect("replay comparison should write");
-        let json_exit = compare_command(
-            None,
-            Some(&new_artifact),
-            &old_artifact,
-            &json_output,
-            None,
-            CompareFormat::Json,
-        )
-        .expect("json comparison should write");
 
         // Assert
         assert_eq!(schema_file_exit, ExitCode::SUCCESS);
         assert_eq!(schema_stdout_exit, ExitCode::SUCCESS);
         assert!(schema_stdout.ends_with(b"\n"));
-        assert_eq!(parse_exit, ExitCode::SUCCESS);
-        assert!(copied_bytes > 0);
-        assert_eq!(markdown_exit, ExitCode::SUCCESS);
-        assert_eq!(replay_exit, ExitCode::SUCCESS);
-        assert_eq!(json_exit, ExitCode::SUCCESS);
         assert!(schema_output.exists());
-        assert!(markdown_output.exists());
-        assert!(detail_output.exists());
-        assert!(replay_output.exists());
-        assert!(json_output.exists());
     }
 
     #[test]
@@ -817,9 +644,6 @@ mod tests {
         .expect_err("invalid parser metadata should fail");
         let checksum_error = SourceChecksum::sha256("not-sha256")
             .expect_err("invalid checksum should fail validation");
-        let compare_error =
-            compare_artifacts("old", br#"{"status":"success"}"#, "new", br#"{"status":"success""#)
-                .expect_err("invalid new artifact JSON should fail comparison");
         let cases = [
             (
                 CliError::ReadInput {
@@ -850,7 +674,6 @@ mod tests {
             (CliError::Serialize(serde_error), "could not serialize JSON output", true),
             (CliError::ParserInfo(parser_info_error), "could not build parser metadata", true),
             (CliError::Checksum(checksum_error), "could not build source checksum", true),
-            (CliError::Compare(compare_error), "could not compare artifacts", true),
             (
                 CliError::Worker(parser_worker::error::WorkerError::ConfigValidation(
                     "missing required REPLAY_PARSER_S3_BUCKET".to_owned(),
@@ -862,17 +685,6 @@ mod tests {
                 CliError::WorkerRuntime(io::Error::other("runtime unavailable")),
                 "could not build worker runtime",
                 true,
-            ),
-            (CliError::CompareRequiresInput, "compare requires --replay or --new-artifact", false),
-            (
-                CliError::CompareConflictingInput,
-                "compare accepts only one of --replay or --new-artifact",
-                false,
-            ),
-            (
-                CliError::CompareJsonDetailOutput,
-                "compare --format json cannot be combined with --detail-output",
-                false,
             ),
             (
                 CliError::DebugArtifactConflictsWithOutput,

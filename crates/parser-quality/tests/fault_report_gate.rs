@@ -5,7 +5,7 @@
     reason = "integration tests use expect messages as assertion context"
 )]
 
-use parser_harness::fault_report::{
+use parser_quality::fault_report::{
     FaultCase, FaultOutcome, FaultReport, FaultReportValidationError, FaultRisk,
 };
 

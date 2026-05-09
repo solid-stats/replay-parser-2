@@ -99,7 +99,7 @@ run_deterministic_fallback() {
 }
 
 validate_report() {
-  cargo run -p parser-harness --bin fault-report-check -- --report "$REPORT_PATH"
+  cargo run -p parser-quality --bin fault-report-check -- --report "$REPORT_PATH"
 }
 
 if cargo mutants --version >/dev/null 2>&1; then

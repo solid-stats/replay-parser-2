@@ -9,4 +9,5 @@ Each entry records the covered category, requirement IDs, decision IDs, expected
 parse status, expected parser features, provenance, and downstream impact notes.
 
 Full corpus material, regenerated old-parser outputs, benchmark samples, and
-generated comparison reports stay outside git under `.planning/generated/phase-05/`.
+generated comparison reports were v1 migration evidence and are not kept in the
+post-v1 repository workflow.

@@ -194,7 +194,7 @@ run_strict_gate() {
   run_llvm_cov "$COVERAGE_STRICT_TIMEOUT_SECONDS" \
     --workspace --bins --tests --examples --no-cfg-coverage --json --output-path "$coverage_json" 2>&1 \
     | tee "$OUTPUT_ROOT/coverage-run.log"
-  cargo run -p parser-harness --bin coverage-check -- \
+  cargo run -p parser-quality --bin coverage-check -- \
     --allowlist coverage/allowlist.toml \
     --coverage-json "$coverage_json" \
     --project-root . \

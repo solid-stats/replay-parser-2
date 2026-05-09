@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use parser_harness::coverage::{CoverageAllowlist, CoverageAllowlistError, evaluate_coverage_json};
+use parser_quality::coverage::{CoverageAllowlist, CoverageAllowlistError, evaluate_coverage_json};
 
 #[test]
 fn coverage_gate_empty_allowlist_should_validate_without_exclusions() {

@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: Awaiting next milestone
 stopped_at: Phase 7 complete
-last_updated: "2026-05-09T17:50:00+07:00"
-last_activity: 2026-05-09 — Milestone v1.0 completed and archived
+last_updated: "2026-05-09T18:20:00+07:00"
+last_activity: 2026-05-09 — Post-v1 migration harness and benchmark cleanup completed
 progress:
   total_phases: 9
   completed_phases: 9
@@ -20,7 +20,7 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-05-09)
 
-**Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
+**Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, and use for public statistics.
 **Current focus:** Awaiting next milestone definition
 
 ## Current Position
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-05-09 — Milestone v1.0 completed and archived
+Last activity: 2026-05-09 — Post-v1 cleanup retired active migration compare, benchmark, and worker-smoke tooling while preserving strict quality gates.
 
 ## Performance Metrics
 
@@ -255,6 +255,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-v8n | Ran a fifth deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - known differences only | [260502-v8n-old-new-year-edge-parity-fifth-sample](./quick/260502-v8n-old-new-year-edge-parity-fifth-sample/) |
 | 260502-rollup | Documented five-sample year-edge parity result and accepted old/new difference classes | 2026-05-02 | committed | Verified - Phase 05 parity follow-up non-blocking | [260502-year-edge-parity-five-sample-rollup](./quick/260502-year-edge-parity-five-sample-rollup/) |
 | 260509-ocj | Closed TEST-07 strict coverage blocker for v1.0 milestone gap closure | 2026-05-09 | committed | Verified - strict coverage passed | [260509-ocj-close-test-07-strict-coverage-blocker-fo](./quick/260509-ocj-close-test-07-strict-coverage-blocker-fo/) |
+| 260509-p4m | Retired post-v1 migration compare, benchmark, and worker-smoke tooling; renamed quality gates crate | 2026-05-09 | committed | Verified | [260509-p4m-post-v1-cleanup-migration-harness-benchm](./quick/260509-p4m-post-v1-cleanup-migration-harness-benchm/) |
 
 ## Deferred Items
 

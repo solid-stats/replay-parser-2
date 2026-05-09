@@ -7,7 +7,7 @@ use std::{
     process::ExitCode,
 };
 
-use parser_harness::fault_report::FaultReport;
+use parser_quality::fault_report::FaultReport;
 
 fn main() -> ExitCode {
     match run() {
