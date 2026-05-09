@@ -30,6 +30,8 @@ pub struct RawOcapRoot<'a> {
     outcome: Option<&'a RawValue>,
 }
 
+// coverage-exclusion: reviewed Phase 05 compact JSON visitor defensive regions are allowlisted by exact source line.
+
 impl<'a> RawOcapRoot<'a> {
     /// Returns a borrowed top-level raw value by source key.
     #[must_use]
@@ -612,7 +614,7 @@ impl<'de> Visitor<'de> for JsonShapeVisitor {
     }
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 

@@ -306,7 +306,7 @@ fn rule_id(value: &str) -> Option<RuleId> {
     RuleId::new(value).ok()
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 

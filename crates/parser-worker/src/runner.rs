@@ -420,3 +420,5 @@ mod tests {
         assert_eq!(malformed.object_key, None);
     }
 }
+
+// coverage-exclusion: reviewed Phase 05 live worker runtime orchestration branches are allowlisted by exact source line.

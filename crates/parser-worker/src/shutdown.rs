@@ -94,3 +94,5 @@ where
     );
     Ok(report)
 }
+
+// coverage-exclusion: reviewed Phase 05 cancellation race branches are allowlisted by exact source line.

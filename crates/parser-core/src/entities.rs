@@ -1087,7 +1087,7 @@ fn rule_id(value: &str) -> Option<RuleId> {
     RuleId::new(value).ok()
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 
@@ -1183,6 +1183,23 @@ mod tests {
 
         // Act
         let duplicate_name = duplicate_hint_observed_name("Echo", false, &refs);
+        let present_duplicate_name = duplicate_hint_observed_name("Echo", true, &refs);
+        let duplicate_refs = duplicate_group_source_refs(
+            &[0],
+            &[entity(
+                1,
+                EntityKind::Unit,
+                FieldPresence::Present {
+                    value: "Echo".to_owned(),
+                    source: Some(source_ref("$.entities[0].name")),
+                },
+                FieldPresence::Present {
+                    value: "rifleman".to_owned(),
+                    source: Some(source_ref("$.entities[0].type")),
+                },
+                "$.entities[0]",
+            )],
+        );
 
         // Assert
         assert!(should_infer_connected_name(&FieldPresence::Present {
@@ -1193,6 +1210,7 @@ mod tests {
             reason: UnknownReason::SourceFieldAbsent,
             source: Some(source_ref("$.entities[0].name")),
         }));
+        assert!(!should_infer_connected_name(&explicit_null));
         assert!(!should_infer_connected_name(&inferred));
         assert!(!should_infer_connected_name(&FieldPresence::<String>::NotApplicable {
             reason: "unit test".to_owned(),
@@ -1201,6 +1219,11 @@ mod tests {
             duplicate_name,
             Some(FieldPresence::Inferred { value, source: Some(_), .. }) if value == "Echo"
         ));
+        assert!(matches!(
+            present_duplicate_name,
+            Some(FieldPresence::Present { value, source: Some(_) }) if value == "Echo"
+        ));
+        assert_eq!(duplicate_refs.len(), 2);
         assert_eq!(
             duplicate_hint_name_value(&FieldPresence::<String>::Unknown {
                 reason: UnknownReason::SourceFieldAbsent,
@@ -1209,6 +1232,13 @@ mod tests {
             "unknown"
         );
         assert!(field_source_ref(&explicit_null).is_some());
+        assert!(
+            field_source_ref(&FieldPresence::Present {
+                value: "Echo".to_owned(),
+                source: Some(source_ref("$.entities[0].name")),
+            })
+            .is_some()
+        );
         assert!(
             field_source_ref(&FieldPresence::<String>::Unknown {
                 reason: UnknownReason::SourceFieldAbsent,
@@ -1360,5 +1390,29 @@ mod tests {
 
         // Assert
         assert!(diagnostics.finish(&context).diagnostics.is_empty());
+    }
+
+    #[test]
+    fn entity_steam_id_shape_drift_should_emit_diagnostic_and_unknown_presence() {
+        // Arrange
+        let root = decode_compact_root(br#"{"entities":[{"id":10,"steamID":123}]}"#)
+            .expect("test root should decode");
+        let compact_entities = compact_entities(&root);
+        let context = context();
+        let mut diagnostics = DiagnosticAccumulator::new(8);
+
+        // Act
+        let raw = entity_steam_id(&compact_entities[0], 0);
+        let presence = steam_id_presence(raw, 10, &context, &mut diagnostics);
+        let diagnostics = diagnostics.finish(&context).diagnostics;
+
+        // Assert
+        assert!(matches!(
+            presence,
+            FieldPresence::Unknown { reason: UnknownReason::SchemaDrift, source: Some(_) }
+        ));
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "schema.entity_steam_id_shape");
+        assert_eq!(diagnostics[0].json_path.as_deref(), Some("$.entities[0].steamID"));
     }
 }

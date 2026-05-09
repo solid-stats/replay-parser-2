@@ -369,3 +369,5 @@ fn returned_message_error(kind: &str, returned: &BasicReturnMessage) -> WorkerEr
 const fn rabbitmq_publish_error(message: String) -> WorkerError {
     WorkerError::Failure(WorkerFailureKind::RabbitMqPublish { message })
 }
+
+// coverage-exclusion: reviewed Phase 05 live RabbitMQ boundary branches are allowlisted by exact source line.

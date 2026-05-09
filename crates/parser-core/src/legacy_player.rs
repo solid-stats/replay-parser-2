@@ -51,3 +51,69 @@ const fn observed_string(field: &FieldPresence<String>) -> Option<&str> {
 const fn non_empty(value: &str) -> bool {
     !value.is_empty()
 }
+
+#[cfg(test)]
+mod tests {
+    use parser_contract::{
+        identity::{EntityKind, ObservedEntity, ObservedIdentity},
+        presence::{FieldPresence, UnknownReason},
+        source_ref::{RuleId, SourceRef, SourceRefs},
+    };
+
+    use super::is_legacy_player_entity;
+
+    fn source_refs() -> SourceRefs {
+        SourceRefs::single(SourceRef {
+            replay_id: Some("replay-1".to_owned()),
+            source_file: None,
+            checksum: None,
+            frame: None,
+            event_index: None,
+            entity_id: Some(1),
+            json_path: None,
+            rule_id: Some(RuleId::new("test.entity").expect("rule id should be valid")),
+        })
+    }
+
+    fn present_string(value: &str) -> FieldPresence<String> {
+        FieldPresence::Present { value: value.to_owned(), source: None }
+    }
+
+    #[test]
+    fn legacy_player_entity_should_ignore_not_applicable_identity_strings() {
+        let entity = ObservedEntity {
+            source_entity_id: 1,
+            kind: EntityKind::Unit,
+            observed_name: present_string("Player One"),
+            observed_class: present_string("B_Soldier_F"),
+            is_player: FieldPresence::Present { value: true, source: None },
+            identity: ObservedIdentity {
+                nickname: FieldPresence::NotApplicable {
+                    reason: "no observed nickname".to_owned(),
+                },
+                steam_id: FieldPresence::Unknown {
+                    reason: UnknownReason::MissingSteamId,
+                    source: None,
+                },
+                side: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                faction: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                group: FieldPresence::NotApplicable { reason: "no observed group".to_owned() },
+                squad: FieldPresence::NotApplicable { reason: "no observed squad".to_owned() },
+                role: FieldPresence::NotApplicable { reason: "no observed role".to_owned() },
+                description: FieldPresence::NotApplicable {
+                    reason: "no observed description".to_owned(),
+                },
+            },
+            compatibility_hints: Vec::new(),
+            source_refs: source_refs(),
+        };
+
+        assert!(!is_legacy_player_entity(&entity));
+    }
+}

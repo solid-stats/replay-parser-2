@@ -60,6 +60,8 @@ impl ArtifactWrite {
     }
 }
 
+// coverage-exclusion: reviewed Phase 05 live S3 boundary and impossible length branches are allowlisted by exact source line.
+
 /// Outcome of attempting an atomic artifact create.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArtifactPutOutcome {

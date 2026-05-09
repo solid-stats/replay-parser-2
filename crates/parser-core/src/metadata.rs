@@ -224,7 +224,7 @@ const fn u64_to_f64(value: u64) -> f64 {
     value as f64
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use parser_contract::presence::NullReason;

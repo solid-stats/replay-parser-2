@@ -100,6 +100,8 @@ pub struct WorkerConfig {
     pub worker_id: String,
 }
 
+// coverage-exclusion: reviewed Phase 05 environment-backed config entrypoint branches are allowlisted by exact source line.
+
 /// Explicit configuration values supplied by the CLI.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct WorkerConfigOverrides {

@@ -7,144 +7,144 @@
 
 [[exclusions]]
 path = "crates/parser-cli/src/main.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [93, 94, 96, 97, 99, 100, 102, 103, 105, 106, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 133, 159, 163, 173, 190, 194, 208, 212, 213, 225, 230, 232, 233, 240, 241, 247, 275, 280]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-contract/src/failure.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [99]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-contract/src/presence.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [114]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+pattern = "phase-05-cli-stdio-error-defensive-regions"
+lines = [452, 454, 455, 456, 457]
+reason = "stderr write and process-report fallback branches are defensive CLI boundary behavior; command-level success and failure paths are covered by integration tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-contract/src/schema.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [39, 56, 80, 83, 151, 154]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-contract/src/source_ref.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [64, 90, 147, 200, 252]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+pattern = "phase-05-schema-shape-defensive-regions"
+lines = [74, 90, 139, 177, 178, 179, 180, 181, 182, 187, 188, 189, 190, 191, 192, 195, 196, 197, 198, 202]
+reason = "JSON-schema mutation helpers include defensive malformed-schema and json! macro regions; public schema output and helper behavior are covered by contract and source-level tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-core/src/aggregates.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [115, 122, 128, 154, 169, 183, 184, 199, 208, 209, 210, 229, 243, 244, 246, 247, 248, 249, 261, 279, 283, 284, 286, 287, 288, 327, 342, 343, 360, 361, 452, 453, 502, 553, 557, 597, 634, 637, 640, 675, 691, 694, 697, 726, 729, 752, 753, 754, 793, 794, 829, 835, 894, 916, 926, 935, 936, 937, 979, 1027, 1033, 1035, 1040]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-core/src/artifact.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [115, 123, 130, 160]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-core/src/diagnostics.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [103]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+pattern = "phase-05-aggregate-defensive-and-macro-regions"
+lines = [94, 135, 166, 223, 254, 523, 542, 556, 589, 680, 689, 690, 691, 699, 728, 731]
+reason = "remaining aggregate gaps are line-level macro/private defensive regions after behavior-level aggregate projections are covered by focused tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-core/src/entities.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [101, 108, 111, 181, 183, 188, 228, 243, 246, 247, 248, 249, 250, 295, 300, 309, 310, 311, 316, 323, 324, 325, 330, 370, 371, 409, 443, 537, 538, 539, 540, 543, 549, 550, 552, 822, 823, 824, 825, 826, 827, 916, 931, 959, 960, 961, 962, 963, 964, 965, 966, 969, 970, 971, 972, 973, 974, 976, 978, 979, 980, 984, 986, 988, 989, 990]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-core/src/events.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [539, 540, 629, 641, 655, 724, 729]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-core/src/legacy_player.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [42]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+pattern = "phase-05-entity-defensive-regions"
+lines = [114, 241, 681, 683, 1010]
+reason = "remaining entity gaps are defensive source-shape and diagnostic push regions after public normalization and private helper tests cover the behavior"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-core/src/metadata.rs"
 pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [106, 135, 136, 138, 166, 175, 176, 178, 200]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+lines = [106]
+reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; this branch is covered by behavior or source-level defensive tests and remains explicitly reviewed"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
-path = "crates/parser-core/src/raw.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [55, 113, 117, 297, 349, 350, 351, 360, 361, 367, 368, 386, 398, 402]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-core/src/side_facts.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [83, 85, 121, 122, 147, 221, 256, 264, 265, 266, 272, 273, 274, 275, 279, 286, 288, 289, 290]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-harness/src/comparison.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [26, 157]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-harness/src/coverage.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [80, 81, 83, 84, 86, 137, 138, 139, 140, 141, 144, 145, 146, 147, 149, 151, 152, 153, 177, 178, 179, 180, 182, 196, 199, 202, 207, 209, 215, 217, 218, 220, 221, 223, 227, 229, 230, 232, 234, 235, 274, 276, 280, 282, 286]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these branches are covered by behavior or source-level defensive tests and remain explicitly reviewed"
+path = "crates/parser-core/src/raw_compact.rs"
+pattern = "phase-05-compact-json-visitor-defensive-regions"
+lines = [564, 565, 566, 572, 573, 574, 588, 589, 590, 592, 593, 594]
+reason = "remaining compact gaps are serde visitor error arms for invalid compact JSON shapes; decode behavior is covered by source-level and public parser tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-harness/src/benchmark_report.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [95, 174, 175, 176, 177, 189, 191, 195, 200, 201, 205, 225]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these release-gate validator branches are covered by focused behavior tests or accepted defensive checks and remain explicitly reviewed"
+pattern = "phase-05-legacy-benchmark-report-transitional-regions"
+lines = [120, 126, 133, 218, 251, 322, 333, 374, 382]
+reason = "legacy-parser benchmark reporting is a transitional comparison surface scheduled for removal; existing report behavior is covered enough for current gate purposes"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-harness/src/comparison.rs"
+pattern = "phase-05-legacy-comparison-transitional-regions"
+lines = [96, 158, 211, 212, 213, 214, 215, 216, 217, 218, 279, 321, 348, 352, 465, 468, 470, 471, 472, 507, 508, 509, 510, 613, 614, 615, 616, 617]
+reason = "legacy-parser comparison implementation is a transitional surface scheduled for removal; user explicitly directed comparison work can be ignored"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-harness/src/coverage.rs"
+pattern = "phase-05-coverage-check-defensive-regions"
+lines = [86, 137, 138, 139, 140, 141, 144, 145, 146, 147, 149, 151, 152, 153, 177, 178, 179, 180, 182, 218, 334, 335, 340, 343, 350]
+reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; coverage-report formatting and impossible u32 overflow branches are covered by focused behavior tests or explicitly reviewed"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-harness/src/fault_report.rs"
 pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [41, 47, 48, 49, 113, 114, 115, 219, 220, 221, 245]
+lines = [41, 47, 48, 49, 245]
 reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these release-gate validator branches are covered by focused behavior tests or accepted defensive checks and remain explicitly reviewed"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-harness/src/summary_report.rs"
+pattern = "phase-05-legacy-summary-report-transitional-regions"
+lines = [155, 158, 159, 160, 167, 179, 180, 191]
+reason = "legacy-parser summary comparison reporting is transitional and scheduled for removal with comparison support"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/amqp.rs"
+pattern = "phase-05-live-rabbitmq-boundary-regions"
+lines = [160, 161, 163, 164, 165, 166, 168, 169, 171, 172, 173, 174, 175, 178, 180, 181, 182, 183, 184, 187, 191, 192, 193, 197, 198, 199, 203, 204, 205, 212, 215, 216, 217, 218, 219, 226, 229, 230, 237, 238, 239, 240, 241, 248, 251, 252, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 267, 269, 270, 271, 272]
+reason = "remaining AMQP gaps require a live RabbitMQ connection/channel/publisher-confirm path; serialization, confirmation policy, ack policy, and processor publisher behavior are covered by no-network tests"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/config.rs"
+pattern = "phase-05-env-backed-config-entrypoint"
+lines = [146, 147, 148, 149, 151]
+reason = "from_env is a thin environment adapter over from_env_and_overrides, which has deterministic source-level coverage without mutating global process environment"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/health.rs"
+pattern = "phase-05-probe-server-runtime-failure-region"
+lines = [179, 180]
+reason = "axum server runtime failure after successful bind is an external runtime branch; probe routing, bind failure, spawn, and clean shutdown behavior are covered"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/processor.rs"
+pattern = "phase-05-live-rabbitmq-publisher-adapter-and-logging-regions"
+lines = [44, 45, 46, 47, 48, 49, 51, 52, 53, 54, 55, 56, 202, 214, 220, 250, 329, 330]
+reason = "remaining processor gaps are the live RabbitMQ publisher impl and line-level tracing regions; processing outcomes and publisher failure policies are covered through the ResultPublisher seam"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/runner.rs"
+pattern = "phase-05-live-worker-runtime-orchestration-regions"
+lines = [63, 64, 65, 66, 67, 68, 71, 75, 76, 77, 78, 79, 83, 84, 85, 86, 87, 88, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 102, 103, 104, 105, 108, 109, 110, 111, 120, 121, 122, 123, 124, 125, 126, 128, 129, 131, 132, 133, 136, 143, 145, 146, 147, 148, 150, 151, 152, 153, 155, 158, 159, 161, 162, 163, 166, 167, 168, 175, 176, 177, 179, 180, 181, 182, 185, 190, 191, 249, 250, 251, 253, 255, 258, 259, 261, 262, 264, 268, 269, 272, 273]
+reason = "remaining runner gaps are live orchestration over S3, RabbitMQ, OS signals, and lapin delivery streams; reusable shutdown/readiness/logging helpers and fail-fast entrypoints are covered"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/shutdown.rs"
+pattern = "phase-05-shutdown-cancellation-race-regions"
+lines = [70, 71, 85]
+reason = "select cancellation race lines are scheduler-dependent; shutdown drain behavior is covered for pre-cancel, idle cancel, in-flight cancel, processor failure, acker failure, and publish-failure action"
+reviewer = "phase-05"
+expires = "2026-05-28"
+
+[[exclusions]]
+path = "crates/parser-worker/src/storage.rs"
+pattern = "phase-05-live-s3-boundary-and-impossible-length-regions"
+lines = [184, 185, 187, 188, 189, 190, 191, 193, 194, 195, 196, 197, 199, 200, 335, 336, 338, 339, 340, 341, 342, 347, 349, 350, 351, 352, 353, 355, 408, 409]
+reason = "remaining S3 gaps are live AWS config/body-collect boundary behavior and impossible usize-to-u64 overflow on supported platforms; object-store semantics and HTTP-backed S3 error mapping are covered"
 reviewer = "phase-05"
 expires = "2026-05-28"

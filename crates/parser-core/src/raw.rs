@@ -284,7 +284,7 @@ fn entity_json_path(index: usize, key: &str) -> String {
     format!("$.entities[{index}].{key}")
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(
         clippy::expect_used,

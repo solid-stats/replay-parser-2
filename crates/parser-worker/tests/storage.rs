@@ -694,6 +694,50 @@ async fn storage_write_artifact_should_fallback_to_get_then_put_when_conditional
 }
 
 #[tokio::test]
+async fn storage_write_artifact_should_reuse_matching_object_when_conditional_write_unsupported() {
+    // Arrange
+    let key = "artifacts/v3/replay-1/source.json";
+    let bytes = br#"{"ok":true}"#;
+    let store = FakeObjectStore::with_object(key, bytes);
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::UnsupportedConditionalWrite);
+
+    // Act
+    let write = store
+        .write_artifact_if_absent_or_matching(key, bytes)
+        .await
+        .expect("matching fallback artifact should be reused");
+
+    // Assert
+    assert_artifact_write(
+        &write,
+        key,
+        "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        11,
+        true,
+    );
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
+}
+
+#[tokio::test]
+async fn storage_write_artifact_should_conflict_with_different_object_when_conditional_write_unsupported()
+ {
+    // Arrange
+    let key = "artifacts/v3/replay-1/source.json";
+    let store = FakeObjectStore::with_object(key, br#"{"ok":false}"#);
+    store.set_conditional_put_outcome(key, ArtifactPutOutcome::UnsupportedConditionalWrite);
+
+    // Act
+    let error = store
+        .write_artifact_if_absent_or_matching(key, br#"{"ok":true}"#)
+        .await
+        .expect_err("different fallback artifact should conflict");
+
+    // Assert
+    assert!(matches!(error, WorkerError::Failure(WorkerFailureKind::ArtifactConflict { .. })));
+    assert_eq!(store.conditional_put_attempt_count(key), 1);
+}
+
+#[tokio::test]
 async fn storage_write_artifact_should_return_get_error_when_conditional_write_fallback_get_fails()
 {
     // Arrange
@@ -1024,11 +1068,13 @@ fn s3_object_store_debug_should_include_bucket_without_client_details() {
     let store = s3_store(server.endpoint());
 
     // Act
+    let bucket = store.bucket().to_owned();
     let debug = format!("{store:?}");
     let requests = server.finish();
 
     // Assert
     assert!(requests.is_empty());
+    assert_eq!(bucket, "solid-replays");
     assert!(debug.contains("S3ObjectStore"));
     assert!(debug.contains("solid-replays"));
     assert!(debug.contains(".."));

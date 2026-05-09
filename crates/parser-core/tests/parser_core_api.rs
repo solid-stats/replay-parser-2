@@ -114,6 +114,85 @@ fn public_parse_replay_should_strip_replay_metadata_sources() {
 }
 
 #[test]
+fn parser_core_api_should_parse_replay_with_full_compact_root_and_entity_key_surface() {
+    let bytes = br#"{
+        "missionName": "Operation Coverage",
+        "worldName": "Altis",
+        "missionAuthor": "SolidGames",
+        "playersCount": [0, 3],
+        "captureDelay": 0.5,
+        "endFrame": 42,
+        "EditorMarkers": [],
+        "Markers": [],
+        "entities": [
+            {
+                "id": 1,
+                "type": "unit",
+                "name": "Alpha",
+                "class": "B_Soldier_F",
+                "_class": "B_Soldier_F_Alt",
+                "side": "WEST",
+                "group": "Alpha 1-1",
+                "description": "Rifleman",
+                "isPlayer": true,
+                "steamID": "76561198000000001",
+                "positions": [[0, 0, 0]]
+            },
+            {
+                "id": 2,
+                "type": "unit",
+                "name": "Bravo",
+                "class": "O_Soldier_F",
+                "side": "EAST",
+                "group": "Bravo 1-1",
+                "description": "Rifleman",
+                "isPlayer": 1,
+                "steamId": "76561198000000002",
+                "positions": []
+            },
+            {
+                "id": 3,
+                "type": "unit",
+                "name": "Charlie",
+                "class": "B_medic_F",
+                "side": "WEST",
+                "group": "Alpha 1-2",
+                "description": "Medic",
+                "isPlayer": 1,
+                "steam_id": "76561198000000003",
+                "positions": []
+            }
+        ],
+        "events": [
+            [1, "connected", "Alpha", 1],
+            [2, "killed", 2, [1, "rifle"], 10.0]
+        ],
+        "winner": "WEST",
+        "winningSide": "WEST",
+        "outcome": "victory"
+    }"#;
+
+    let artifact = parse_replay(parser_input(bytes));
+    let replay = artifact.replay.expect("replay metadata should parse");
+
+    assert_eq!(artifact.status, ParseStatus::Success);
+    assert_eq!(artifact.players.len(), 3);
+    assert_eq!(artifact.players[0].observed_name.as_deref(), Some("Alpha"));
+    assert_eq!(artifact.players[1].observed_name.as_deref(), Some("Bravo"));
+    assert_eq!(artifact.players[2].observed_name.as_deref(), Some("Charlie"));
+    assert!(
+        matches!(replay.mission_name, FieldPresence::Present { ref value, .. } if value == "Operation Coverage")
+    );
+    assert!(
+        matches!(replay.world_name, FieldPresence::Present { ref value, .. } if value == "Altis")
+    );
+    assert!(
+        matches!(replay.mission_author, FieldPresence::Present { ref value, .. } if value == "SolidGames")
+    );
+    assert!(matches!(replay.end_frame, FieldPresence::Present { value: 42, .. }));
+}
+
+#[test]
 fn public_parse_artifact_should_strip_all_source_bearing_metadata_presence_variants() {
     let source = source_ref();
     let artifact = ParseArtifact {

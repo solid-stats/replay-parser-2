@@ -38,6 +38,8 @@ pub trait ResultPublisher: Sync {
     fn publish_failed<'a>(&'a self, message: &'a ParseFailedMessage) -> PublisherFuture<'a>;
 }
 
+// coverage-exclusion: reviewed Phase 05 live RabbitMQ publisher adapter and logging regions are allowlisted by exact source line.
+
 impl ResultPublisher for RabbitMqClient {
     fn publish_completed<'a>(&'a self, message: &'a ParseCompletedMessage) -> PublisherFuture<'a> {
         Box::pin(async move {
@@ -649,4 +651,152 @@ fn checked_error_code(error_code: &str) -> ErrorCode {
 )]
 fn checked_source_refs(source_refs: Vec<SourceRef>) -> SourceRefs {
     SourceRefs::new(source_refs).expect("processor failure source refs should be non-empty")
+}
+
+#[cfg(test)]
+mod tests {
+    use parser_contract::{
+        failure::{ErrorCode, ParseStage, Retryability},
+        presence::{FieldPresence, UnknownReason},
+        source_ref::SourceChecksum,
+        version::{ContractVersion, ParserInfo},
+        worker::ParseJobMessage,
+    };
+    use serde_json::json;
+
+    use super::{
+        JobContext, field_presence_value, parser_failed_message, present, storage_error_code,
+    };
+
+    fn parser_info() -> ParserInfo {
+        serde_json::from_value(json!({
+            "name": "replay-parser-2",
+            "version": "0.1.0"
+        }))
+        .expect("test parser info should be valid")
+    }
+
+    fn checksum() -> SourceChecksum {
+        SourceChecksum::sha256("a".repeat(64)).expect("test checksum should be valid")
+    }
+
+    fn job_context() -> JobContext {
+        JobContext::from_job(&ParseJobMessage {
+            job_id: "job-1".to_owned(),
+            replay_id: "replay-1".to_owned(),
+            object_key: "raw/replay-1.ocap.json".to_owned(),
+            checksum: checksum(),
+            parser_contract_version: ContractVersion::current(),
+        })
+    }
+
+    #[test]
+    fn parser_failed_message_without_payload_should_build_internal_failure() {
+        let failed = parser_failed_message(&job_context(), None, parser_info());
+
+        assert_eq!(failed.failure.stage, ParseStage::Internal);
+        assert_eq!(failed.failure.error_code.as_str(), "internal.missing_failure_payload");
+        assert_eq!(failed.failure.retryability, Retryability::Unknown);
+        assert!(matches!(
+            failed.failure.source_cause,
+            FieldPresence::Present { ref value, .. } if value == "missing parser failure payload"
+        ));
+    }
+
+    #[test]
+    fn parser_failed_message_should_enrich_supplied_failure_with_job_context() {
+        let context = job_context();
+        let supplied = super::build_parse_failure(
+            &JobContext {
+                job_id: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                replay_id: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                object_key: FieldPresence::Unknown {
+                    reason: UnknownReason::SourceFieldAbsent,
+                    source: None,
+                },
+                parser_contract_version: present(ContractVersion::current()),
+                source_checksum: present(checksum()),
+                replay_id_value: None,
+                object_key_value: None,
+                source_checksum_value: None,
+            },
+            ParseStage::Normalize,
+            "schema.source",
+            "source schema failed",
+            Retryability::NotRetryable,
+            "missing source field".to_owned(),
+        );
+
+        let failed = parser_failed_message(&context, Some(supplied), parser_info());
+
+        assert!(matches!(
+            failed.failure.job_id,
+            FieldPresence::Present { ref value, .. } if value == "job-1"
+        ));
+        assert!(matches!(
+            failed.failure.replay_id,
+            FieldPresence::Present { ref value, .. } if value == "replay-1"
+        ));
+        assert!(matches!(
+            failed.failure.source_file,
+            FieldPresence::Present { ref value, .. } if value == "raw/replay-1.ocap.json"
+        ));
+    }
+
+    #[test]
+    fn storage_error_code_should_classify_non_storage_stages_as_internal() {
+        for stage in [
+            ParseStage::Checksum,
+            ParseStage::JsonDecode,
+            ParseStage::Schema,
+            ParseStage::Normalize,
+            ParseStage::Aggregate,
+            ParseStage::Internal,
+        ] {
+            assert_eq!(storage_error_code(stage), "internal.storage_stage");
+        }
+        assert_eq!(storage_error_code(ParseStage::Input), "io.s3_read");
+        assert_eq!(storage_error_code(ParseStage::Output), "output.s3_write");
+    }
+
+    #[test]
+    fn field_presence_value_should_only_return_real_values() {
+        let inferred = FieldPresence::Inferred {
+            value: "job-1".to_owned(),
+            reason: "test inference".to_owned(),
+            confidence: None,
+            source: None,
+            rule_id: parser_contract::source_ref::RuleId::new("test.rule")
+                .expect("rule id should be valid"),
+        };
+        let explicit_null = FieldPresence::<String>::ExplicitNull {
+            reason: parser_contract::presence::NullReason::SourceNull,
+            source: None,
+        };
+        let unknown = FieldPresence::<String>::Unknown {
+            reason: UnknownReason::SourceFieldAbsent,
+            source: None,
+        };
+        let not_applicable =
+            FieldPresence::<String>::NotApplicable { reason: "not a job field".to_owned() };
+
+        assert_eq!(field_presence_value(&present("job-0".to_owned())), Some("job-0"));
+        assert_eq!(field_presence_value(&inferred), Some("job-1"));
+        assert_eq!(field_presence_value(&explicit_null), None);
+        assert_eq!(field_presence_value(&unknown), None);
+        assert_eq!(field_presence_value(&not_applicable), None);
+    }
+
+    #[test]
+    fn checked_error_code_should_accept_processor_failure_codes() {
+        let code = ErrorCode::new("internal.storage_stage").expect("code should be valid");
+
+        assert_eq!(code.as_str(), storage_error_code(ParseStage::Internal));
+    }
 }

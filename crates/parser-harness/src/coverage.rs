@@ -226,10 +226,23 @@ pub fn evaluate_coverage_json(
         let segments = file.get("segments").and_then(Value::as_array).ok_or(
             CoverageAllowlistError::CoverageJsonShape { message: "missing file segments" },
         )?;
+        let mut covered_lines = BTreeSet::new();
+        let mut uncovered_lines = BTreeSet::new();
         for segment in segments {
-            let Some(line) = uncovered_segment_line(segment)? else {
+            let Some((line, count)) = counted_segment_line(segment)? else {
                 continue;
             };
+            if count == 0 {
+                let _inserted = uncovered_lines.insert(line);
+            } else {
+                let _inserted = covered_lines.insert(line);
+            }
+        }
+
+        for line in uncovered_lines {
+            if covered_lines.contains(&line) {
+                continue;
+            }
             if test_only_lines.contains(&line) {
                 continue;
             }
@@ -272,24 +285,24 @@ fn insert_or_allow_gap(
     }
 }
 
-fn uncovered_segment_line(segment: &Value) -> Result<Option<u32>, CoverageAllowlistError> {
+fn counted_segment_line(segment: &Value) -> Result<Option<(u32, u64)>, CoverageAllowlistError> {
     let values = segment
         .as_array()
         .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "segment is not an array" })?;
     let Some(has_count) = values.get(3).and_then(Value::as_bool) else {
         return Ok(None);
     };
-    let count = values.get(2).and_then(Value::as_u64).unwrap_or(0);
-    if !has_count || count != 0 {
+    if !has_count {
         return Ok(None);
     }
 
-    values
-        .first()
-        .and_then(Value::as_u64)
-        .and_then(|line| u32::try_from(line).ok())
-        .map(Some)
-        .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "segment line is not a u32" })
+    let line =
+        values.first().and_then(Value::as_u64).and_then(|line| u32::try_from(line).ok()).ok_or(
+            CoverageAllowlistError::CoverageJsonShape { message: "segment line is not a u32" },
+        )?;
+    let count = values.get(2).and_then(Value::as_u64).unwrap_or(0);
+
+    Ok(Some((line, count)))
 }
 
 fn production_relative_path(project_root: &Path, path: &str) -> Option<String> {

@@ -567,7 +567,7 @@ fn write_stderr_line(message: &str) -> io::Result<()> {
     stderr.write_all(b"\n")
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 

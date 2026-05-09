@@ -283,7 +283,7 @@ fn enforce_source_ref_evidence_invariants(schema: &mut Schema) {
     ));
 }
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
 

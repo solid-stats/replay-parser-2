@@ -195,3 +195,5 @@ async fn readyz(State(state): State<HealthState>) -> (StatusCode, Json<HealthSna
     let status = if snapshot.ready { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE };
     (status, Json(snapshot))
 }
+
+// coverage-exclusion: reviewed Phase 05 probe-server runtime failure branch is allowlisted by exact source line.

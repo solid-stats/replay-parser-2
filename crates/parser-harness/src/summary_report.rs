@@ -21,6 +21,8 @@ pub struct ComparisonTopDiff {
     pub note: String,
 }
 
+// coverage-exclusion: reviewed Phase 05 legacy comparison summary branches are allowlisted by exact source line.
+
 /// Summary-first comparison review model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ComparisonReviewSummary {

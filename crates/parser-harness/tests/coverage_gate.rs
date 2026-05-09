@@ -265,7 +265,7 @@ fn coverage_gate_report_should_ignore_source_unit_test_module_lines() {
         "crates/example/src/lib.rs",
         r#"pub fn production_path() {}
 
-#[cfg(all(test, not(coverage)))]
+#[cfg(test)]
 mod tests {
     #[test]
     fn source_level_test_helper() {
@@ -286,6 +286,255 @@ mod tests {
     // Assert
     assert_eq!(report.uncovered_locations.len(), 1);
     assert_eq!(report.uncovered_locations[0].line, 1);
+}
+
+#[test]
+fn coverage_gate_report_should_reject_json_without_data_array() {
+    // Arrange
+    let root = temp_project_root("report_missing_data").expect("temp root should be created");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+
+    // Act
+    let error = evaluate_coverage_json(r#"{"not_data":[]}"#, &allowlist, &root)
+        .expect_err("coverage JSON without data[0] should fail");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::CoverageJsonShape { message: "missing data[0]" }
+    ));
+}
+
+#[test]
+fn coverage_gate_report_should_reject_data_entry_without_files() {
+    // Arrange
+    let root = temp_project_root("report_missing_files").expect("temp root should be created");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+
+    // Act
+    let error = evaluate_coverage_json(r#"{"data":[{"files":null}]}"#, &allowlist, &root)
+        .expect_err("coverage JSON without files should fail");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::CoverageJsonShape { message: "missing files" }
+    ));
+}
+
+#[test]
+fn coverage_gate_report_should_reject_file_without_segments() {
+    // Arrange
+    let root = temp_project_root("report_missing_segments").expect("temp root should be created");
+    write_project_file(&root, "crates/example/src/lib.rs", "pub fn production_path() {}\n");
+    let filename = root.join("crates/example/src/lib.rs");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = format!(
+        r#"{{
+  "data": [
+    {{
+      "files": [{{ "filename": "{}", "segments": null }}]
+    }}
+  ]
+}}"#,
+        filename.display()
+    );
+
+    // Act
+    let error = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect_err("coverage JSON file without segments should fail");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::CoverageJsonShape { message: "missing file segments" }
+    ));
+}
+
+#[test]
+fn coverage_gate_report_should_reject_non_array_segment() {
+    // Arrange
+    let root = temp_project_root("report_non_array_segment").expect("temp root should be created");
+    write_project_file(&root, "crates/example/src/lib.rs", "pub fn production_path() {}\n");
+    let filename = root.join("crates/example/src/lib.rs");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = format!(
+        r#"{{
+  "data": [
+    {{
+      "files": [
+        {{
+          "filename": "{}",
+          "segments": [{{ "line": 1 }}]
+        }}
+      ]
+    }}
+  ]
+}}"#,
+        filename.display()
+    );
+
+    // Act
+    let error = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect_err("coverage JSON with non-array segment should fail");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::CoverageJsonShape { message: "segment is not an array" }
+    ));
+}
+
+#[test]
+fn coverage_gate_report_should_reject_uncovered_segment_without_u32_line() {
+    // Arrange
+    let root = temp_project_root("report_bad_segment_line").expect("temp root should be created");
+    write_project_file(&root, "crates/example/src/lib.rs", "pub fn production_path() {}\n");
+    let filename = root.join("crates/example/src/lib.rs");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = format!(
+        r#"{{
+  "data": [
+    {{
+      "files": [
+        {{
+          "filename": "{}",
+          "segments": [["line-one", 1, 0, true, true]]
+        }}
+      ]
+    }}
+  ]
+}}"#,
+        filename.display()
+    );
+
+    // Act
+    let error = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect_err("coverage JSON with non-u32 segment line should fail");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::CoverageJsonShape { message: "segment line is not a u32" }
+    ));
+}
+
+#[test]
+fn coverage_gate_report_should_ignore_non_counted_and_covered_segments() {
+    // Arrange
+    let root =
+        temp_project_root("report_ignores_inactive_segments").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        "pub fn first() {}\npub fn second() {}\n",
+    );
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_custom_segments(
+        &root,
+        "crates/example/src/lib.rs",
+        &["[1, 1, 0, false, true]", "[2, 1, 7, true, true]"],
+    );
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(report.is_passing());
+    assert!(report.uncovered_locations.is_empty());
+}
+
+#[test]
+fn coverage_gate_report_should_ignore_segments_without_count_metadata() {
+    // Arrange
+    let root = temp_project_root("report_ignores_segments_without_counts")
+        .expect("temp root should be created");
+    write_project_file(&root, "crates/example/src/lib.rs", "pub fn production_path() {}\n");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_custom_segments(
+        &root,
+        "crates/example/src/lib.rs",
+        &["[1, 1, 0]", "[1, 3, 0, false, true]"],
+    );
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(report.is_passing());
+    assert!(report.uncovered_locations.is_empty());
+}
+
+#[test]
+fn coverage_gate_report_should_not_treat_covered_line_subregion_as_uncovered_line() {
+    // Arrange
+    let root = temp_project_root("report_ignores_covered_line_subregions")
+        .expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        "pub fn branchy(value: bool) { if value { println!(\"yes\"); } }\n",
+    );
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_custom_segments(
+        &root,
+        "crates/example/src/lib.rs",
+        &["[1, 1, 1, true, true]", "[1, 31, 0, true, true]"],
+    );
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert!(report.is_passing());
+    assert!(report.uncovered_locations.is_empty());
+}
+
+#[test]
+fn coverage_gate_report_should_ignore_files_outside_production_sources() {
+    // Arrange
+    let root = temp_project_root("report_ignores_non_production_files")
+        .expect("temp root should be created");
+    write_project_file(&root, "crates/example/tests/integration.rs", "fn helper() {}\n");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_file(&root, "crates/example/tests/integration.rs", 1, 0);
+
+    // Act
+    let report = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect("coverage JSON should evaluate");
+
+    // Assert
+    assert_eq!(report.production_files, 0);
+    assert!(report.is_passing());
+}
+
+#[test]
+fn coverage_gate_report_should_reject_missing_production_source_file() {
+    // Arrange
+    let root =
+        temp_project_root("report_missing_production_source").expect("temp root should be created");
+    let allowlist =
+        CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
+    let coverage_json = coverage_json_for_file(&root, "crates/example/src/missing.rs", 1, 0);
+
+    // Act
+    let error = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect_err("missing production source file should fail evaluation");
+
+    // Assert
+    assert!(matches!(error, CoverageAllowlistError::TargetRead { .. }));
 }
 
 fn temp_project_root(test_name: &str) -> std::io::Result<PathBuf> {
@@ -314,12 +563,20 @@ fn coverage_json_for_file(root: &Path, relative_path: &str, line: u32, count: u3
 }
 
 fn coverage_json_for_segments(root: &Path, relative_path: &str, segments: &[(u32, u32)]) -> String {
-    let filename = root.join(relative_path);
     let segments = segments
         .iter()
         .map(|(line, count)| format!("[{line}, 1, {count}, true, true]"))
-        .collect::<Vec<_>>()
-        .join(", ");
+        .collect::<Vec<_>>();
+    coverage_json_for_custom_segments(root, relative_path, &segments)
+}
+
+fn coverage_json_for_custom_segments(
+    root: &Path,
+    relative_path: &str,
+    segments: &[impl AsRef<str>],
+) -> String {
+    let filename = root.join(relative_path);
+    let segments = segments.iter().map(AsRef::as_ref).collect::<Vec<_>>().join(", ");
     format!(
         r#"{{
   "data": [

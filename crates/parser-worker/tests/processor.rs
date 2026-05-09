@@ -274,6 +274,70 @@ impl ObjectStore for DownloadChecksumFailureStore {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum UnhandledStorageFailure {
+    Download,
+    ArtifactWrite,
+}
+
+#[derive(Debug)]
+struct UnhandledStorageFailureStore {
+    mode: UnhandledStorageFailure,
+}
+
+impl UnhandledStorageFailureStore {
+    fn download() -> Self {
+        Self { mode: UnhandledStorageFailure::Download }
+    }
+
+    fn artifact_write() -> Self {
+        Self { mode: UnhandledStorageFailure::ArtifactWrite }
+    }
+}
+
+impl ObjectStore for UnhandledStorageFailureStore {
+    #[allow(
+        clippy::unnecessary_literal_bound,
+        reason = "ObjectStore trait fixes the bucket lifetime to self"
+    )]
+    fn bucket(&self) -> &str {
+        "solid-replays"
+    }
+
+    fn get_object_bytes<'a>(&'a self, _object_key: &'a str) -> ObjectStoreFuture<'a, Vec<u8>> {
+        Box::pin(async move {
+            match self.mode {
+                UnhandledStorageFailure::Download => {
+                    Err(WorkerError::ParserMetadata("configured download failure".to_owned()))
+                }
+                UnhandledStorageFailure::ArtifactWrite => Ok(VALID_REPLAY.to_vec()),
+            }
+        })
+    }
+
+    fn put_object_bytes<'a>(
+        &'a self,
+        _object_key: &'a str,
+        _bytes: &'a [u8],
+        _content_type: &'a str,
+    ) -> ObjectStoreFuture<'a, ()> {
+        Box::pin(async { Ok(()) })
+    }
+
+    fn write_artifact_if_absent_or_matching<'a>(
+        &'a self,
+        _key: &'a str,
+        _bytes: &'a [u8],
+    ) -> ObjectStoreFuture<'a, parser_worker::storage::ArtifactWrite> {
+        Box::pin(async move {
+            Err(WorkerError::ParserMetadata(match self.mode {
+                UnhandledStorageFailure::Download => "unexpected artifact write".to_owned(),
+                UnhandledStorageFailure::ArtifactWrite => "configured artifact failure".to_owned(),
+            }))
+        })
+    }
+}
+
 #[derive(Debug, Default)]
 struct FakePublisher {
     completed: Mutex<Vec<ParseCompletedMessage>>,
@@ -693,6 +757,25 @@ async fn processor_download_checksum_failure_should_publish_internal_failed_mess
 }
 
 #[tokio::test]
+async fn processor_unhandled_download_failure_should_return_error_without_publishing() {
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = UnhandledStorageFailureStore::download();
+    let publisher = FakePublisher::default();
+
+    // Act
+    let error = process_job_body(&body, &config(), &store, &publisher, parser_info())
+        .await
+        .expect_err("unhandled download failure should propagate");
+
+    // Assert
+    assert!(matches!(error, WorkerError::ParserMetadata(_)));
+    assert!(publisher.completed_messages().is_empty());
+    assert!(publisher.failed_messages().is_empty());
+}
+
+#[tokio::test]
 async fn processor_s3_raw_get_failure_should_publish_input_read_failure() {
     // Arrange
     let job = job_message(VALID_REPLAY);
@@ -784,6 +867,26 @@ async fn processor_s3_artifact_write_failure_should_publish_failed() {
     assert_eq!(failed.len(), 1);
     assert_eq!(failure_code(&failed[0]), "output.s3_write");
     assert!(publisher.completed_messages().is_empty());
+}
+
+#[tokio::test]
+async fn processor_unhandled_artifact_write_failure_should_return_error_without_publishing_failed()
+{
+    // Arrange
+    let job = job_message(VALID_REPLAY);
+    let body = job_body(&job);
+    let store = UnhandledStorageFailureStore::artifact_write();
+    let publisher = FakePublisher::default();
+
+    // Act
+    let error = process_job_body(&body, &config(), &store, &publisher, parser_info())
+        .await
+        .expect_err("unhandled artifact write failure should propagate");
+
+    // Assert
+    assert!(matches!(error, WorkerError::ParserMetadata(_)));
+    assert!(publisher.completed_messages().is_empty());
+    assert!(publisher.failed_messages().is_empty());
 }
 
 #[tokio::test]
