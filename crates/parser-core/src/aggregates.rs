@@ -162,9 +162,7 @@ fn minimal_players(entities: &[ObservedEntity]) -> PlayerRows {
     for mut group in grouped.into_values() {
         group.sort_by_key(|entity| entity.source_entity_id);
 
-        let Some(representative) = group.last().copied() else {
-            continue; // coverage-exclusion: grouped player representative fallback is defensive.
-        };
+        let representative = group[group.len() - 1];
         let entity_ids = group.iter().map(|entity| entity.source_entity_id).collect::<Vec<_>>();
         let source_entity_ids = if entity_ids.len() > 1 { entity_ids.clone() } else { Vec::new() };
         let representative_id = representative.source_entity_id;
@@ -585,7 +583,8 @@ fn push_minimal_event_diagnostic(
     diagnostic: MinimalEventDiagnostic<'_>,
 ) {
     let source_ref = minimal_event_source_ref(context, observation);
-    let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else { // coverage-exclusion: SourceRefs construction failure is defensive for a single valid source ref.
+    let Some(source_refs) = SourceRefs::new(vec![source_ref]).ok() else {
+        // coverage-exclusion: SourceRefs construction failure is defensive for a single valid source ref.
         return;
     };
 

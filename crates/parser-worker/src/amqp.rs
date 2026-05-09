@@ -157,7 +157,8 @@ impl RabbitMqClient {
     /// # Errors
     ///
     /// Returns [`WorkerError`] when connection, channel, `QoS`, consumer, or confirm setup fails.
-    pub async fn connect(config: &WorkerConfig) -> Result<Self, WorkerError> { // coverage-exclusion: live RabbitMQ connection setup is smoke-tested, not unit-tested.
+    pub async fn connect(config: &WorkerConfig) -> Result<Self, WorkerError> {
+        // coverage-exclusion: live RabbitMQ connection setup is smoke-tested, not unit-tested.
         config.validate()?;
 
         let connection =
@@ -177,7 +178,8 @@ impl RabbitMqClient {
             )
             .await?; // coverage-exclusion: broker consumer setup requires a live RabbitMQ channel.
 
-        Ok(Self { // coverage-exclusion: successful live RabbitMQ client construction requires broker integration.
+        Ok(Self {
+            // coverage-exclusion: successful live RabbitMQ client construction requires broker integration.
             _connection: connection,
             consume_channel,
             publish_channel,
@@ -194,13 +196,15 @@ impl RabbitMqClient {
 
     /// Returns the mutable job consumer stream.
     #[must_use]
-    pub const fn consumer_mut(&mut self) -> &mut Consumer { // coverage-exclusion: live consumer accessor is exercised through broker integration.
+    pub const fn consumer_mut(&mut self) -> &mut Consumer {
+        // coverage-exclusion: live consumer accessor is exercised through broker integration.
         &mut self.consumer
     }
 
     /// Returns the channel used for manual delivery acknowledgements.
     #[must_use]
-    pub const fn consume_channel(&self) -> &Channel { // coverage-exclusion: live channel accessor is exercised through broker integration.
+    pub const fn consume_channel(&self) -> &Channel {
+        // coverage-exclusion: live channel accessor is exercised through broker integration.
         &self.consume_channel
     }
 
@@ -209,7 +213,8 @@ impl RabbitMqClient {
     /// # Errors
     ///
     /// Returns [`WorkerError`] if serialization, publishing, or broker confirmation fails.
-    pub async fn publish_completed( // coverage-exclusion: live publisher adapter is covered through no-network publish policy tests.
+    pub async fn publish_completed(
+        // coverage-exclusion: live publisher adapter is covered through no-network publish policy tests.
         &self,
         message: &ParseCompletedMessage,
     ) -> Result<(), WorkerError> {
@@ -226,7 +231,7 @@ impl RabbitMqClient {
             duration_ms = duration_ms(start),
             "worker_result_published"
         );
-        Ok(())
+        Ok(()) // coverage-exclusion: live completed-result publish success requires broker integration.
     }
 
     /// Publishes a confirmed `parse.failed` result.
@@ -234,7 +239,8 @@ impl RabbitMqClient {
     /// # Errors
     ///
     /// Returns [`WorkerError`] if serialization, publishing, or broker confirmation fails.
-    pub async fn publish_failed(&self, message: &ParseFailedMessage) -> Result<(), WorkerError> { // coverage-exclusion: live failed-result publishing requires broker integration.
+    pub async fn publish_failed(&self, message: &ParseFailedMessage) -> Result<(), WorkerError> {
+        // coverage-exclusion: live failed-result publishing requires broker integration.
         let start = Instant::now();
         let routing_key = self.config.failed_routing_key.clone();
         self.publish_prepared(prepare_failed_publish(&self.config, message)?).await?;
@@ -251,7 +257,8 @@ impl RabbitMqClient {
         Ok(())
     }
 
-    async fn publish_prepared(&self, publish: PreparedResultPublish) -> Result<(), WorkerError> { // coverage-exclusion: live basic_publish path requires broker integration.
+    async fn publish_prepared(&self, publish: PreparedResultPublish) -> Result<(), WorkerError> {
+        // coverage-exclusion: live basic_publish path requires broker integration.
         let confirm = self
             .publish_channel
             .basic_publish(

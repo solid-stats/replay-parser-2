@@ -207,7 +207,8 @@ fn legacy_player_game_results(tables: &MinimalComparisonTables) -> Value {
                     .by_source_entity_id
                     .get(&player.source_entity_id)
                     .cloned()
-                    .unwrap_or_else(|| PlayerComparisonRef { // coverage-exclusion: missing player projection fallback is transitional legacy compatibility.
+                    .unwrap_or_else(|| PlayerComparisonRef {
+                        // coverage-exclusion: missing player projection fallback is transitional legacy compatibility.
                         player_id: player_id(player.source_entity_id),
                         source_entity_id: player.source_entity_id,
                         compatibility_key: player_id(player.source_entity_id),
@@ -610,7 +611,8 @@ fn classify_values(
 
 fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
     if surface.is_projection() {
-        return ImpactAssessment::new( // coverage-exclusion: projection impact branch is transitional comparison reporting.
+        return ImpactAssessment::new(
+            // coverage-exclusion: projection impact branch is transitional comparison reporting.
             ImpactLevel::Yes,
             ImpactLevel::Unknown,
             ImpactLevel::Unknown,

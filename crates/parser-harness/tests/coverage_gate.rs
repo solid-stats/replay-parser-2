@@ -187,15 +187,11 @@ expires = "2026-05-28"
     );
 
     // Act
-    let error = allowlist
-        .validate_against_root(&root)
-        .expect_err("distant marker should fail validation");
+    let error =
+        allowlist.validate_against_root(&root).expect_err("distant marker should fail validation");
 
     // Assert
-    assert!(matches!(
-        error,
-        CoverageAllowlistError::MissingInlineMarker { line: 12, .. }
-    ));
+    assert!(matches!(error, CoverageAllowlistError::MissingInlineMarker { line: 12, .. }));
 }
 
 #[test]
@@ -315,6 +311,44 @@ expires = "2026-05-28"
     // Assert
     assert!(report.is_passing());
     assert_eq!(report.allowlisted_locations, 1);
+}
+
+#[test]
+fn coverage_gate_report_should_reject_allowlisted_line_that_is_not_uncovered() {
+    // Arrange
+    let root =
+        temp_project_root("report_rejects_unused_allowlist").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/lib.rs",
+        "// coverage-exclusion: defensive fallback is unreachable\npub fn fallback() {}\n",
+    );
+    let allowlist = CoverageAllowlist::from_toml_str(
+        r#"
+[[exclusions]]
+path = "crates/example/src/lib.rs"
+pattern = "fallback"
+lines = [2]
+reason = "defensive unreachable branch kept for parser diagnostics"
+reviewer = "phase-05"
+expires = "2026-05-28"
+"#,
+    )
+    .expect("allowlist should parse");
+    let coverage_json = coverage_json_for_file(&root, "crates/example/src/lib.rs", 2, 1);
+
+    // Act
+    let error = evaluate_coverage_json(&coverage_json, &allowlist, &root)
+        .expect_err("covered allowlist line should fail evaluation");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::UnusedAllowlistLine {
+            path,
+            line: 2,
+        } if path == "crates/example/src/lib.rs"
+    ));
 }
 
 #[test]

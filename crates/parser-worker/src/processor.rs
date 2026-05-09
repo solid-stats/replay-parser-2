@@ -40,7 +40,8 @@ pub trait ResultPublisher: Sync {
 
 // coverage-exclusion: reviewed Phase 05 live RabbitMQ publisher adapter and logging regions are allowlisted by exact source line.
 
-impl ResultPublisher for RabbitMqClient { // coverage-exclusion: live RabbitMQ publisher adapter delegates to tested publisher behavior.
+impl ResultPublisher for RabbitMqClient {
+    // coverage-exclusion: live RabbitMQ publisher adapter delegates to tested publisher behavior.
     fn publish_completed<'a>(&'a self, message: &'a ParseCompletedMessage) -> PublisherFuture<'a> {
         Box::pin(async move {
             Self::publish_completed(self, message).await?;
@@ -320,18 +321,21 @@ async fn publish_failed_action(
     let replay_id = field_presence_value(&message.replay_id);
     let object_key = field_presence_value(&message.object_key);
     match &publish_result {
-        Ok(PublishedOutcome::Failed) => tracing::info!( // coverage-exclusion: failed-job tracing field region is covered through processor outcomes.
-            event = WORKER_JOB_FAILED,
-            worker_id = %config.worker_id,
-            job_id = ?job_id,
-            replay_id = ?replay_id,
-            object_key = ?object_key,
-            error_code = %message.failure.error_code.as_str(),
-            error_type = %message.failure.error_code.as_str(),
-            retryability = ?message.failure.retryability,
-            outcome = OUTCOME_FAILED,
-            "worker_job_failed"
-        ),
+        Ok(PublishedOutcome::Failed) => {
+            // coverage-exclusion: failed-job tracing field region is covered through processor outcomes.
+            tracing::info!(
+                event = WORKER_JOB_FAILED,
+                worker_id = %config.worker_id,
+                job_id = ?job_id,
+                replay_id = ?replay_id,
+                object_key = ?object_key,
+                error_code = %message.failure.error_code.as_str(),
+                error_type = %message.failure.error_code.as_str(),
+                retryability = ?message.failure.retryability,
+                outcome = OUTCOME_FAILED,
+                "worker_job_failed",
+            );
+        }
         Ok(PublishedOutcome::Completed) => tracing::warn!(
             event = WORKER_JOB_FAILED,
             worker_id = %config.worker_id,

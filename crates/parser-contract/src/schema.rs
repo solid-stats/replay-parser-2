@@ -132,7 +132,8 @@ fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definitio
         return;
     };
 
-    if let Some(Value::Object(nested_defs)) = definition.remove("$defs") { // coverage-exclusion: nested generated schema definitions are schemars-shape dependent.
+    if let Some(Value::Object(nested_defs)) = definition.remove("$defs") {
+        // coverage-exclusion: nested generated schema definitions are schemars-shape dependent.
         for (key, value) in nested_defs {
             if let Entry::Vacant(entry) = defs.entry(key) {
                 let _inserted = entry.insert(value);

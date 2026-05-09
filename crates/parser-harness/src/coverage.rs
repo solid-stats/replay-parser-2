@@ -146,7 +146,8 @@ impl CoverageGateReport {
             format!("uncovered_locations={}", self.uncovered_locations.len()),
         ];
 
-        if !self.uncovered_locations.is_empty() { // coverage-exclusion: uncovered report formatting is covered by focused gate tests.
+        if !self.uncovered_locations.is_empty() {
+            // coverage-exclusion: uncovered report formatting is covered by focused gate tests.
             lines.push("uncovered:".to_string());
             for gap in &self.uncovered_locations {
                 lines.push(format!("{}:{} {}", gap.path, gap.line, gap.kind));
@@ -210,6 +211,7 @@ pub fn evaluate_coverage_json(
 
     let mut report = CoverageGateReport::default();
     let mut gaps = BTreeSet::<CoverageGap>::new();
+    let mut used_allowlist_lines = BTreeMap::<String, BTreeSet<u32>>::new();
 
     for file in data
         .get("files")
@@ -252,12 +254,14 @@ pub fn evaluate_coverage_json(
                 &mut report,
                 &mut gaps,
                 &allowed_lines,
+                &mut used_allowlist_lines,
                 &relative_path,
                 line,
                 CoverageGapKind::Region,
             );
         }
     }
+    reject_unused_allowlist_lines(&allowed_lines, &used_allowlist_lines)?;
     report.uncovered_locations = gaps.into_iter().collect();
     Ok(report)
 }
@@ -275,15 +279,37 @@ fn insert_or_allow_gap(
     report: &mut CoverageGateReport,
     gaps: &mut BTreeSet<CoverageGap>,
     allowed_lines: &BTreeMap<String, BTreeSet<u32>>,
+    used_allowlist_lines: &mut BTreeMap<String, BTreeSet<u32>>,
     relative_path: &str,
     line: u32,
     kind: CoverageGapKind,
 ) {
     if allowed_lines.get(relative_path).is_some_and(|lines| lines.contains(&line)) {
         report.allowlisted_locations += 1;
+        let _inserted =
+            used_allowlist_lines.entry(relative_path.to_string()).or_default().insert(line);
     } else {
         let _inserted = gaps.insert(CoverageGap { path: relative_path.to_string(), line, kind });
     }
+}
+
+fn reject_unused_allowlist_lines(
+    allowed_lines: &BTreeMap<String, BTreeSet<u32>>,
+    used_allowlist_lines: &BTreeMap<String, BTreeSet<u32>>,
+) -> Result<(), CoverageAllowlistError> {
+    for (path, lines) in allowed_lines {
+        let used_lines = used_allowlist_lines.get(path);
+        for line in lines {
+            if !used_lines.is_some_and(|used| used.contains(line)) {
+                return Err(CoverageAllowlistError::UnusedAllowlistLine {
+                    path: path.clone(),
+                    line: *line,
+                });
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn counted_segment_line(segment: &Value) -> Result<Option<(u32, u64)>, CoverageAllowlistError> {
@@ -337,7 +363,8 @@ fn test_only_lines(
 
     let mut pending_cfg_test = false;
     for (index, line) in contents.lines().enumerate() {
-        let line_number = u32::try_from(index + 1).map_err(|_source| { // coverage-exclusion: usize-to-u32 overflow is impossible for source line indexes.
+        let line_number = u32::try_from(index + 1).map_err(|_source| {
+            // coverage-exclusion: usize-to-u32 overflow is impossible for source line indexes.
             CoverageAllowlistError::CoverageJsonShape {
                 message: "source line number does not fit u32",
             }
@@ -362,7 +389,8 @@ fn test_only_lines(
 fn coverage_marker_lines(contents: &str) -> Result<BTreeSet<u32>, CoverageAllowlistError> {
     let mut lines = BTreeSet::new();
     for (index, line) in contents.lines().enumerate() {
-        if line.contains(COVERAGE_EXCLUSION_MARKER) { // coverage-exclusion: marker extraction branch is covered by allowlist validation tests.
+        if line.contains(COVERAGE_EXCLUSION_MARKER) {
+            // coverage-exclusion: marker extraction branch is covered by allowlist validation tests.
             let line_number = u32::try_from(index + 1).map_err(|_source| {
                 CoverageAllowlistError::CoverageJsonShape {
                     message: "source line number does not fit u32",
@@ -375,9 +403,7 @@ fn coverage_marker_lines(contents: &str) -> Result<BTreeSet<u32>, CoverageAllowl
 }
 
 fn has_nearby_marker(line: u32, marker_lines: &BTreeSet<u32>) -> bool {
-    marker_lines
-        .iter()
-        .any(|marker_line| marker_line.abs_diff(line) <= INLINE_MARKER_WINDOW) // coverage-exclusion: marker proximity predicate is covered by nearby/far marker tests.
+    marker_lines.iter().any(|marker_line| marker_line.abs_diff(line) <= INLINE_MARKER_WINDOW) // coverage-exclusion: marker proximity predicate is covered by nearby/far marker tests.
 }
 
 fn validate_non_empty(
@@ -420,7 +446,8 @@ pub enum CoverageAllowlistError {
     },
     /// A blanket non-generated exclusion was attempted.
     #[error("coverage exclusion `{path}` uses pattern `*` without a generated-code reason")]
-    BlanketNonGenerated { // coverage-exclusion: thiserror generated formatting branch is covered through validation tests.
+    BlanketNonGenerated {
+        // coverage-exclusion: thiserror generated formatting branch is covered through validation tests.
         /// Exclusion path.
         path: String,
     },
@@ -461,5 +488,13 @@ pub enum CoverageAllowlistError {
     CoverageJsonShape {
         /// Static shape failure description.
         message: &'static str,
+    },
+    /// An allowlist entry no longer corresponds to an uncovered production line.
+    #[error("coverage exclusion `{path}` line {line} is not an uncovered production line")]
+    UnusedAllowlistLine {
+        /// Exclusion path.
+        path: String,
+        /// Stale or overly broad source line.
+        line: u32,
     },
 }
