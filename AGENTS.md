@@ -32,14 +32,14 @@ Read these planning files before planning or implementing:
 - The new parser must preserve observed replay identity fields only. Canonical player matching belongs to `server-2`.
 - External replay discovery, production raw replay fetching, and ingestion staging belong to `replays-fetcher`; parser worker consumes `server-2` parse jobs and S3 object keys only.
 - PostgreSQL persistence, public UI, Steam OAuth, correction workflow, and final bounty/reward rules are outside this parser.
-- GitHub issue #13 vehicle score is an explicit v1 requirement and is covered in Phase 4.
+- GitHub issue #13 vehicle score is removed from v1 default output; ordinary vehicle facts remain and raw replay reprocessing can support that statistic later.
 - Before executing any task, verify the requested change does not contradict `replays-fetcher`, `server-2`, or `web` responsibilities and remains compatible with their contracts, data ownership, and user-facing expectations.
 
 ## Current GSD State
 
-- Current focus: Phase 3, `Deterministic Parser Core`.
-- Next command: `$gsd-execute-phase 3`.
-- Roadmap has 7 phases and maps all 71 v1 requirements.
+- Current focus: v1.0 milestone gap closure after Phase 7 execution.
+- Next work should follow `.planning/STATE.md`; strict coverage remains the tracked blocker.
+- Roadmap has 9 phases and maps 80 v1 requirements.
 
 ## Stack Direction
 
