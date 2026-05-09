@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: complete
 stopped_at: Phase 7 complete
-last_updated: "2026-05-03T09:56:32+07:00"
-last_activity: 2026-05-03 -- strict coverage safety guard added; obsolete aggregate coverage path removed; TEST-07 strict coverage still blocked
+last_updated: "2026-05-09T17:33:00+07:00"
+last_activity: 2026-05-09 -- TEST-07 strict coverage blocker closed with fresh strict gate evidence
 progress:
   total_phases: 9
   completed_phases: 9
-  total_plans: 56
-  completed_plans: 56
+  total_plans: 57
+  completed_plans: 57
   percent: 100
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** v1.0 milestone gap closure — verification artifacts repaired; strict coverage blocker remains
+**Current focus:** v1.0 milestone completion — gap closure blockers cleared
 
 ## Current Position
 
-Phase: v1.0 milestone gap closure — PARTIAL
+Phase: v1.0 milestone gap closure — COMPLETE
 Plan: v1.0-MILESTONE-GAP-PLAN
-Status: Phase 05/07 verification blockers closed; TEST-07 strict coverage blocker remains
-Last activity: 2026-05-03 -- strict coverage safety guard added; obsolete aggregate coverage path removed
-Last quick task: 2026-05-02 - Completed five deterministic year-edge `sg`/`mace`/`sm` old/new parity samples. Across 364 selected replay entries and 291 unique replay files, the new parser succeeded on all entries, the old parser produced 305 comparable artifacts and skipped 59, and no new mismatch class appeared. Remaining differences are documented accepted classes, so the Phase 05/05.2 parity follow-up is non-blocking and Phase 6 can proceed.
+Status: Phase 05/07 verification blockers closed; TEST-07 strict coverage gate passes
+Last activity: 2026-05-09 -- fresh strict coverage gate passed with `production_files=41`, `allowlisted_locations=244`, `uncovered_locations=0`
+Last quick task: 2026-05-09 - Closed the v1.0 TEST-07 strict coverage blocker with a fresh `COVERAGE_ALLOW_HEAVY=1 COVERAGE_JOBS=1 scripts/coverage-gate.sh --strict` run and refreshed milestone/state tracking.
 
 Progress: [██████████] 100%
 
@@ -218,7 +218,7 @@ new failure paths match `.planning/benchmarks/phase-05-all-raw-accepted-failures
 and the old cached baseline keeps `error_count=4`, `skipped_count=0`.
 Phase 7 completed WORK-08 and WORK-09. Remaining provider-specific Timeweb live validation requires external credentials and is a deployer-run operational check, not a parser code blocker.
 
-Current v1.0 milestone audit state: Phase 05 and Phase 07 now have verification reports, so their requirements are no longer orphaned. `scripts/coverage-gate.sh --check` passes, focused `cargo test -p parser-worker -p parser-cli` passes, `scripts/fault-report-gate.sh` passes, `scripts/worker-smoke.sh` passes, and `git diff --check` passes. Strict coverage still fails after the `benchmark_report.rs` marker repair and obsolete normalized-event aggregate path cleanup with latest measured `production_files=41`, `allowlisted_locations=127`, and `uncovered_locations=1017`; TEST-07 remains the milestone blocker. Strict local coverage now requires explicit `COVERAGE_ALLOW_HEAVY=1` opt-in to avoid accidental workstation freezes.
+Current v1.0 milestone audit state: Phase 05 and Phase 07 have verification reports, so their requirements are no longer orphaned. `scripts/coverage-gate.sh --check` passes, focused `cargo test -p parser-worker -p parser-cli` passes, `scripts/fault-report-gate.sh` passes, `scripts/worker-smoke.sh` passes, and `git diff --check` passes. Fresh strict coverage on 2026-05-09 also passes with `production_files=41`, `allowlisted_locations=244`, and `uncovered_locations=0`; TEST-07 is closed. Strict local coverage still requires explicit `COVERAGE_ALLOW_HEAVY=1` opt-in to avoid accidental workstation freezes.
 
 Resolved: Phase 5.1 replaced the default artifact with compact
 `participants`/`facts`/`summaries`, removed full top-level `entities` and
@@ -257,6 +257,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-q4m | Ran a fourth deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - known differences only | [260502-q4m-old-new-year-edge-parity-fourth-sample](./quick/260502-q4m-old-new-year-edge-parity-fourth-sample/) |
 | 260502-v8n | Ran a fifth deterministic year-edge old/new replay statistics sample with a different seed | 2026-05-02 | committed | Verified - known differences only | [260502-v8n-old-new-year-edge-parity-fifth-sample](./quick/260502-v8n-old-new-year-edge-parity-fifth-sample/) |
 | 260502-rollup | Documented five-sample year-edge parity result and accepted old/new difference classes | 2026-05-02 | committed | Verified - Phase 05 parity follow-up non-blocking | [260502-year-edge-parity-five-sample-rollup](./quick/260502-year-edge-parity-five-sample-rollup/) |
+| 260509-ocj | Closed TEST-07 strict coverage blocker for v1.0 milestone gap closure | 2026-05-09 | committed | Verified - strict coverage passed | [260509-ocj-close-test-07-strict-coverage-blocker-fo](./quick/260509-ocj-close-test-07-strict-coverage-blocker-fo/) |
 
 ## Deferred Items
 
