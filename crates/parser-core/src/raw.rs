@@ -7,8 +7,8 @@
 use serde_json::value::RawValue;
 
 pub use crate::raw_compact::{
-    ConnectedEventObservation, KilledEventKillInfo, KilledEventObservation, RawEntityObservation,
-    RawRelevantEvents,
+    ConnectedEventObservation, KilledEventKillInfo, KilledEventObservation,
+    MissionMessageEventObservation, RawEntityObservation, RawRelevantEvents,
 };
 use crate::raw_compact::{
     RawOcapRoot, compact_connected_events, compact_entities, compact_killed_events,
@@ -180,6 +180,12 @@ pub fn connected_events(raw: RawReplay<'_>) -> Vec<ConnectedEventObservation> {
 #[must_use]
 pub fn killed_events(raw: RawReplay<'_>) -> Vec<KilledEventObservation> {
     compact_killed_events(raw.root)
+}
+
+/// Reads mission message tuples shaped as `[frame, "mission_message", message]`.
+#[must_use]
+pub fn mission_message_events(raw: RawReplay<'_>) -> Vec<MissionMessageEventObservation> {
+    compact_relevant_events(raw.root).mission_messages
 }
 
 /// Reads all default-parser-relevant event observations in a single source scan.

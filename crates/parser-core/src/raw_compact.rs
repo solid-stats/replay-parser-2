@@ -315,6 +315,19 @@ pub struct KilledEventObservation {
     pub json_path: String,
 }
 
+/// Raw mission-message event observation from `$.events`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MissionMessageEventObservation {
+    /// Original index in the source `events` array.
+    pub event_index: usize,
+    /// Source frame number from `event[0]`, when numeric.
+    pub frame: Option<u64>,
+    /// Message text from `event[2]`.
+    pub message: String,
+    /// JSON path to the source event tuple.
+    pub json_path: String,
+}
+
 /// Raw killer evidence from a killed event tuple.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KilledEventKillInfo {
@@ -341,6 +354,8 @@ pub struct RawRelevantEvents {
     pub connected: Vec<ConnectedEventObservation>,
     /// Killed-event observations needed for default v1 statistics.
     pub killed: Vec<KilledEventObservation>,
+    /// Mission-message observations needed for replay-side commander outcomes.
+    pub mission_messages: Vec<MissionMessageEventObservation>,
 }
 
 /// Reads compact entity observations from the borrowed root.
@@ -385,6 +400,7 @@ pub fn compact_killed_events(root: &RawOcapRoot<'_>) -> Vec<KilledEventObservati
 pub fn compact_relevant_events(root: &RawOcapRoot<'_>) -> RawRelevantEvents {
     let mut connected = Vec::new();
     let mut killed = Vec::new();
+    let mut mission_messages = Vec::new();
 
     for (event_index, event) in event_rows(root) {
         let Some(event) = raw_array_items(event) else {
@@ -403,11 +419,16 @@ pub fn compact_relevant_events(root: &RawOcapRoot<'_>) -> RawRelevantEvents {
             "killed" => {
                 killed.push(killed_event(&event, event_index));
             }
+            "mission_message" => {
+                if let Some(observation) = mission_message_event(&event, event_index) {
+                    mission_messages.push(observation);
+                }
+            }
             _ => {}
         }
     }
 
-    RawRelevantEvents { connected, killed }
+    RawRelevantEvents { connected, killed, mission_messages }
 }
 
 pub(crate) fn raw_array_field(
@@ -491,6 +512,18 @@ fn killed_event(event: &[&RawValue], event_index: usize) -> KilledEventObservati
         distance_meters: event.get(4).and_then(|value| parse_raw_f64(value)),
         json_path: format!("$.events[{event_index}]"),
     }
+}
+
+fn mission_message_event(
+    event: &[&RawValue],
+    event_index: usize,
+) -> Option<MissionMessageEventObservation> {
+    Some(MissionMessageEventObservation {
+        event_index,
+        frame: event.first().and_then(|value| parse_raw_u64(value)),
+        message: event.get(2).and_then(|value| parse_raw_string(value))?,
+        json_path: format!("$.events[{event_index}]"),
+    })
 }
 
 fn killed_event_kill_info(value: Option<&RawValue>) -> KilledEventKillInfo {

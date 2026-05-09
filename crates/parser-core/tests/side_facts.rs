@@ -15,7 +15,9 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{DebugParseArtifact, ParserInput, ParserOptions, parse_replay_debug};
+use parser_core::{
+    DebugParseArtifact, ParserInput, ParserOptions, parse_replay, parse_replay_debug,
+};
 use serde_json::json;
 
 const SIDE_FACTS_FIXTURE: &[u8] = include_bytes!("fixtures/side-facts.ocap.json");
@@ -104,6 +106,157 @@ const COMMANDER_FALSE_POSITIVE_FIXTURE: &[u8] = br#"{
   "Markers": [],
   "EditorMarkers": []
 }"#;
+const KS_MISSION_MESSAGE_FIXTURE: &str = r#"{
+  "missionName": "sg ks mission message",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [1, 1],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "[SHK]Sota",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "[JTF2]Bas",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    [902, "mission_message", "Победа КС: [SHK]Sota. Поражение КС: [JTF2]Bas"]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
+const MULTI_KS_MISSION_MESSAGE_FIXTURE: &str = r#"{
+  "missionName": "sg multi ks mission message",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [3, 1],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "[RAF]Valar",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Rollan",
+      "group": "Alpha 1-2",
+      "side": "WEST",
+      "description": "Заместитель командира",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 3,
+      "type": "unit",
+      "name": "[RT]Raiden",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 4,
+      "type": "unit",
+      "name": "[RAF]baptized",
+      "group": "Bravo 1-2",
+      "side": "EAST",
+      "description": "Заместитель командира",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    [54, "mission_message", "Победа КС: [RAF]Valar, Rollan. Поражение КС: [RT]Raiden, [RAF]baptized"],
+    [54, "mission_message", "Победа КС: [RAF]Valar, Rollan. Поражение КС: [RT]Raiden, [RAF]baptized"]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
+const CONFLICTING_KS_MISSION_MESSAGE_FIXTURE: &str = r#"{
+  "missionName": "sg conflicting ks mission message",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [1, 1],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Alpha",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    },
+    {
+      "id": 2,
+      "type": "unit",
+      "name": "Bravo",
+      "group": "Bravo 1-1",
+      "side": "EAST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    [10, "mission_message", "Победа КС: Alpha, Bravo. Поражение КС: "]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
+const UNMATCHED_KS_MISSION_MESSAGE_FIXTURE: &str = r#"{
+  "missionName": "sg unmatched ks mission message",
+  "worldName": "Altis",
+  "missionAuthor": "SolidGames",
+  "playersCount": [1, 0],
+  "captureDelay": 0.5,
+  "endFrame": 120,
+  "entities": [
+    {
+      "id": 1,
+      "type": "unit",
+      "name": "Known",
+      "group": "Alpha 1-1",
+      "side": "WEST",
+      "description": "Командир",
+      "isPlayer": 1,
+      "positions": []
+    }
+  ],
+  "events": [
+    [87, "mission_message", "Победа КС: Missing. Поражение КС: "]
+  ],
+  "Markers": [],
+  "EditorMarkers": []
+}"#;
 
 fn parser_info() -> ParserInfo {
     serde_json::from_value(json!({
@@ -142,11 +295,12 @@ fn parse_fixture(bytes: &[u8]) -> DebugParseArtifact {
 
 fn present_winner_side(artifact: &DebugParseArtifact) -> Option<EntitySide> {
     match &artifact.side_facts.outcome.winner_side {
-        FieldPresence::Present { value, source: Some(_) } => Some(*value),
+        FieldPresence::Present { value, source: Some(_) }
+        | FieldPresence::Inferred { value, source: Some(_), .. } => Some(*value),
         FieldPresence::Present { source: None, .. }
         | FieldPresence::ExplicitNull { .. }
         | FieldPresence::Unknown { .. }
-        | FieldPresence::Inferred { .. }
+        | FieldPresence::Inferred { source: None, .. }
         | FieldPresence::NotApplicable { .. } => None,
     }
 }
@@ -246,6 +400,62 @@ fn side_facts_should_accept_trimmed_case_insensitive_winner_aliases() {
 }
 
 #[test]
+fn side_facts_should_infer_ks_winner_from_mission_message_event() {
+    let artifact = parse_fixture(KS_MISSION_MESSAGE_FIXTURE.as_bytes());
+    let commander_entity_ids = artifact
+        .side_facts
+        .commanders
+        .iter()
+        .filter_map(|commander| match &commander.commander {
+            FieldPresence::Present { value, .. } => actor_source_entity_id(value),
+            FieldPresence::ExplicitNull { .. }
+            | FieldPresence::Unknown { .. }
+            | FieldPresence::Inferred { .. }
+            | FieldPresence::NotApplicable { .. } => None,
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Inferred);
+    assert_eq!(present_winner_side(&artifact), Some(EntitySide::West));
+    assert!(artifact.side_facts.outcome.source_refs.is_some());
+    assert!(commander_entity_ids.contains(&1));
+    assert!(commander_entity_ids.contains(&2));
+    assert!(artifact.side_facts.commanders.iter().any(|commander| {
+        commander.kind == CommanderFactKind::Observed
+            && commander.rule_id.as_str() == "side_facts.commander.mission_message"
+    }));
+}
+
+#[test]
+fn side_facts_should_emit_mission_message_facts_in_default_artifact() {
+    let artifact = parse_replay(parser_input(KS_MISSION_MESSAGE_FIXTURE.as_bytes()));
+
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Inferred);
+    assert_eq!(artifact.side_facts.commanders.len(), 2);
+}
+
+#[test]
+fn side_facts_should_dedupe_duplicate_mission_message_commanders() {
+    let artifact = parse_fixture(MULTI_KS_MISSION_MESSAGE_FIXTURE.as_bytes());
+    let commander_entity_ids = artifact
+        .side_facts
+        .commanders
+        .iter()
+        .filter_map(|commander| match &commander.commander {
+            FieldPresence::Present { value, .. } => actor_source_entity_id(value),
+            FieldPresence::ExplicitNull { .. }
+            | FieldPresence::Unknown { .. }
+            | FieldPresence::Inferred { .. }
+            | FieldPresence::NotApplicable { .. } => None,
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Inferred);
+    assert_eq!(present_winner_side(&artifact), Some(EntitySide::West));
+    assert_eq!(commander_entity_ids, vec![1, 2, 3, 4]);
+}
+
+#[test]
 fn side_facts_should_emit_partial_unknown_outcome_when_recognized_fields_conflict() {
     let artifact = parse_fixture(CONFLICTING_WINNER_FIXTURE);
 
@@ -260,6 +470,27 @@ fn side_facts_should_emit_partial_unknown_outcome_when_recognized_fields_conflic
             .iter()
             .any(|diagnostic| diagnostic.code == "side_facts.outcome_conflict")
     );
+}
+
+#[test]
+fn side_facts_should_keep_mission_message_outcome_unknown_when_winner_sides_conflict() {
+    let artifact = parse_fixture(CONFLICTING_KS_MISSION_MESSAGE_FIXTURE.as_bytes());
+
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
+    assert!(
+        artifact
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "side_facts.outcome_conflict")
+    );
+}
+
+#[test]
+fn side_facts_should_not_fabricate_unmatched_mission_message_commanders() {
+    let artifact = parse_fixture(UNMATCHED_KS_MISSION_MESSAGE_FIXTURE.as_bytes());
+
+    assert_eq!(artifact.side_facts.outcome.status, OutcomeStatus::Unknown);
+    assert!(artifact.side_facts.commanders.is_empty());
 }
 
 #[test]

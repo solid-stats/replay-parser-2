@@ -11,11 +11,23 @@ use parser_contract::{
 };
 use parser_core::{
     artifact::SourceContext,
-    raw::{KilledEventKillInfo, KilledEventObservation, RawReplay, killed_events},
+    raw::{
+        KilledEventKillInfo, KilledEventObservation, MissionMessageEventObservation, RawReplay,
+        killed_events, mission_message_events,
+    },
     raw_compact::decode_compact_root,
 };
 
 const KILLED_EVENTS_FIXTURE: &[u8] = include_bytes!("fixtures/killed-events.ocap.json");
+const MISSION_MESSAGE_EVENTS_FIXTURE: &str = r#"{
+  "events": [
+    [10, "connected", "Alpha", 1],
+    [902, "mission_message", "Победа КС: [SHK]Sota. Поражение КС: [JTF2]Bas"],
+    ["bad", "mission_message", "Победа КС: [31st]Flori. Поражение КС: "],
+    [903, "mission_message", {"bad": true}],
+    [904, "admin-menu", "ignored"]
+  ]
+}"#;
 
 fn killed_observations() -> Vec<KilledEventObservation> {
     let root = decode_compact_root(KILLED_EVENTS_FIXTURE)
@@ -23,6 +35,14 @@ fn killed_observations() -> Vec<KilledEventObservation> {
     let raw = RawReplay::new(&root);
 
     killed_events(raw)
+}
+
+fn mission_message_observations() -> Vec<MissionMessageEventObservation> {
+    let root = decode_compact_root(MISSION_MESSAGE_EVENTS_FIXTURE.as_bytes())
+        .expect("mission-message events fixture should be a root object");
+    let raw = RawReplay::new(&root);
+
+    mission_message_events(raw)
 }
 
 fn replay_source() -> ReplaySource {
@@ -131,6 +151,21 @@ fn raw_event_accessors_should_ignore_non_killed_events() {
 
     assert_eq!(observations.len(), 5);
     assert!(connected_event_was_ignored);
+}
+
+#[test]
+fn raw_event_accessors_should_read_mission_message_events() {
+    let observations = mission_message_observations();
+
+    assert_eq!(observations.len(), 2);
+    assert_eq!(observations[0].event_index, 1);
+    assert_eq!(observations[0].frame, Some(902));
+    assert_eq!(observations[0].message, "Победа КС: [SHK]Sota. Поражение КС: [JTF2]Bas");
+    assert_eq!(observations[0].json_path, "$.events[1]");
+    assert_eq!(observations[1].event_index, 2);
+    assert_eq!(observations[1].frame, None);
+    assert_eq!(observations[1].message, "Победа КС: [31st]Flori. Поражение КС: ");
+    assert_eq!(observations[1].json_path, "$.events[2]");
 }
 
 #[test]

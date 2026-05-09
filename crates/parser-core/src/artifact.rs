@@ -23,6 +23,7 @@ use crate::{
     metadata::normalize_metadata,
     raw::{RawReplay, relevant_events},
     raw_compact::{CompactDecodeError, RawOcapRoot, decode_compact_root},
+    side_facts::normalize_mission_message_side_facts,
 };
 
 /// Parses replay bytes into a deterministic artifact shell.
@@ -96,6 +97,8 @@ fn success_artifact(
         &context,
         &mut diagnostics,
     );
+    let side_facts =
+        normalize_mission_message_side_facts(&raw, &entities, &context, &mut diagnostics);
     let diagnostic_report = diagnostics.finish(&context);
 
     ParseArtifact {
@@ -109,7 +112,7 @@ fn success_artifact(
         players: minimal_tables.players,
         weapons: minimal_tables.weapons,
         destroyed_vehicles: minimal_tables.destroyed_vehicles,
-        side_facts: ReplaySideFacts::default(),
+        side_facts,
         failure: None,
         extensions: BTreeMap::new(),
     }
