@@ -821,6 +821,39 @@ mod tests {
     }
 
     #[test]
+    fn json_shape_visitor_should_deserialize_scalar_shapes() {
+        use serde::de::value::{Error as ValueError, StringDeserializer, UnitDeserializer};
+        use serde::{Deserialize as _, de::IntoDeserializer as _};
+
+        // Arrange
+        let cases = [
+            ("true", JsonShape::Boolean),
+            ("-1", JsonShape::Number),
+            ("1", JsonShape::Number),
+            ("1.25", JsonShape::Number),
+            (r#""value""#, JsonShape::String),
+            ("null", JsonShape::Null),
+        ];
+
+        // Act + Assert
+        for (json, expected) in cases {
+            let shape =
+                serde_json::from_str::<JsonShape>(json).expect("JSON shape should deserialize");
+            assert_eq!(shape, expected);
+        }
+
+        let owned_deserializer: StringDeserializer<ValueError> =
+            "owned".to_owned().into_deserializer();
+        let owned_string_shape = JsonShape::deserialize(owned_deserializer)
+            .expect("owned string should deserialize through visit_string");
+        let unit_shape = JsonShape::deserialize(UnitDeserializer::<ValueError>::new())
+            .expect("unit should deserialize through visit_unit");
+
+        assert_eq!(owned_string_shape, JsonShape::String);
+        assert_eq!(unit_shape, JsonShape::Null);
+    }
+
+    #[test]
     fn compact_section_helpers_should_tolerate_missing_and_drifted_arrays() {
         let missing = decode_compact_root(br"{}").expect("empty root should decode");
         let drifted = decode_compact_root(br#"{"entities": {}, "events": {}}"#)

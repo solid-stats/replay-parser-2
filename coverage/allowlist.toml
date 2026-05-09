@@ -24,7 +24,7 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-core/src/aggregates.rs"
 pattern = "phase-05-aggregate-defensive-and-macro-regions"
-lines = [94, 135, 166, 223, 254, 542, 589, 689, 690, 691]
+lines = [94, 135, 166, 223, 254, 542, 589]
 reason = "remaining aggregate gaps are line-level macro/private defensive regions after behavior-level aggregate projections are covered by focused tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
@@ -48,24 +48,16 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-core/src/raw_compact.rs"
 pattern = "phase-05-compact-json-visitor-defensive-regions"
-lines = [564, 565, 566, 572, 573, 574, 588, 589, 590, 592, 593, 594]
+lines = [564, 565, 566, 592, 593, 594]
 reason = "remaining compact gaps are serde visitor error arms for invalid compact JSON shapes; decode behavior is covered by source-level and public parser tests"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-harness/src/benchmark_report.rs"
-pattern = "phase-05-legacy-benchmark-report-transitional-regions"
-lines = [120, 126, 133, 218, 251, 322, 333, 374, 382]
-reason = "legacy-parser benchmark reporting is a transitional comparison surface scheduled for removal; existing report behavior is covered enough for current gate purposes"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
 [[exclusions]]
 path = "crates/parser-harness/src/comparison.rs"
 pattern = "phase-05-legacy-comparison-transitional-regions"
-lines = [96, 158, 211, 212, 213, 214, 215, 216, 217, 218, 279, 321, 348, 352, 465, 468, 470, 471, 472, 507, 508, 509, 510, 613, 614, 615, 616, 617]
-reason = "legacy-parser comparison implementation is a transitional surface scheduled for removal; user explicitly directed comparison work can be ignored"
+lines = [96, 211, 212, 213, 214, 215, 216, 217, 218, 279, 321, 613, 614, 615, 616, 617]
+reason = "remaining comparison gaps are impossible fallback rows or currently unreachable projection-impact branches after selected legacy/minimal comparison behavior is covered by focused tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
@@ -82,14 +74,6 @@ path = "crates/parser-harness/src/fault_report.rs"
 pattern = "phase-05-stable-coverage-defensive-regions"
 lines = [41, 47, 48, 49, 245]
 reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these release-gate validator branches are covered by focused behavior tests or accepted defensive checks and remain explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-harness/src/summary_report.rs"
-pattern = "phase-05-legacy-summary-report-transitional-regions"
-lines = [155, 158, 159, 160, 167, 179, 180, 191]
-reason = "legacy-parser summary comparison reporting is transitional and scheduled for removal with comparison support"
 reviewer = "phase-05"
 expires = "2026-05-28"
 

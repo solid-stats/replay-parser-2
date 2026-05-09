@@ -829,6 +829,7 @@ mod tests {
         let tagged = split_legacy_player_name("[SG] Alpha [ignored]");
         let empty_tag = split_legacy_player_name("[] Alpha");
         let no_close = split_legacy_player_name("[SG Alpha");
+        let malformed_later_tag = split_legacy_player_name("[SG] Alpha [broken");
 
         assert_eq!(tagged.name, "Alpha");
         assert_eq!(tagged.tag.as_deref(), Some("[SG]"));
@@ -836,6 +837,8 @@ mod tests {
         assert_eq!(empty_tag.name, "Alpha");
         assert_eq!(empty_tag.tag, None);
         assert_eq!(no_close.name, "[SG Alpha");
+        assert_eq!(malformed_later_tag.name, "Alpha[broken");
+        assert_eq!(malformed_later_tag.tag.as_deref(), Some("[SG]"));
         assert_eq!(entity_kind_name(&unit_entity(1, "Alpha", EntitySide::West)), "unit");
         assert_eq!(
             entity_kind_name(&vehicle_entity(2, "Truck", EntitySide::West, EntityKind::Vehicle)),
@@ -880,6 +883,82 @@ mod tests {
         increment_player_by_entity_id(&mut players, 1, |row| row.kills += 1);
 
         assert_eq!(players.rows.get(&1).expect("player row should exist").kills, 1);
+    }
+
+    #[test]
+    fn aggregate_minimal_tables_should_cover_weapon_and_no_stats_branches() {
+        let context = SourceContext::new(&ReplaySource {
+            replay_id: Some("aggregate-unit-test".to_owned()),
+            source_file: "aggregate-unit-test.ocap.json".to_owned(),
+            checksum: FieldPresence::Unknown {
+                reason: UnknownReason::ChecksumUnavailable,
+                source: None,
+            },
+        });
+        let entities = vec![
+            unit_entity(1, "Alpha", EntitySide::West),
+            unit_entity(2, "Bravo", EntitySide::East),
+            vehicle_entity(20, "Truck", EntitySide::West, EntityKind::Vehicle),
+            vehicle_entity(21, "Truck", EntitySide::West, EntityKind::Vehicle),
+            vehicle_entity(22, "APC", EntitySide::East, EntityKind::Vehicle),
+        ];
+        let killed_events = vec![
+            KilledEventObservation {
+                event_index: 0,
+                frame: Some(10),
+                killed_entity_id: Some(2),
+                kill_info: KilledEventKillInfo::Killer {
+                    killer_entity_id: 1,
+                    weapon: Some("Truck".to_owned()),
+                },
+                distance_meters: None,
+                json_path: "$.events[0]".to_owned(),
+            },
+            KilledEventObservation {
+                event_index: 1,
+                frame: Some(20),
+                killed_entity_id: Some(22),
+                kill_info: KilledEventKillInfo::Killer {
+                    killer_entity_id: 1,
+                    weapon: Some("Rifle".to_owned()),
+                },
+                distance_meters: None,
+                json_path: "$.events[1]".to_owned(),
+            },
+            KilledEventObservation {
+                event_index: 2,
+                frame: Some(30),
+                killed_entity_id: Some(2),
+                kill_info: KilledEventKillInfo::Malformed { observed_shape: "array".to_owned() },
+                distance_meters: None,
+                json_path: "$.events[2]".to_owned(),
+            },
+        ];
+        let mut diagnostics = DiagnosticAccumulator::new(8);
+
+        let tables = derive_minimal_tables_from_killed_events(
+            &entities,
+            &killed_events,
+            &context,
+            &mut diagnostics,
+        );
+        let diagnostics = diagnostics.finish(&context).diagnostics;
+
+        let alpha = tables
+            .players
+            .iter()
+            .find(|player| player.source_entity_id == 1)
+            .expect("alpha player row should exist");
+        assert_eq!(alpha.kills, 1);
+        assert_eq!(alpha.kills_from_vehicle, 1);
+        assert_eq!(alpha.kill_rows.len(), 1);
+        assert_eq!(alpha.kill_rows[0].attacker_vehicle_entity_id, Some(20));
+        assert_eq!(
+            tables.weapons.iter().map(|weapon| weapon.name.as_str()).collect::<Vec<_>>(),
+            vec!["Rifle", "Truck"]
+        );
+        assert_eq!(tables.destroyed_vehicles.len(), 1);
+        assert_eq!(diagnostics.len(), 1);
     }
 
     #[test]

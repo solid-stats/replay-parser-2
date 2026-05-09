@@ -103,6 +103,40 @@ fn benchmark_report_should_reject_selected_artifact_size_above_100000() {
 }
 
 #[test]
+fn benchmark_report_should_reject_missing_selected_byte_evidence_and_invalid_ratio() {
+    // Arrange
+    let mut missing_raw_bytes = selected_large_replay();
+    missing_raw_bytes.raw_bytes = 0;
+
+    let mut missing_artifact_bytes = selected_large_replay();
+    missing_artifact_bytes.artifact_bytes = 0;
+
+    let mut invalid_ratio = selected_large_replay();
+    invalid_ratio.artifact_raw_ratio += 0.001;
+
+    // Act + Assert
+    assert_eq!(
+        valid_report(missing_raw_bytes, all_raw_corpus(), None)
+            .expect_err("raw_bytes must be present"),
+        BenchmarkReportValidationError::MissingByteEvidence {
+            field: "selected_large_replay.raw_bytes"
+        }
+    );
+    assert_eq!(
+        valid_report(missing_artifact_bytes, all_raw_corpus(), None)
+            .expect_err("artifact_bytes must be present"),
+        BenchmarkReportValidationError::MissingByteEvidence {
+            field: "selected_large_replay.artifact_bytes"
+        }
+    );
+    assert_eq!(
+        valid_report(invalid_ratio, all_raw_corpus(), None)
+            .expect_err("artifact/raw ratio must match byte evidence"),
+        BenchmarkReportValidationError::InvalidSelectedArtifactRawRatio
+    );
+}
+
+#[test]
 fn benchmark_report_should_reject_all_raw_x10_pass_below_speedup_gate() {
     // Arrange
     let mut all_raw = all_raw_corpus();
@@ -114,6 +148,21 @@ fn benchmark_report_should_reject_all_raw_x10_pass_below_speedup_gate() {
 
     // Assert
     assert_eq!(error, BenchmarkReportValidationError::AllRawX10PassRequiresSpeedup);
+}
+
+#[test]
+fn benchmark_report_should_reject_invalid_all_raw_accounting() {
+    // Arrange
+    let mut all_raw = all_raw_corpus();
+    all_raw.attempted_count =
+        all_raw.success_count + all_raw.failed_count + all_raw.skipped_count + 1;
+
+    // Act
+    let error = valid_report(selected_large_replay(), all_raw, None)
+        .expect_err("attempted count must equal success plus failure plus skipped counts");
+
+    // Assert
+    assert_eq!(error, BenchmarkReportValidationError::InvalidAllRawCounts);
 }
 
 #[test]
@@ -221,6 +270,72 @@ fn benchmark_report_should_reject_failed_or_unknown_status_without_complete_tria
     assert_eq!(
         error,
         BenchmarkReportValidationError::StatusRequiresTriage { scope: "selected_large_replay" }
+    );
+}
+
+#[test]
+fn benchmark_report_should_reject_all_raw_failed_status_without_triage() {
+    // Arrange
+    let mut all_raw = all_raw_corpus();
+    all_raw.x10_status = GateStatus::Fail;
+    all_raw.triage = None;
+
+    // Act
+    let error = valid_report(selected_large_replay(), all_raw, None)
+        .expect_err("all-raw failed status should require complete triage");
+
+    // Assert
+    assert_eq!(
+        error,
+        BenchmarkReportValidationError::StatusRequiresTriage { scope: "all_raw_corpus" }
+    );
+}
+
+#[test]
+fn benchmark_report_should_reject_invalid_phase_profile_and_empty_fields() {
+    // Arrange
+    let mut wrong_phase = valid_report(selected_large_replay(), all_raw_corpus(), None)
+        .expect("baseline report should be valid");
+    wrong_phase.phase = "05.1".to_owned();
+
+    let mut missing_profile = valid_report(selected_large_replay(), all_raw_corpus(), None)
+        .expect("baseline report should be valid");
+    missing_profile.old_baseline_profile = "deterministic worker count one".to_owned();
+
+    let mut empty_rss_note = valid_report(selected_large_replay(), all_raw_corpus(), None)
+        .expect("baseline report should be valid");
+    empty_rss_note.rss_note = " ".to_owned();
+
+    let mut empty_allowlist_path = valid_report(
+        selected_large_replay(),
+        all_raw_corpus(),
+        Some(BenchmarkAllowlist {
+            path: "accepted.json".to_owned(),
+            approval_status: AllowlistApprovalStatus::AcceptedByUser,
+        }),
+    )
+    .expect("baseline report should be valid before mutating allowlist path");
+    empty_allowlist_path.allowlist = Some(BenchmarkAllowlist {
+        path: " ".to_owned(),
+        approval_status: AllowlistApprovalStatus::AcceptedByUser,
+    });
+
+    // Act + Assert
+    assert_eq!(
+        wrong_phase.validate().expect_err("phase must remain 05.2"),
+        BenchmarkReportValidationError::InvalidPhase
+    );
+    assert_eq!(
+        missing_profile.validate().expect_err("old baseline profile must name WORKER_COUNT=1"),
+        BenchmarkReportValidationError::MissingDeterministicOldBaseline
+    );
+    assert_eq!(
+        empty_rss_note.validate().expect_err("rss_note cannot be blank"),
+        BenchmarkReportValidationError::EmptyField { field: "rss_note" }
+    );
+    assert_eq!(
+        empty_allowlist_path.validate().expect_err("allowlist path cannot be blank"),
+        BenchmarkReportValidationError::EmptyField { field: "allowlist.path" }
     );
 }
 

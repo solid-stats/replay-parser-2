@@ -291,7 +291,7 @@ fn coverage_gate_report_should_ignore_source_unit_test_module_lines() {
     write_project_file(
         &root,
         "crates/example/src/lib.rs",
-        r#"pub fn production_path() {}
+        r"pub fn production_path() {}
 
 #[cfg(test)]
 mod tests {
@@ -300,7 +300,7 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
-"#,
+",
     );
     let allowlist =
         CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");
@@ -325,7 +325,7 @@ fn coverage_gate_report_should_ignore_source_unit_test_module_after_outer_attrib
     write_project_file(
         &root,
         "crates/example/src/lib.rs",
-        r#"pub fn production_path() {}
+        r"pub fn production_path() {}
 
 #[cfg(test)]
 #[allow(clippy::expect_used)]
@@ -336,7 +336,7 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
-"#,
+",
     );
     let allowlist =
         CoverageAllowlist::from_toml_str("exclusions = []").expect("allowlist should parse");

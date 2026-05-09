@@ -286,11 +286,11 @@ struct UnhandledStorageFailureStore {
 }
 
 impl UnhandledStorageFailureStore {
-    fn download() -> Self {
+    const fn download() -> Self {
         Self { mode: UnhandledStorageFailure::Download }
     }
 
-    fn artifact_write() -> Self {
+    const fn artifact_write() -> Self {
         Self { mode: UnhandledStorageFailure::ArtifactWrite }
     }
 }

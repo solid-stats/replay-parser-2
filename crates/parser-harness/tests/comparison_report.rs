@@ -216,6 +216,167 @@ fn comparison_report_compare_artifacts_should_derive_legacy_view_from_minimal_ta
 }
 
 #[test]
+fn comparison_report_compare_artifacts_should_use_top_level_kills_when_present() {
+    // Arrange
+    let old_json = legacy_surface_artifact_json("success");
+    let mut new_value: Value = serde_json::from_slice(&minimal_artifact_json("success"))
+        .expect("minimal artifact fixture should deserialize");
+    new_value["kills"] = json!([
+        {
+            "k": 1,
+            "v": 2,
+            "c": "enemy_kill",
+            "w": 2,
+            "av": 20,
+            "avc": "offroad_hmg"
+        },
+        {
+            "k": 1,
+            "v": 3,
+            "c": "teamkill",
+            "w": 1
+        }
+    ]);
+    new_value["players"][0]["kills"] = json!([
+        {
+            "v": 99,
+            "c": "enemy_kill"
+        }
+    ]);
+    let new_json =
+        serde_json::to_vec(&new_value).expect("modified minimal fixture should serialize");
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("top-level kills should drive derived legacy surfaces when present");
+
+    // Assert
+    let relationships = finding(&report, "legacy.relationships");
+    assert_eq!(relationships.category, MismatchCategory::Compatible);
+    assert_eq!(relationships.new_value["killed"][0]["target_entity_id"], 2);
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_fallback_minimal_player_identity_fields() {
+    // Arrange
+    let new_json = serde_json::to_vec(&json!({
+        "status": "success",
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "players": [
+            {
+                "eid": 1,
+                "eids": [1, 10],
+                "s": "guer",
+                "k": 1,
+                "kills": [
+                    {
+                        "v": 2,
+                        "c": "enemy_kill"
+                    }
+                ]
+            },
+            {
+                "eid": 2,
+                "n": "Civilian",
+                "s": "civ",
+                "d": 1
+            },
+            {
+                "eid": 3,
+                "n": "Unknown",
+                "s": "unknown"
+            }
+        ],
+        "weapons": [],
+        "destroyed_vehicles": []
+    }))
+    .expect("fallback fixture should serialize");
+    let old_json = new_json.clone();
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("minimal identity fallbacks should derive comparable legacy surfaces");
+
+    // Assert
+    let player_results = finding(&report, "legacy.player_game_results");
+    assert_eq!(player_results.category, MismatchCategory::Compatible);
+    assert_eq!(player_results.new_value[0]["compatibility_key"], "entity:1");
+    assert_eq!(player_results.new_value[0]["observed_entity_ids"], json!([1, 10]));
+    assert_eq!(player_results.new_value[0]["side"], "guer");
+    assert_eq!(player_results.new_value[1]["compatibility_key"], "legacy_name:Civilian");
+    assert_eq!(player_results.new_value[1]["side"], "civ");
+    assert_eq!(player_results.new_value[2]["side"], "unknown");
+}
+
+#[test]
+fn comparison_report_compare_artifacts_should_ignore_relationships_with_missing_player_refs() {
+    // Arrange
+    let new_json = serde_json::to_vec(&json!({
+        "status": "success",
+        "replay": {
+            "mission_name": "SolidGames"
+        },
+        "players": [
+            {
+                "eid": 1,
+                "n": "Alpha",
+                "k": 2,
+                "kills": [
+                    {
+                        "v": 2,
+                        "c": "suicide"
+                    },
+                    {
+                        "v": 3,
+                        "c": "null_killer"
+                    },
+                    {
+                        "v": 4,
+                        "c": "unknown"
+                    }
+                ]
+            }
+        ],
+        "kills": [
+            {
+                "k": 1,
+                "c": "enemy_kill"
+            },
+            {
+                "v": 1,
+                "c": "teamkill"
+            }
+        ],
+        "weapons": [],
+        "destroyed_vehicles": [
+            {
+                "a": 1,
+                "c": "enemy"
+            }
+        ]
+    }))
+    .expect("missing-ref fixture should serialize");
+    let old_json = new_json.clone();
+
+    // Act
+    let report =
+        compare_artifacts("old-selected-artifact", &old_json, "new-selected-artifact", &new_json)
+            .expect("missing relationship refs should be ignored without failing comparison");
+
+    // Assert
+    let player_results = finding(&report, "legacy.player_game_results");
+    assert_eq!(player_results.category, MismatchCategory::Compatible);
+    assert_eq!(player_results.new_value[0]["vehicleKills"], 1);
+    let relationships = finding(&report, "legacy.relationships");
+    assert_eq!(relationships.new_value["killed"], json!([]));
+    assert_eq!(relationships.new_value["teamkillers"], json!([]));
+}
+
+#[test]
 fn comparison_report_compare_artifacts_should_emit_insufficient_data_when_selected_surface_is_missing()
  {
     // Arrange
@@ -335,6 +496,105 @@ fn comparison_report_review_summary_should_not_list_compatible_surfaces_as_top_d
 
     // Assert
     assert!(summary.top_diffs.is_empty());
+    assert!(markdown.contains("## Top Diffs\n\n- None"));
+}
+
+#[test]
+fn comparison_report_review_summary_should_prioritize_categories_and_notes() {
+    // Arrange
+    let baseline = ComparisonBaseline {
+        old_profile: "old-selected-artifact".to_owned(),
+        old_command: "pnpm run parse".to_owned(),
+        worker_count: Some(1),
+        source: "selected".to_owned(),
+        diagnostic_only: false,
+    };
+    let impact = ImpactAssessment::new(
+        ImpactLevel::Yes,
+        ImpactLevel::No,
+        ImpactLevel::Unknown,
+        ImpactLevel::Yes,
+    );
+    let mut noted_new_bug = ComparisonFinding::new(
+        "new-bug",
+        None,
+        MismatchCategory::NewBug,
+        impact,
+        json!(1),
+        json!(2),
+    );
+    noted_new_bug.notes.push("fix parser regression".to_owned());
+    let findings = vec![
+        ComparisonFinding::new(
+            "compatible",
+            None,
+            MismatchCategory::Compatible,
+            impact,
+            json!(1),
+            json!(1),
+        ),
+        ComparisonFinding::new(
+            "old-bug-preserved",
+            None,
+            MismatchCategory::OldBugPreserved,
+            impact,
+            json!(1),
+            json!(2),
+        ),
+        noted_new_bug,
+        ComparisonFinding::new(
+            "intentional",
+            None,
+            MismatchCategory::IntentionalChange,
+            impact,
+            json!(1),
+            json!(2),
+        ),
+        ComparisonFinding::new(
+            "old-bug-fixed",
+            None,
+            MismatchCategory::OldBugFixed,
+            impact,
+            json!(1),
+            json!(2),
+        ),
+    ];
+    let report = ComparisonReport::new(
+        baseline,
+        vec![ComparisonInput::new("old", "~/sg_stats/results")],
+        findings,
+    )
+    .expect("non-drift report should accept mixed categories");
+
+    // Act
+    let summary = ComparisonReviewSummary::from_report(&report);
+    let markdown = render_markdown_summary(&report);
+
+    // Assert
+    assert_eq!(summary.top_diffs[0].surface, "new-bug");
+    assert_eq!(summary.top_diffs[0].note, "fix parser regression");
+    assert_eq!(summary.top_diffs[1].surface, "intentional");
+    assert!(markdown.contains("fix parser regression"));
+    assert!(markdown.contains("- `parser_artifact.yes`: 5"));
+    assert!(markdown.contains("- `server_2_recalculation.unknown`: 5"));
+}
+
+#[test]
+fn comparison_report_markdown_summary_should_render_empty_count_sections() {
+    // Arrange
+    let baseline = ComparisonBaseline::saved_artifact("old-selected-artifact");
+    let report = ComparisonReport::new(
+        baseline,
+        vec![ComparisonInput::new("old", "~/sg_stats/results")],
+        Vec::new(),
+    )
+    .expect("empty comparison report should be renderable");
+
+    // Act
+    let markdown = render_markdown_summary(&report);
+
+    // Assert
+    assert!(markdown.contains("## Counts by Category\n\n- None"));
     assert!(markdown.contains("## Top Diffs\n\n- None"));
 }
 

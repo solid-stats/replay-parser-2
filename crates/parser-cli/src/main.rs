@@ -569,7 +569,11 @@ fn write_stderr_line(message: &str) -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    #![allow(clippy::expect_used, reason = "unit tests use expect messages as assertion context")]
+    #![allow(
+        clippy::expect_used,
+        clippy::panic,
+        reason = "unit tests use expect messages and panic to report fixture cleanup failures"
+    )]
 
     use std::{net::TcpListener, thread};
 
