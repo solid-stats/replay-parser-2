@@ -256,6 +256,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260502-rollup | Documented five-sample year-edge parity result and accepted old/new difference classes | 2026-05-02 | committed | Verified - Phase 05 parity follow-up non-blocking | [260502-year-edge-parity-five-sample-rollup](./quick/260502-year-edge-parity-five-sample-rollup/) |
 | 260509-ocj | Closed TEST-07 strict coverage blocker for v1.0 milestone gap closure | 2026-05-09 | committed | Verified - strict coverage passed | [260509-ocj-close-test-07-strict-coverage-blocker-fo](./quick/260509-ocj-close-test-07-strict-coverage-blocker-fo/) |
 | 260509-p4m | Retired post-v1 migration compare, benchmark, and worker-smoke tooling; renamed quality gates crate | 2026-05-09 | committed | Verified | [260509-p4m-post-v1-cleanup-migration-harness-benchm](./quick/260509-p4m-post-v1-cleanup-migration-harness-benchm/) |
+| 260509-rff | Fixed KS victory detection from OCAP raw `mission_message` events | 2026-05-09 | committed | Verified | [260509-rff-ocap-raw-events-mission-message-top-leve](./quick/260509-rff-ocap-raw-events-mission-message-top-leve/) |
 
 ## Deferred Items
 
