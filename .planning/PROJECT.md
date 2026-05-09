@@ -14,11 +14,26 @@ Parse OCAP JSON replays quickly and deterministically into compact server-facing
 
 ## Current State
 
-Phase 5 execution produced the local `replay-parser-2` CLI, compact golden behavior fixtures, selected old-vs-new comparison reports, strict coverage postprocessing, deterministic fault-report gating, and benchmark report validation, but UAT rejected the current parser direction as a product-fit gap. The current parser mostly reserializes a large normalized artifact instead of reducing replay information for `server-2`; the curated old/new benchmark records only a small speedup, `ten_x_status=fail`, and `parity_status=human_review`; and the generated comparison surface is too large for practical human review.
+v1.0 shipped on 2026-05-09. The milestone delivered a deterministic Rust OCAP
+parser core, v3 minimal server-facing artifact contract, local CLI, old-vs-new
+comparison harness, strict coverage/fault gates, benchmark evidence, and a
+RabbitMQ/S3 worker with deterministic S3 artifact references, safe ack/publish
+behavior, duplicate-redelivery handling, structured logs, container probes, and
+two-worker smoke evidence.
 
-Phase 5.1 redesigned the default artifact as a compact server-facing result, moved full event/entity detail out of the default contract, and added a selective parser boundary, but its acceptance evidence is still not sufficient for worker integration.
+The default v1 parser artifact is a compact minimal statistics artifact, not a
+full replay-shaped JSON dump. Full event/entity/source-reference evidence is
+available only through explicit debug/parity tooling or raw replay reprocessing.
+GitHub issue #13 vehicle score is intentionally removed from the active v1
+contract, while ordinary vehicle kill/destruction facts remain.
 
-Phase 5.2 was inserted before worker integration to make the default artifact minimal rather than merely compact, record the product decision to remove GitHub issue #13 vehicle score from v1, put detailed evidence behind an explicit debug sidecar, and record accepted benchmark evidence. On 2026-05-02 the product owner accepted the current measured performance, accepted p95 artifact/raw ratio above 10% as non-blocking, and accepted the 4 known malformed/non-JSON all-raw failures when old/new failure parity matches.
+Accepted v1 caveats are recorded in the milestone archive: current measured
+performance is sufficient, p95 artifact/raw ratio above 10% is non-blocking
+because every successful default artifact is <= 100 KB, and the 4 known
+malformed/non-JSON all-raw failures are accepted while old/new failure parity
+matches. Live Timeweb S3 validation remains deployer-run operational evidence
+requiring credentials; local MinIO and worker smoke tests cover parser-owned
+behavior.
 
 ## Requirements
 
@@ -31,21 +46,14 @@ Phase 5.2 was inserted before worker integration to make the default artifact mi
 - [x] Phase 2 validated the versioned `ParseArtifact` and `ParseFailure` contract shape, generated JSON Schema, explicit presence states, observed identity boundary, checksum/source-reference invariants, and schema-backed example validation.
 - [x] Phase 3 validated deterministic parser-core output, tolerant OCAP root/metadata/entity normalization, schema-drift diagnostics, connected-player backfill, and duplicate-slot same-name compatibility hints without canonical identity matching.
 - [x] Phase 4 validated normalized combat/outcome semantics, legacy and relationship aggregate projections, bounty inputs, issue #13 vehicle score inputs, source-reference-backed recalculation evidence, and replay-side commander/outcome facts without parser-owned persistence or canonical identity.
+- [x] v1.0 validated the local CLI, schema export, selected comparison harness, golden fixtures, deterministic behavior tests, strict reachable-code coverage gate, deterministic fault report, accepted benchmark evidence, and summary-first parity reports.
+- [x] v1.0 validated the default v3 minimal artifact shape with `players[]`, `weapons[]`, nested player kill rows, `destroyed_vehicles[]`, and `diagnostics[]`, with heavy debug evidence kept out of ordinary ingestion.
+- [x] v1.0 validated RabbitMQ/S3 worker integration, deterministic artifact keys, checksum verification, artifact-reference result messages, structured failures, manual ack-after-publish behavior, duplicate-redelivery safety, structured logs, HTTP probes, and container smoke evidence.
 
 ### Active
 
-- [x] Provide a CLI that parses a local OCAP JSON file and writes parser output JSON.
-- [ ] Redesign the default parser output as a compact server-facing artifact rather than a full normalized event/entity dump.
-- [ ] Replace the current compact artifact with a minimal flat v1 statistics artifact containing `players[]`, `player_stats[]`, `kills[]`, `destroyed_vehicles[]`, and `diagnostics[]`.
-- [ ] Move heavy audit/parity/debug detail out of the default worker artifact; optional sidecars must not be required for ordinary `server-2` ingestion.
-- [ ] Emit detailed event/entity/source-reference evidence only through an explicit debug sidecar mode, not through ordinary parser output.
-- [ ] Remove GitHub issue #13 vehicle score and `vehicle_score` output from the v1 contract, schema, examples, tests, docs, and plans.
-- [ ] Implement a selective parser path that avoids full JSON-to-JSON roundtrips and reads only the OCAP metadata, entities, and events required for v1 statistics.
-- [ ] Replace unreadable large comparison output with summary-first parity reports plus machine-readable detailed evidence.
-- [ ] Provide a worker/container mode that consumes parse jobs from RabbitMQ and reads replay files from S3-compatible storage.
-- [x] Use `~/sg_stats` historical data for golden tests and old-vs-new result comparisons.
-- [x] Enforce 100% statement, branch, function, and line coverage for reachable production Rust code, with unit and regression tests following the `unit-tests-philosophy` RITE/AAA/TDD standards.
-- [x] Include benchmark evidence that establishes the current parser baseline, reports selected/all-raw old/new wall times and historical x3/x10 target status, reports artifact-size percentiles, proves every successful default artifact is <= 100 KB (100,000 bytes), and records accepted malformed-file parity for known bad raw files.
+No active v1 requirements remain. Define the next active requirements through
+`$gsd-new-milestone` before starting v1.1 or v2 work.
 
 ### Out of Scope
 
@@ -201,4 +209,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-02 after Phase 5.2 benchmark acceptance update*
+*Last updated: 2026-05-09 after v1.0 milestone completion*

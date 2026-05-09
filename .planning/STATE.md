@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
+status: Awaiting next milestone
 stopped_at: Phase 7 complete
-last_updated: "2026-05-09T17:33:00+07:00"
-last_activity: 2026-05-09 -- TEST-07 strict coverage blocker closed with fresh strict gate evidence
+last_updated: "2026-05-09T17:50:00+07:00"
+last_activity: 2026-05-09 — Milestone v1.0 completed and archived
 progress:
   total_phases: 9
   completed_phases: 9
-  total_plans: 57
-  completed_plans: 57
+  total_plans: 56
+  completed_plans: 56
   percent: 100
 ---
 
@@ -18,20 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-01)
+See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Parse OCAP JSON replays quickly and deterministically into compact server-facing statistics artifacts with enough contribution evidence for `server-2` to persist, audit, compare against golden data, and use for public statistics.
-**Current focus:** v1.0 milestone completion — gap closure blockers cleared
+**Current focus:** Awaiting next milestone definition
 
 ## Current Position
 
-Phase: v1.0 milestone gap closure — COMPLETE
-Plan: v1.0-MILESTONE-GAP-PLAN
-Status: Phase 05/07 verification blockers closed; TEST-07 strict coverage gate passes
-Last activity: 2026-05-09 -- fresh strict coverage gate passed with `production_files=41`, `allowlisted_locations=244`, `uncovered_locations=0`
-Last quick task: 2026-05-09 - Closed the v1.0 TEST-07 strict coverage blocker with a fresh `COVERAGE_ALLOW_HEAVY=1 COVERAGE_JOBS=1 scripts/coverage-gate.sh --strict` run and refreshed milestone/state tracking.
-
-Progress: [██████████] 100%
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-09 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -261,11 +258,13 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and deferred at milestone close on 2026-05-09:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| quick_task | 16 legacy quick-task directories reported by `audit-open` as `missing` status | acknowledged-non-blocking | v1.0 close |
+| uat_gap | Phase 05 `05-UAT.md` reports `issues-found` with zero open scenarios; superseded by Phase 5.1/5.2 and v1.0 audit acceptance | acknowledged-non-blocking | v1.0 close |
+| verification_gap | Phase 05.1 `05.1-VERIFICATION.md` reports `gaps_found`; superseded by Phase 5.2 acceptance and v1.0 audit acceptance | acknowledged-non-blocking | v1.0 close |
 
 ## Session Continuity
 
@@ -279,4 +278,8 @@ Resume file: .planning/phases/07-parallel-and-container-hardening/07-CONTEXT.md
 **Completed Phase:** 04 (Event Semantics and Aggregates) — 7 plans — 2026-04-28
 **Completed Phase:** 06 (RabbitMQ/S3 Worker Integration) — 6 plans — 2026-05-02
 **Completed Phase:** 07 (Parallel and Container Hardening) — 5 plans — 2026-05-02
-**Next Step:** Complete milestone closeout or start the next planned milestone.
+**Next Step:** Start the next milestone.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
