@@ -129,10 +129,9 @@ pub fn derive_minimal_tables_from_killed_events(
                     player.vehicle_kills += 1;
                 });
             }
-            MinimalEventEffect::NoStats { diagnostic: Some(diagnostic) } => {
+            MinimalEventEffect::NoStats { diagnostic } => {
                 push_minimal_event_diagnostic(diagnostics, context, observation, diagnostic);
             }
-            MinimalEventEffect::NoStats { diagnostic: None } => {} // coverage-exclusion: explicit no-op projection branch.
         }
     }
 
@@ -294,7 +293,7 @@ enum MinimalEventEffect<'a> {
         attacker_vehicle: Option<&'a ObservedEntity>,
     },
     NoStats {
-        diagnostic: Option<MinimalEventDiagnostic<'a>>,
+        diagnostic: MinimalEventDiagnostic<'a>,
     },
 }
 
@@ -305,13 +304,13 @@ fn classify_minimal_killed_event<'a>(
 ) -> MinimalEventEffect<'a> {
     if observation.frame.is_none() {
         return MinimalEventEffect::NoStats {
-            diagnostic: Some(MinimalEventDiagnostic {
+            diagnostic: MinimalEventDiagnostic {
                 code: "event.killed_shape_unknown",
                 message: "Killed event frame had an unexpected source shape",
                 expected_shape: "numeric frame in killed tuple slot 0",
                 observed_shape: "absent_or_non_numeric",
                 parser_action: "emit_unknown_combat_event",
-            }),
+            },
         };
     }
 
@@ -327,13 +326,13 @@ fn classify_minimal_killed_event<'a>(
             vehicle_name_index,
         ),
         KilledEventKillInfo::Malformed { observed_shape } => MinimalEventEffect::NoStats {
-            diagnostic: Some(MinimalEventDiagnostic {
+            diagnostic: MinimalEventDiagnostic {
                 code: "event.killed_shape_unknown",
                 message: "Killed event kill-info tuple had an unexpected source shape",
                 expected_shape: "killed tuple with numeric victim and [killer_id, weapon]",
                 observed_shape,
                 parser_action: "emit_unknown_combat_event",
-            }),
+            },
         },
     }
 }
@@ -344,17 +343,17 @@ fn classify_minimal_null_killer_event<'a>(
 ) -> MinimalEventEffect<'a> {
     let Some(victim) = victim_entity_from_observation(observation, entity_index) else {
         return MinimalEventEffect::NoStats {
-            diagnostic: Some(actor_unknown_diagnostic(
+            diagnostic: actor_unknown_diagnostic(
                 "Killed event has an explicit null killer but no known player victim",
-            )),
+            ),
         };
     };
 
     if !is_legacy_player_entity(victim) {
         return MinimalEventEffect::NoStats {
-            diagnostic: Some(actor_unknown_diagnostic(
+            diagnostic: actor_unknown_diagnostic(
                 "Killed event has an explicit null killer and a non-player victim",
-            )),
+            ),
         };
     }
 
@@ -373,13 +372,13 @@ fn classify_minimal_killer_event<'a>(
 ) -> MinimalEventEffect<'a> {
     if observation.killed_entity_id.is_none() {
         return MinimalEventEffect::NoStats {
-            diagnostic: Some(MinimalEventDiagnostic {
+            diagnostic: MinimalEventDiagnostic {
                 code: "event.killed_shape_unknown",
                 message: "Killed event has no numeric victim entity identifier",
                 expected_shape: "numeric killed entity identifier",
                 observed_shape: "absent_or_non_numeric",
                 parser_action: "emit_unknown_combat_event",
-            }),
+            },
         };
     }
 
@@ -458,7 +457,7 @@ fn unknown_death_or_no_stats<'a>(
         };
     }
 
-    MinimalEventEffect::NoStats { diagnostic: Some(diagnostic) }
+    MinimalEventEffect::NoStats { diagnostic }
 }
 
 const fn actor_unknown_diagnostic(message: &'static str) -> MinimalEventDiagnostic<'static> {
@@ -974,8 +973,8 @@ mod tests {
             player_effect,
             MinimalEventEffect::UnknownPlayerDeath { victim_entity_id: 1, .. }
         ));
-        assert!(matches!(vehicle_effect, MinimalEventEffect::NoStats { diagnostic: Some(_) }));
-        assert!(matches!(missing_effect, MinimalEventEffect::NoStats { diagnostic: Some(_) }));
+        assert!(matches!(vehicle_effect, MinimalEventEffect::NoStats { .. }));
+        assert!(matches!(missing_effect, MinimalEventEffect::NoStats { .. }));
     }
 
     #[test]

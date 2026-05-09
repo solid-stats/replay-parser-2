@@ -24,8 +24,8 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-core/src/aggregates.rs"
 pattern = "phase-05-aggregate-defensive-and-macro-regions"
-lines = [94, 135, 221, 252, 540, 588]
-reason = "remaining aggregate gaps are line-level macro/private defensive regions after behavior-level aggregate projections are covered by focused tests"
+lines = [94, 220, 251, 539, 587]
+reason = "remaining aggregate gaps are structurally unreachable classification arms, line-level macro/private defensive regions, or SourceRefs construction failure for a single valid source ref after behavior-level aggregate projections are covered by focused tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
@@ -56,8 +56,8 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-harness/src/comparison.rs"
 pattern = "phase-05-legacy-comparison-transitional-regions"
-lines = [96, 212, 213, 214, 215, 216, 217, 218, 219, 280, 322, 614, 616, 617, 618, 619]
-reason = "remaining comparison gaps are impossible fallback rows or currently unreachable projection-impact branches after selected legacy/minimal comparison behavior is covered by focused tests"
+lines = [96, 212, 213, 214, 215, 216, 217, 218, 219, 280, 322]
+reason = "remaining comparison gaps are impossible fallback rows or no-op relationship classifications after selected legacy/minimal comparison behavior is covered by focused tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 

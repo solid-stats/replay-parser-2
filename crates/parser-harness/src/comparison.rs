@@ -609,17 +609,7 @@ fn classify_values(
     }
 }
 
-fn impact_for_surface(surface: &SelectedSurface) -> ImpactAssessment {
-    if surface.is_projection() {
-        return ImpactAssessment::new(
-            // coverage-exclusion: projection impact branch is transitional comparison reporting.
-            ImpactLevel::Yes,
-            ImpactLevel::Unknown,
-            ImpactLevel::Unknown,
-            ImpactLevel::Unknown,
-        );
-    }
-
+const fn impact_for_surface(_surface: &SelectedSurface) -> ImpactAssessment {
     ImpactAssessment::new(
         ImpactLevel::Yes,
         ImpactLevel::Unknown,
@@ -646,10 +636,6 @@ impl SelectedSurface {
         }
 
         Some(current)
-    }
-
-    fn is_projection(&self) -> bool {
-        matches!(self.path, ["summaries", "projections", ..])
     }
 }
 
