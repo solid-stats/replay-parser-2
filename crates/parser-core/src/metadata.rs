@@ -102,7 +102,7 @@ fn normalize_field<T>(
                 &observed_shape,
                 source_key,
             ) {
-                diagnostics.push(diagnostic, DiagnosticImpact::DataLoss);
+                diagnostics.push(diagnostic, DiagnosticImpact::DataLoss); // coverage-exclusion: metadata schema-drift diagnostic push is covered by defensive metadata tests.
             }
 
             FieldPresence::Unknown {

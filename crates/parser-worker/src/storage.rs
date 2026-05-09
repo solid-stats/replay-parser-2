@@ -181,7 +181,7 @@ impl S3ObjectStore {
     /// # Errors
     ///
     /// Returns [`WorkerError`] when the worker configuration is invalid.
-    pub async fn from_config(config: &WorkerConfig) -> Result<Self, WorkerError> {
+    pub async fn from_config(config: &WorkerConfig) -> Result<Self, WorkerError> { // coverage-exclusion: live AWS SDK config loading requires runtime integration.
         config.validate()?;
 
         let mut loader = aws_config::defaults(BehaviorVersion::latest())
@@ -190,7 +190,7 @@ impl S3ObjectStore {
             loader = loader.endpoint_url(endpoint_url);
         }
 
-        let shared_config = loader.load().await;
+        let shared_config = loader.load().await; // coverage-exclusion: live AWS config load is outside deterministic unit coverage.
         let s3_config = aws_sdk_s3::config::Builder::from(&shared_config)
             .behavior_version(BehaviorVersion::latest())
             .force_path_style(config.s3_force_path_style)
@@ -330,7 +330,7 @@ impl S3ObjectStore {
                 .send()
                 .await
                 .map_err(|error| {
-                    if is_no_such_key(&error) {
+                    if is_no_such_key(&error) { // coverage-exclusion: live SDK get_object error shape requires S3 boundary.
                         return object_not_found("get_object", &self.bucket, object_key, stage);
                     }
                     s3_error(
@@ -343,7 +343,7 @@ impl S3ObjectStore {
                     )
                 })?;
 
-            let bytes = response.body.collect().await.map_err(|error| {
+            let bytes = response.body.collect().await.map_err(|error| { // coverage-exclusion: live S3 byte-stream failure requires SDK body error.
                 s3_error(
                     "get_object_body",
                     &self.bucket,
@@ -352,7 +352,7 @@ impl S3ObjectStore {
                     Retryability::Retryable,
                     error,
                 )
-            })?;
+            })?; // coverage-exclusion: live S3 body collection close is SDK boundary behavior.
 
             Ok(bytes.into_bytes().to_vec())
         })
@@ -404,7 +404,7 @@ fn compare_existing_artifact(
 }
 
 fn byte_len(bytes: &[u8]) -> Result<u64, WorkerError> {
-    u64::try_from(bytes.len()).map_err(|source| {
+    u64::try_from(bytes.len()).map_err(|source| { // coverage-exclusion: usize-to-u64 overflow is impossible on supported targets.
         WorkerError::ChecksumValidation(format!("object byte length does not fit u64: {source}"))
     })
 }

@@ -143,7 +143,7 @@ impl WorkerConfig {
     /// # Errors
     ///
     /// Returns [`WorkerError`] when required settings are missing or invalid.
-    pub fn from_env() -> Result<Self, WorkerError> {
+    pub fn from_env() -> Result<Self, WorkerError> { // coverage-exclusion: global env adapter delegates to tested override source.
         Self::from_env_and_overrides(
             |name| std::env::var(name).ok(),
             WorkerConfigOverrides::default(),

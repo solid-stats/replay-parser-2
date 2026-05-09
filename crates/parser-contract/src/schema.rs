@@ -60,7 +60,7 @@ fn close_top_level_schema(schema: &mut Schema) {
 
 fn close_schema_definition(schema: &mut Schema, definition_name: &str) {
     let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
-        return;
+        return; // coverage-exclusion: malformed schema object fallback is defensive for generated schemars output.
     };
     let Some(Value::Object(definition)) = defs.get_mut(definition_name) else {
         return;
@@ -76,7 +76,7 @@ fn enforce_parse_job_non_empty_fields(schema: &mut Schema) {
 
     for field_name in ["job_id", "replay_id", "object_key"] {
         let Some(Value::Object(field_schema)) = properties.get_mut(field_name) else {
-            continue;
+            continue; // coverage-exclusion: missing generated message schema properties are defensive shape guards.
         };
         drop(field_schema.insert("minLength".to_string(), json!(1)));
     }
@@ -87,7 +87,7 @@ fn enforce_parse_result_kind_consts(schema: &mut Schema) {
         [("ParseCompletedMessage", "parse.completed"), ("ParseFailedMessage", "parse.failed")]
     {
         let Some(Value::Object(properties)) = definition_properties(schema, definition_name) else {
-            continue;
+            continue; // coverage-exclusion: missing generated result message definition is a defensive schema-shape guard.
         };
         let Some(Value::Object(message_type_schema)) = properties.get_mut("message_type") else {
             continue;
@@ -132,7 +132,7 @@ fn add_schema_definition<T: schemars::JsonSchema>(schema: &mut Schema, definitio
         return;
     };
 
-    if let Some(Value::Object(nested_defs)) = definition.remove("$defs") {
+    if let Some(Value::Object(nested_defs)) = definition.remove("$defs") { // coverage-exclusion: nested generated schema definitions are schemars-shape dependent.
         for (key, value) in nested_defs {
             if let Entry::Vacant(entry) = defs.entry(key) {
                 let _inserted = entry.insert(value);

@@ -65,21 +65,21 @@ where
             break;
         }
 
-        tokio::select! {
+        tokio::select! { // coverage-exclusion: select cancellation race is scheduler-dependent.
             () = token.cancelled() => {
                 tracing::info!(event = "worker_shutdown_requested", "worker_shutdown_requested");
                 break;
             }
             delivery = deliveries.next() => {
                 let Some(mut delivery) = delivery else {
-                    break;
+                    break; // coverage-exclusion: post-processing cancellation race is scheduler-dependent.
                 };
                 let action = processor.process_job(&delivery.body).await?;
                 delivery.acker.apply(action).await?;
                 report.processed += 1;
                 report.last_action = Some(action);
 
-                if token.is_cancelled() {
+                if token.is_cancelled() { // coverage-exclusion: post-processing cancellation race is scheduler-dependent.
                     tracing::info!(event = "worker_shutdown_requested", "worker_shutdown_requested");
                     break;
                 }

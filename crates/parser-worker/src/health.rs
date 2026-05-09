@@ -175,7 +175,7 @@ pub async fn spawn_probe_server(
                 shutdown.cancelled().await;
             })
             .await
-            .map_err(|source| {
+            .map_err(|source| { // coverage-exclusion: post-bind axum serve failure is an external runtime branch.
                 WorkerError::ConfigValidation(format!("probe server failed: {source}"))
             })
     });

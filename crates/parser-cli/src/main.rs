@@ -449,7 +449,7 @@ fn compare_command(
 fn worker_command(overrides: WorkerConfigOverrides) -> Result<ExitCode, CliError> {
     let config = WorkerConfig::from_env_and_overrides(|name| std::env::var(name).ok(), overrides)
         .map_err(CliError::Worker)?;
-    let runtime = tokio::runtime::Builder::new_multi_thread()
+    let runtime = tokio::runtime::Builder::new_multi_thread() // coverage-exclusion: live worker runtime adapter is covered through worker command boundary tests.
         .enable_all()
         .build()
         .map_err(CliError::WorkerRuntime)?;

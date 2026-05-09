@@ -165,6 +165,40 @@ expires = "2026-05-28"
 }
 
 #[test]
+fn coverage_gate_allowlist_should_reject_file_level_marker_far_from_excluded_line() {
+    // Arrange
+    let allowlist = CoverageAllowlist::from_toml_str(
+        r#"
+[[exclusions]]
+path = "crates/example/src/module.rs"
+pattern = "defensive_fallback"
+lines = [12]
+reason = "defensive unreachable branch kept for parser diagnostics"
+reviewer = "phase-05"
+expires = "2026-05-28"
+"#,
+    )
+    .expect("concrete exclusion should parse before marker validation");
+    let root = temp_project_root("distant_marker").expect("temp root should be created");
+    write_project_file(
+        &root,
+        "crates/example/src/module.rs",
+        "// coverage-exclusion: module-level marker is too far from the exclusion\n\n\n\n\n\n\n\n\n\n\npub fn defensive_fallback() {}\n",
+    );
+
+    // Act
+    let error = allowlist
+        .validate_against_root(&root)
+        .expect_err("distant marker should fail validation");
+
+    // Assert
+    assert!(matches!(
+        error,
+        CoverageAllowlistError::MissingInlineMarker { line: 12, .. }
+    ));
+}
+
+#[test]
 fn coverage_gate_allowlist_should_accept_concrete_exclusion_with_inline_marker() {
     // Arrange
     let allowlist = CoverageAllowlist::from_toml_str(

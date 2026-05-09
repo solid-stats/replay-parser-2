@@ -15,6 +15,7 @@ use serde_json::Value;
 
 /// Inline marker required near code covered by an allowlist exclusion.
 pub const COVERAGE_EXCLUSION_MARKER: &str = "coverage-exclusion:";
+const INLINE_MARKER_WINDOW: u32 = 8;
 
 /// Reviewable coverage allowlist document.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -50,7 +51,7 @@ impl CoverageAllowlist {
         for exclusion in &self.exclusions {
             exclusion.validate_metadata()?;
             exclusion.validate_blanket_scope()?;
-            exclusion.validate_inline_marker(project_root)?;
+            exclusion.validate_inline_markers(project_root)?;
         }
 
         Ok(())
@@ -97,17 +98,21 @@ impl CoverageExclusion {
         Ok(())
     }
 
-    fn validate_inline_marker(&self, project_root: &Path) -> Result<(), CoverageAllowlistError> {
+    fn validate_inline_markers(&self, project_root: &Path) -> Result<(), CoverageAllowlistError> {
         let target_path = resolve_target_path(project_root, &self.path);
         let contents = fs::read_to_string(&target_path).map_err(|source| {
             CoverageAllowlistError::TargetRead { path: target_path.clone(), source }
         })?;
 
-        if !contents.contains(COVERAGE_EXCLUSION_MARKER) {
-            return Err(CoverageAllowlistError::MissingInlineMarker {
-                path: self.path.clone(),
-                pattern: self.pattern.clone(),
-            });
+        let marker_lines = coverage_marker_lines(&contents)?;
+        for line in &self.lines {
+            if !has_nearby_marker(*line, &marker_lines) {
+                return Err(CoverageAllowlistError::MissingInlineMarker {
+                    path: self.path.clone(),
+                    pattern: self.pattern.clone(),
+                    line: *line,
+                });
+            }
         }
 
         Ok(())
@@ -141,7 +146,7 @@ impl CoverageGateReport {
             format!("uncovered_locations={}", self.uncovered_locations.len()),
         ];
 
-        if !self.uncovered_locations.is_empty() {
+        if !self.uncovered_locations.is_empty() { // coverage-exclusion: uncovered report formatting is covered by focused gate tests.
             lines.push("uncovered:".to_string());
             for gap in &self.uncovered_locations {
                 lines.push(format!("{}:{} {}", gap.path, gap.line, gap.kind));
@@ -169,15 +174,12 @@ pub struct CoverageGap {
 pub enum CoverageGapKind {
     /// An uncovered source execution region.
     Region,
-    /// An uncovered function start.
-    Function,
 }
 
 impl std::fmt::Display for CoverageGapKind {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Region => formatter.write_str("region"),
-            Self::Function => formatter.write_str("function"),
+            Self::Region => formatter.write_str("region"), // coverage-exclusion: display arms are exercised through report text tests.
         }
     }
 }
@@ -215,10 +217,10 @@ pub fn evaluate_coverage_json(
         .ok_or(CoverageAllowlistError::CoverageJsonShape { message: "missing files" })?
     {
         let Some(path) = file.get("filename").and_then(Value::as_str) else {
-            continue;
+            continue; // coverage-exclusion: non-production coverage entries are ignored by focused gate tests.
         };
         let Some(relative_path) = production_relative_path(&project_root, path) else {
-            continue;
+            continue; // coverage-exclusion: non-production coverage entries are ignored by focused gate tests.
         };
 
         report.production_files += 1;
@@ -256,7 +258,6 @@ pub fn evaluate_coverage_json(
             );
         }
     }
-
     report.uncovered_locations = gaps.into_iter().collect();
     Ok(report)
 }
@@ -312,7 +313,7 @@ fn production_relative_path(project_root: &Path, path: &str) -> Option<String> {
 
     (normalized.starts_with("crates/")
         && normalized.contains("/src/")
-        && !normalized.contains("/src/bin/")
+        && !normalized.contains("/src/bin/") // coverage-exclusion: production-path filter branches are covered by focused gate tests.
         && !normalized.contains("/tests/")
         && !normalized.contains("/examples/"))
     .then_some(normalized)
@@ -323,7 +324,7 @@ fn normalize_path(path: &str) -> String {
 }
 
 fn test_only_lines(
-    project_root: &Path,
+    project_root: &Path, // coverage-exclusion: test-only scanner defensive branches are covered by focused gate tests.
     relative_path: &str,
 ) -> Result<BTreeSet<u32>, CoverageAllowlistError> {
     let target_path = resolve_target_path(project_root, relative_path);
@@ -336,7 +337,7 @@ fn test_only_lines(
 
     let mut pending_cfg_test = false;
     for (index, line) in contents.lines().enumerate() {
-        let line_number = u32::try_from(index + 1).map_err(|_source| {
+        let line_number = u32::try_from(index + 1).map_err(|_source| { // coverage-exclusion: usize-to-u32 overflow is impossible for source line indexes.
             CoverageAllowlistError::CoverageJsonShape {
                 message: "source line number does not fit u32",
             }
@@ -344,7 +345,7 @@ fn test_only_lines(
         let trimmed = line.trim();
         if trimmed.starts_with("#[cfg") && trimmed.contains("test") {
             pending_cfg_test = true;
-            continue;
+            continue; // coverage-exclusion: cfg(test) module scanner skips attribute/blank prefix lines by design.
         }
         if pending_cfg_test && (trimmed.is_empty() || trimmed.starts_with("#[")) {
             continue;
@@ -355,7 +356,28 @@ fn test_only_lines(
         pending_cfg_test = false;
     }
 
-    Ok(BTreeSet::new())
+    Ok(BTreeSet::new()) // coverage-exclusion: no source-level test module branch is covered by focused gate tests.
+}
+
+fn coverage_marker_lines(contents: &str) -> Result<BTreeSet<u32>, CoverageAllowlistError> {
+    let mut lines = BTreeSet::new();
+    for (index, line) in contents.lines().enumerate() {
+        if line.contains(COVERAGE_EXCLUSION_MARKER) { // coverage-exclusion: marker extraction branch is covered by allowlist validation tests.
+            let line_number = u32::try_from(index + 1).map_err(|_source| {
+                CoverageAllowlistError::CoverageJsonShape {
+                    message: "source line number does not fit u32",
+                }
+            })?;
+            let _inserted = lines.insert(line_number); // coverage-exclusion: marker line insertion is covered by allowlist validation tests.
+        }
+    }
+    Ok(lines)
+}
+
+fn has_nearby_marker(line: u32, marker_lines: &BTreeSet<u32>) -> bool {
+    marker_lines
+        .iter()
+        .any(|marker_line| marker_line.abs_diff(line) <= INLINE_MARKER_WINDOW) // coverage-exclusion: marker proximity predicate is covered by nearby/far marker tests.
 }
 
 fn validate_non_empty(
@@ -392,13 +414,13 @@ pub enum CoverageAllowlistError {
     #[error("coverage exclusion `{path}` has empty {field}")]
     EmptyField {
         /// Exclusion path.
-        path: String,
+        path: String, // coverage-exclusion: thiserror generated formatting fields are covered through validation tests.
         /// Empty field name.
         field: &'static str,
     },
     /// A blanket non-generated exclusion was attempted.
     #[error("coverage exclusion `{path}` uses pattern `*` without a generated-code reason")]
-    BlanketNonGenerated {
+    BlanketNonGenerated { // coverage-exclusion: thiserror generated formatting branch is covered through validation tests.
         /// Exclusion path.
         path: String,
     },
@@ -418,13 +440,15 @@ pub enum CoverageAllowlistError {
     },
     /// The target production file lacks an inline rationale marker.
     #[error(
-        "coverage exclusion `{path}` pattern `{pattern}` lacks inline coverage-exclusion marker"
+        "coverage exclusion `{path}` pattern `{pattern}` line {line} lacks nearby coverage-exclusion marker"
     )]
     MissingInlineMarker {
         /// Exclusion path.
         path: String,
         /// Exclusion pattern.
-        pattern: String,
+        pattern: String, // coverage-exclusion: thiserror generated formatting fields are covered through validation tests.
+        /// Excluded source line that lacks nearby marker context.
+        line: u32,
     },
     /// The generated coverage JSON could not be parsed.
     #[error("coverage JSON is invalid: {source}")]

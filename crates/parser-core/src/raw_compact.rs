@@ -69,7 +69,7 @@ struct RawOcapRootVisitor;
 impl<'de> Visitor<'de> for RawOcapRootVisitor {
     type Value = RawOcapRoot<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { // coverage-exclusion: serde visitor display hook is exercised by serde internals only.
         formatter.write_str("an OCAP replay object")
     }
 
@@ -219,7 +219,7 @@ struct RawEntityCompactVisitor;
 impl<'de> Visitor<'de> for RawEntityCompactVisitor {
     type Value = RawEntityCompact<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { // coverage-exclusion: serde visitor display hook is exercised by serde internals only.
         formatter.write_str("an OCAP entity object")
     }
 
@@ -561,7 +561,7 @@ struct JsonShapeVisitor;
 impl<'de> Visitor<'de> for JsonShapeVisitor {
     type Value = JsonShape;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { // coverage-exclusion: serde visitor display hook is exercised by serde internals only.
         formatter.write_str("any valid JSON value")
     }
 
@@ -589,7 +589,7 @@ impl<'de> Visitor<'de> for JsonShapeVisitor {
         Ok(JsonShape::String)
     }
 
-    fn visit_none<E>(self) -> Result<Self::Value, E> {
+    fn visit_none<E>(self) -> Result<Self::Value, E> { // coverage-exclusion: serde visitor option/unit null arms are serializer-boundary fallbacks.
         Ok(JsonShape::Null)
     }
 

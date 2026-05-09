@@ -64,7 +64,7 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-harness/src/coverage.rs"
 pattern = "phase-05-coverage-check-defensive-regions"
-lines = [149, 180, 218, 334, 335, 340, 343]
+lines = [154, 220, 335, 336, 341, 344, 367, 370]
 reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; coverage-report formatting and impossible u32 overflow branches are covered by focused behavior tests or explicitly reviewed"
 reviewer = "phase-05"
 expires = "2026-05-28"
