@@ -1,5 +1,4 @@
 //! Serializable mutation and deterministic fault-injection report vocabulary.
-// coverage-exclusion: reviewed Phase 05 fault report defensive branches are allowlisted by exact source line.
 //!
 //! Reports are release-gate evidence for fixed or accepted fault escapes.
 
@@ -38,7 +37,7 @@ impl FaultOutcome {
             Self::Caught => "caught",
             Self::Missed => "missed",
             Self::Timeout => "timeout",
-            Self::Unviable => "unviable", // coverage-exclusion: enum string arm is covered through validation report serialization.
+            Self::Unviable => "unviable",
         }
     }
 }
@@ -242,7 +241,7 @@ fn validate_non_empty(
     id: &str,
 ) -> Result<(), FaultReportValidationError> {
     if value.trim().is_empty() {
-        return Err(FaultReportValidationError::EmptyField { id: id.to_owned(), field }); // coverage-exclusion: defensive validator branch is covered through report-gate tests.
+        return Err(FaultReportValidationError::EmptyField { id: id.to_owned(), field });
     }
 
     Ok(())

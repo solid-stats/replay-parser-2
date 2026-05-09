@@ -16,8 +16,8 @@ expires = "2026-05-28"
 [[exclusions]]
 path = "crates/parser-contract/src/schema.rs"
 pattern = "phase-05-schema-shape-defensive-regions"
-lines = [74, 90, 140]
-reason = "JSON-schema mutation helpers include defensive malformed-schema and json! macro regions; public schema output and helper behavior are covered by contract and source-level tests"
+lines = [140]
+reason = "JSON-schema mutation helpers include a remaining json! macro/source-region gap; public schema output and helper behavior are covered by contract and source-level tests"
 reviewer = "phase-05"
 expires = "2026-05-28"
 
@@ -66,14 +66,6 @@ path = "crates/parser-harness/src/coverage.rs"
 pattern = "phase-05-coverage-check-defensive-regions"
 lines = [155, 222, 361, 362, 368, 371, 395, 398]
 reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; coverage-report formatting and impossible u32 overflow branches are covered by focused behavior tests or explicitly reviewed"
-reviewer = "phase-05"
-expires = "2026-05-28"
-
-[[exclusions]]
-path = "crates/parser-harness/src/fault_report.rs"
-pattern = "phase-05-stable-coverage-defensive-regions"
-lines = [41, 47, 48, 49, 245]
-reason = "stable llvm-cov cannot subtract private defensive coverage without a custom postprocessor; these release-gate validator branches are covered by focused behavior tests or accepted defensive checks and remain explicitly reviewed"
 reviewer = "phase-05"
 expires = "2026-05-28"
 

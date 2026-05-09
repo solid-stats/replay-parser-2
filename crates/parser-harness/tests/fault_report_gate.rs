@@ -10,6 +10,23 @@ use parser_harness::fault_report::{
 };
 
 #[test]
+fn fault_report_gate_should_expose_stable_outcome_strings() {
+    // Arrange
+    let cases = [
+        (FaultOutcome::Caught, "caught"),
+        (FaultOutcome::Missed, "missed"),
+        (FaultOutcome::Timeout, "timeout"),
+        (FaultOutcome::Unviable, "unviable"),
+    ];
+
+    // Act + Assert
+    for (outcome, expected) in cases {
+        assert_eq!(outcome.as_str(), expected);
+        assert_eq!(outcome.to_string(), expected);
+    }
+}
+
+#[test]
 fn fault_report_gate_should_accept_caught_cases_for_required_targets() {
     // Arrange
     let cases = required_target_cases(FaultOutcome::Caught, FaultRisk::High);
@@ -111,6 +128,23 @@ fn fault_report_gate_should_reject_timeout_and_unviable_cases_without_evidence()
             id: "events.timeout".to_owned(),
             outcome: FaultOutcome::Timeout,
         }
+    );
+}
+
+#[test]
+fn fault_report_gate_should_reject_empty_metadata_fields() {
+    // Arrange + Act
+    let error = FaultReport::new(
+        " ",
+        "2026-04-28",
+        required_target_cases(FaultOutcome::Caught, FaultRisk::High),
+    )
+    .expect_err("empty report metadata should fail validation");
+
+    // Assert
+    assert_eq!(
+        error,
+        FaultReportValidationError::EmptyField { id: "report".to_owned(), field: "tool" }
     );
 }
 

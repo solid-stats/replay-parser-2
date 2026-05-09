@@ -60,7 +60,7 @@ fn close_top_level_schema(schema: &mut Schema) {
 
 fn close_schema_definition(schema: &mut Schema, definition_name: &str) {
     let Some(Value::Object(defs)) = schema.get_mut("$defs") else {
-        return; // coverage-exclusion: malformed schema object fallback is defensive for generated schemars output.
+        return;
     };
     let Some(Value::Object(definition)) = defs.get_mut(definition_name) else {
         return;
@@ -76,7 +76,7 @@ fn enforce_parse_job_non_empty_fields(schema: &mut Schema) {
 
     for field_name in ["job_id", "replay_id", "object_key"] {
         let Some(Value::Object(field_schema)) = properties.get_mut(field_name) else {
-            continue; // coverage-exclusion: missing generated message schema properties are defensive shape guards.
+            continue;
         };
         drop(field_schema.insert("minLength".to_string(), json!(1)));
     }
@@ -87,7 +87,7 @@ fn enforce_parse_result_kind_consts(schema: &mut Schema) {
         [("ParseCompletedMessage", "parse.completed"), ("ParseFailedMessage", "parse.failed")]
     {
         let Some(Value::Object(properties)) = definition_properties(schema, definition_name) else {
-            continue; // coverage-exclusion: missing generated result message definition is a defensive schema-shape guard.
+            continue;
         };
         let Some(Value::Object(message_type_schema)) = properties.get_mut("message_type") else {
             continue;
@@ -381,6 +381,31 @@ mod tests {
             schema_value["$defs"]["ParseCompletedMessage"]["properties"]["message_type"],
             true
         );
+    }
+
+    #[test]
+    fn schema_helpers_should_skip_missing_properties_objects() {
+        // Arrange
+        let mut job_schema = schema_from(json!({
+            "properties": true
+        }));
+        let mut result_schema = schema_from(json!({
+            "$defs": {
+                "ParseCompletedMessage": true,
+                "ParseFailedMessage": {
+                    "type": "object"
+                }
+            }
+        }));
+
+        // Act
+        enforce_parse_job_non_empty_fields(&mut job_schema);
+        enforce_parse_result_kind_consts(&mut result_schema);
+
+        // Assert
+        assert_eq!(job_schema.as_value()["properties"], true);
+        assert_eq!(result_schema.as_value()["$defs"]["ParseCompletedMessage"], true);
+        assert_eq!(result_schema.as_value()["$defs"]["ParseFailedMessage"]["type"], "object");
     }
 
     #[test]
