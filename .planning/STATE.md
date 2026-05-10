@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: Awaiting next milestone
 stopped_at: Phase 7 complete
-last_updated: "2026-05-09T18:20:00+07:00"
-last_activity: 2026-05-09 — Post-v1 migration harness and benchmark cleanup completed
+last_updated: "2026-05-10T12:50:50+07:00"
+last_activity: 2026-05-10 — Completed quick task 260510-hu6: Scale staging parser workers to 2
 progress:
   total_phases: 9
   completed_phases: 9
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-05-09 — Post-v1 cleanup retired active migration compare, benchmark, and worker-smoke tooling while preserving strict quality gates.
+Last activity: 2026-05-10 — Completed quick task 260510-hu6: Scale staging parser workers to 2
 
 ## Performance Metrics
 
@@ -257,6 +257,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260509-ocj | Closed TEST-07 strict coverage blocker for v1.0 milestone gap closure | 2026-05-09 | committed | Verified - strict coverage passed | [260509-ocj-close-test-07-strict-coverage-blocker-fo](./quick/260509-ocj-close-test-07-strict-coverage-blocker-fo/) |
 | 260509-p4m | Retired post-v1 migration compare, benchmark, and worker-smoke tooling; renamed quality gates crate | 2026-05-09 | committed | Verified | [260509-p4m-post-v1-cleanup-migration-harness-benchm](./quick/260509-p4m-post-v1-cleanup-migration-harness-benchm/) |
 | 260509-rff | Fixed KS victory detection from OCAP raw `mission_message` events | 2026-05-09 | committed | Verified | [260509-rff-ocap-raw-events-mission-message-top-leve](./quick/260509-rff-ocap-raw-events-mission-message-top-leve/) |
+| 260510-hu6 | Scale staging parser workers to 2 | 2026-05-10 | d0a2b33 | Verified | [260510-hu6-scale-staging-parser-workers-to-2](./quick/260510-hu6-scale-staging-parser-workers-to-2/) |
 
 ## Deferred Items
 
