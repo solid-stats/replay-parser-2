@@ -284,6 +284,12 @@ AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
 
+The shared staging RabbitMQ topology is owned by `server-2`: parser jobs are
+published to `solid_stats.parser` with routing key `parse.requested` and routed
+to durable queue `server2.parse.requested`. The worker consumes
+`server2.parse.requested` and publishes `parse.completed` / `parse.failed`
+results back to the same `solid_stats.parser` exchange.
+
 Supply credentials through the deployment secret store; do not commit them. If Timeweb conditional writes are unsupported or unreliable, the worker still uses the tested compare/reuse/conflict fallback before accepting or rejecting existing artifact objects.
 
 ## Development Workflow

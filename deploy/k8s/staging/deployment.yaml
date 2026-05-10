@@ -21,16 +21,16 @@ spec:
         - name: ghcr-pull
       containers:
         - name: replay-parser-2
-          image: ghcr.io/solid-stats/sg-replay-parser-2:latest
+          image: ghcr.io/solid-stats/replay-parser-2:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: probes
               containerPort: 8080
           env:
             - name: REPLAY_PARSER_JOB_QUEUE
-              value: parse.jobs
+              value: server2.parse.requested
             - name: REPLAY_PARSER_RESULT_EXCHANGE
-              value: parse.results
+              value: solid_stats.parser
             - name: REPLAY_PARSER_COMPLETED_ROUTING_KEY
               value: parse.completed
             - name: REPLAY_PARSER_FAILED_ROUTING_KEY

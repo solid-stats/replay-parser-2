@@ -179,7 +179,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" \
             "kubectl apply -f /tmp/replay-parser-2-secrets.yaml && rm -f /tmp/replay-parser-2-secrets.yaml"
           rm -f /tmp/replay-parser-2-secrets.yaml
-          cat deploy/k8s/staging/*.yaml \
+          sed "s#ghcr.io/solid-stats/replay-parser-2:latest#$IMAGE#g" deploy/k8s/staging/deployment.yaml \
             | ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" "kubectl apply -f -"
           ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" \
-            "kubectl -n '$K8S_NAMESPACE' set image deployment/replay-parser-2 replay-parser-2='$IMAGE' && kubectl -n '$K8S_NAMESPACE' rollout status deployment/replay-parser-2 --timeout=300s"
+            "kubectl -n '$K8S_NAMESPACE' rollout status deployment/replay-parser-2 --timeout=300s"
