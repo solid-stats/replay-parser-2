@@ -38,7 +38,7 @@ spec:
             - name: REPLAY_PARSER_S3_ENDPOINT
               value: https://s3.twcstorage.ru
             - name: AWS_REGION
-              value: ru:ru-1-hot
+              value: ru-1
             - name: REPLAY_PARSER_S3_FORCE_PATH_STYLE
               value: "true"
             - name: REPLAY_PARSER_ARTIFACT_PREFIX
