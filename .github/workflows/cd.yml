@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   pull_request:
@@ -18,7 +18,6 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  K8S_NAMESPACE: solid-stats-staging
   RUST_VERSION: 1.95.0
 
 jobs:
@@ -51,8 +50,6 @@ jobs:
     timeout-minutes: 40
     needs: verify
     if: github.event_name != 'pull_request'
-    outputs:
-      image: ${{ steps.image.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -80,106 +77,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Select deploy image
-        id: image
-        run: echo "image=${IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-  deploy:
-    name: Deploy worker to k3s
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: image
-    if: github.event_name != 'pull_request'
-    environment: staging
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install SSH key
-        env:
-          CD_SSH_PRIVATE_KEY: ${{ secrets.CD_SSH_PRIVATE_KEY }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$CD_SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-      - name: Trust deploy host
-        env:
-          CD_SSH_HOST: ${{ secrets.CD_SSH_HOST }}
-          CD_SSH_PORT: ${{ secrets.CD_SSH_PORT || '22' }}
-        run: ssh-keyscan -p "$CD_SSH_PORT" "$CD_SSH_HOST" >> ~/.ssh/known_hosts
-
-      - name: Apply manifests and roll out
-        env:
-          CD_SSH_HOST: ${{ secrets.CD_SSH_HOST }}
-          CD_SSH_PORT: ${{ secrets.CD_SSH_PORT || '22' }}
-          CD_SSH_USER: ${{ secrets.CD_SSH_USER }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.actor }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          IMAGE: ${{ needs.image.outputs.image }}
-          REPLAY_PARSER_AMQP_URL: ${{ secrets.REPLAY_PARSER_AMQP_URL }}
-          REPLAY_PARSER_S3_BUCKET: ${{ secrets.REPLAY_PARSER_S3_BUCKET }}
-          REPLAY_PARSER_AWS_ACCESS_KEY_ID: ${{ secrets.REPLAY_PARSER_AWS_ACCESS_KEY_ID }}
-          REPLAY_PARSER_AWS_SECRET_ACCESS_KEY: ${{ secrets.REPLAY_PARSER_AWS_SECRET_ACCESS_KEY }}
-        run: |
-          set -euo pipefail
-          target="${CD_SSH_USER}@${CD_SSH_HOST}"
-          ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" \
-            "kubectl get namespace '$K8S_NAMESPACE' >/dev/null 2>&1 || kubectl create namespace '$K8S_NAMESPACE'"
-          python3 <<'PY' > /tmp/replay-parser-2-secrets.yaml
-          import base64
-          import json
-          import os
-          import sys
-
-          required = [
-              "GHCR_USERNAME",
-              "GHCR_TOKEN",
-              "REPLAY_PARSER_AMQP_URL",
-              "REPLAY_PARSER_S3_BUCKET",
-              "REPLAY_PARSER_AWS_ACCESS_KEY_ID",
-              "REPLAY_PARSER_AWS_SECRET_ACCESS_KEY",
-          ]
-          missing = [name for name in required if not os.environ.get(name)]
-          if missing:
-              print(f"Missing required secrets: {', '.join(missing)}", file=sys.stderr)
-              sys.exit(64)
-
-          namespace = os.environ["K8S_NAMESPACE"]
-
-          def encoded(value):
-              return base64.b64encode(value.encode()).decode()
-
-          auth = encoded(f"{os.environ['GHCR_USERNAME']}:{os.environ['GHCR_TOKEN']}")
-          docker_config = json.dumps({
-              "auths": {
-                  "ghcr.io": {
-                      "username": os.environ["GHCR_USERNAME"],
-                      "password": os.environ["GHCR_TOKEN"],
-                      "auth": auth,
-                  }
-              }
-          }, separators=(",", ":"))
-
-          docs = [
-              "apiVersion: v1\nkind: Secret\ntype: kubernetes.io/dockerconfigjson\nmetadata:\n"
-              f"  name: ghcr-pull\n  namespace: {namespace}\ndata:\n"
-              f"  .dockerconfigjson: {encoded(docker_config)}",
-              "apiVersion: v1\nkind: Secret\ntype: Opaque\nmetadata:\n"
-              f"  name: replay-parser-2-runtime\n  namespace: {namespace}\ndata:\n"
-              f"  REPLAY_PARSER_AMQP_URL: {encoded(os.environ['REPLAY_PARSER_AMQP_URL'])}\n"
-              f"  REPLAY_PARSER_S3_BUCKET: {encoded(os.environ['REPLAY_PARSER_S3_BUCKET'])}\n"
-              f"  AWS_ACCESS_KEY_ID: {encoded(os.environ['REPLAY_PARSER_AWS_ACCESS_KEY_ID'])}\n"
-              f"  AWS_SECRET_ACCESS_KEY: {encoded(os.environ['REPLAY_PARSER_AWS_SECRET_ACCESS_KEY'])}",
-          ]
-          print("\n---\n".join(docs))
-          PY
-          scp -i ~/.ssh/deploy_key -P "$CD_SSH_PORT" /tmp/replay-parser-2-secrets.yaml "$target:/tmp/replay-parser-2-secrets.yaml"
-          ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" \
-            "kubectl apply -f /tmp/replay-parser-2-secrets.yaml && rm -f /tmp/replay-parser-2-secrets.yaml"
-          rm -f /tmp/replay-parser-2-secrets.yaml
-          sed "s#ghcr.io/solid-stats/replay-parser-2:latest#$IMAGE#g" deploy/k8s/staging/deployment.yaml \
-            | ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" "kubectl apply -f -"
-          ssh -i ~/.ssh/deploy_key -p "$CD_SSH_PORT" "$target" \
-            "kubectl -n '$K8S_NAMESPACE' rollout status deployment/replay-parser-2 --timeout=300s"
