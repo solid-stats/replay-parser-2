@@ -30,6 +30,36 @@
       "sourceType": "github",
       "skillPath": "skills/rust-testing/SKILL.md",
       "computedHash": "8f6cab4bcbdc5bd8c19f179e893ca5d502604a03e4e443bd27ba7c3a88a93add"
+    },
+    "solidstats-parser-rust-code-review": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-parser-rust-code-review/SKILL.md",
+      "computedHash": "30167f995305c89e0f1bf3a10718288fd850aa7b65c4df6e2e880f2bf6b7e5fa"
+    },
+    "solidstats-parser-rust-conventions": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-parser-rust-conventions/SKILL.md",
+      "computedHash": "455bd0604a37fa9b0ceb2a633f3171bd99ceb10a5d448ef7b773b939c9fd3055"
+    },
+    "solidstats-parser-rust-tests": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-parser-rust-tests/SKILL.md",
+      "computedHash": "f6aa03dad0ea689f696ea7cee4468716b129bf5bc828b353e7e01c7362b77de5"
+    },
+    "solidstats-process-review-standards": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-process-review-standards/SKILL.md",
+      "computedHash": "3c2b24d531ad63c3a0c934475492ad64f247cc8926e1b684e44ebc97bf9eb237"
+    },
+    "solidstats-process-testing-standards": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-process-testing-standards/SKILL.md",
+      "computedHash": "e569f9ed94b6e687d6034f46d2743209459e50befe88e60bdbe564dd1a26cbc6"
     }
   }
 }

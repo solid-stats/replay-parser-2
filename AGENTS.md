@@ -72,3 +72,17 @@ Do not add Node/pnpm legacy-baseline dependencies back to this repository unless
 - Check cross-application compatibility before implementation: parser contract changes must account for `server-2`, and parser output/data-shape changes must account for `web` needs through `server-2` APIs.
 - Apply these AI/GSD workflow rules as product-wide standards across `replays-fetcher`, `replay-parser-2`, `server-2`, and `web`.
 - Use risk-based compatibility depth: local-only parser changes can rely on this repo's planning docs and `gsd-briefs`; parser contract, RabbitMQ/S3 message, artifact shape, raw replay object key assumptions, API/data model, canonical identity, auth, moderation, or UI-visible behavior changes require adjacent app docs/repos or a user question.
+
+<!-- GSD:skills-start source:skills/ -->
+## Project Skills
+
+| Skill | When to Invoke |
+|-------|----------------|
+| `solidstats-parser-rust-conventions` | Любой модуль парсера, контракт артефакта, CLI/worker, Cargo-workspace layout — архитектура и конвенции Rust OCAP-парсера (детерминизм, versioned contract, serde/schemars). |
+| `solidstats-parser-rust-code-review` | Педантичное код-ревью Rust-парсера; ruleset делегируется в conventions, формат отчёта — в process-review-standards. |
+| `solidstats-parser-rust-tests` | Написание или ревью тестов парсера (cargo test, golden/parity manifests, fuzz) поверх process-testing-standards. |
+| `solidstats-process-review-standards` | Общий фундамент формата код-ревью (severity-бакеты, формат отчёта, правила вердикта); подключается code-review skills, не используется самостоятельно. |
+| `solidstats-process-testing-standards` | Общая философия тестов (AAA, изоляция, детерминизм, test doubles, размещение файлов); подключается per-stack test skills. |
+| `cargo-fuzz` | Setting up or running fuzz tests on parser inputs |
+| `coverage-analysis` | Assessing test coverage gaps or fuzzing effectiveness |
+<!-- GSD:skills-end -->
