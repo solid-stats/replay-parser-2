@@ -49,6 +49,12 @@
       "skillPath": "solidstats-parser-rust-tests/SKILL.md",
       "computedHash": "f6aa03dad0ea689f696ea7cee4468716b129bf5bc828b353e7e01c7362b77de5"
     },
+    "solidstats-process-project-standards": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-process-project-standards/SKILL.md",
+      "computedHash": "4333ac10b8f09bea8e3bfc79f3ad041de5b19a95eac4d14d8a810eae98bf33d6"
+    },
     "solidstats-process-review-standards": {
       "source": "solid-stats/skills",
       "sourceType": "github",
