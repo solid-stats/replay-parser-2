@@ -5,31 +5,13 @@
       "source": "trailofbits/skills",
       "sourceType": "github",
       "skillPath": "plugins/testing-handbook-skills/skills/cargo-fuzz/SKILL.md",
-      "computedHash": "00e8e9e919e39cb0739dbec41038c723bc644ba82f83787188d5a975887421ea"
+      "computedHash": "d3f0be4bd295400e7f8ba8a0fb695cde53bc7958357edf4e5876c798bbc598ba"
     },
     "coverage-analysis": {
       "source": "trailofbits/skills",
       "sourceType": "github",
       "skillPath": "plugins/testing-handbook-skills/skills/coverage-analysis/SKILL.md",
-      "computedHash": "ea5b9a4adb286bc7698dd7aa115897ac259211544afeeef29e85c3e86feda5e6"
-    },
-    "rust-async-patterns": {
-      "source": "wshobson/agents",
-      "sourceType": "github",
-      "skillPath": "plugins/systems-programming/skills/rust-async-patterns/SKILL.md",
-      "computedHash": "20d32ef58158c94eb4dfc4aaf19bec7ae2a025ae5d42da7b49ccfbaeda389273"
-    },
-    "rust-best-practices": {
-      "source": "apollographql/skills",
-      "sourceType": "github",
-      "skillPath": "skills/rust-best-practices/SKILL.md",
-      "computedHash": "fd336f2f772eb46ddf8658de5f9dd8faa1f35615b316665307fc82eeb4b2e658"
-    },
-    "rust-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/rust-testing/SKILL.md",
-      "computedHash": "8f6cab4bcbdc5bd8c19f179e893ca5d502604a03e4e443bd27ba7c3a88a93add"
+      "computedHash": "672be3b126ee75a4847c60e97cdc40e9330da7ee1bbb550ad7efaf93129b7503"
     },
     "solidstats-parser-rust-code-review": {
       "source": "solid-stats/skills",
