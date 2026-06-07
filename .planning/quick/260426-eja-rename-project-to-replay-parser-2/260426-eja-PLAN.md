@@ -13,10 +13,10 @@ Rename the project identity from `sg-replay-parser-2` / `replays-parser-2` to `r
 
 ## Scope
 
-- Confirm the workspace directory is already `/home/afgan0r/Projects/SolidGames/replay-parser-2`.
+- Confirm the workspace directory is already `replay-parser-2`.
 - Update active project docs, planning docs, and cross-project briefs to use `replay-parser-2`.
 - Rename the parser brief from `gsd-briefs/replays-parser-2.md` to `gsd-briefs/replay-parser-2.md` and update references to it.
-- Keep the legacy parser path `/home/afgan0r/Projects/SolidGames/replays-parser` and planned CLI command `sg-replay-parser` unchanged because they identify separate artifacts.
+- Keep the legacy parser path `replays-parser` and planned CLI command `sg-replay-parser` unchanged because they identify separate artifacts.
 - Update `.planning/STATE.md` with this quick task.
 
 ## Verification

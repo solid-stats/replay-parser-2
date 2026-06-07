@@ -83,8 +83,8 @@ Output: A typed compact default artifact contract, parser-core builder, focused 
 </objective>
 
 <execution_context>
-@/home/afgan0r/.codex/get-shit-done/workflows/execute-plan.md
-@/home/afgan0r/.codex/get-shit-done/templates/summary.md
+@~/.codex/get-shit-done/workflows/execute-plan.md
+@~/.codex/get-shit-done/templates/summary.md
 </execution_context>
 
 <context>
@@ -176,7 +176,7 @@ Debug sidecar remains the home for verbose evidence from `parse_replay_debug`; d
   <verify>
     <automated>cargo test -p parser-cli --test parse_command</automated>
     <automated>cargo test -p parser-harness --test comparison_report</automated>
-    <automated>cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json</automated>
+    <automated>cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse ~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json</automated>
     <automated>python3 -c 'from pathlib import Path; import json; p=Path(".planning/generated/phase-05/benchmarks/selected-large-artifact.json"); n=p.stat().st_size; data=json.loads(p.read_text()); blob=p.read_text(); print(f"selected_large_artifact_bytes={n}"); assert n <= 100000; assert "player_stats" not in data; assert "bounty_eligible" not in blob; assert "source_refs" not in blob'</automated>
     <automated>cargo run -q -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural</automated>
   </verify>
@@ -219,7 +219,7 @@ Overall verification:
 3. `cargo test -p parser-core --test debug_artifact`
 4. `cargo test -p parser-cli --test parse_command`
 5. `cargo test -p parser-harness --test comparison_report`
-6. `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json`
+6. `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse ~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json`
 7. `python3 -c 'from pathlib import Path; import json; p=Path(".planning/generated/phase-05/benchmarks/selected-large-artifact.json"); n=p.stat().st_size; data=json.loads(p.read_text()); blob=p.read_text(); print(f"selected_large_artifact_bytes={n}"); assert n <= 100000; assert "player_stats" not in data; assert "bounty_eligible" not in blob; assert "source_refs" not in blob'`
 8. `cargo run -q -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural`
 

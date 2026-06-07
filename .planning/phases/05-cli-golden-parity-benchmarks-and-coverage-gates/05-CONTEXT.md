@@ -196,7 +196,7 @@ raw replay fetching, or annual/yearly nomination product support.
   through `server-2`.
 
 ### Test Philosophy
-- `/home/afgan0r/.agents/skills/unit-tests-philosophy/SKILL.md` - RITE/AAA
+- `~/.agents/skills/unit-tests-philosophy/SKILL.md` - RITE/AAA
   test quality standard that Phase 5 tests and coverage gates must follow.
 
 </canonical_refs>

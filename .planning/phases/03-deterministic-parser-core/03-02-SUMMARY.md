@@ -146,7 +146,7 @@ completed: 2026-04-27
 
 ## Issues Encountered
 
-- The Task 1 read_first path `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - types/replay.d.ts` was not present in this environment, and no readable local replacement was available. This did not affect the metadata implementation because the task's executable top-level field evidence came from the Phase 1 corpus manifest and parser-contract metadata types.
+- The Task 1 read_first path `replays-parser/src/0 - types/replay.d.ts` was not present in this environment, and no readable local replacement was available. This did not affect the metadata implementation because the task's executable top-level field evidence came from the Phase 1 corpus manifest and parser-contract metadata types.
 - The local `node_modules/@gsd-build/sdk` CLI path was absent and the `gsd-sdk query` command on PATH did not support query mode. Per the user-provided commit protocol, execution used normal git commits and did not update `STATE.md` or `ROADMAP.md`.
 
 ## Known Stubs

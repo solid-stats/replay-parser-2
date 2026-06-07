@@ -15,7 +15,7 @@ cargo test -p parser-core
 cargo test --workspace
 cargo doc --workspace --no-deps
 git diff --check
-cargo run -p parser-cli -- parse --output /tmp/sg-ks-mission-message-artifact.json --pretty --replay-id ks-sample /home/afgan0r/sg_stats/raw_replays/2026_04_24__23_48_19__2_ocap.json
+cargo run -p parser-cli -- parse --output /tmp/sg-ks-mission-message-artifact.json --pretty --replay-id ks-sample ~/sg_stats/raw_replays/2026_04_24__23_48_19__2_ocap.json
 jq '.side_facts' /tmp/sg-ks-mission-message-artifact.json
 ```
 

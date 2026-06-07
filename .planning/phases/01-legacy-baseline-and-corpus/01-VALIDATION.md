@@ -33,7 +33,7 @@ Per-phase validation contract for Phase 1 execution.
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 01-00-01 | 00 | 1 | WF-01, WF-02 | T-01-05 | generated artifacts stay out of commits | doc/git | `rg -n "\\.planning/generated" .gitignore` | no | pending |
-| 01-00-02 | 00 | 1 | LEG-01 | T-01-01 | source-command blocker is reproduced or resolved before baseline | command | `cd /home/afgan0r/Projects/SolidGames/replays-parser && source "$HOME/.nvm/nvm.sh" && nvm use --silent v18.14.0 && pnpm run parse -- --help` | no | pending |
+| 01-00-02 | 00 | 1 | LEG-01 | T-01-01 | source-command blocker is reproduced or resolved before baseline | command | `cd replays-parser && source "$HOME/.nvm/nvm.sh" && nvm use --silent v18.14.0 && pnpm run parse -- --help` | no | pending |
 | 01-01-01 | 01 | 2 | LEG-01, LEG-02 | T-01-01, T-01-02 | baseline run uses fake HOME and does not mutate real results | artifact | `test -f .planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md` | no | pending |
 | 01-01-02 | 01 | 2 | LEG-05 | T-01-06 | current results and regenerated old-parser outputs are compared per D-08 | artifact | `rg -n "Current Results Comparison|D-08|current-vs-regenerated-results" .planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md` | no | pending |
 | 01-02-01 | 02 | 2 | DOC-01, LEG-03 | T-01-03, T-01-04 | full-history corpus facts are documented from current data | artifact | `test -f .planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md` | no | pending |

@@ -95,14 +95,14 @@ The current historical reference data lives at `~/sg_stats`:
 - `~/sg_stats/year_results` contains 14 legacy annual nomination output files and is a v2 reference, not ordinary v1 stats.
 - The archive is for tests and golden validation only, not production import.
 
-The old parser lives at `/home/afgan0r/Projects/SolidGames/replays-parser` and is a required behavioral reference for this project. The Rust parser is a replacement, but it must be based on the old parser's observed parsing behavior, statistics semantics, output fields, runtime assumptions, and known exclusions before deliberately changing anything.
+The old parser lives at `replays-parser` and is a required behavioral reference for this project. The Rust parser is a replacement, but it must be based on the old parser's observed parsing behavior, statistics semantics, output fields, runtime assumptions, and known exclusions before deliberately changing anything.
 
 Important old parser facts:
 
 - It is a TypeScript/Node project named `sg-replay-parser`.
 - Main parse command: `pnpm run parse`, which runs `tsx src/start.ts`.
 - Compiled parse command: `pnpm run parse:dist`, which runs `node dist/start.js`.
-- Existing architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md`.
+- Existing architecture reference: `replays-parser/docs/architecture.md`.
 - Main runtime entrypoints include `src/start.ts`, `src/index.ts`, `src/schedule.ts`, `src/jobs/prepareReplaysList/start.ts`, and `src/!yearStatistics/index.ts`.
 - The old pipeline stages are replay discovery/download in `src/jobs/prepareReplaysList/*`, replay selection/worker dispatch in `src/1 - replays/*`, single-replay parsing in `src/2 - parseReplayInfo/*`, aggregation in `src/3 - statistics/*`, and output publication in `src/4 - output/*`.
 - The old yearly statistics pipeline under `src/!yearStatistics` is a separate legacy surface that produces annual nomination outputs in `~/sg_stats/year_results`; v1 should treat it as historical reference material only, with product support deferred to v2.
@@ -154,7 +154,7 @@ Open implementation details for later phases:
 - **Database ownership**: `server-2` owns PostgreSQL persistence - parser does not mutate business tables in v1.
 - **Identity**: Parser preserves observed identifiers only - canonical player matching belongs to `server-2`.
 - **History reprocessing**: Server may overwrite derived results in v1 - parser must make output repeatable and versioned.
-- **Brownfield reference**: `/home/afgan0r/Projects/SolidGames/replays-parser` - new behavior must be grounded in old parser semantics and comparison tests.
+- **Brownfield reference**: `replays-parser` - new behavior must be grounded in old parser semantics and comparison tests.
 - **Test coverage**: 100% reachable-code statement, branch, function, and line coverage is a release gate; exclusions must be explicit, justified, and allowlisted.
 - **Development workflow**: Project development is performed only by AI agents using GSD; README and planning artifacts must make that workflow visible and current.
 - **Git hygiene**: Completed work must end with a clean git working tree by committing intended results, not by deleting or reverting them; ambiguous changes require asking the user.

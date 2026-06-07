@@ -116,7 +116,7 @@ completed: 2026-04-27
 
 ## Issues Encountered
 
-- The plan's legacy reference path under `/home/afgan0r/Projects/SolidGames/replays-parser` was absent in this environment. The equivalent old parser source was read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`, matching the previous Phase 3 execution summaries.
+- The plan's legacy reference path under `replays-parser` was absent in this environment. The equivalent old parser source was read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`, matching the previous Phase 3 execution summaries.
 - The local `node_modules/@gsd-build/sdk` CLI path was absent, and `gsd-sdk query` on PATH did not support query mode. Per the user-provided commit protocol, execution used normal git commits and did not update `STATE.md` or `ROADMAP.md`.
 - An unrelated `.gitignore` modification adding `.codex` appeared during final verification. It was not part of this plan and was not committed.
 

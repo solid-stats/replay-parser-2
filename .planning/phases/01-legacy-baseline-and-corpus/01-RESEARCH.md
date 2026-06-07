@@ -75,7 +75,7 @@ No discretionary implementation choices were delegated. Planner may choose exact
 
 ## Summary
 
-Phase 1 should be planned as a documentation and local evidence phase around the old parser, not as Rust parser implementation. [VERIFIED: `.planning/ROADMAP.md` + `01-CONTEXT.md`] The key implementation risk is that the locked canonical source command `pnpm run parse` is currently not runnable in the local environment under either default Node 22.16.0 or old-parser `.nvmrc` Node 18.14.0, because `tsx src/start.ts` fails on Lodash named ESM imports before help can render. [VERIFIED: command preflights in `/home/afgan0r/Projects/SolidGames/replays-parser`] The planner must include a Wave 0 unblock for canonical source-command execution or require explicit user approval before treating `parse:dist` as the primary baseline. [VERIFIED: `01-CONTEXT.md` D-01 + D-12]
+Phase 1 should be planned as a documentation and local evidence phase around the old parser, not as Rust parser implementation. [VERIFIED: `.planning/ROADMAP.md` + `01-CONTEXT.md`] The key implementation risk is that the locked canonical source command `pnpm run parse` is currently not runnable in the local environment under either default Node 22.16.0 or old-parser `.nvmrc` Node 18.14.0, because `tsx src/start.ts` fails on Lodash named ESM imports before help can render. [VERIFIED: command preflights in `replays-parser`] The planner must include a Wave 0 unblock for canonical source-command execution or require explicit user approval before treating `parse:dist` as the primary baseline. [VERIFIED: `01-CONTEXT.md` D-01 + D-12]
 
 The corpus is full-history scale now. [VERIFIED: local `find ~/sg_stats/raw_replays -maxdepth 1 -type f -name '*.json' | wc -l`] Current docs and prior research that mention around 3,938 files are stale for planning. [VERIFIED: `README.md` + `.planning/research/SUMMARY.md` + local file count] The latest `replaysList.json` facts to preserve in Phase 1 are `parsedReplays`/`replays` count 23,456 and `replaysListPreparedAt` `2026-04-25T04:42:54.889Z`. [VERIFIED: user-provided latest corpus update] Phase 1 should profile all 23,473 raw files, but should commit compact summaries and small indexes only; raw files, full hashes, regenerated results, logs, and heavy reports should live under a generated/local ignored path. [VERIFIED: `01-CONTEXT.md` D-06/D-09 + local `du -sh ~/sg_stats/*`]
 
@@ -86,7 +86,7 @@ The baseline must be non-destructive by running the old parser against an isolat
 ## Project Constraints (from AGENTS.md)
 
 - This repo is the Rust replacement parser only; `server-2` owns PostgreSQL, canonical identity, APIs, auth, moderation, parse jobs, aggregate/bounty calculation, and operational visibility, while `web` owns UI/API consumption. [VERIFIED: `AGENTS.md`]
-- The old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is the required v1 behavioral reference. [VERIFIED: `AGENTS.md`]
+- The old parser at `replays-parser` is the required v1 behavioral reference. [VERIFIED: `AGENTS.md`]
 - Historical data at `~/sg_stats` is the golden/test and benchmark baseline. [VERIFIED: `AGENTS.md`]
 - The new parser must preserve observed replay identity fields only; canonical player matching belongs to `server-2`. [VERIFIED: `AGENTS.md`]
 - PostgreSQL persistence, public UI, Steam OAuth, correction workflow, and final bounty/reward rules are outside this parser. [VERIFIED: `AGENTS.md`]
@@ -103,7 +103,7 @@ The baseline must be non-destructive by running the old parser against an isolat
 
 | Capability | Primary Tier | Secondary Tier | Rationale |
 |------------|--------------|----------------|-----------|
-| Legacy command/runtime capture | Legacy parser repo + local shell harness | Phase docs | The command, commit, lockfile, env, worker count, logs, and output paths come from `/home/afgan0r/Projects/SolidGames/replays-parser` and must be recorded in committed Phase 1 docs. [VERIFIED: old `package.json` + `01-CONTEXT.md` D-02] |
+| Legacy command/runtime capture | Legacy parser repo + local shell harness | Phase docs | The command, commit, lockfile, env, worker count, logs, and output paths come from `replays-parser` and must be recorded in committed Phase 1 docs. [VERIFIED: old `package.json` + `01-CONTEXT.md` D-02] |
 | Non-destructive baseline execution | Local filesystem harness | Legacy parser runtime | The old parser writes under `os.homedir()/sg_stats`, empties `temp_results`, and replaces `results`, so isolation must happen at process environment/filesystem level. [VERIFIED: old `paths.ts` + old `src/index.ts` + old `src/4 - output/index.ts`] |
 | Corpus manifest/profile | Local corpus tooling | Phase docs | Counts, hashes, file sizes, malformed files, top-level keys, event/entity shapes, and game-type distribution come from `~/sg_stats`, with compact summaries committed. [VERIFIED: `01-CONTEXT.md` D-06/D-09 + local corpus commands] |
 | Legacy filters/skip rules/config inventory | Legacy parser source | Parity harness notes | Game-type selection and skip rules are harness compatibility concerns, not parser-core contract behavior. [VERIFIED: `01-CONTEXT.md` D-10 + old `getReplays.ts`/`parseReplayWorker.ts`] |
@@ -117,7 +117,7 @@ The baseline must be non-destructive by running the old parser against an isolat
 
 | Tool / Library | Version | Purpose | Why Standard |
 |----------------|---------|---------|--------------|
-| Legacy parser repo | Commit `3392ca2f367a87f6eb59041a239e7ca2519e1ec5` | Behavioral reference and baseline runner | v1 behavior is required to be grounded in this old parser. [VERIFIED: `git -C /home/afgan0r/Projects/SolidGames/replays-parser rev-parse HEAD` + `AGENTS.md`] |
+| Legacy parser repo | Commit `3392ca2f367a87f6eb59041a239e7ca2519e1ec5` | Behavioral reference and baseline runner | v1 behavior is required to be grounded in this old parser. [VERIFIED: `git -C replays-parser rev-parse HEAD` + `AGENTS.md`] |
 | `pnpm run parse` | Script maps to `tsx src/start.ts` | Canonical old-parser source baseline command | User locked this exact command as canonical in D-01. [VERIFIED: old `package.json` + `01-CONTEXT.md`] |
 | Node.js | `.nvmrc` pins `v18.14.0`; default shell currently reports `v22.16.0` | Legacy parser runtime | Old parser adjacent docs identify Node 18.14.0 as platform requirement, and local default Node 22 must not be assumed compatible. [VERIFIED: old `.nvmrc` + old `CLAUDE.md` + `node --version`] |
 | pnpm | Package manager field `pnpm@10.33.0`; local `pnpm --version` is `10.33.0`; registry latest is `10.33.2` modified 2026-04-23 | Legacy dependency/script runner | Baseline reproducibility should use the package-manager version declared by the old parser rather than opportunistically upgrading. [VERIFIED: old `package.json` + local `pnpm --version` + npm registry] |
@@ -148,7 +148,7 @@ The baseline must be non-destructive by running the old parser against an isolat
 ```bash
 # No new repo dependency is required for Phase 1 research/planning deliverables.
 # Use the old parser's existing dependency install and declared package manager.
-cd /home/afgan0r/Projects/SolidGames/replays-parser
+cd replays-parser
 corepack prepare pnpm@10.33.0 --activate
 pnpm install --frozen-lockfile
 ```
@@ -172,7 +172,7 @@ Read-only corpus profiler and manifest commands
         |
         +--> heavy generated local reports under .planning/generated/phase-01/
 
-Legacy parser repo /home/afgan0r/Projects/SolidGames/replays-parser
+Legacy parser repo replays-parser
   package.json + source modules + config + commit + lockfile
         |
         v
@@ -394,7 +394,7 @@ Verified patterns from local sources:
 ### Source Command Preflight
 
 ```bash
-cd /home/afgan0r/Projects/SolidGames/replays-parser
+cd replays-parser
 source "$HOME/.nvm/nvm.sh"
 nvm use --silent v18.14.0
 pnpm run parse -- --help
@@ -405,7 +405,7 @@ This currently fails on Lodash named ESM imports and should be a Wave 0 gate bef
 ### Secondary Compiled Help Check
 
 ```bash
-cd /home/afgan0r/Projects/SolidGames/replays-parser
+cd replays-parser
 pnpm run parse:dist -- --help
 ```
 
@@ -520,7 +520,7 @@ This skeleton depends on first unblocking the canonical source command. [VERIFIE
 | WF-03/WF-04/WF-05 | Risky instruction pushback workflow documented | doc review | `rg -n "challenge|risky|confirmation|safer" AGENTS.md README.md .planning/REQUIREMENTS.md` | yes, docs exist [VERIFIED: local rg] |
 | INT-01/INT-03 | Multi-project product and product-wide GSD rules documented | doc review | `rg -n "server-2|web|product-wide" README.md AGENTS.md gsd-briefs/*.md` | yes, docs exist [VERIFIED: local rg] |
 | INT-02/INT-04 | Risk-based compatibility checks documented | doc review | `rg -n "risk-based|compatibility|adjacent" README.md AGENTS.md gsd-briefs/*.md` | yes, docs exist [VERIFIED: local rg] |
-| LEG-01 | Canonical old parser source command can run | command smoke | `cd /home/afgan0r/Projects/SolidGames/replays-parser && source ~/.nvm/nvm.sh && nvm use --silent v18.14.0 && pnpm run parse -- --help` | no, currently fails Wave 0 [VERIFIED: command preflight] |
+| LEG-01 | Canonical old parser source command can run | command smoke | `cd replays-parser && source ~/.nvm/nvm.sh && nvm use --silent v18.14.0 && pnpm run parse -- --help` | no, currently fails Wave 0 [VERIFIED: command preflight] |
 | LEG-02 | Baseline manifest records commit/runtime/env/outputs | artifact check | `test -f .planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md` | no, Wave 0/1 [VERIFIED: file absent] |
 | LEG-03 | Corpus manifest covers raw/results/replay list | artifact check | `test -f .planning/phases/01-legacy-baseline-and-corpus/corpus-manifest.md` | no, Wave 0/1 [VERIFIED: file absent] |
 | LEG-04 | Legacy filters/config inputs documented | artifact check | `test -f .planning/phases/01-legacy-baseline-and-corpus/legacy-rules-output-surfaces.md` | no, Wave 0/1 [VERIFIED: file absent] |
@@ -576,7 +576,7 @@ OWASP ASVS 5.0.0 is the latest stable ASVS release listed by OWASP as of the pag
 - `.planning/ROADMAP.md` - Phase 1 goal and success criteria. [VERIFIED: local file read]
 - `.planning/PROJECT.md`, `.planning/STATE.md`, `README.md`, `AGENTS.md` - project constraints, stale/current context, workflow requirements. [VERIFIED: local file reads]
 - `gsd-briefs/replay-parser-2.md`, `gsd-briefs/server-2.md`, `gsd-briefs/web.md` - cross-application responsibilities and compatibility rules. [VERIFIED: local file reads]
-- `/home/afgan0r/Projects/SolidGames/replays-parser/package.json`, `.nvmrc`, `CLAUDE.md`, `docs/architecture.md`, `src/start.ts`, `src/index.ts`, `src/0 - utils/runtimeConfig.ts`, `src/0 - utils/paths.ts`, `src/1 - replays/getReplays.ts`, `src/1 - replays/workers/parseReplayWorker.ts`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, `src/4 - output/*`, `config/*.json`. [VERIFIED: local file reads]
+- `replays-parser/package.json`, `.nvmrc`, `CLAUDE.md`, `docs/architecture.md`, `src/start.ts`, `src/index.ts`, `src/0 - utils/runtimeConfig.ts`, `src/0 - utils/paths.ts`, `src/1 - replays/getReplays.ts`, `src/1 - replays/workers/parseReplayWorker.ts`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, `src/4 - output/*`, `config/*.json`. [VERIFIED: local file reads]
 - Local corpus commands over `~/sg_stats/raw_replays`, `~/sg_stats/results`, `~/sg_stats/year_results`, `~/sg_stats/lists/replaysList.json`, and `~/sg_stats/config/nameChanges.csv`. [VERIFIED: local command output]
 - npm registry checks for `pnpm`, `tsx`, `lodash`, `typescript`, and `fs-extra`. [VERIFIED: npm registry]
 - OWASP ASVS project page for ASVS purpose and latest stable version. [CITED: https://owasp.org/www-project-application-security-verification-standard/]

@@ -41,7 +41,7 @@ The comparison should prioritize differences that can affect future statistics c
 
 - Previous quick task `260502-ecp` reduced the selected large default artifact to `40042` bytes, but the broader benchmark report was stale and still recorded unknown selected x3/parity and all-raw gates.
 - Current selected replay policy is "largest .json by byte size under `~/sg_stats/raw_replays`; tie-break lexicographic path".
-- Current selected replay path in existing evidence is `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`.
+- Current selected replay path in existing evidence is `~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`.
 
 </specifics>
 

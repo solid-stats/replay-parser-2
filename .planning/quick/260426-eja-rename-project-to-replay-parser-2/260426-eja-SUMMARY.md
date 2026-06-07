@@ -8,11 +8,11 @@ completed: 2026-04-26
 
 ## Completed
 
-- Confirmed the repository directory is already `/home/afgan0r/Projects/SolidGames/replay-parser-2`.
+- Confirmed the repository directory is already `replay-parser-2`.
 - Renamed current project references from `sg-replay-parser-2` and `replays-parser-2` to `replay-parser-2` across README, AGENTS, planning docs, research docs, phase docs, and cross-project briefs.
 - Renamed `gsd-briefs/replays-parser-2.md` to `gsd-briefs/replay-parser-2.md` and updated references to that brief.
 - Renamed older quick-task directories whose slugs embedded the old project name, then updated `STATE.md` links.
-- Left the legacy parser path `/home/afgan0r/Projects/SolidGames/replays-parser` and planned CLI command `sg-replay-parser` unchanged because they identify separate artifacts.
+- Left the legacy parser path `replays-parser` and planned CLI command `sg-replay-parser` unchanged because they identify separate artifacts.
 - Updated `.planning/STATE.md` with the quick-task record.
 
 ## Verification

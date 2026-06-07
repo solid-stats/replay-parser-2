@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-`replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. Production replay discovery/fetching is now owned by the separate `replays-fetcher` service; this parser consumes local files or `server-2` parse jobs pointing at S3 raw objects. The old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
+`replay-parser-2` is a replacement parser for SolidGames OCAP JSON replays. Experts should build this as a deterministic parsing engine with thin runtime adapters: one pure Rust parser core, one versioned output contract, one local CLI, one RabbitMQ/S3 worker, and one first-class migration harness. Production replay discovery/fetching is now owned by the separate `replays-fetcher` service; this parser consumes local files or `server-2` parse jobs pointing at S3 raw objects. The old TypeScript parser at `replays-parser` is not optional background material. It is the required behavioral reference for v1 statistics semantics, legacy output fields, skip rules, name-compatibility behavior, runtime assumptions, and benchmark baselines.
 
 The recommended approach is to start with corpus and legacy behavior discovery, then lock the output contract, then implement the Rust core and aggregate projection against executable parity tests. The parser should preserve enough observed facts and source references to derive and audit legacy-compatible aggregate summaries, but the default server-facing artifact must be compact. CLI and worker modes must call the same core; worker-specific RabbitMQ, S3, checksum, retry, and artifact concerns belong outside the parser core.
 
@@ -251,7 +251,7 @@ Phases with standard patterns where generic research can usually be skipped:
 - GitHub issue #13, Vehicle score: https://github.com/solid-stats/sg-replay-parser/issues/13 - requested vehicle score formula and weight matrix.
 - `.planning/research/ARCHITECTURE.md` - service boundaries, component responsibilities, Cargo workspace shape, old parser migration map, build order.
 - `.planning/research/PITFALLS.md` - critical pitfalls, phase mapping, integration gotchas, recovery strategies.
-- `/home/afgan0r/Projects/SolidGames/replays-parser` - required old parser behavioral reference. Key areas include `package.json`, `docs/architecture.md`, `src/start.ts`, `src/index.ts`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, and `src/4 - output/*`.
+- `replays-parser` - required old parser behavioral reference. Key areas include `package.json`, `docs/architecture.md`, `src/start.ts`, `src/index.ts`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, and `src/4 - output/*`.
 - `~/sg_stats/raw_replays`, `~/sg_stats/results`, `~/sg_stats/lists/replaysList.json` - historical corpus and old result baseline; observed around 3,938 raw replay JSON files.
 - Official Rust/Cargo/Serde/Tokio/Clap docs - workspace, serialization, async runtime, and CLI patterns.
 - RabbitMQ docs - consumer acknowledgements, publisher confirms, prefetch, reliability, negative ack, and DLX behavior.

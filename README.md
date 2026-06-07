@@ -122,7 +122,7 @@ The parser will not own:
 
 The old parser and historical data defined the v1 compatibility baseline:
 
-- Legacy parser: `/home/afgan0r/Projects/SolidGames/replays-parser`.
+- Legacy parser: `replays-parser`.
 - Historical raw replays: `~/sg_stats/raw_replays`.
 - Historical calculated results: `~/sg_stats/results`.
 - Legacy annual nomination outputs: `~/sg_stats/year_results`.

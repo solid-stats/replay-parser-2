@@ -8,7 +8,7 @@
 
 ### System Overview
 
-Build `replay-parser-2` as a Rust migration of the existing parser at `/home/afgan0r/Projects/SolidGames/replays-parser`, not as an independent parser invented from the raw OCAP corpus alone. The old TypeScript/Node parser is the required behavioral reference for replay interpretation, legacy aggregate fields, `~/sg_stats` runtime assumptions, and benchmark baselines.
+Build `replay-parser-2` as a Rust migration of the existing parser at `replays-parser`, not as an independent parser invented from the raw OCAP corpus alone. The old TypeScript/Node parser is the required behavioral reference for replay interpretation, legacy aggregate fields, `~/sg_stats` runtime assumptions, and benchmark baselines.
 
 The target architecture is still a deterministic parsing engine with thin runtime adapters. The parser core should know nothing about RabbitMQ, S3, filesystems, clocks, environment variables, PostgreSQL, or canonical player identity. CLI, worker, tests, and benchmarks should all call the same pure core API. The old parser informs what that core must do; it should not force the new service to keep old production responsibilities that now belong to `server-2`.
 
@@ -60,7 +60,7 @@ The target architecture is still a deterministic parsing engine with thin runtim
 
 | Component | Responsibility | Typical Implementation |
 |-----------|----------------|------------------------|
-| Old parser reference | Required behavioral source for how current SolidGames replays are discovered, parsed, aggregated, and published today. | Read and test against `/home/afgan0r/Projects/SolidGames/replays-parser`; run `pnpm run parse` / `pnpm run parse:dist` for baseline behavior; use `docs/architecture.md` and stage modules as migration map. |
+| Old parser reference | Required behavioral source for how current SolidGames replays are discovered, parsed, aggregated, and published today. | Read and test against `replays-parser`; run `pnpm run parse` / `pnpm run parse:dist` for baseline behavior; use `docs/architecture.md` and stage modules as migration map. |
 | Legacy parity harness | Compare Rust outputs against old parser outputs and historical `~/sg_stats/results` for fields that must remain compatible. | Harness commands that run or consume old parser outputs, normalize comparable fields, and produce old-vs-new reports with documented tolerances. |
 | `parser-contract` | Versioned Rust types and generated JSON Schema for parse requests, parse artifacts, failures, source references, unknown states, and aggregate summaries. | `serde` derives, `schemars` schema generation, `jsonschema` validation in tests. Keep this stable and reviewed before worker integration. |
 | `parser-core` | Pure OCAP JSON parsing and normalization. Accept bytes/readers plus explicit parse metadata; return `ParseArtifact` or `ParseFailure`. | Synchronous Rust library using strongly typed raw DTOs, domain newtypes, deterministic ordering, no network or filesystem side effects. |
@@ -76,7 +76,7 @@ The target architecture is still a deterministic parsing engine with thin runtim
 
 ### Observed Old Parser Architecture
 
-The old parser is a TypeScript/Node project at `/home/afgan0r/Projects/SolidGames/replays-parser`.
+The old parser is a TypeScript/Node project at `replays-parser`.
 
 | Old Parser Area | Observed Source | Migration Use |
 |-----------------|-----------------|---------------|
@@ -262,7 +262,7 @@ pub struct ParseArtifact {
 ### Legacy Reference Flow
 
 ```
-Old parser at /home/afgan0r/Projects/SolidGames/replays-parser
+Old parser at replays-parser
     |
     +--> pnpm run parse      -> tsx src/start.ts
     +--> pnpm run parse:dist -> node dist/start.js
@@ -410,7 +410,7 @@ The parser may output "observed facts" and "calculated inputs"; it must not outp
 
 ### Anti-Pattern 1: Ignoring the Old Parser
 
-**What people do:** Build from OCAP JSON samples and new requirements only, treating `/home/afgan0r/Projects/SolidGames/replays-parser` as historical trivia.
+**What people do:** Build from OCAP JSON samples and new requirements only, treating `replays-parser` as historical trivia.
 
 **Why it is wrong:** Current public stats semantics live in the old parser's parsing and aggregation code. A Rust rewrite can be faster and cleaner while still being behaviorally wrong.
 
@@ -489,7 +489,7 @@ The parser may output "observed facts" and "calculated inputs"; it must not outp
 | RabbitMQ | Worker consumes `parse.request` with manual ack, bounded prefetch, and publishes `parse.completed`/`parse.failed` with publisher confirms. | Consumer acknowledgements and publisher confirms are separate reliability mechanisms. Use both. Track redeliveries and avoid requeue loops. |
 | S3-compatible storage | Worker downloads replay by object key and checksum; writes full parse artifact by deterministic artifact key. | Prefer artifact reference in RabbitMQ result. Verify checksum from request/object metadata before parsing. |
 | server-2 | Message contract plus S3 artifact contract. | No direct DB access from parser. Server owns persistence, identity, retries, rotations, bounty, and public APIs. |
-| Old parser repo | Behavioral reference and executable baseline. | Located at `/home/afgan0r/Projects/SolidGames/replays-parser`; use `pnpm run parse`, `pnpm run parse:dist`, `docs/architecture.md`, and stage modules for parity and migration mapping. |
+| Old parser repo | Behavioral reference and executable baseline. | Located at `replays-parser`; use `pnpm run parse`, `pnpm run parse:dist`, `docs/architecture.md`, and stage modules for parity and migration mapping. |
 | Historical `~/sg_stats` | Test and benchmark input only. | Use as fixture/golden source, not production import. Local inspection confirmed 3,938 raw replay JSON files and observed OCAP keys matching the project brief. |
 
 ### Internal Boundaries
@@ -567,9 +567,9 @@ Recommended roadmap order:
 
 - Local project context: `.planning/PROJECT.md` and `gsd-briefs/replay-parser-2.md` (HIGH).
 - Server boundary context: `gsd-briefs/server-2.md` (HIGH).
-- Old parser repo: `/home/afgan0r/Projects/SolidGames/replays-parser` (HIGH).
-- Old parser architecture reference: `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md` (HIGH).
-- Old parser package scripts: `/home/afgan0r/Projects/SolidGames/replays-parser/package.json` confirms `pnpm run parse` -> `tsx src/start.ts` and `pnpm run parse:dist` -> `node dist/start.js` (HIGH).
+- Old parser repo: `replays-parser` (HIGH).
+- Old parser architecture reference: `replays-parser/docs/architecture.md` (HIGH).
+- Old parser package scripts: `replays-parser/package.json` confirms `pnpm run parse` -> `tsx src/start.ts` and `pnpm run parse:dist` -> `node dist/start.js` (HIGH).
 - Old parser orchestration/code inspected: `src/start.ts`, `src/index.ts`, `src/0 - utils/paths.ts`, `src/0 - utils/runtimeConfig.ts`, `src/1 - replays/*`, `src/2 - parseReplayInfo/*`, `src/3 - statistics/*`, and `src/4 - output/*` (HIGH for observed current repo structure).
 - Local corpus inspection: `~/sg_stats/raw_replays` contains 3,938 JSON files; largest observed file about 18.9 MB; sample top-level keys were `EditorMarkers`, `Markers`, `captureDelay`, `endFrame`, `entities`, `events`, `missionAuthor`, `missionName`, `playersCount`, `worldName` (MEDIUM until corpus profiler phase formalizes this).
 - Rust Cargo workspaces: https://doc.rust-lang.org/cargo/reference/workspaces.html and https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html (HIGH).

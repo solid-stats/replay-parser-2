@@ -76,20 +76,20 @@ No discretionary implementation choices were delegated. Planner may choose exact
 - `gsd-briefs/web.md` - Frontend ownership and API-consumption boundaries.
 
 ### Legacy parser reference
-- `/home/afgan0r/Projects/SolidGames/replays-parser/package.json` - Legacy commands, including `pnpm run parse` and `pnpm run parse:dist`.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/docs/architecture.md` - Legacy runtime architecture and file-backed `~/sg_stats` model.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/start.ts` - Legacy source-command entrypoint target.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/index.ts` - Main parse orchestration, game-type selection, worker pool usage, aggregation, and output generation.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - utils/runtimeConfig.ts` - Legacy `WORKER_COUNT` behavior.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - utils/paths.ts` - Legacy `~/sg_stats` path contract.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/getReplays.ts` - Legacy game-type filtering and `sgs` exclusion.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/getEntities.ts` - Entity extraction and connected-player backfill behavior.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/getKillsAndDeaths.ts` - Legacy kill, death, teamkill, and vehicle-kill behavior.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts` - Duplicate-slot same-name merge compatibility behavior.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/!yearStatistics` - v2-deferred yearly nomination reference only.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/config/excludeReplays.json` - Legacy replay exclusion input.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/config/includeReplays.json` - Legacy manual include/game-type input.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/config/excludePlayers.json` - Legacy player exclusion input.
+- `replays-parser/package.json` - Legacy commands, including `pnpm run parse` and `pnpm run parse:dist`.
+- `replays-parser/docs/architecture.md` - Legacy runtime architecture and file-backed `~/sg_stats` model.
+- `replays-parser/src/start.ts` - Legacy source-command entrypoint target.
+- `replays-parser/src/index.ts` - Main parse orchestration, game-type selection, worker pool usage, aggregation, and output generation.
+- `replays-parser/src/0 - utils/runtimeConfig.ts` - Legacy `WORKER_COUNT` behavior.
+- `replays-parser/src/0 - utils/paths.ts` - Legacy `~/sg_stats` path contract.
+- `replays-parser/src/1 - replays/getReplays.ts` - Legacy game-type filtering and `sgs` exclusion.
+- `replays-parser/src/2 - parseReplayInfo/getEntities.ts` - Entity extraction and connected-player backfill behavior.
+- `replays-parser/src/2 - parseReplayInfo/getKillsAndDeaths.ts` - Legacy kill, death, teamkill, and vehicle-kill behavior.
+- `replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts` - Duplicate-slot same-name merge compatibility behavior.
+- `replays-parser/src/!yearStatistics` - v2-deferred yearly nomination reference only.
+- `replays-parser/config/excludeReplays.json` - Legacy replay exclusion input.
+- `replays-parser/config/includeReplays.json` - Legacy manual include/game-type input.
+- `replays-parser/config/excludePlayers.json` - Legacy player exclusion input.
 
 ### Historical data
 - `~/sg_stats/raw_replays` - Historical OCAP raw corpus.

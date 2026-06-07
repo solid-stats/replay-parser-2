@@ -26,7 +26,7 @@ The command generated a valid report but exited non-zero because acceptance gate
 
 Selected replay:
 
-- selected path: `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
+- selected path: `~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
 - artifact bytes: 40780, size pass
 - old wall time: 260.071354 ms
 - new wall time: 92.255598 ms

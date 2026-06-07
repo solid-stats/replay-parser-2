@@ -9,7 +9,7 @@
 Build this as a Rust 2024 workspace with a parser library, a CLI binary, and worker integration modules around the same parser entry point. Use `serde_json` as the correctness-first parser, deterministic structs/`BTreeMap` output, `lapin` for RabbitMQ AMQP 0-9-1, the official AWS SDK for S3-compatible object access, and a two-level validation harness:
 
 1. Golden JSON tests derived from `~/sg_stats/raw_replays` and existing `~/sg_stats/results`.
-2. Legacy comparison tests that run the old `/home/afgan0r/Projects/SolidGames/replays-parser` TypeScript parser as the behavioral/statistics baseline.
+2. Legacy comparison tests that run the old `replays-parser` TypeScript parser as the behavioral/statistics baseline.
 
 Do not port the old TypeScript runtime stack into the new service. Keep Node/pnpm dev-only for baseline generation and command-level benchmarks.
 
@@ -117,7 +117,7 @@ cargo install cargo-deny --version 0.19.4
 cargo install cargo-audit --version 0.22.1
 cargo install hyperfine --version 1.20.0
 
-# Legacy baseline only, run inside /home/afgan0r/Projects/SolidGames/replays-parser
+# Legacy baseline only, run inside replays-parser
 corepack enable
 pnpm install --frozen-lockfile
 pnpm run build
@@ -182,7 +182,7 @@ pnpm run build
 
 **Legacy parser migration/comparison:**
 - Discover and document the exact old command before locking benchmarks. Current local old parser evidence:
-  - Root: `/home/afgan0r/Projects/SolidGames/replays-parser`
+  - Root: `replays-parser`
   - Package manager: `pnpm@10.33.0`
   - Relevant scripts: `parse` (`tsx src/start.ts`), `build`, and `parse:dist` (`node dist/start.js`)
 - Add a dev-only legacy runner that executes old commands from the old parser root with controlled env and fixed fixture directories.
@@ -240,7 +240,7 @@ pnpm run build
 - RabbitMQ acknowledgements and publisher confirms reliability guide: https://www.rabbitmq.com/docs/confirms
 - hyperfine project source/version guidance: https://github.com/sharkdp/hyperfine
 - Crates.io API queried 2026-04-24 for current versions/MSRV: `tokio`, `clap`, `serde`, `serde_json`, `serde_path_to_error`, `simd-json`, `lapin`, `aws-config`, `aws-sdk-s3`, `tracing`, `tracing-subscriber`, `thiserror`, `anyhow`, `criterion`, `insta`, `testcontainers`, `schemars`, `cargo-nextest`, `cargo-deny`, `cargo-audit`, `cargo-llvm-cov`, `hyperfine`.
-- Local legacy parser source consulted: `/home/afgan0r/Projects/SolidGames/replays-parser/package.json`, `/home/afgan0r/Projects/SolidGames/replays-parser/README.md`, `/home/afgan0r/Projects/SolidGames/replays-parser/src/start.ts`, `/home/afgan0r/Projects/SolidGames/replays-parser/src/index.ts`.
+- Local legacy parser source consulted: `replays-parser/package.json`, `replays-parser/README.md`, `replays-parser/src/start.ts`, `replays-parser/src/index.ts`.
 
 ---
 *Stack research for: Rust OCAP JSON replay parser/worker service*

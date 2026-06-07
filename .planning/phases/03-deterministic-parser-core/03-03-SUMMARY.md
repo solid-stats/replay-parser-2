@@ -129,7 +129,7 @@ completed: 2026-04-27
 
 ## Issues Encountered
 
-- The read-first legacy path under `/home/afgan0r/Projects/SolidGames/replays-parser` was absent in this environment. The equivalent old parser source was read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`.
+- The read-first legacy path under `replays-parser` was absent in this environment. The equivalent old parser source was read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`.
 - The local `node_modules/@gsd-build/sdk` CLI path was absent, and `gsd-sdk query` on PATH does not support query mode. Per the user-provided commit protocol, execution used normal git commits and did not update `STATE.md` or `ROADMAP.md`.
 
 ## Known Stubs

@@ -105,7 +105,7 @@ Full Phase 5.2 acceptance was not expanded in this quick task. The existing benc
 - `cargo test -p parser-cli --test parse_command` - passed, 11 tests.
 - `cargo test -p parser-harness --test comparison_report` - passed, 14 tests.
 - `cargo clippy --workspace --all-targets -- -D warnings` - passed after final quality-gate fix.
-- `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json` - passed.
+- `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse ~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json` - passed.
 - `python3 -c 'from pathlib import Path; import json; p=Path(".planning/generated/phase-05/benchmarks/selected-large-artifact.json"); n=p.stat().st_size; data=json.loads(p.read_text()); blob=p.read_text(); print(f"selected_large_artifact_bytes={n}"); assert n <= 100000; assert "player_stats" not in data; assert "bounty_eligible" not in blob; assert "source_refs" not in blob'` - passed, `selected_large_artifact_bytes=40042`.
 - `cargo run -q -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural` - passed structural validation.
 

@@ -63,7 +63,7 @@ Old `package.json` script `parse` runs `tsx src/start.ts`.
 Old `.nvmrc` pins `v18.14.0`.
 ```
 
-**Legacy command pattern** (`/home/afgan0r/Projects/SolidGames/replays-parser/package.json` lines 25-26):
+**Legacy command pattern** (`replays-parser/package.json` lines 25-26):
 ```json
 "parse": "tsx src/start.ts",
 "parse:dist": "node dist/start.js"

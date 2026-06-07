@@ -98,7 +98,7 @@ completed: 2026-04-27
 
 - Followed the Phase 3 plan contract shape exactly and kept parser-core population for later plans.
 - Used typed compatibility hints rather than merging duplicate-slot same-name entities, preserving raw observed entity IDs for audit and later aggregate projection.
-- Treated the actual legacy parser path on this machine, `/home/alexandr/Projects/SolidGames/sg-replay-parser`, as the read-first equivalent for missing `/home/afgan0r/Projects/SolidGames/replays-parser`.
+- Treated the actual legacy parser path on this machine, `/home/alexandr/Projects/SolidGames/sg-replay-parser`, as the read-first equivalent for missing `replays-parser`.
 
 ## Deviations from Plan
 
@@ -119,7 +119,7 @@ completed: 2026-04-27
 
 ## Issues Encountered
 
-- The read-first legacy paths under `/home/afgan0r/Projects/SolidGames/replays-parser` were absent in this environment. The equivalent old parser files were read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`.
+- The read-first legacy paths under `replays-parser` were absent in this environment. The equivalent old parser files were read from `/home/alexandr/Projects/SolidGames/sg-replay-parser`.
 - The plan command `cargo test -p parser-contract metadata_identity_contract` exits successfully but filters out all tests. To preserve the plan gate and still verify behavior, the real integration target was also run with `cargo test -p parser-contract --test metadata_identity_contract`.
 
 ## Known Stubs

@@ -64,7 +64,7 @@ The parser must stay within `replay-parser-2` ownership: no canonical player mat
 
 ## Size Findings
 
-I regenerated the selected large replay to `/tmp/replay-parser-2-selected-current.json` with the current release CLI to separate current-code evidence from stale generated files. [VERIFIED: `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output /tmp/replay-parser-2-selected-current.json`]
+I regenerated the selected large replay to `/tmp/replay-parser-2-selected-current.json` with the current release CLI to separate current-code evidence from stale generated files. [VERIFIED: `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse ~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output /tmp/replay-parser-2-selected-current.json`]
 
 | Measurement | Value | Meaning |
 |---|---:|---|
@@ -144,7 +144,7 @@ pub struct CompactPlayerRow {
 2. Parser-core behavior: update aggregate projection tests for merged counters, numeric refs, weapon dictionary, omitted zero/null fields, and debug-only names/provenance; run `cargo test -p parser-core --test aggregate_projection --test deterministic_output --test debug_artifact --test combat_event_semantics --test fault_injection_regressions`. [VERIFIED: existing test files]
 3. CLI behavior: prove default minified output omits `null`, empty arrays, zero counters, verbose names in event rows, bounty fields, source refs, and debug keys; run `cargo test -p parser-cli --test parse_command`. [VERIFIED: crates/parser-cli/tests/parse_command.rs]
 4. Harness behavior: update comparison derivation to read merged player counters and derive bounty inputs from compact kills; run `cargo test -p parser-harness comparison_report benchmark_report`. [VERIFIED: crates/parser-harness/src/comparison.rs and crates/parser-harness/src/benchmark_report.rs]
-5. Selected size proof: run `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse /home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json` and require the generated artifact size to be `<= 100000`, with recursive absence checks for removed default fields. [VERIFIED: selected replay path in .planning/STATE.md]
+5. Selected size proof: run `cargo run -q -p parser-cli --bin replay-parser-2 --release -- parse ~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json --output .planning/generated/phase-05/benchmarks/selected-large-artifact.json` and require the generated artifact size to be `<= 100000`, with recursive absence checks for removed default fields. [VERIFIED: selected replay path in .planning/STATE.md]
 6. Structural report proof: run `cargo run -q -p parser-harness --bin benchmark-report-check -- --report .planning/generated/phase-05/benchmarks/benchmark-report.json --mode structural`. Do not run `scripts/benchmark-phase5.sh --ci` as this quick plan's verification because it can fail on unrelated full Phase 5.2 acceptance gates; those gates remain preserved for later full acceptance execution. [VERIFIED: scripts/benchmark-phase5.sh and crates/parser-harness/src/bin/benchmark-report-check.rs]
 
 ## Open Questions (RESOLVED)

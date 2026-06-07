@@ -17,7 +17,7 @@ key-files:
     - .gitignore
     - .planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md
   modified:
-    - /home/afgan0r/Projects/SolidGames/replays-parser/src
+    - replays-parser/src
 key-decisions:
   - "workflow.auto_advance selected repair-source-command at the blocking decision checkpoint."
   - "The legacy parser source command remains canonical; parse:dist is diagnostic only unless explicitly approved later."
@@ -53,14 +53,14 @@ completed: 2026-04-25
 2. **Task 2: Record the canonical source-command preflight gate** - `c3ec98f`
 3. **Task 3: Resolve source-command blocker before baseline execution** - `4e41b46`
 
-**External compatibility repair:** `/home/afgan0r/Projects/SolidGames/replays-parser` commit `5e639fc0af222d198a4d20c402f2c8edb0bdc90d`.
+**External compatibility repair:** `replays-parser` commit `5e639fc0af222d198a4d20c402f2c8edb0bdc90d`.
 
 ## Files Created/Modified
 
 - `.gitignore` - Ignores generated GSD evidence artifacts.
 - `.planning/generated/phase-01/` - Local ignored evidence directories for baseline runs, corpus profiles, and backups.
 - `.planning/phases/01-legacy-baseline-and-corpus/baseline-command-runtime.md` - Source-command gate, preflight evidence, fallback warning, repair decision, and post-repair pass.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src` - Mechanical Lodash import compatibility repair committed in the legacy parser repo.
+- `replays-parser/src` - Mechanical Lodash import compatibility repair committed in the legacy parser repo.
 
 ## Decisions Made
 
@@ -74,7 +74,7 @@ completed: 2026-04-25
 - **Found during:** Task 3 (Resolve source-command blocker before baseline execution)
 - **Issue:** `pnpm run parse -- --help` failed because Node ESM could not provide named exports from CommonJS `lodash`.
 - **Fix:** Replaced legacy parser Lodash named ESM imports with default imports plus destructuring, preserving the same Lodash functions.
-- **Files modified:** `/home/afgan0r/Projects/SolidGames/replays-parser/src`
+- **Files modified:** `replays-parser/src`
 - **Verification:** `pnpm run parse -- --help` passes under Node `v18.14.0`.
 - **Committed in:** `5e639fc0af222d198a4d20c402f2c8edb0bdc90d`
 
@@ -98,7 +98,7 @@ Wave 2 can run baseline and corpus plans against the canonical source command. A
 ## Self-Check: PASSED
 
 - `rg -n "^\\.planning/generated/$" .gitignore` passed.
-- `pnpm run parse -- --help` passed in `/home/afgan0r/Projects/SolidGames/replays-parser` under Node `v18.14.0`.
+- `pnpm run parse -- --help` passed in `replays-parser` under Node `v18.14.0`.
 - `rg -n "Gate decision:|Source command status: PASS" baseline-command-runtime.md` passed.
 - `git diff --check` passed in this repo.
 

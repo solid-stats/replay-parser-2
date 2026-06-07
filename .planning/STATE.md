@@ -99,7 +99,7 @@ Last activity: 2026-05-10 — Completed quick task 260510-hu6: Scale staging par
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- V1 behavior must be grounded in the old TypeScript parser at `/home/afgan0r/Projects/SolidGames/replays-parser`.
+- V1 behavior must be grounded in the old TypeScript parser at `replays-parser`.
 - `~/sg_stats` historical data is the golden/test baseline, not a production import source.
 - Parser output preserves observed identifiers only; canonical player matching and PostgreSQL persistence belong to `server-2`.
 - Vehicle score from GitHub issue #13 is in Phase 4 event/aggregate semantics.

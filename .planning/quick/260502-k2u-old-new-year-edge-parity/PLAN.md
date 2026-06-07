@@ -13,7 +13,7 @@ the end of that year's replay list.
 
 ## Constraints
 
-- Use the old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` as the
+- Use the old parser at `replays-parser` as the
   behavioral reference.
 - Keep replay discovery, server persistence, canonical identity, and web behavior
   out of scope.

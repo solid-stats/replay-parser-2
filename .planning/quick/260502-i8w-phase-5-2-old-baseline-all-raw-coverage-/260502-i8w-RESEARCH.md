@@ -4,10 +4,10 @@
 
 Old parser reference:
 
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/index.ts`
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts`
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - utils/getPlayerName.ts`
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/workers/parseReplayWorker.ts`
+- `replays-parser/src/2 - parseReplayInfo/index.ts`
+- `replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts`
+- `replays-parser/src/0 - utils/getPlayerName.ts`
+- `replays-parser/src/1 - replays/workers/parseReplayWorker.ts`
 
 Findings:
 
@@ -24,7 +24,7 @@ After the fix, old and new both attempted 23473 raw files.
 
 ## Selected Replay Comparison
 
-Selected replay: `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
+Selected replay: `~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
 
 Stats-relevant totals match between old and new:
 

@@ -185,11 +185,11 @@ worker behavior, old-vs-new comparison commands, benchmarks, or adjacent
   Legacy parser command/runtime baseline and result drift context.
 
 ### Legacy parser source
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/getEntities.ts`
+- `replays-parser/src/2 - parseReplayInfo/getEntities.ts`
   - Old entity extraction, vehicle capture, and connected-player backfill logic.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts`
+- `replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts`
   - Old duplicate-slot same-name aggregate merge behavior.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - types/replay.d.ts`
+- `replays-parser/src/0 - types/replay.d.ts`
   - Old replay/entity/event/player type shapes.
 
 ### Strict quality quick task

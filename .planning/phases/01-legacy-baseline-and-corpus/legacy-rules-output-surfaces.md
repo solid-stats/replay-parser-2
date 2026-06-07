@@ -11,10 +11,10 @@ status: draft
 Legacy replay selection is a parity-harness concern, not a parser core contract rule. Phase 2 should keep normalized parser artifacts based on observed replay contents; Phase 5 can apply the legacy selection policy when comparing old and new aggregate outputs.
 
 Source references:
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/getReplays.ts:20` filters replay-list rows with `replay.mission_name.startsWith(gameType)`.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/getReplays.ts:23` excludes Solid Games Squad missions with `!replay.mission_name.startsWith('sgs')`.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/index.ts:26` applies an extra `sm` selection rule: `dayjsUTC(replay.date).isAfter('2023-01-01', 'month')`.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/getReplays.ts:19` deduplicates replay-list rows by filename before filtering.
+- `replays-parser/src/1 - replays/getReplays.ts:20` filters replay-list rows with `replay.mission_name.startsWith(gameType)`.
+- `replays-parser/src/1 - replays/getReplays.ts:23` excludes Solid Games Squad missions with `!replay.mission_name.startsWith('sgs')`.
+- `replays-parser/src/index.ts:26` applies an extra `sm` selection rule: `dayjsUTC(replay.date).isAfter('2023-01-01', 'month')`.
+- `replays-parser/src/1 - replays/getReplays.ts:19` deduplicates replay-list rows by filename before filtering.
 
 The new parser should not hide or drop replay content based on these legacy filters. The filters are used to reproduce the old aggregate baseline and should be named as such in the comparison harness.
 
@@ -23,8 +23,8 @@ The new parser should not hide or drop replay content based on these legacy filt
 Legacy parse workers can return successful skips rather than parsed replay data.
 
 Source references:
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/workers/parseReplayWorker.ts:29` returns skipped status with reason `empty_replay` when parsed replay info has no player results.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/1 - replays/workers/parseReplayWorker.ts:38` returns skipped status with reason `mace_min_players` when a `mace` replay has fewer than `10` parsed players.
+- `replays-parser/src/1 - replays/workers/parseReplayWorker.ts:29` returns skipped status with reason `empty_replay` when parsed replay info has no player results.
+- `replays-parser/src/1 - replays/workers/parseReplayWorker.ts:38` returns skipped status with reason `mace_min_players` when a `mace` replay has fewer than `10` parsed players.
 - Other read/parse failures return `status: 'error'` with filename, message, and stack; they are not the same as the two explicit skip reasons.
 
 These skip reasons are legacy aggregate/parity behavior. A normalized parser artifact can still represent source references and parse failures without treating the legacy aggregate skip as canonical parser semantics.
@@ -35,9 +35,9 @@ Legacy parity depends on four config inputs:
 
 | Input | Observed state | Legacy role |
 |---|---:|---|
-| `/home/afgan0r/Projects/SolidGames/replays-parser/config/excludeReplays.json` | 16 replay path entries, including one duplicate | Replay exclusion input used by legacy preparation/selection logic. |
-| `/home/afgan0r/Projects/SolidGames/replays-parser/config/includeReplays.json` | 3 manual mission includes: Red Dawn, Unorthodox Methods, Nuclear Danger | Manual mission-to-game-type include input. |
-| `/home/afgan0r/Projects/SolidGames/replays-parser/config/excludePlayers.json` | 5 player rules: scandal, mayson, exile, mooniverse, jm0t | Legacy player exclusion input with optional date bounds. |
+| `replays-parser/config/excludeReplays.json` | 16 replay path entries, including one duplicate | Replay exclusion input used by legacy preparation/selection logic. |
+| `replays-parser/config/includeReplays.json` | 3 manual mission includes: Red Dawn, Unorthodox Methods, Nuclear Danger | Manual mission-to-game-type include input. |
+| `replays-parser/config/excludePlayers.json` | 5 player rules: scandal, mayson, exile, mooniverse, jm0t | Legacy player exclusion input with optional date bounds. |
 | `~/sg_stats/config/nameChanges.csv` | 74 lines including header | Legacy name/id compatibility input. |
 
 The new parser should preserve source-observed replay identity fields. Config-driven exclusions, manual includes, and name compatibility belong in the parity harness or aggregate compatibility layer unless a later phase explicitly moves a specific rule into a server-owned workflow.
@@ -47,10 +47,10 @@ The new parser should preserve source-observed replay identity fields. Config-dr
 Observed identity and compatibility identity are separate.
 
 Source references:
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/getEntities.ts:27` creates player records from unit entities using observed `id`, `name`, and `side`.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/getEntities.ts:55` backfills player records from `connected` events when the entity is not a vehicle and the connected name is present.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts:13` merges duplicate player records by equal `name`, combining kills, vehicle stats, teamkills, death flags, weapons, vehicles, and other-player references.
-- `/home/afgan0r/Projects/SolidGames/replays-parser/src/0 - utils/namesHelper/prepareNamesList.ts` reads `nameChanges.csv` and prepares legacy name history for aggregate compatibility.
+- `replays-parser/src/2 - parseReplayInfo/getEntities.ts:27` creates player records from unit entities using observed `id`, `name`, and `side`.
+- `replays-parser/src/2 - parseReplayInfo/getEntities.ts:55` backfills player records from `connected` events when the entity is not a vehicle and the connected name is present.
+- `replays-parser/src/2 - parseReplayInfo/combineSamePlayersInfo.ts:13` merges duplicate player records by equal `name`, combining kills, vehicle stats, teamkills, death flags, weapons, vehicles, and other-player references.
+- `replays-parser/src/0 - utils/namesHelper/prepareNamesList.ts` reads `nameChanges.csv` and prepares legacy name history for aggregate compatibility.
 
 Phase 2 parser artifacts must keep observed identity raw enough for `server-2` to own canonical player matching later. Old same-name combining, accepted name-change history, and display-name compatibility are compatibility layer behavior for parity and aggregate comparison, not parser-core identity normalization.
 
@@ -74,7 +74,7 @@ The parser core owns:
 
 ## Ordinary Output Surfaces
 
-Legacy ordinary outputs are produced by `/home/afgan0r/Projects/SolidGames/replays-parser/src/4 - output`.
+Legacy ordinary outputs are produced by `replays-parser/src/4 - output`.
 
 Source references:
 - `src/4 - output/consts.ts` defines `global_statistics.json`, `squad_statistics.json`, `squad_full_rotation_statistics.json`, `rotations_info.json`, `all_time`, `weapons_statistics`, `weeks_statistics`, and `other_players_statistics`.
@@ -107,7 +107,7 @@ Detailed Phase 5 comparison should record whether each diff affects only parser 
 
 ## Annual Nomination Reference Only
 
-Legacy annual nomination code lives under `/home/afgan0r/Projects/SolidGames/replays-parser/src/!yearStatistics`.
+Legacy annual nomination code lives under `replays-parser/src/!yearStatistics`.
 
 Observed yearly outputs live under `~/sg_stats/year_results` and currently include 14 `nomination.txt` files in numbered folders.
 

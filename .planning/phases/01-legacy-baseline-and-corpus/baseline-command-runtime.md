@@ -33,7 +33,7 @@ Both runs used fake HOME isolation. The real `~/sg_stats/results` and `~/sg_stat
 
 | Field | Value |
 |-------|-------|
-| Legacy repo path | `/home/afgan0r/Projects/SolidGames/replays-parser` |
+| Legacy repo path | `replays-parser` |
 | Original legacy reference commit | `3392ca2f367a87f6eb59041a239e7ca2519e1ec5` |
 | Baseline source-command repair commit | `5e639fc0af222d198a4d20c402f2c8edb0bdc90d` |
 | Canonical command | `pnpm run parse` |
@@ -146,7 +146,7 @@ Allowed D-08 categories for future comparison reports are `compatible`, `intenti
 Source-command preflight:
 
 ```bash
-cd /home/afgan0r/Projects/SolidGames/replays-parser
+cd replays-parser
 source "$HOME/.nvm/nvm.sh"
 nvm use --silent v18.14.0
 pnpm run parse -- --help
@@ -155,13 +155,13 @@ pnpm run parse -- --help
 Deterministic profile pattern:
 
 ```bash
-RUN_ROOT="/home/afgan0r/Projects/SolidGames/replay-parser-2/.planning/generated/phase-01/baseline-runs/<run-id>-wc1"
+RUN_ROOT="replay-parser-2/.planning/generated/phase-01/baseline-runs/<run-id>-wc1"
 RUN_HOME="$RUN_ROOT/home"
 mkdir -p "$RUN_HOME/sg_stats"
 ln -s "$HOME/sg_stats/raw_replays" "$RUN_HOME/sg_stats/raw_replays"
 ln -s "$HOME/sg_stats/lists" "$RUN_HOME/sg_stats/lists"
 cp -a "$HOME/sg_stats/config" "$RUN_HOME/sg_stats/config"
-cd /home/afgan0r/Projects/SolidGames/replays-parser
+cd replays-parser
 source "$HOME/.nvm/nvm.sh"
 nvm use --silent v18.14.0
 HOME="$RUN_HOME" WORKER_COUNT=1 pnpm run parse > "$RUN_ROOT/baseline.log" 2>&1

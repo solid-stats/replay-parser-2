@@ -132,7 +132,7 @@ None - no external service configuration required.
 
 ## Verification
 
-- `cargo metadata --format-version 1 --manifest-path /home/afgan0r/Projects/SolidGames/replay-parser-2/Cargo.toml --filter-platform x86_64-unknown-linux-gnu`
+- `cargo metadata --format-version 1 --manifest-path replay-parser-2/Cargo.toml --filter-platform x86_64-unknown-linux-gnu`
 - `test -f Cargo.toml && test -f rust-toolchain.toml && test -f crates/parser-contract/Cargo.toml`
 - `cargo test -p parser-contract version_contract`
 - `git diff --check`

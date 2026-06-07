@@ -27,7 +27,7 @@ Read these planning files before planning or implementing:
 
 ## Critical Context
 
-- The old parser at `/home/afgan0r/Projects/SolidGames/replays-parser` is the historical v1 behavioral reference. Do not reintroduce active old-vs-new parity tooling unless the user explicitly requests new migration work.
+- The old parser at `replays-parser` is the historical v1 behavioral reference. Do not reintroduce active old-vs-new parity tooling unless the user explicitly requests new migration work.
 - Historical data at `~/sg_stats` is the historical v1 validation source and may be used for curated regression fixtures or investigation. It is no longer an active benchmark gate.
 - The new parser must preserve observed replay identity fields only. Canonical player matching belongs to `server-2`.
 - External replay discovery, production raw replay fetching, and ingestion staging belong to `replays-fetcher`; parser worker consumes `server-2` parse jobs and S3 object keys only.

@@ -34,7 +34,7 @@ Fresh report: `.planning/generated/phase-05/benchmarks/benchmark-report.json`
 
 Selected large replay:
 
-- Path: `/home/afgan0r/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
+- Path: `~/sg_stats/raw_replays/2021_10_31__00_13_51_ocap.json`
 - Raw bytes: `19706937`
 - Artifact bytes: `40042`
 - New artifact status: `partial`

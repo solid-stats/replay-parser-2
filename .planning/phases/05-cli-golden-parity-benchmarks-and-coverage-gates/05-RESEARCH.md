@@ -54,7 +54,7 @@ memory/RSS where practical, and 10x status as pass, fail, or unknown.
 
 ## Old Parser and Corpus Inputs
 
-The canonical old baseline remains `/home/afgan0r/Projects/SolidGames/replays-parser`
+The canonical old baseline remains `replays-parser`
 at the repaired source-command baseline. The semantic profile is
 `HOME=<fake-home> WORKER_COUNT=1 pnpm run parse`, with Node `v18.14.0` and pnpm
 `10.33.0`. The default-worker profile is diagnostic only because Phase 1 found
