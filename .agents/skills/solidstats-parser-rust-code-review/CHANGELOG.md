@@ -12,7 +12,7 @@
   S3 read, and shutdown-without-drain.
 
 ## 2026-06-06 — Initial
-- The operational parser reviewer: hard-requires `solidstats-process-review-standards` (format,
+- The operational parser reviewer: hard-requires `solidstats-shared-review-standards` (format,
   severity, verdict, scope, noise filter) and enforces `solidstats-parser-rust-conventions` as its
   rule library. Cites rules, doesn't restate them.
 - **Phase 1 — contract & determinism gate** (the parser analog of the backend API-contract gate):

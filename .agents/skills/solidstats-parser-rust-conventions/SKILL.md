@@ -62,8 +62,18 @@ The workspace already denies a large surface (`unsafe_code = forbid`, `warnings 
 `print_stdout`, `dbg_macro`). These conventions **build on that floor — they do not restate it.**
 
 - A clean `cargo clippy` and `cargo build` (warnings are errors) is a hard gate, not a nicety.
-- Never silence a lint with `#[allow(...)]`. Use `#[expect(lint, reason = "…")]` so the suppression
-  is justified and fails the build when it becomes unnecessary.
+- **Never silence a lint with `#[allow(...)]`.** Use `#[expect(lint, reason = "…")]` so the
+  suppression is justified and fails the build the moment it becomes unnecessary. This mirrors the
+  TS lint-suppression policy (`solidstats-shared-ts-standards` §C) — silencing a gate hides the
+  problem instead of fixing it.
+- **Structural-complexity lints are a design signal, not a thing to suppress.**
+  `clippy::too_many_lines`, `too_many_arguments`, `cognitive_complexity`, `type_complexity` mean
+  the function/type is doing too much — **split it**, never `#[expect]`/`#[allow]` the limit. (A
+  CLI/worker `main` assembling dependencies is the one place this tension shows up — extract the
+  wiring, don't silence the lint.)
+- **A lint that is genuine noise for this codebase is configured once**, at the workspace
+  `[lints.clippy]` level, not suppressed at each site. N scattered `#[expect]`s for the same lint
+  is the signal to move it to the workspace table.
 - `unwrap`/`expect`/`panic` are denied — a parser never panics on input (see parsing); reach for
   typed errors.
 
@@ -78,6 +88,7 @@ Load the file that matches the code you're touching — not all at once.
 | `references/determinism-and-contract.md` | **§C Determinism** (byte-identical artifacts, ordered output, float/overflow rules) and **§G the parser-contract** (semver, JSON Schema, golden manifest, cargo-semver-checks) — the two headline rules. |
 | `references/parsing-types-errors.md` | **§D error handling** (thiserror, C-GOOD-ERR), **§E types** (newtypes, exhaustive matches, C-CONV), **§F parsing & malformed-input totality** (size/recursion caps, deny_unknown_fields, fuzzability). |
 | `references/worker-build-perf.md` | **§H async & worker** (tokio, DLX/prefetch/drain/S3 timeouts, durability), **§I docs/API hygiene/perf**, **§J build/supply-chain/CI** (cargo-deny/audit, MSRV, reproducible builds). |
+| `references/observability-and-lifecycle.md` | **§K Log hygiene** (tracing structured fields, level semantics, state-transition spans), **§L Diagnosability** (swallowed Results, error source chains, identifying context, upstream detail), **§M Resource lifecycle** (unbounded collections on worker state, bounded channels, temp files, S3 multipart cleanup). Mirrors `solidstats-shared-backend-ts-standards` §Z/§AA/§AB. |
 
 ---
 
@@ -86,4 +97,4 @@ Load the file that matches the code you're touching — not all at once.
 Test conventions — the golden/parity harness, required proptest/insta/fuzz, determinism tests, and
 the coverage gate — live in
 [`solidstats-parser-rust-tests`](../solidstats-parser-rust-tests/SKILL.md), on top of
-[`solidstats-process-testing-standards`](../solidstats-process-testing-standards/SKILL.md).
+[`solidstats-shared-testing-standards`](../solidstats-shared-testing-standards/SKILL.md).

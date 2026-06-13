@@ -10,6 +10,11 @@ The same input must produce a **byte-identical** artifact on every run, machine,
 
 - **Ordered output only.** Serialize from `BTreeMap` / sorted `Vec`, never from `HashMap`/`HashSet`
   iteration — their order is randomized per process and will desync artifacts.
+- **`IndexMap` default serde gives NO ordering guarantee.** The official docs are explicit: the
+  default serde impl serializes `IndexMap` as a normal map with no guarantee the serialization
+  format preserves key-value order. Canonical output uses `BTreeMap` (or `serde_seq`, which emits
+  the entries as a tuple sequence — deterministic only insofar as the insertion order is). Never
+  rely on `IndexMap`'s default serde for bit-for-bit determinism.
 - **No nondeterministic sources in derived data.** No `SystemTime`/`Instant`, no `rand`, no env
   reads, no thread-scheduling-dependent ordering feeding anything that lands in the artifact.
 - **Floats compare with an epsilon** (`float_cmp` is denied); define a tolerance, don't `==`. Prefer

@@ -1,11 +1,23 @@
 # Changelog — solidstats-parser-rust-tests
 
+## 2026-06-13 — coverage-suppression discipline (shared-testing-standards §H)
+- Coverage gate section rewritten: no blanket file excludes, every suppressed line in
+  `coverage/allowlist.toml` with exact line numbers / owner / EXPIRY / co-located marker.
+  Legitimate categories enumerated; ordinary logic branches excluded from suppression.
+  Two hard requirements added: no stale entries (expired EXPIRY is a finding) and the gate
+  must run in CI — an unchecked or expired allowlist is theatre.
+
+## 2026-06-13 — insta sorted redactions (taxonomy V5, research-parser.md confirmed)
+- Snapshot section: stabilize snapshots over `HashSet` / non-deterministic iteration order with
+  sorted redaction selectors (`insta::sorted_redaction()`) instead of restructuring the type —
+  test-only/non-artifact values only; artifact data stays ordered per conventions §C.
+
 ## 2026-06-06 — Analysis fixes (see .planning/SKILLS-ANALYSIS.md)
 - Fixed the CI fuzz command: `-max_total_time` is a libFuzzer flag and must follow `--`
   (`cargo fuzz run <target> -- -max_total_time=300`).
 
 ## 2026-06-06 — Initial
-- The thin per-stack Rust parser test skill on top of `solidstats-process-testing-standards` (which
+- The thin per-stack Rust parser test skill on top of `solidstats-shared-testing-standards` (which
   owns the philosophy). Adds the cargo runner, the golden harness, and the property/snapshot/fuzz
   layers; assumes `solidstats-parser-rust-conventions` (determinism §C, contract §G).
 - **Required tooling (ratified):** proptest, insta, cargo-fuzz — added where missing.

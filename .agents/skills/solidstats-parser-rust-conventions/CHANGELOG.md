@@ -1,5 +1,38 @@
 # Changelog — solidstats-parser-rust-conventions
 
+## 2026-06-13 — Lint-suppression policy extended in §B
+
+- Extended the §B lint-floor `#[allow]`/`#[expect]` rule to mirror the TS suppression policy
+  (`solidstats-shared-ts-standards` §C): **structural-complexity lints** (`too_many_lines`,
+  `too_many_arguments`, `cognitive_complexity`, `type_complexity`) are a split signal, never
+  suppressed; a lint firing across many sites for one codebase-wide reason is set **once** at the
+  workspace `[lints.clippy]` level, not scattered as per-site `#[expect]`. The existing
+  `#[expect(reason=…)]`-over-`#[allow]` rule stays (it self-retires when unnecessary).
+- Basis: the gate-suppression triage (`plans/product/skills-taxonomy/coverage-clippy-triage.md`) —
+  e.g. `trivially_copy_pass_by_ref` (8 sites, one rationale) belongs in the workspace table; the 9
+  redundant test-module `#![allow(expect_used)]` are already covered by `clippy.toml`
+  `allow-expect-in-tests`.
+
+## 2026-06-13 — Observability reference (§K–§M) + research deltas (taxonomy V5)
+- New `references/observability-and-lifecycle.md`: **§K log hygiene** (tracing structured fields,
+  level semantics, state-transition spans, no PII/struct dumps, span hierarchy), **§L diagnosability**
+  (swallowed Results, error source chains, identifying context, upstream S3/lapin detail, happy-path
+  legibility), **§M resource lifecycle** (unbounded worker-state collections, bounded channels,
+  tempfile RAII, S3 multipart abort). Carries the bidirectional parity header naming
+  `solidstats-shared-backend-ts-standards` §Z/§AA/§AB (TS mirror): update both sides in the same
+  pass or leave a `TODO(#issue)`; one-sided edits are a review finding. Added to the SKILL.md
+  reference map (§-letter scheme continues §K–§M).
+- §H: the "Instrument with `tracing`" bullet is now a forward-reference to §K, not stand-alone prose.
+- §C (research-parser.md, confirmed): `IndexMap`'s default serde gives NO ordering guarantee —
+  canonical output uses `BTreeMap` or `serde_seq`; never rely on `IndexMap` default serde for
+  bit-for-bit determinism.
+- §H (research-parser.md, confirmed): lapin auto-recovery —
+  `ConnectionProperties::default().enable_auto_recover()` + `wait_for_recovery` on recoverable
+  errors; `basic_qos` prefetch clarified as delivery backpressure, NOT task concurrency — real
+  concurrency is capped with a bounded semaphore/channel.
+- §D's thiserror-only stance deliberately unchanged (research's "anyhow at the edge" consensus is
+  noted and rejected — our convention forbids anyhow).
+
 ## 2026-06-06 — Split into spine + references (user directive)
 - Restructured the single SKILL.md into a spine (intro + §A architecture + §B lint floor + reference
   map) plus `references/`: `determinism-and-contract.md` (§C/§G), `parsing-types-errors.md` (§D/§E/§F),

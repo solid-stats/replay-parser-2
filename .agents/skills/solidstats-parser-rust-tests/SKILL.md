@@ -2,7 +2,7 @@
 name: solidstats-parser-rust-tests
 description: >
   Rust testing for the SolidStats OCAP parser (replay-parser-2) — the per-stack layer on top of
-  solidstats-process-testing-standards. Adds the cargo test runner, the manifest-driven golden/parity
+  solidstats-shared-testing-standards. Adds the cargo test runner, the manifest-driven golden/parity
   harness, determinism tests, required property testing (proptest), snapshot testing (insta), required
   fuzzing (cargo-fuzz), and the coverage gate. Use when writing or reviewing parser unit, property,
   snapshot, golden, or fuzz tests.
@@ -15,7 +15,7 @@ description: >
 
 # Parser Tests — Rust / OCAP
 
-**This skill builds on [`solidstats-process-testing-standards`](../solidstats-process-testing-standards/SKILL.md) — read it first.**
+**This skill builds on [`solidstats-shared-testing-standards`](../solidstats-shared-testing-standards/SKILL.md) — read it first.**
 That skill owns the philosophy (RITE, AAA, the unit-vs-integration boundary, determinism, doubles,
 oracle strength, the coverage mindset, TDD). This skill adds the **Rust/parser HOW**: the runner,
 the golden harness, and the property/snapshot/fuzz layers. It assumes the rules in
@@ -68,6 +68,11 @@ expected status/features) is the canonical behavioral test.
 - Snapshot the generated artifact for representative fixtures (`assert_json_snapshot!`). Because
   artifacts are deterministic, snapshots should be stable with **minimal** redactions — redact only
   fields that legitimately vary (a build/version stamp), placing any `sorted_redaction` last.
+- **Sorted redactions for non-deterministic collections**: when a snapshot must include a `HashSet`
+  or another collection with non-deterministic iteration/serialization order, sort it at the
+  selector with a sorted redaction (`insta::sorted_redaction()`) — the snapshot stays stable across
+  runs without restructuring the type. This is for **test-only/non-artifact** values; anything that
+  lands in the artifact still serializes from ordered structures (conventions §C).
 - **CI enforcement**: insta auto-detects `CI=true` and fails on drift rather than writing snapshots;
   use `--unreferenced=auto` (delete locally / reject in CI). Local workflow: `cargo insta review`.
 
@@ -95,13 +100,42 @@ References the external `cargo-fuzz` tool skill for mechanics; the policy here:
 
 ## Coverage gate
 
-- `cargo-llvm-cov` via `parser-quality` + `scripts/coverage-gate.sh` (references the external
-  `coverage-analysis` skill). Aim high — `parser-core` logic toward 100% reachable; rare exceptions
-  justified. Coverage is a **floor, not proof** (testing-standards §H): pair with the property and
-  fuzz layers, which are the real fault detectors.
+Coverage tooling is `cargo-llvm-cov` via `parser-quality` + `scripts/coverage-gate.sh` (references
+the external `coverage-analysis` skill). This section mirrors the shared coverage policy in
+`solidstats-shared-testing-standards` §H and makes it concrete for the parser crate.
+
+**No blanket file excludes.** Every production line is either covered by tests or explicitly listed
+in `coverage/allowlist.toml`. There are no whole-file or whole-module suppressions.
+
+**Allowlist discipline.** Each entry in `coverage/allowlist.toml` requires:
+- Exact line numbers (not ranges wider than the actual excluded span).
+- A reviewer/owner field.
+- An `EXPIRY` date — the maximum age before the exclusion must be re-evaluated.
+- A co-located `// coverage-exclusion: <reason>` marker within a few lines of the excluded code in
+  the source file.
+
+Legitimate categories: live I/O boundaries (AMQP, S3, OS signals, outbound HTTP), `serde` Visitor
+arms that only fire on externally-supplied schema variations, `tokio::select!` cancellation races
+where the cancel arm cannot be driven deterministically, and defensive schema-drift fallbacks.
+**Never an ordinary logic branch** — if a branch is reachable in tests it must be covered, not
+suppressed.
+
+**Two hard requirements — without both, the gate is theatre:**
+
+1. **No stale entries.** An allowlist entry whose EXPIRY date has passed is a finding: either renew
+   it (with a new owner review) or resolve the underlying gap. A stale expiry means nobody is
+   watching that exclusion — treat it the same as a missing test.
+
+2. **CI enforcement.** The strict coverage gate must run in CI (e.g. the `cd.yml` verify job).
+   An allowlist that no CI job checks is not a gate; it is an unread document. Local-only coverage
+   checks do not satisfy this requirement.
+
+Aim high — `parser-core` logic toward 100 % reachable; rare exceptions go through the allowlist
+process above. Coverage is a **floor, not proof** (testing-standards §H): pair it with the property
+and fuzz layers, which are the real fault detectors.
 
 ## Not owned here
 
-The testing philosophy lives in `solidstats-process-testing-standards`; the severity of a
-test-quality problem in review lives in `solidstats-process-review-standards` §F (test quality is
+The testing philosophy lives in `solidstats-shared-testing-standards`; the severity of a
+test-quality problem in review lives in `solidstats-shared-review-standards` §F (test quality is
 never a standalone BLOCK unless a test actively masks a real bug).

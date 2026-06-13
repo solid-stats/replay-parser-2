@@ -2,7 +2,7 @@
 name: solidstats-parser-rust-code-review
 description: >
   Pedantic code review for the SolidStats Rust OCAP parser (replay-parser-2). Builds on
-  solidstats-process-review-standards (severity buckets, output format, verdict, scope, noise
+  solidstats-shared-review-standards (severity buckets, output format, verdict, scope, noise
   filter) and enforces solidstats-parser-rust-conventions as its rule library. Runs a
   contract-&-determinism gate, then a convention and correctness sweep with a parser-specific
   severity table. Use when reviewing parser code, verifying a finished parser task, or checking a
@@ -15,7 +15,7 @@ description: >
 
 # Parser Code Review — Rust / OCAP
 
-**This skill builds on [`solidstats-process-review-standards`](../solidstats-process-review-standards/SKILL.md) — read it first.**
+**This skill builds on [`solidstats-shared-review-standards`](../solidstats-shared-review-standards/SKILL.md) — read it first.**
 That skill owns the review philosophy, scope resolution (read every changed file in full), the
 severity buckets (🔴🟠🟡🔵), continuous-numbering output, the verdict rules, the test-file rule, and
 the noise filter. It must be installed alongside this skill.
@@ -125,7 +125,7 @@ severity from the Severity reference table below.
 ## Output
 
 Follow the output format, continuous numbering, severity buckets, and verdict rules from
-`solidstats-process-review-standards` (§D–§E). Open the report with the **Contract & determinism**
+`solidstats-shared-review-standards` (§D–§E). Open the report with the **Contract & determinism**
 gate result (above the buckets); there is no "Good" section. Cite the broken convention on each
 finding. The test-file rule (test quality is never a standalone BLOCK unless a test actively masks a
 real bug) lives in review-standards §F and applies unchanged; defer detailed test-quality judgement

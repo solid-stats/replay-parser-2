@@ -18,15 +18,22 @@ Applies to `parser-worker` (the `parser-core` logic stays sync and pure).
   *transient* failures requeue. An always-failing message must not redeliver forever.
 - **Bound prefetch.** Set a small `basic_qos(prefetch_count)` (e.g. 10–50) so unacked deliveries
   don't stream unbounded into worker memory — the queue-level counterpart to the input-size cap
-  (`parsing-types-errors.md` §F).
+  (`parsing-types-errors.md` §F). Prefetch is **delivery backpressure, not task concurrency**: it
+  caps unacked deliveries, not how many parse tasks run at once — cap real concurrency with a
+  bounded semaphore or bounded channel (the tokio-discipline bullet above).
 - **Drain on shutdown, don't just signal.** Graceful shutdown both *tells* (CancellationToken) and
   *waits*: collect in-flight tasks in a `JoinSet` and `join_next` them (ack the in-flight delivery)
   before exit, so SIGTERM doesn't drop a mid-parse message.
 - **Handle consumer cancellation / recovery.** A broker `basic.cancel` (queue deleted, failover) ends
-  the consumer stream — treat stream-end as reconnect, and enable connection recovery.
+  the consumer stream — treat stream-end as reconnect, and enable connection recovery: turn on
+  lapin's automatic connection + topology recovery via
+  `ConnectionProperties::default().enable_auto_recover()` and call
+  `channel.wait_for_recovery(error).await` on recoverable errors instead of tearing the worker down.
 - **Bound S3.** aws-sdk-s3 retries by default but sets **no** operation timeout — configure explicit
   `operation_timeout` + `operation_attempt_timeout` so a stalled read can't hang a worker task.
-- Instrument with `tracing` (structured spans/fields), correlating by `replayId` / `jobId`.
+- **Instrument with `tracing`** — the log-hygiene rules (structured fields, level semantics, span
+  hierarchy, `replay_id` / `job_id` correlation) live in `observability-and-lifecycle.md` §K;
+  diagnosability in §L.
 - *(Optional, once an OTLP collector exists)* propagate `traceparent` through the RabbitMQ message and
   export worker spans via `tracing-opentelemetry` / OTLP, so a parse is followable from server-2's
   dispatch span through the worker in one distributed trace.
