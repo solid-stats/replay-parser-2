@@ -93,9 +93,20 @@ order**:
    respected, no logic in the binaries. `[conv: §A]`
 7. **Async / worker** — tokio discipline (no `std::thread::sleep`, no lock across `.await`, bounded
    concurrency), durable jobs / ack / idempotency, graceful shutdown, `tracing`. `[conv: §H]`
-8. **Build & supply-chain** — `cargo-deny`/`cargo-audit`, MSRV, `overflow-checks`, profile policy.
+8. **Observability** — structured `tracing` fields (named, never `{}` interpolation of identity into
+   the message), log levels mean things (`warn!` = unexpected, `debug!` = an expected path), state
+   transitions instrumented, no whole-struct/PII fields; swallowed errors (`let _ =` / `.ok()` /
+   `unwrap_or_default()` on a `Result` that carries failure), the error `source()` chain passed as a
+   field (`err = ?e`), in-scope identifiers (`replay_id`/`job_id`/offset) named on error events, and
+   S3/lapin failures logged with status / request-id before propagating. `[conv: §K/§L]`
+9. **Resource lifecycle** — the worker is long-lived: no unbounded `Vec`/`HashMap` field on worker
+   state with a per-job write and no remove/cap, bounded `channel(N)` over `unbounded_channel()` on
+   per-job paths, RAII temp-file cleanup (`tempfile`), S3 multipart aborted on failure. A leak
+   finding cites all three legs (outlives the job, unbounded write path, nothing removes/caps it).
+   `[conv: §M]`
+10. **Build & supply-chain** — `cargo-deny`/`cargo-audit`, MSRV, `overflow-checks`, profile policy.
    `[conv: §J]`
-9. **Docs / perf / quality** — `missing_docs`, `#[must_use]`, perf (iterators, box large variants),
+11. **Docs / perf / quality** — `missing_docs`, `#[must_use]`, perf (iterators, box large variants),
    the lint floor. `[conv: §I/§B]`
 
 Each finding lands in one severity bucket, carries a `[topic]` tag, and cites `[conv: …]`. Take the
@@ -116,9 +127,12 @@ severity from the Severity reference table below.
 | Logic / clock / network in `parser-core` (impurity) | 🟠 |
 | `deny_unknown_fields` off on an artifact-bound type; unbounded S3 read | 🟠 |
 | `cargo-deny` / `cargo-audit` advisory; MSRV undeclared | 🟠 |
+| Unbounded growth on long-lived worker state — per-job `insert`/`push`, no `remove`/`clear`/cap (cite all three legs) | 🟠 (🔴 on the hot delivery path) |
+| Swallowed `Result` (`let _ =` / `.ok()` / `unwrap_or_default`) on an error path, nothing logged or propagated; `unbounded_channel()` on a per-job path; temp file with no RAII cleanup; un-aborted S3 multipart on failure | 🟠 |
 | Non-exhaustive `_` match hiding variants; hand-written `Into`/`TryInto`; missing newtype | 🟡 |
 | Missing `#[non_exhaustive]` on a growing public enum; shutdown signals but doesn't drain | 🟡 |
-| Docs / naming / style; missing `#[must_use]` | 🔵 |
+| Unstructured `tracing` (`{}` interpolation vs named fields), wrong log level, uninstrumented state transition, whole-struct/PII log field; dropped error `source()` chain; missing in-scope identifier on an error event; S3/lapin failure logged without status/request-id | 🟡 |
+| Docs / naming / style; missing `#[must_use]`; no one-line log at a real flow inflection point (happy-path legibility) | 🔵 |
 
 ---
 

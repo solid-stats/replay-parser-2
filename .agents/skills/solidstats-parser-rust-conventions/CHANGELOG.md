@@ -8,7 +8,7 @@
   suppressed; a lint firing across many sites for one codebase-wide reason is set **once** at the
   workspace `[lints.clippy]` level, not scattered as per-site `#[expect]`. The existing
   `#[expect(reason=…)]`-over-`#[allow]` rule stays (it self-retires when unnecessary).
-- Basis: the gate-suppression triage (`plans/product/skills-taxonomy/coverage-clippy-triage.md`) —
+- Basis: the gate-suppression triage (`skills/decisions/research/coverage-clippy-triage.md`) —
   e.g. `trivially_copy_pass_by_ref` (8 sites, one rationale) belongs in the workspace table; the 9
   redundant test-module `#![allow(expect_used)]` are already covered by `clippy.toml`
   `allow-expect-in-tests`.

@@ -17,13 +17,13 @@
       "source": "solid-stats/skills",
       "sourceType": "github",
       "skillPath": "solidstats-parser-rust-code-review/SKILL.md",
-      "computedHash": "3949a7c4dcae974e69dd63e926ca4927a5b53a8830d55f9a407d2447ddd8e672"
+      "computedHash": "e8d4321ea725852d913e0058385b621c2d31e7b1939151e26cce4836ffd72ce0"
     },
     "solidstats-parser-rust-conventions": {
       "source": "solid-stats/skills",
       "sourceType": "github",
       "skillPath": "solidstats-parser-rust-conventions/SKILL.md",
-      "computedHash": "e6fc9ac254cecd1b424a72a40f9f339f128cbea809a5720aba1fb46fda30ba92"
+      "computedHash": "52c35022bfa586b56a1924e2e52f926fd1036cd097b88e830fc8fbf4c221a78e"
     },
     "solidstats-parser-rust-tests": {
       "source": "solid-stats/skills",

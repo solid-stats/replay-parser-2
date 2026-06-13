@@ -1,5 +1,17 @@
 # Changelog — solidstats-parser-rust-code-review
 
+## 2026-06-13 — Wire observability & lifecycle (§K–§M)
+- Phase 2 sweep gains two risk-ordered steps after async/worker: **Observability** (`[conv: §K/§L]`
+  — structured `tracing` fields, log-level semantics, state-transition instrumentation, swallowed
+  `Result`s, error `source()` chain + identifying context, S3/lapin failure detail) and **Resource
+  lifecycle** (`[conv: §M]` — unbounded worker-state growth, bounded channels, RAII temp files, S3
+  multipart abort; a leak finding cites all three legs).
+- Severity table gains the matching rows: worker-state leak 🟠 (🔴 on the hot delivery path);
+  swallowed `Result` / `unbounded_channel` / temp-file / multipart 🟠; the §K/§L logging set 🟡;
+  happy-path legibility 🔵.
+- Closes the gap (ADR 0006) where `references/observability-and-lifecycle.md` §K–§M existed in the
+  conventions but no review step enforced them.
+
 ## 2026-06-06 — Follow-up
 - Conventions split into spine + `references/`; noted that the §-letters now live in those reference
   files (citations unchanged, resolved via the conventions reference map).
