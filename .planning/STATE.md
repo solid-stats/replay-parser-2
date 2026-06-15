@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-05-10 — Completed quick task 260510-hu6: Scale staging parser workers to 2
+Last activity: 2026-06-15 — Completed quick task 260615-snt: Wire errors-only Sentry
 
 ## Performance Metrics
 
@@ -258,6 +258,7 @@ Resolved: The 05-03 stable Rust coverage blocker was resolved by the custom
 | 260509-p4m | Retired post-v1 migration compare, benchmark, and worker-smoke tooling; renamed quality gates crate | 2026-05-09 | committed | Verified | [260509-p4m-post-v1-cleanup-migration-harness-benchm](./quick/260509-p4m-post-v1-cleanup-migration-harness-benchm/) |
 | 260509-rff | Fixed KS victory detection from OCAP raw `mission_message` events | 2026-05-09 | committed | Verified | [260509-rff-ocap-raw-events-mission-message-top-leve](./quick/260509-rff-ocap-raw-events-mission-message-top-leve/) |
 | 260510-hu6 | Scale staging parser workers to 2 | 2026-05-10 | d0a2b33 | Verified | [260510-hu6-scale-staging-parser-workers-to-2](./quick/260510-hu6-scale-staging-parser-workers-to-2/) |
+| 260615-snt | Wire errors-only Sentry/GlitchTip into the parser binary | 2026-06-15 | (this PR) | Reviewed (APPROVE) | [260615-snt-sentry-errors-only-wire](./quick/260615-snt-sentry-errors-only-wire/) |
 
 ## Deferred Items
 
