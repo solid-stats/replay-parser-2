@@ -183,6 +183,20 @@ impl Error for CliError {
 }
 
 fn main() -> ExitCode {
+    // Errors-only Sentry/GlitchTip wiring. The guard must stay bound for the whole
+    // program (it owns the panic hook and flushes pending events on drop); binding to
+    // `_sentry` rather than `_` keeps it alive instead of dropping it immediately. An
+    // empty/unset `SENTRY_DSN` yields a disabled no-op client. We never set
+    // `traces_sample_rate`, so it stays 0.0 — no performance tracing, errors only.
+    let _sentry = sentry::init((
+        std::env::var("SENTRY_DSN").unwrap_or_default(),
+        sentry::ClientOptions {
+            environment: Some("staging".into()),
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
     match run() {
         Ok(exit_code) => exit_code,
         Err(error) => report_error(&error),

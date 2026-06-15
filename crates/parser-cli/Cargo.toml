@@ -23,6 +23,15 @@ hex = "0.4"
 serde_json = "1"
 sha2 = "0.10"
 tokio = { version = "1", features = ["rt-multi-thread"] }
+# Errors-only Sentry/GlitchTip reporting: keep `panic`, drop `tracing`/`profiling`.
+# `rustls` matches the worker's existing TLS stack, avoiding a native-tls dependency.
+sentry = { version = "0.48.2", default-features = false, features = [
+    "backtrace",
+    "contexts",
+    "panic",
+    "reqwest",
+    "rustls",
+] }
 
 [dev-dependencies]
 assert_cmd = "2"
