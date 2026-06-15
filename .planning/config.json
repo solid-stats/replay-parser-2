@@ -147,5 +147,8 @@
       "standard": "medium",
       "heavy": "xhigh"
     }
+  },
+  "graphify": {
+    "enabled": true
   }
 }
