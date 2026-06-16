@@ -35,6 +35,33 @@ matches. Live Timeweb S3 validation remains deployer-run operational evidence
 requiring credentials; local MinIO and worker smoke tests cover parser-owned
 behavior.
 
+## Current Milestone: v1.1 Skill-Conformance Refactor
+
+**Goal:** Bring `replay-parser-2` into compliance with `solidstats-parser-rust-conventions` (§A–§M),
+behavior-preserving — golden fixtures stay byte-identical, the published parse-artifact /
+worker-message bytes and JSON Schema do not change, and the full Rust gate stays green at every phase
+boundary. This is a Rust skill-conformance refactor, NOT a TS toolchain migration; it runs in parallel
+with `server-2` Track C.
+
+**Target areas:**
+- Quality-gate restoration: renew the coverage allowlist + wire `coverage-gate.sh --strict`,
+  `cargo-deny`/`cargo-audit`, `cargo-semver-checks`/JSON-schema-diff into CI; add `overflow-checks`
+  to the release profile (§C/§J/§G).
+- Lint-floor + structural conformance: `#[allow]` → `#[expect(reason=)]`, config-once promotion,
+  structural-complexity split, crate dep-table reconcile (§B/§A).
+- Core determinism + totality + errors: sort-key total-ordering audit, non-finite-float guard,
+  `thiserror`/`Option` cleanups, core-internal newtypes (§C/§D/§E/§F).
+- Worker resilience + observability: lapin auto-recovery, S3 operation timeouts, `parse_job` span
+  hierarchy, S3 error status/request-id (§H/§K/§L).
+- Milestone-close conformance audit (goal-backward, zero behavioral drift).
+
+**Key context:** behavior-preserving is a blocker-level invariant; §F non-finite is fixed in-scope
+(`null`→`unknown`, with a `server-2` heads-up); §E contract-facing newtypes, §G `#[non_exhaustive]`,
+and §G newtype-hide are OUT of scope (schema/semver-affecting or §E-wildcard-conflicting) — deferred
+to a coordinated contract-version bump with `server-2` (see
+`plans/replay-parser-2/briefs/replay-parser-2-contract-conformance-deferred.md`). Full divergence
+sizing: `.planning/milestones/v1.1-SIZING.md`.
+
 ## Requirements
 
 ### Validated
@@ -52,8 +79,9 @@ behavior.
 
 ### Active
 
-No active v1 requirements remain. Define the next active requirements through
-`$gsd-new-milestone` before starting v1.1 or v2 work.
+Milestone v1.1 (Skill-Conformance Refactor) requirements live in `.planning/REQUIREMENTS.md` —
+behavior-preserving conformance of the parser source to `solidstats-parser-rust-conventions`. See the
+Current Milestone section above and `.planning/milestones/v1.1-SIZING.md`.
 
 ### Out of Scope
 
@@ -209,4 +237,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-09 after v1.0 milestone completion*
+*Last updated: 2026-06-16 after starting milestone v1.1 (Skill-Conformance Refactor)*
