@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "updated_at": "2026-06-16T11:50:25.898Z",
+    "version": 2
+  },
+  "entries": {
+    "CLI parse": {
+      "method": "CLI",
+      "path": "replay-parser-2 parse <input> --output <path> [--pretty] [--debug-artifact <path>] [--replay-id <id>]",
+      "params": [
+        "input",
+        "output",
+        "pretty",
+        "debug_artifact",
+        "replay_id"
+      ],
+      "file": "crates/parser-cli/src/main.rs",
+      "description": "Parse a local OCAP JSON replay into a compact (minimal v3) parse artifact JSON."
+    },
+    "CLI schema": {
+      "method": "CLI",
+      "path": "replay-parser-2 schema [--output <path>]",
+      "params": [
+        "output"
+      ],
+      "file": "crates/parser-cli/src/main.rs",
+      "description": "Export the current compact parse-artifact JSON Schema (stdout when --output omitted)."
+    },
+    "CLI worker": {
+      "method": "CLI",
+      "path": "replay-parser-2 worker [--amqp-url --job-queue --result-exchange --completed-routing-key --failed-routing-key --s3-bucket --s3-region --s3-endpoint --s3-force-path-style --artifact-prefix --prefetch --probe-bind --probe-port --probes-enabled --worker-id]",
+      "params": [
+        "amqp_url",
+        "job_queue",
+        "result_exchange",
+        "completed_routing_key",
+        "failed_routing_key",
+        "s3_bucket",
+        "s3_region",
+        "s3_endpoint",
+        "s3_force_path_style",
+        "artifact_prefix",
+        "prefetch",
+        "probe_bind",
+        "probe_port",
+        "probes_enabled",
+        "worker_id"
+      ],
+      "file": "crates/parser-cli/src/main.rs",
+      "description": "Run the RabbitMQ/S3 parser worker runtime (consumes parse jobs, writes artifacts to S3, publishes results)."
+    },
+    "CLI healthcheck": {
+      "method": "CLI",
+      "path": "replay-parser-2 healthcheck [--url http://127.0.0.1:8080/readyz]",
+      "params": [
+        "url"
+      ],
+      "file": "crates/parser-cli/src/main.rs",
+      "description": "Hidden Docker health-check command probing the worker readiness endpoint."
+    },
+    "GET /healthz": {
+      "method": "GET",
+      "path": "/healthz",
+      "params": [],
+      "file": "crates/parser-worker/src/health.rs",
+      "description": "Worker HTTP liveness probe (Axum), cached HealthState snapshot."
+    },
+    "GET /readyz": {
+      "method": "GET",
+      "path": "/readyz",
+      "params": [],
+      "file": "crates/parser-worker/src/health.rs",
+      "description": "Worker HTTP readiness probe (Axum); reflects AMQP/S3 dependency ReadinessState and drain status."
+    },
+    "AMQP consume parse.jobs": {
+      "method": "AMQP",
+      "path": "queue parse.jobs",
+      "params": [
+        "ParseJobMessage"
+      ],
+      "file": "crates/parser-worker/src/amqp.rs",
+      "description": "Consume ParseJobMessage deliveries from the RabbitMQ job queue (default parse.jobs)."
+    },
+    "AMQP publish parse.completed": {
+      "method": "AMQP",
+      "path": "exchange parse.results / parse.completed",
+      "params": [
+        "ParseCompletedMessage"
+      ],
+      "file": "crates/parser-worker/src/amqp.rs",
+      "description": "Publish ParseCompletedMessage results to the result exchange with the completed routing key."
+    },
+    "AMQP publish parse.failed": {
+      "method": "AMQP",
+      "path": "exchange parse.results / parse.failed",
+      "params": [
+        "ParseFailedMessage"
+      ],
+      "file": "crates/parser-worker/src/amqp.rs",
+      "description": "Publish ParseFailedMessage results to the result exchange with the failed routing key."
+    },
+    "lib parse_replay": {
+      "method": "RUST",
+      "path": "parser_core::parse_replay(ParserInput) -> ParseArtifact",
+      "params": [
+        "ParserInput"
+      ],
+      "file": "crates/parser-core/src/lib.rs",
+      "description": "Pure deterministic parse entrypoint; caller supplies replay bytes and source metadata."
+    },
+    "lib public_parse_replay": {
+      "method": "RUST",
+      "path": "parser_core::public_parse_replay(ParserInput) -> ParseArtifact",
+      "params": [
+        "ParserInput"
+      ],
+      "file": "crates/parser-core/src/lib.rs",
+      "description": "Public minimal-artifact parse path used by CLI and worker (strips debug provenance)."
+    }
+  }
+}

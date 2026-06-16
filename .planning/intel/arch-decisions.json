@@ -1,0 +1,57 @@
+{
+  "_meta": {
+    "updated_at": "2026-06-16T11:50:25.976Z",
+    "version": 2
+  },
+  "entries": {
+    "overview": {
+      "pattern": "Layered Cargo workspace: deterministic pure core + transport-free contract + runtime adapters",
+      "description": "Five-crate workspace (edition 2024). parser-contract defines versioned JSON-Schema-backed types; parser-core is a pure deterministic parser that consumes caller-provided bytes and returns contract artifacts; parser-cli and parser-worker are runtime adapters; parser-quality holds CI quality gates. unsafe_code is forbidden and the workspace runs deny-level clippy pedantic/nursery/cargo lints."
+    },
+    "data-flow": {
+      "flow": "OCAP JSON replay bytes -> ParserInput -> parser_core::public_parse_replay -> decode_compact_root -> normalize (entities/events/metadata/side_facts/aggregates) -> ParseArtifact (minimal v3) -> JSON output (CLI file / S3 artifact)",
+      "description": "CLI parse mode reads a local OCAP file and writes the minimal artifact. Worker mode consumes a ParseJobMessage from RabbitMQ, fetches raw replay from S3, parses, writes the artifact back to S3 under a deterministic key, then publishes ParseCompletedMessage/ParseFailedMessage to the result exchange."
+    },
+    "conventions": {
+      "naming": "snake_case modules, CamelCase contract types; raw_* modules hold zero-copy raw OCAP decoding (serde_json RawValue), normalize_* fns produce contract types.",
+      "file-organization": "One concern per module per crate; contract modules mirror artifact sections (minimal, events, identity, side_facts, aggregates, presence, diagnostic, source_ref, version, worker).",
+      "imports": "Path dependencies only between crates; no wildcard imports (clippy deny); runtime crates depend on core+contract, core depends on contract only, contract depends on nothing internal."
+    },
+    "contract": {
+      "version": "Current contract version 3.0.0 (parser-contract/src/version.rs CURRENT_CONTRACT_VERSION).",
+      "description": "The v3 minimal contract is the public parse-result surface: ParseArtifact envelope (contract_version, parser, source, status, diagnostics, replay, players, weapons, destroyed_vehicles, side_facts, failure, extensions) plus minimal flat rows (MinimalPlayerRow, MinimalKillRow, MinimalPlayerKillRow, MinimalDestroyedVehicleRow, MinimalWeaponRow, MinimalDiagnosticRow). Schemas are generated via schemars (schema.rs: parse_artifact_schema/parse_job_schema/parse_result_schema) and checked-in under schemas/ (parse-artifact-v3, parse-job-v1, parse-result-v1)."
+    },
+    "presence-model": {
+      "pattern": "Explicit field-presence enum instead of bare Option",
+      "description": "FieldPresence<T> distinguishes present/null/unknown/inferred/not-applicable with NullReason, UnknownReason, and Confidence (0.0-1.0), making provenance and missing-data semantics explicit in the contract."
+    },
+    "determinism": {
+      "principle": "parser-core and parser-contract are transport-free and deterministic",
+      "description": "Non-deterministic concerns (file access, queues, S3 object storage, timestamps such as produced_at) live only in runtime adapters. parse_replay_debug produces a full debug artifact; public_parse_artifact strips debug provenance for ingestion output."
+    },
+    "component:parser-contract": {
+      "path": "crates/parser-contract",
+      "responsibility": "Versioned, schema-backed parse-result/job/result contract types (the v3 minimal contract) shared across all crates; emits JSON Schemas via schemars."
+    },
+    "component:parser-core": {
+      "path": "crates/parser-core",
+      "responsibility": "Pure deterministic OCAP replay parser: zero-copy raw decode (raw_compact/raw) then normalization into contract artifacts; no I/O."
+    },
+    "component:parser-cli": {
+      "path": "crates/parser-cli",
+      "responsibility": "Clap binary replay-parser-2 with parse/schema/worker/healthcheck subcommands; Sentry/GlitchTip error reporting; delegates worker mode to parser-worker."
+    },
+    "component:parser-worker": {
+      "path": "crates/parser-worker",
+      "responsibility": "RabbitMQ (lapin) + S3 (aws-sdk-s3) runtime: consume jobs, store/reuse artifacts by deterministic key, publish results, Axum health/readiness probes, graceful drain shutdown."
+    },
+    "component:parser-quality": {
+      "path": "crates/parser-quality",
+      "responsibility": "CI quality gates: coverage-gate allowlist evaluation (coverage-check bin) and fault-report validation (fault-report-check bin), kept out of the runtime crates."
+    },
+    "worker-config": {
+      "pattern": "Env-var + CLI-override layered config with redaction",
+      "description": "WorkerConfig built from REPLAY_PARSER_* env vars (and AWS_REGION) with WorkerConfigOverrides from CLI flags; RedactedWorkerConfig hides secrets (AMQP URL) in operator logs. Stable log event taxonomy and outcomes in logging.rs (LOG_EVENTS/OUTCOMES)."
+    }
+  }
+}

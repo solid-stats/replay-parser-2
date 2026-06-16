@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "updated_at": "2026-06-16T11:50:25.826Z",
+    "version": 2
+  },
+  "languages": [
+    "Rust"
+  ],
+  "frameworks": [
+    "Tokio (async runtime)",
+    "Axum (HTTP probes)",
+    "Clap (CLI)",
+    "Lapin (RabbitMQ/AMQP)"
+  ],
+  "tools": [
+    "Cargo workspace",
+    "clippy",
+    "rustfmt",
+    "schemars (JSON Schema gen)",
+    "AWS SDK for S3",
+    "Sentry/GlitchTip",
+    "tracing",
+    "Docker"
+  ],
+  "build_system": "Cargo (edition 2024, rust 1.95.0)",
+  "test_framework": "cargo test (assert_cmd, jsonschema, tower for harness)",
+  "package_manager": "Cargo",
+  "content_formats": [
+    "JSON Schema (schemas/*.schema.json: parse-artifact-v3, parse-job-v1, parse-result-v1)",
+    "OCAP JSON replays (input)",
+    "TOML (coverage allowlist, Cargo manifests)"
+  ]
+}

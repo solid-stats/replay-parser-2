@@ -1,0 +1,706 @@
+{
+  "_meta": {
+    "updated_at": "2026-06-16T11:50:25.862Z",
+    "version": 2
+  },
+  "entries": {
+    "crates/parser-contract/src/lib.rs": {
+      "exports": [
+        "aggregates",
+        "artifact",
+        "compact",
+        "diagnostic",
+        "events",
+        "failure",
+        "identity",
+        "metadata",
+        "minimal",
+        "presence",
+        "schema",
+        "side_facts",
+        "source_ref",
+        "version",
+        "worker"
+      ],
+      "imports": [
+        "schemars",
+        "semver",
+        "serde",
+        "serde_json",
+        "thiserror"
+      ],
+      "type": "entry-point"
+    },
+    "crates/parser-contract/src/artifact.rs": {
+      "exports": [
+        "ParseStatus",
+        "ParseArtifact",
+        "ParseArtifactError"
+      ],
+      "imports": [
+        "contract_version",
+        "parser_info",
+        "source_ref",
+        "minimal",
+        "metadata",
+        "side_facts",
+        "failure"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/minimal.rs": {
+      "exports": [
+        "MinimalPlayerRow",
+        "KillClassification",
+        "MinimalPlayerKillRow",
+        "DestroyedVehicleClassification",
+        "MinimalKillRow",
+        "MinimalDestroyedVehicleRow",
+        "MinimalWeaponRow"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/version.rs": {
+      "exports": [
+        "CURRENT_CONTRACT_VERSION",
+        "ContractVersion",
+        "ParserInfo",
+        "ParserBuildInfo"
+      ],
+      "imports": [
+        "semver",
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/source_ref.rs": {
+      "exports": [
+        "ReplaySource",
+        "ChecksumAlgorithm",
+        "ChecksumValue",
+        "ChecksumValueError",
+        "SourceChecksum",
+        "SourceRef",
+        "SourceRefs",
+        "SourceRefsError",
+        "RuleId",
+        "RuleIdError"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/failure.rs": {
+      "exports": [
+        "ParseStage",
+        "Retryability",
+        "ErrorCode",
+        "ErrorCodeError",
+        "ParseFailure"
+      ],
+      "imports": [
+        "serde",
+        "schemars",
+        "thiserror"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/events.rs": {
+      "exports": [
+        "NormalizedEventKind",
+        "CombatSemantic",
+        "CombatVictimKind",
+        "BountyEligibilityState",
+        "BountyExclusionReason",
+        "VehicleContext",
+        "BountyEligibility",
+        "LegacyCounterEffect",
+        "CombatEventAttributes",
+        "EventActorRef",
+        "NormalizedEvent"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/identity.rs": {
+      "exports": [
+        "EntityKind",
+        "EntitySide",
+        "EntityCompatibilityHintKind",
+        "EntityCompatibilityHint",
+        "ObservedEntity",
+        "ObservedIdentity"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/compact.rs": {
+      "exports": [
+        "ObservedParticipantRef",
+        "CombatFact",
+        "ParseFactSection",
+        "ParseSummarySection"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/aggregates.rs": {
+      "exports": [
+        "AggregateContributionKind",
+        "LegacyCounterContributionValue",
+        "RelationshipContributionValue",
+        "BountyInputContributionValue",
+        "AggregateContributionRef",
+        "AggregateSection"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/side_facts.rs": {
+      "exports": [
+        "ReplaySideFacts",
+        "CommanderFactKind",
+        "CommanderSideFact",
+        "OutcomeStatus",
+        "OutcomeFact"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/diagnostic.rs": {
+      "exports": [
+        "DiagnosticSeverity",
+        "Diagnostic",
+        "MinimalDiagnosticRow"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/presence.rs": {
+      "exports": [
+        "FieldPresence",
+        "NullReason",
+        "UnknownReason",
+        "Confidence",
+        "ConfidenceError"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/metadata.rs": {
+      "exports": [
+        "ReplayMetadata",
+        "ReplayTimeBounds",
+        "FrameBounds"
+      ],
+      "imports": [
+        "serde",
+        "schemars"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/worker.rs": {
+      "exports": [
+        "ParseJobMessage",
+        "ArtifactReference",
+        "ParseResultKind",
+        "ParseCompletedMessage",
+        "ParseFailedMessage",
+        "ParseResultMessage"
+      ],
+      "imports": [
+        "serde",
+        "schemars",
+        "source_ref",
+        "failure"
+      ],
+      "type": "module"
+    },
+    "crates/parser-contract/src/schema.rs": {
+      "exports": [
+        "parse_artifact_schema",
+        "parse_job_schema",
+        "parse_result_schema"
+      ],
+      "imports": [
+        "schemars",
+        "artifact",
+        "worker"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/lib.rs": {
+      "exports": [
+        "DebugParseArtifact",
+        "ParserInput",
+        "ParserOptions",
+        "parse_replay",
+        "public_parse_artifact",
+        "public_parse_replay",
+        "parse_replay_debug"
+      ],
+      "imports": [
+        "parser-contract",
+        "serde",
+        "serde_json",
+        "thiserror"
+      ],
+      "type": "entry-point"
+    },
+    "crates/parser-core/src/artifact.rs": {
+      "exports": [
+        "parse_replay",
+        "public_parse_artifact",
+        "SourceContext"
+      ],
+      "imports": [
+        "parser_contract::artifact",
+        "input",
+        "metadata",
+        "entities",
+        "events",
+        "aggregates",
+        "side_facts",
+        "diagnostics"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/input.rs": {
+      "exports": [
+        "ParserInput",
+        "ParserOptions"
+      ],
+      "imports": [
+        "parser_contract::source_ref"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/raw_compact.rs": {
+      "exports": [
+        "RawOcapRoot",
+        "CompactDecodeError",
+        "decode_compact_root",
+        "RawEntityCompact",
+        "RawEntityObservation",
+        "ConnectedEventObservation",
+        "KilledEventObservation",
+        "MissionMessageEventObservation",
+        "KilledEventKillInfo",
+        "RawRelevantEvents",
+        "compact_entities",
+        "compact_connected_events",
+        "compact_killed_events",
+        "compact_relevant_events"
+      ],
+      "imports": [
+        "serde_json::value::RawValue"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/raw.rs": {
+      "exports": [
+        "RawReplay",
+        "RawField",
+        "entity_id",
+        "entity_type",
+        "entity_name",
+        "entity_class",
+        "entity_side",
+        "entity_group",
+        "entity_is_player",
+        "connected_events",
+        "killed_events",
+        "mission_message_events",
+        "relevant_events",
+        "string_candidates",
+        "RawStringCandidate"
+      ],
+      "imports": [
+        "raw_compact",
+        "serde_json"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/entities.rs": {
+      "exports": [
+        "normalize_entities",
+        "normalize_entities_with_connected_events"
+      ],
+      "imports": [
+        "parser_contract::identity",
+        "raw"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/events.rs": {
+      "exports": [
+        "normalize_combat_events"
+      ],
+      "imports": [
+        "parser_contract::events",
+        "raw"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/aggregates.rs": {
+      "exports": [
+        "MinimalTables",
+        "derive_minimal_tables_from_killed_events"
+      ],
+      "imports": [
+        "parser_contract::minimal",
+        "raw_compact"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/side_facts.rs": {
+      "exports": [
+        "normalize_side_facts",
+        "normalize_mission_message_side_facts"
+      ],
+      "imports": [
+        "parser_contract::side_facts",
+        "raw"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/metadata.rs": {
+      "exports": [
+        "normalize_metadata"
+      ],
+      "imports": [
+        "parser_contract::metadata",
+        "raw"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/diagnostics.rs": {
+      "exports": [
+        "DiagnosticPolicy",
+        "DiagnosticImpact",
+        "DiagnosticReport",
+        "DiagnosticAccumulator"
+      ],
+      "imports": [
+        "parser_contract::diagnostic"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/debug_artifact.rs": {
+      "exports": [
+        "DebugParseArtifact",
+        "parse_replay_debug"
+      ],
+      "imports": [
+        "artifact",
+        "input"
+      ],
+      "type": "module"
+    },
+    "crates/parser-core/src/legacy_player.rs": {
+      "exports": [
+        "is_legacy_player_entity"
+      ],
+      "imports": [
+        "parser_contract::identity"
+      ],
+      "type": "module"
+    },
+    "crates/parser-cli/src/main.rs": {
+      "exports": [
+        "main"
+      ],
+      "imports": [
+        "clap",
+        "parser-core",
+        "parser-worker",
+        "parser-contract",
+        "tokio",
+        "sentry",
+        "sha2",
+        "hex"
+      ],
+      "type": "entry-point"
+    },
+    "crates/parser-worker/src/lib.rs": {
+      "exports": [
+        "amqp",
+        "artifact_key",
+        "checksum",
+        "config",
+        "error",
+        "health",
+        "logging",
+        "processor",
+        "runner",
+        "shutdown",
+        "storage"
+      ],
+      "imports": [
+        "parser-contract",
+        "parser-core",
+        "tokio",
+        "lapin",
+        "aws-sdk-s3",
+        "axum",
+        "tracing"
+      ],
+      "type": "entry-point"
+    },
+    "crates/parser-worker/src/runner.rs": {
+      "exports": [
+        "run",
+        "run_until_cancelled"
+      ],
+      "imports": [
+        "config",
+        "amqp",
+        "storage",
+        "processor",
+        "health",
+        "shutdown",
+        "error"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/processor.rs": {
+      "exports": [
+        "ResultPublisher",
+        "PublisherFuture",
+        "process_job_body"
+      ],
+      "imports": [
+        "parser-core",
+        "parser_contract::worker",
+        "storage",
+        "checksum",
+        "artifact_key",
+        "error"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/amqp.rs": {
+      "exports": [
+        "DeliveryAction",
+        "PublishedOutcome",
+        "delivery_action_after_publish",
+        "DeliveryAcker",
+        "LapinDeliveryAcker",
+        "apply_delivery_action",
+        "apply_lapin_delivery_action",
+        "RabbitMqClient",
+        "PreparedResultPublish",
+        "prepare_completed_publish",
+        "prepare_failed_publish",
+        "ensure_publish_confirmed"
+      ],
+      "imports": [
+        "lapin",
+        "parser_contract::worker",
+        "error"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/storage.rs": {
+      "exports": [
+        "ObjectStoreFuture"
+      ],
+      "imports": [
+        "aws-sdk-s3",
+        "aws-config",
+        "error"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/config.rs": {
+      "exports": [
+        "WorkerConfig",
+        "WorkerConfigOverrides",
+        "RedactedWorkerConfig"
+      ],
+      "imports": [
+        "std::env"
+      ],
+      "type": "config"
+    },
+    "crates/parser-worker/src/health.rs": {
+      "exports": [
+        "HealthState",
+        "HealthSnapshot",
+        "ReadinessState",
+        "probe_router",
+        "spawn_probe_server"
+      ],
+      "imports": [
+        "axum",
+        "tokio"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/shutdown.rs": {
+      "exports": [
+        "ShutdownFuture",
+        "ShutdownDelivery",
+        "ShutdownJobProcessor",
+        "ShutdownDeliveryAcker",
+        "ShutdownDrainReport",
+        "drain_until_cancelled"
+      ],
+      "imports": [
+        "tokio-util",
+        "error"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/checksum.rs": {
+      "exports": [
+        "sha256_hex",
+        "source_checksum_from_bytes",
+        "verify_source_checksum"
+      ],
+      "imports": [
+        "sha2",
+        "hex",
+        "parser_contract::source_ref"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/artifact_key.rs": {
+      "exports": [
+        "artifact_key"
+      ],
+      "imports": [
+        "parser_contract::source_ref"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/error.rs": {
+      "exports": [
+        "WorkerFailureKind",
+        "WorkerError"
+      ],
+      "imports": [
+        "thiserror"
+      ],
+      "type": "module"
+    },
+    "crates/parser-worker/src/logging.rs": {
+      "exports": [
+        "LOG_EVENTS",
+        "OUTCOMES",
+        "duration_ms"
+      ],
+      "imports": [
+        "tracing"
+      ],
+      "type": "module"
+    },
+    "crates/parser-quality/src/lib.rs": {
+      "exports": [
+        "coverage",
+        "fault_report"
+      ],
+      "imports": [
+        "serde",
+        "serde_json",
+        "toml",
+        "thiserror"
+      ],
+      "type": "entry-point"
+    },
+    "crates/parser-quality/src/coverage.rs": {
+      "exports": [
+        "COVERAGE_EXCLUSION_MARKER",
+        "CoverageAllowlist",
+        "CoverageExclusion",
+        "CoverageGateReport",
+        "CoverageGap",
+        "CoverageGapKind",
+        "evaluate_coverage_json",
+        "CoverageAllowlistError"
+      ],
+      "imports": [
+        "serde_json",
+        "toml"
+      ],
+      "type": "module"
+    },
+    "crates/parser-quality/src/fault_report.rs": {
+      "exports": [
+        "FAULT_REPORT_VERSION",
+        "FaultOutcome",
+        "FaultRisk",
+        "FaultCase",
+        "FaultSummary",
+        "FaultReport",
+        "FaultReportValidationError"
+      ],
+      "imports": [
+        "serde",
+        "serde_json"
+      ],
+      "type": "module"
+    },
+    "crates/parser-quality/src/bin/coverage-check.rs": {
+      "exports": [
+        "main"
+      ],
+      "imports": [
+        "coverage"
+      ],
+      "type": "script"
+    },
+    "crates/parser-quality/src/bin/fault-report-check.rs": {
+      "exports": [
+        "main"
+      ],
+      "imports": [
+        "fault_report"
+      ],
+      "type": "script"
+    },
+    "schemas/parse-artifact-v3.schema.json": {
+      "exports": [],
+      "imports": [],
+      "type": "data"
+    },
+    "schemas/parse-job-v1.schema.json": {
+      "exports": [],
+      "imports": [],
+      "type": "data"
+    },
+    "schemas/parse-result-v1.schema.json": {
+      "exports": [],
+      "imports": [],
+      "type": "data"
+    }
+  }
+}
