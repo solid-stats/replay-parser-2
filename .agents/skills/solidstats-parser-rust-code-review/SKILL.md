@@ -136,6 +136,29 @@ severity from the Severity reference table below.
 
 ---
 
+## Review lenses
+
+For a deep phase/milestone review, run the change through the three adversarial lenses from
+`solidstats-shared-review-standards` §J — many lenses, one report (all findings share the §C buckets,
+§D numbering, one §E verdict). First run §I discovery: locate the plan and **map the change onto the
+codebase** (`.planning/codebase/` for crate/module placement; the knowledge graph for the blast radius
+— here the key dependent is **server-2**, which ingests the artifact). The lenses map onto this
+reviewer's two phases as:
+
+| Lens | Parser mandate |
+|------|----------------|
+| **Contract Adversary** | Assume the change makes the artifact drift (run-to-run / arch-to-arch) or breaks the contract `server-2` ingests. Drive **Phase 1** — `deterministic_output`, semver/schema/manifest, `cargo-semver-checks`, the JSON-Schema field-type diff — and trace the §I.2 blast radius onto the server-2 ingest. |
+| **Edge / Failure Hunter** | The valid replay parses. Hunt the malformed-input path: `panic`/`unwrap`/`expect` on untrusted input, missing size cap / recursion limit, integer overflow, a poison message with no DLX, an un-acked / non-idempotent job, unbounded worker-state growth — Phase 2 topics 2, 7, and 9. |
+| **Acceptance Auditor** | The task is marked done. Prove the tests prove the plan's `must_haves.truths` (§I.3) — for determinism/contract truths that means the golden/parity manifest actually covers them, not just that `cargo test` is green; §F + the discovered PLAN contract. |
+
+Each lens records what it attacked and ruled out under **Non-Findings Checked** (§D); a lens that
+finds nothing real reports nothing — no forced findings. The parallel-subagent fan-out (one per lens)
+is driven from the invocation layer by the `solidstats-process-review-lenses` skill/Workflow — never by
+editing the vendored `gsd-code-review`/`gsd-verifier` (see `solidstats-shared-review-standards` §J); a
+`/gsd-quick` review collapses the lenses into the single Phase-1→Phase-2 pass.
+
+---
+
 ## Output
 
 Follow the output format, continuous numbering, severity buckets, and verdict rules from
