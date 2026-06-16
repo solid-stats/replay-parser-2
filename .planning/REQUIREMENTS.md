@@ -66,16 +66,39 @@ Explicitly excluded from v1.1. Deferred to a coordinated contract-version bump w
 
 ## Traceability
 
-Populated during roadmap creation (each requirement maps to exactly one phase).
+Each requirement maps to exactly one phase (continued numbering: v1.1 runs Phases 8-12).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by gsd-roadmapper) | | |
+| GATE-01 | Phase 8 | Pending |
+| GATE-02 | Phase 8 | Pending |
+| GATE-03 | Phase 8 | Pending |
+| GATE-04 | Phase 8 | Pending |
+| GATE-05 | Phase 8 | Pending |
+| GATE-06 | Phase 8 | Pending |
+| LINT-01 | Phase 9 | Pending |
+| LINT-02 | Phase 9 | Pending |
+| LINT-03 | Phase 9 | Pending |
+| LINT-04 | Phase 9 | Pending |
+| LINT-05 | Phase 9 | Pending |
+| DET-01 | Phase 10 | Pending |
+| CORE-01 | Phase 10 | Pending |
+| CORE-02 | Phase 10 | Pending |
+| CORE-03 | Phase 10 | Pending |
+| CORE-04 | Phase 10 | Pending |
+| CORE-05 | Phase 10 | Pending |
+| WORK-01 | Phase 11 | Pending |
+| WORK-02 | Phase 11 | Pending |
+| WORK-03 | Phase 11 | Pending |
+| WORK-04 | Phase 11 | Pending |
+| WORK-05 | Phase 11 | Pending |
+| AUDIT-01 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 23 total
-- Mapped to phases: (pending roadmap)
-- Unmapped: (pending roadmap)
+- Mapped to phases: 23 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-17 — milestone v1.1 (Skill-Conformance Refactor)*
+*Traceability populated: 2026-06-17 — gsd-roadmapper (Phases 8-12)*
