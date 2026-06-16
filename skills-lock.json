@@ -17,7 +17,7 @@
       "source": "solid-stats/skills",
       "sourceType": "github",
       "skillPath": "solidstats-parser-rust-code-review/SKILL.md",
-      "computedHash": "e8d4321ea725852d913e0058385b621c2d31e7b1939151e26cce4836ffd72ce0"
+      "computedHash": "119923f5816446fc2c2d4c1aaabfe39142ff0f9d3ed09d48a2064c2538257e35"
     },
     "solidstats-parser-rust-conventions": {
       "source": "solid-stats/skills",
@@ -31,6 +31,18 @@
       "skillPath": "solidstats-parser-rust-tests/SKILL.md",
       "computedHash": "b34d0cba15e4686f32723c53bd7f5afca33a991d20ed7edcb3a4cbf69c1a38a1"
     },
+    "solidstats-process-review-lenses": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-process-review-lenses/SKILL.md",
+      "computedHash": "dbf3643536c205d29ea642bb36234108d52b867173eed11b5d49f1d0b3a809c3"
+    },
+    "solidstats-shared-planning-standards": {
+      "source": "solid-stats/skills",
+      "sourceType": "github",
+      "skillPath": "solidstats-shared-planning-standards/SKILL.md",
+      "computedHash": "73ae57f7279ea007fd0e0605b349072b47ee679c7e90ffdb4d979aa177e169a5"
+    },
     "solidstats-shared-project-standards": {
       "source": "solid-stats/skills",
       "sourceType": "github",
@@ -41,7 +53,7 @@
       "source": "solid-stats/skills",
       "sourceType": "github",
       "skillPath": "solidstats-shared-review-standards/SKILL.md",
-      "computedHash": "8cd5d06815a76a60d4625286b0a13d210d3d51be7fedf581ab607ed423262322"
+      "computedHash": "c9f38b32cdcb3dc3378c0e1970963fcf7142be89dcf567386efbe9850352dd2b"
     },
     "solidstats-shared-testing-standards": {
       "source": "solid-stats/skills",
