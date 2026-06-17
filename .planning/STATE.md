@@ -154,6 +154,12 @@ v1.0 close state (reference): `scripts/coverage-gate.sh --check` passes, focused
 `scripts/worker-smoke.sh` passes. Strict local coverage still requires explicit `COVERAGE_ALLOW_HEAVY=1`
 opt-in to avoid accidental workstation freezes.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260617-v7d | Golden container-e2e regression oracle (testcontainers worker e2e + fast byte-exact in-process consumer of one shared baseline; #[ignore] master-only pre-deploy gate) | 2026-06-17 | 2932aa3 | Verified | [260617-v7d-golden-container-e2e-regression-oracle-f](./quick/260617-v7d-golden-container-e2e-regression-oracle-f/) |
+
 ## Deferred Items
 
 Items acknowledged and deferred at v1.0 milestone close on 2026-05-09:
