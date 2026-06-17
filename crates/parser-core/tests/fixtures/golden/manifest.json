@@ -4,6 +4,30 @@
     "fixture_strategy": "linked_existing_focused_fixture",
     "category": "normal",
     "source": {
+      "artifact": ".planning/quick/260617-v7d-golden-container-e2e-regression-oracle-f/260617-v7d-PLAN.md",
+      "source_file": "tests/fixtures/golden/expected/valid-minimal.expected.json",
+      "notes": "Shared byte-exact artifact baseline for the golden container-e2e oracle. The committed valid-minimal.expected.json equals serde_json::to_vec(&artifact)+\\n and is consumed BOTH by the #[ignore] parser-worker container e2e (S3 bytes) and by the fast in-process parser-core golden_artifact_bytes.rs, sharing tests/common/golden_identity.rs pinned identity constants so parser drift fails without containers."
+    },
+    "requirements": ["TEST-01", "TEST-03", "TEST-08", "TEST-09", "TEST-10"],
+    "decisions": ["D-08", "D-13"],
+    "expected_status": "success",
+    "expected_features": [
+      "byte_exact_artifact_baseline",
+      "deterministic_serialization",
+      "shared_golden_identity",
+      "container_e2e_oracle"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Pins the exact artifact bytes the worker writes to S3 for an ordinary minimal replay; any byte drift in the parser-contract artifact shape fails the golden compare immediately.",
+      "server_2": "Guarantees server-2 keeps consuming the same artifact bytes through the behavior-preserving v1.1 refactor; no contract change is introduced.",
+      "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs over the unchanged artifact."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/valid-minimal.ocap.json",
+    "fixture_strategy": "linked_existing_focused_fixture",
+    "category": "normal",
+    "source": {
       "artifact": ".planning/phases/01-legacy-baseline-and-corpus/fixture-index.json",
       "source_file": "2026_04_25__00_52_18__1_ocap.json",
       "notes": "Focused fixture representing an ordinary selected sg replay seed from Phase 1 without committing corpus payloads. Phase 5.2 minimal default assertions target players with nested player-authored kills, destroyed_vehicles, and absence of default debug sidecar detail."
