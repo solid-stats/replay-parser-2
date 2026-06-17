@@ -53,7 +53,14 @@ FIRST=1
 
 # Pinned indices into the sorted list (1-based). Adjust deliberately if the curated
 # spread must change; keep them small and stable so re-capture is reproducible.
-for IDX in 1 2 3 "$TOTAL"; do
+#
+# De-duplicated and bounded before the loop: when the store holds <=3 replays the raw
+# set `1 2 3 $TOTAL` would repeat an index (e.g. TOTAL=3 -> `1 2 3 3`), emitting two
+# manifest entries for the same fixture. `sort -n -u` collapses duplicates and the
+# in-loop bound drops any index past the end, so each replay is captured at most once.
+INDICES="$(printf '1\n2\n3\n%s\n' "$TOTAL" | sort -n -u)"
+for IDX in $INDICES; do
+  [ "$IDX" -le "$TOTAL" ] || continue
   SRC="$(printf '%s\n' "$SORTED_LIST" | sed -n "${IDX}p")"
   [ -n "$SRC" ] || continue
   BASE="$(basename "$SRC" .json)"

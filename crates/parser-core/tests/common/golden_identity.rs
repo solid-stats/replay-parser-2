@@ -31,3 +31,15 @@ pub const GOLDEN_SOURCE_CHECKSUM_HEX: &str =
 
 /// Parser name embedded in the artifact (matches `parser_worker::runner::parser_info`).
 pub const GOLDEN_PARSER_NAME: &str = "replay-parser-2";
+
+/// Parser version embedded in the committed baseline artifact bytes.
+///
+/// PINNED, NOT derived from `env!("CARGO_PKG_VERSION")`: this file is textually
+/// `include!`d into both `parser-core` and `parser-worker` test crates, and that macro
+/// would resolve to the *including* crate's version. Today both crates are `0.1.0`, so
+/// an `env!` happened to agree — but the moment the two crate versions diverge, exactly
+/// one golden layer would fail with no behavior change, reading as spurious "parser
+/// drift". A single pinned constant makes both consumers agree on the SAME value the
+/// baseline actually carries. If this value changes, the committed baseline
+/// `valid-minimal.expected.json` must be regenerated to match.
+pub const GOLDEN_PARSER_VERSION: &str = "0.1.0";

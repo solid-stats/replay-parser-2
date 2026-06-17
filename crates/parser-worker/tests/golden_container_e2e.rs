@@ -59,6 +59,27 @@ struct Infra {
     amqp_url: String,
 }
 
+// Enforces the version coupling LOUDLY and WITHOUT Docker. The worker embeds its own
+// `env!("CARGO_PKG_VERSION")` (parser-worker's) into the artifact it writes to S3, while
+// the committed baseline is pinned to `GOLDEN_PARSER_VERSION`. The byte-exact e2e assert
+// would catch a divergence, but only when Docker is present and only as a confusing
+// "parser drift" byte-diff. This fast guard runs under plain `cargo test --workspace`
+// and turns a future parser-worker version bump into an explicit, self-explaining
+// failure instead.
+#[test]
+fn worker_package_version_must_match_pinned_golden_baseline_version() {
+    assert_eq!(
+        env!("CARGO_PKG_VERSION"),
+        GOLDEN_PARSER_VERSION,
+        "parser-worker package version diverged from the pinned golden baseline version \
+         (GOLDEN_PARSER_VERSION in tests/common/golden_identity.rs). The worker embeds its \
+         own CARGO_PKG_VERSION into the artifact, so this divergence would make the golden \
+         container e2e fail byte-for-byte and read as spurious parser drift. Either align \
+         the crate version or regenerate valid-minimal.expected.json and bump \
+         GOLDEN_PARSER_VERSION together."
+    );
+}
+
 // Boots MinIO + RabbitMQ, returning `Ok(None)` (skip) when Docker is unavailable.
 async fn boot_infra() -> Result<Option<Infra>, BoxError> {
     let minio = match MinIO::default().start().await {

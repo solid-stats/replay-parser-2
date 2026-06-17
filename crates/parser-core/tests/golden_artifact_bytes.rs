@@ -50,7 +50,7 @@ fn golden_source() -> ReplaySource {
 fn golden_parser_info() -> ParserInfo {
     serde_json::from_value(json!({
         "name": GOLDEN_PARSER_NAME,
-        "version": env!("CARGO_PKG_VERSION"),
+        "version": GOLDEN_PARSER_VERSION,
     }))
     .expect("golden parser info should be valid")
 }
