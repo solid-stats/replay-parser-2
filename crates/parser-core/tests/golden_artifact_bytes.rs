@@ -24,7 +24,7 @@ use parser_contract::{
     source_ref::{ReplaySource, SourceChecksum},
     version::ParserInfo,
 };
-use parser_core::{ParserInput, ParserOptions, parse_replay};
+use parser_core::{ParserInput, ParserOptions, public_parse_replay};
 use serde_json::json;
 
 // Shared, single-source-of-truth identity constants. Included (not imported) because
@@ -61,8 +61,12 @@ fn golden_artifact_bytes_should_match_committed_baseline_byte_for_byte() {
     let fixture_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(SEED_FIXTURE);
     let bytes = std::fs::read(&fixture_path).expect("seed fixture should be readable");
 
-    // Act: reproduce the worker's exact artifact serialization (processor.rs:149-150).
-    let artifact = parse_replay(ParserInput {
+    // Act: reproduce the worker's exact artifact serialization. The worker uses
+    // public_parse_replay (processor.rs:136) — the public minimal artifact with
+    // debug-only per-field source provenance stripped — then serde_json::to_vec +
+    // trailing b'\n' (processor.rs:149-150). parse_replay would retain provenance and
+    // NOT match the S3 bytes, so this MUST use public_parse_replay.
+    let artifact = public_parse_replay(ParserInput {
         bytes: &bytes,
         source: golden_source(),
         parser: golden_parser_info(),
