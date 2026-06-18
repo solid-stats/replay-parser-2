@@ -44,6 +44,33 @@ jobs:
       - name: Test
         run: cargo +"$RUST_VERSION" test --workspace
 
+  golden-container-e2e:
+    name: Golden container e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    env:
+      # MinIO defaults baked into testcontainers-modules; the AWS SDK reads them from the
+      # standard credential chain for both the test client and the worker client.
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: rustup toolchain install "$RUST_VERSION" --profile minimal
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2.9.1
+
+      - name: Build worker tests
+        run: cargo +"$RUST_VERSION" build -p parser-worker --tests
+
+      - name: Run golden container e2e
+        run: cargo +"$RUST_VERSION" test -p parser-worker --test golden_container_e2e -- --ignored
+
   image:
     name: Build image
     runs-on: ubuntu-latest

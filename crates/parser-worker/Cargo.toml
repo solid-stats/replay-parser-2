@@ -30,6 +30,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
 
 [dev-dependencies]
+# Gunzip the committed real-corpus golden fixtures (gzip-at-rest) at test time.
+# Default `rust_backend` (pure-Rust miniz) — no C toolchain / system zlib dependency.
+flate2 = "1.1.9"
+testcontainers-modules = { version = "0.15.0", features = ["rabbitmq", "minio"] }
 tower = { version = "0.5", features = ["util"] }
 
 [lints]
