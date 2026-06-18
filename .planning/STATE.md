@@ -158,7 +158,7 @@ opt-in to avoid accidental workstation freezes.
 
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
-| 260617-v7d | Golden container-e2e regression oracle (testcontainers worker e2e + fast byte-exact in-process consumer of one shared baseline; #[ignore] master-only pre-deploy gate) | 2026-06-17 | 2932aa3 | Verified | [260617-v7d-golden-container-e2e-regression-oracle-f](./quick/260617-v7d-golden-container-e2e-regression-oracle-f/) |
+| 260617-v7d | Golden container-e2e regression oracle (testcontainers worker e2e + fast byte-exact in-process consumer of one shared baseline; #[ignore] master-only pre-deploy gate) + real-corpus fixtures from Timeweb S3 (small/mid/large success + partial), byte-exact, Docker e2e green | 2026-06-18 | 3f90f6c | Verified | [260617-v7d-golden-container-e2e-regression-oracle-f](./quick/260617-v7d-golden-container-e2e-regression-oracle-f/) |
 
 ## Deferred Items
 
