@@ -287,8 +287,15 @@ async fn assert_real_corpus_contract(
         )?;
 
         let job_id = format!("job-{}", fixture.label);
-        common::publish_job(channel, &config.job_queue, &job_id, fixture.replay_id(), &object_key, &checksum)
-            .await;
+        common::publish_job(
+            channel,
+            &config.job_queue,
+            &job_id,
+            fixture.replay_id(),
+            &object_key,
+            &checksum,
+        )
+        .await;
         let completed = common::wait_for_completed(channel).await;
         let fetched = common::fetch_artifact_bytes(s3, &completed).await;
 
@@ -315,11 +322,22 @@ async fn assert_real_corpus_contract(
         assert_eq!(completed.replay_id, fixture.replay_id(), "{}: replay_id", fixture.label);
 
         // Idempotency: redeliver the SAME job → completed again, exactly one artifact.
-        common::publish_job(channel, &config.job_queue, &job_id, fixture.replay_id(), &object_key, &checksum)
-            .await;
+        common::publish_job(
+            channel,
+            &config.job_queue,
+            &job_id,
+            fixture.replay_id(),
+            &object_key,
+            &checksum,
+        )
+        .await;
         let again = common::wait_for_completed(channel).await;
         assert_eq!(again.artifact.key, expected_key, "{}: idempotent key", fixture.label);
-        assert_eq!(again.artifact_checksum, completed.artifact_checksum, "{}: idempotent checksum", fixture.label);
+        assert_eq!(
+            again.artifact_checksum, completed.artifact_checksum,
+            "{}: idempotent checksum",
+            fixture.label
+        );
         assert_eq!(
             common::count_artifact_keys(s3, &completed).await,
             1,
@@ -333,8 +351,8 @@ async fn assert_real_corpus_contract(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "requires Docker; boots ephemeral RabbitMQ + MinIO via testcontainers"]
-async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte()
--> Result<(), BoxError> {
+async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte() -> Result<(), BoxError>
+{
     // Skip-guard: missing seed fixture must skip cleanly, never false-fail.
     let fixture_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(SEED_FIXTURE);
     if !fixture_path.is_file() {
@@ -380,8 +398,8 @@ async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte()
     common::ensure_bucket(&s3, &config.s3_bucket).await;
     common::put_raw_object(&s3, &config.s3_bucket, GOLDEN_OBJECT_KEY, &seed_bytes).await;
 
-    let amqp =
-        lapin::Connection::connect(&config.amqp_url, lapin::ConnectionProperties::default()).await?;
+    let amqp = lapin::Connection::connect(&config.amqp_url, lapin::ConnectionProperties::default())
+        .await?;
     let channel = amqp.create_channel().await?;
     common::prepare_broker(&channel, &config).await;
 

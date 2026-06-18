@@ -264,13 +264,7 @@ pub async fn fetch_artifact_bytes(
         .send()
         .await
         .expect("completed artifact should exist in S3-compatible storage");
-    object
-        .body
-        .collect()
-        .await
-        .expect("artifact body should collect")
-        .into_bytes()
-        .to_vec()
+    object.body.collect().await.expect("artifact body should collect").into_bytes().to_vec()
 }
 
 /// Counts objects whose key exactly equals `completed.artifact.key` (idempotency check).
@@ -301,8 +295,9 @@ pub async fn put_conflicting_artifact(
     replay_id: &str,
     checksum: &SourceChecksum,
 ) -> String {
-    let key = parser_worker::artifact_key::artifact_key(&config.artifact_prefix, replay_id, checksum)
-        .expect("conflict artifact key should be deterministic");
+    let key =
+        parser_worker::artifact_key::artifact_key(&config.artifact_prefix, replay_id, checksum)
+            .expect("conflict artifact key should be deterministic");
     let _put = client
         .put_object()
         .bucket(&config.s3_bucket)

@@ -88,8 +88,9 @@ fn artifact_bytes(artifact: &ParseArtifact) -> Vec<u8> {
 /// Gunzips a committed real-corpus fixture at runtime (gzip-at-rest).
 fn read_real_fixture(sha256: &str) -> Vec<u8> {
     let path = crate_root().join(REAL_DIR).join(format!("{sha256}.ocap.gz"));
-    let gz = std::fs::read(&path)
-        .unwrap_or_else(|error| panic!("real fixture {} should be readable: {error}", path.display()));
+    let gz = std::fs::read(&path).unwrap_or_else(|error| {
+        panic!("real fixture {} should be readable: {error}", path.display())
+    });
     let mut decoder = GzDecoder::new(gz.as_slice());
     let mut raw = Vec::new();
     let _decoded = decoder.read_to_end(&mut raw).expect("real fixture should gunzip");
