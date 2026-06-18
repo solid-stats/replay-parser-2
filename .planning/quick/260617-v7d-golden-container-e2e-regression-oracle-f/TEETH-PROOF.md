@@ -102,9 +102,97 @@ is independent evidence the oracle is not a no-op.
 
 ---
 
+---
+
+## Real-corpus teeth re-confirmation (2026-06-18)
+
+After extending the oracle with 4 byte-exact REAL OCAP fixtures pulled from Timeweb S3
+(`sg-replays raw/sha256/<hash>.ocap`, sha256-verified) — small/mid/large success + one
+partial (real schema-drift) — the mutation-turns-red proof was re-run on a REAL fixture,
+on BOTH consumers, with Docker present.
+
+Real fixtures (committed, gzip-at-rest under `crates/parser-core/tests/fixtures/golden/real/`):
+
+| label | sha256 (file stem) | raw | gzip | status | baseline |
+|-------|--------------------|-----|------|--------|----------|
+| real-small-success | 00118b23… | 10 KB | 1776 B | success | real-small-success.expected.json |
+| real-mid-success | 0006b10d… | 167 KB | 28117 B | success | real-mid-success.expected.json |
+| real-large-success | 0053d62b… | 1.07 MB | 114759 B | success | real-large-success.expected.json |
+| real-partial-schema-drift | 00085e03… | 273 KB | 39517 B | partial | real-partial-schema-drift.expected.json |
+
+Total committed gzip ≈ 184 KB (≤ 500 KB target). Every committed artifact baseline ≤ 100 KB
+(largest = real-large-success.expected.json at 8847 B).
+
+### Mutation A-real (file-byte) — REAL fixture baseline
+
+**Edit (temporary):** flip one byte in the committed real-large-success baseline —
+`"status":"success"` → `"status":"xuccess"` (one byte: 's' 0x73 → 'x' 0x78), at offset 416.
+
+**Fast consumer (RED):**
+```
+$ cargo test -p parser-core --test golden_artifact_bytes \
+    golden_artifact_bytes_should_match_real_corpus_baselines_byte_for_byte
+test ... FAILED
+assertion `left == right` failed: real fixture `real-large-success`
+(0053d62b…): artifact bytes drifted from its committed baseline real-large-success.expected.json
+test result: FAILED. 0 passed; 1 failed; ...
+```
+
+**Container e2e (RED), Docker present:**
+```
+$ AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
+    cargo test -p parser-worker --test golden_container_e2e -- --ignored
+thread '…' panicked at crates/parser-worker/tests/golden_container_e2e.rs:295:9:
+assertion `left == right` failed: real fixture `real-large-success`
+(0053d62b…): S3 artifact bytes must equal the committed baseline real-large-success.expected.json
+test result: FAILED. 0 passed; 1 failed; …
+```
+The worker wrote the real (unmutated) bytes to MinIO; the byte-exact compare against the
+mutated baseline failed — the SAME baseline both consumers share. Reverted by regenerating
+the baseline (the file is new/untracked, so `git checkout` cannot restore it):
+`cargo test -p parser-core --test golden_artifact_bytes -- --ignored regenerate` → status
+`success`, no `xuccess` residue.
+
+### Mutation B-real (behavioral parse-path) — REAL fixtures
+
+**Edit (temporary):** `crates/parser-core/src/metadata.rs:36`
+`raw.string_field("worldName")` → `raw.string_field("worldNameX")` (world_name no longer
+resolves from the real replays, so the re-serialized artifact drifts).
+
+**Fast consumer (RED):**
+```
+$ cargo test -p parser-core --test golden_artifact_bytes \
+    golden_artifact_bytes_should_match_real_corpus_baselines_byte_for_byte
+test ... FAILED
+assertion `left == right` failed: real fixture `real-small-success`
+(00118b23…): artifact bytes drifted from its committed baseline real-small-success.expected.json
+test result: FAILED. 0 passed; 1 failed; ...
+```
+Proves the parse PATH (not just the committed file) is pinned on real data. Reverted with
+`git checkout -- crates/parser-core/src/metadata.rs`; fast golden suite green again.
+
+### Full container e2e green on real data
+
+Before the mutations, the full container e2e ran GREEN with Docker present (booted
+ephemeral RabbitMQ + MinIO, drove the real worker via `run_until_cancelled`, and for EVERY
+fixture — valid-minimal + all 4 real fixtures — asserted byte-exact S3 artifact == its
+committed baseline, plus key/checksum/size, idempotency, checksum-mismatch, and
+artifact-conflict):
+```
+$ AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
+    cargo test -p parser-worker --test golden_container_e2e -- --ignored
+test golden_container_e2e_should_pin_full_worker_contract_byte_for_byte ... ok
+test result: ok. 1 passed; 0 failed; … finished in 13.14s
+```
+
+---
+
 ## Working tree clean
 
-Both mutations reverted; no mutated source or baseline committed.
+Both original mutations AND the real-corpus mutations were reverted; no mutated source or
+baseline committed (only the intended task artifacts: gzipped real fixtures, generated
+baselines, manifest entries, test wiring, the capture-script provenance update, and this
+proof doc).
 
 ```
 $ git status --short

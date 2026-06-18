@@ -21,9 +21,10 @@
 
 mod common;
 
-use std::path::Path;
+use std::{io::Read, path::Path, path::PathBuf};
 
 use aws_sdk_s3::Client;
+use flate2::read::GzDecoder;
 use lapin::Channel;
 use parser_contract::{
     failure::{ParseStage, Retryability},
@@ -48,6 +49,10 @@ const SEED_FIXTURE: &str = "../parser-core/tests/fixtures/valid-minimal.ocap.jso
 const EXPECTED_BASELINE: &[u8] =
     include_bytes!("../../parser-core/tests/fixtures/golden/expected/valid-minimal.expected.json");
 const BUCKET: &str = "solid-replays";
+
+// Real-corpus fixtures live under parser-core's golden tree (one baseline, two consumers).
+const REAL_FIXTURE_DIR: &str = "../parser-core/tests/fixtures/golden/real";
+const REAL_EXPECTED_DIR: &str = "../parser-core/tests/fixtures/golden/expected";
 
 type BoxError = Box<dyn std::error::Error>;
 
@@ -247,6 +252,85 @@ async fn assert_artifact_conflict_failure(
     Ok(())
 }
 
+// Gunzips a committed real-corpus fixture at runtime (gzip-at-rest).
+fn read_real_fixture(sha256: &str) -> Result<Vec<u8>, BoxError> {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(REAL_FIXTURE_DIR)
+        .join(format!("{sha256}.ocap.gz"));
+    let gz = std::fs::read(&path)?;
+    let mut decoder = GzDecoder::new(gz.as_slice());
+    let mut raw = Vec::new();
+    let _decoded = decoder.read_to_end(&mut raw)?;
+    Ok(raw)
+}
+
+// REAL-CORPUS: seed each real replay under its deterministic S3 key, run it through the
+// worker, and assert the worker-written S3 artifact bytes equal the committed baseline
+// byte-for-byte (the whole point — regression teeth on real data). Success cases also
+// assert key/checksum/size + idempotency; the partial case asserts status=partial via its
+// baseline bytes (the partial diagnostics live inside those bytes) and a completed result.
+async fn assert_real_corpus_contract(
+    channel: &Channel,
+    s3: &Client,
+    config: &WorkerConfig,
+) -> Result<(), BoxError> {
+    for fixture in GOLDEN_REAL_FIXTURES {
+        let raw = read_real_fixture(fixture.sha256)?;
+        let object_key = golden_real_object_key(fixture.sha256);
+        let checksum = SourceChecksum::sha256(fixture.sha256)?;
+        common::put_raw_object(s3, &config.s3_bucket, &object_key, &raw).await;
+
+        let baseline = std::fs::read(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join(REAL_EXPECTED_DIR)
+                .join(fixture.baseline_file),
+        )?;
+
+        let job_id = format!("job-{}", fixture.label);
+        common::publish_job(channel, &config.job_queue, &job_id, fixture.replay_id(), &object_key, &checksum)
+            .await;
+        let completed = common::wait_for_completed(channel).await;
+        let fetched = common::fetch_artifact_bytes(s3, &completed).await;
+
+        assert_eq!(
+            fetched, baseline,
+            "real fixture `{}` ({}): S3 artifact bytes must equal the committed baseline {}",
+            fixture.label, fixture.sha256, fixture.baseline_file
+        );
+        let expected_key = artifact_key(&config.artifact_prefix, fixture.replay_id(), &checksum)?;
+        assert_eq!(completed.artifact.key, expected_key, "{}: deterministic key", fixture.label);
+        assert_eq!(
+            completed.artifact_checksum,
+            source_checksum_from_bytes(&fetched),
+            "{}: artifact_checksum matches fetched bytes",
+            fixture.label
+        );
+        assert_eq!(
+            completed.artifact_size_bytes,
+            u64::try_from(fetched.len()).expect("artifact length should fit u64"),
+            "{}: artifact_size_bytes matches fetched bytes",
+            fixture.label
+        );
+        assert_eq!(completed.job_id, job_id, "{}: job_id", fixture.label);
+        assert_eq!(completed.replay_id, fixture.replay_id(), "{}: replay_id", fixture.label);
+
+        // Idempotency: redeliver the SAME job → completed again, exactly one artifact.
+        common::publish_job(channel, &config.job_queue, &job_id, fixture.replay_id(), &object_key, &checksum)
+            .await;
+        let again = common::wait_for_completed(channel).await;
+        assert_eq!(again.artifact.key, expected_key, "{}: idempotent key", fixture.label);
+        assert_eq!(again.artifact_checksum, completed.artifact_checksum, "{}: idempotent checksum", fixture.label);
+        assert_eq!(
+            common::count_artifact_keys(s3, &completed).await,
+            1,
+            "{}: redelivery must leave exactly one artifact",
+            fixture.label
+        );
+        common::assert_queue_empty(channel, &config.job_queue).await;
+    }
+    Ok(())
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "requires Docker; boots ephemeral RabbitMQ + MinIO via testcontainers"]
 async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte()
@@ -258,6 +342,17 @@ async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte()
         return Ok(());
     }
     let seed_bytes = std::fs::read(&fixture_path)?;
+
+    // Skip-guard: missing real-corpus fixtures must skip cleanly too.
+    for fixture in GOLDEN_REAL_FIXTURES {
+        let gz = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join(REAL_FIXTURE_DIR)
+            .join(format!("{}.ocap.gz", fixture.sha256));
+        if !gz.is_file() {
+            eprintln!("SKIP golden_container_e2e: real fixture absent at {}", gz.display());
+            return Ok(());
+        }
+    }
 
     // Skip-guard: MinIO needs static credentials in the process env (the AWS SDK reads
     // its standard chain for BOTH this test's client AND the worker's own client). We do
@@ -299,6 +394,7 @@ async fn golden_container_e2e_should_pin_full_worker_contract_byte_for_byte()
     assert_idempotency(&channel, &s3, &config, &checksum, &expected_key).await;
     assert_checksum_mismatch_failure(&channel, &config).await?;
     assert_artifact_conflict_failure(&channel, &s3, &config, &checksum).await?;
+    assert_real_corpus_contract(&channel, &s3, &config).await?;
 
     common::stop_worker(&shutdown, worker).await;
     Ok(())

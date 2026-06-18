@@ -8,8 +8,17 @@
       "source_file": "tests/fixtures/golden/expected/valid-minimal.expected.json",
       "notes": "Shared byte-exact artifact baseline for the golden container-e2e oracle. The committed valid-minimal.expected.json equals serde_json::to_vec(&artifact)+\\n and is consumed BOTH by the #[ignore] parser-worker container e2e (S3 bytes) and by the fast in-process parser-core golden_artifact_bytes.rs, sharing tests/common/golden_identity.rs pinned identity constants so parser drift fails without containers."
     },
-    "requirements": ["TEST-01", "TEST-03", "TEST-08", "TEST-09", "TEST-10"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-03",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
     "expected_features": [
       "byte_exact_artifact_baseline",
@@ -43,7 +52,12 @@
       "PARS-12",
       "TEST-13"
     ],
-    "decisions": ["D-08", "D-13", "D-20", "D-23"],
+    "decisions": [
+      "D-08",
+      "D-13",
+      "D-20",
+      "D-23"
+    ],
     "expected_status": "success",
     "expected_features": [
       "metadata_present",
@@ -79,7 +93,11 @@
       "OUT-09",
       "OUT-10"
     ],
-    "decisions": ["D-08", "D-13", "D-20"],
+    "decisions": [
+      "D-08",
+      "D-13",
+      "D-20"
+    ],
     "expected_status": "failed",
     "expected_features": [
       "structured_failure",
@@ -103,10 +121,23 @@
       "source_file": "schema-shape-profile",
       "notes": "Compact fixture for known OCAP top-level field drift summarized by Phase 1 shape profiling."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "partial",
-    "expected_features": ["schema_drift_diagnostic", "no_panic", "unknown_field_presence"],
+    "expected_features": [
+      "schema_drift_diagnostic",
+      "no_panic",
+      "unknown_field_presence"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Recoverable schema drift stays visible through diagnostics and explicit unknowns.",
       "server_2": "Lets downstream persistence distinguish partial artifacts from hard parser failures.",
@@ -122,10 +153,23 @@
       "source_file": "tests/fixtures/killed-events.ocap.json",
       "notes": "Phase 4 raw killed-event tuple fixture preserves legacy array event shapes without copying real replay files."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "partial",
-    "expected_features": ["legacy_killed_tuple_shapes", "null_killer", "malformed_tuple_diagnostic"],
+    "expected_features": [
+      "legacy_killed_tuple_shapes",
+      "null_killer",
+      "malformed_tuple_diagnostic"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Keeps old OCAP tuple compatibility evidence auditable through source refs.",
       "server_2": "Comparison harness can classify old-shape tuple behavior without changing server data ownership.",
@@ -141,10 +185,22 @@
       "source_file": "tests/fixtures/side-facts.ocap.json",
       "notes": "Focused Phase 4 fixture with explicit winner and commander candidate evidence."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["known_winner_side", "commander_candidate"],
+    "expected_features": [
+      "known_winner_side",
+      "commander_candidate"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Proves known winner and commander candidate facts are source-backed parser evidence.",
       "server_2": "Supports later server-owned commander and outcome persistence decisions.",
@@ -160,10 +216,22 @@
       "source_file": "tests/fixtures/valid-minimal.ocap.json",
       "notes": "Normal compact fixture intentionally omits winner data to prove missing outcome remains explicit unknown."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["unknown_winner_side", "missing_winner_not_partial"],
+    "expected_features": [
+      "unknown_winner_side",
+      "missing_winner_not_partial"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Missing winner is represented as explicit unknown, not false negative evidence.",
       "server_2": "Downstream correction or inference remains server-owned.",
@@ -179,10 +247,23 @@
       "source_file": "tests/fixtures/vehicle-context.ocap.json",
       "notes": "Focused Phase 4 vehicle-context fixture now covering ordinary vehicle kills, kills from vehicle, and destroyed vehicle rows."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["destroyed_vehicles", "vehicleKills", "killsFromVehicle"],
+    "expected_features": [
+      "destroyed_vehicles",
+      "vehicleKills",
+      "killsFromVehicle"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Provides ordinary destroyed vehicle rows plus vehicleKills and killsFromVehicle counters without retired score weights.",
       "server_2": "Any future cross-replay score remains a separate server or harness responsibility.",
@@ -198,10 +279,22 @@
       "source_file": "tests/fixtures/aggregate-combat.ocap.json",
       "notes": "Focused aggregate fixture where same-side combat stays auditable but excluded from bounty inputs."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["teamkill_semantic", "no_teamkill_bounty_input"],
+    "expected_features": [
+      "teamkill_semantic",
+      "no_teamkill_bounty_input"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Teamkills remain source-backed combat events and aggregate evidence.",
       "server_2": "Bounty award calculation can consume only eligible parser inputs.",
@@ -217,10 +310,22 @@
       "source_file": "tests/fixtures/side-facts.ocap.json",
       "notes": "Focused Phase 4 commander-side candidate fixture with source refs and confidence."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["commander_candidate", "no_canonical_identity"],
+    "expected_features": [
+      "commander_candidate",
+      "no_canonical_identity"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Commander-side evidence is candidate-level observed identity only.",
       "server_2": "Canonical commander truth and moderation remain server-owned.",
@@ -236,10 +341,22 @@
       "source_file": "tests/fixtures/combat-events.ocap.json",
       "notes": "Focused Phase 4 combat fixture covering explicit null-killer deaths."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "partial",
-    "expected_features": ["null_killer_semantic", "bounty_excluded_null_killer"],
+    "expected_features": [
+      "null_killer_semantic",
+      "bounty_excluded_null_killer"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Null-killer deaths stay explicit and auditable instead of becoming enemy kills.",
       "server_2": "Bounty and relationship calculation can exclude null-killer evidence.",
@@ -255,10 +372,22 @@
       "source_file": "tests/fixtures/duplicate-slot-same-name.ocap.json",
       "notes": "Focused Phase 3 compatibility fixture preserving duplicate same-name slot hints without entity merging."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["duplicate_slot_same_name_hint", "entities_not_merged"],
+    "expected_features": [
+      "duplicate_slot_same_name_hint",
+      "entities_not_merged"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Observed entities remain separate while legacy compatibility hints are explicit.",
       "server_2": "Canonical identity and merge decisions remain server-owned.",
@@ -274,14 +403,166 @@
       "source_file": "tests/fixtures/connected-backfill.ocap.json",
       "notes": "Focused Phase 3 compatibility fixture for legacy connected-player name backfill."
     },
-    "requirements": ["TEST-01", "TEST-08", "TEST-09", "TEST-10", "TEST-11"],
-    "decisions": ["D-08", "D-13"],
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
     "expected_status": "success",
-    "expected_features": ["connected_player_backfill_hint", "inferred_observed_name"],
+    "expected_features": [
+      "connected_player_backfill_hint",
+      "inferred_observed_name"
+    ],
     "cross_app_impact": {
       "parser_artifact": "Backfilled observed names are marked inferred with compatibility provenance.",
       "server_2": "Canonical matching remains server-owned despite compatibility hints.",
       "web": "No direct UI behavior."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/golden/real/00118b2386dc8ba66ada1a8e956cbe9b983c0af280beef0ffbeeb86435c57969.ocap.gz",
+    "fixture_strategy": "linked_existing_focused_fixture",
+    "category": "normal",
+    "source": {
+      "artifact": ".planning/quick/260617-v7d-golden-container-e2e-regression-oracle-f/260617-v7d-PLAN.md",
+      "source_file": "tests/fixtures/golden/expected/real-small-success.expected.json",
+      "notes": "committed-gzipped-real-corpus: small (~10 KB raw) byte-exact REAL OCAP replay from Timeweb S3 sg-replays raw/sha256/<hash>.ocap, sha256-verified, pulled 2026-06-18. Gzipped at rest, gunzipped at runtime; baseline real-small-success.expected.json is the exact worker output (public_parse_replay -> serde_json::to_vec + trailing newline) consumed byte-for-byte by BOTH the #[ignore] parser-worker container e2e (S3 bytes) and the fast in-process golden_artifact_bytes.rs, sharing tests/common/golden_identity.rs pinned identity (replay_id=sha, source_file=raw/sha256/<hash>.ocap, checksum=real sha256)."
+    },
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
+    "expected_status": "success",
+    "expected_features": [
+      "byte_exact_artifact_baseline",
+      "real_corpus_replay",
+      "deterministic_serialization",
+      "shared_golden_identity",
+      "container_e2e_oracle",
+      "gzip_at_rest"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Pins the exact artifact bytes the worker writes to S3 for a small real production replay; any byte drift in the parser-contract artifact shape fails the golden compare immediately on real data.",
+      "server_2": "Guarantees server-2 keeps consuming identical artifact bytes for real replays through the behavior-preserving v1.1 refactor; no contract change is introduced.",
+      "web": "No direct UI behavior; downstream public stats still flow through server-2 APIs over the unchanged artifact."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/golden/real/0006b10dfbbb6d6fcb387fb66cb62d40740e4aa93ba9a2ef81ceb7f47af1e7c3.ocap.gz",
+    "fixture_strategy": "linked_existing_focused_fixture",
+    "category": "normal",
+    "source": {
+      "artifact": ".planning/quick/260617-v7d-golden-container-e2e-regression-oracle-f/260617-v7d-PLAN.md",
+      "source_file": "tests/fixtures/golden/expected/real-mid-success.expected.json",
+      "notes": "committed-gzipped-real-corpus: mid (~167 KB raw) byte-exact REAL OCAP replay from Timeweb S3 sg-replays raw/sha256/<hash>.ocap, sha256-verified, pulled 2026-06-18. Gzipped at rest, gunzipped at runtime; baseline real-mid-success.expected.json is the exact worker output consumed byte-for-byte by BOTH the container e2e (S3 bytes) and the fast in-process golden_artifact_bytes.rs, sharing the pinned golden identity."
+    },
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
+    "expected_status": "success",
+    "expected_features": [
+      "byte_exact_artifact_baseline",
+      "real_corpus_replay",
+      "deterministic_serialization",
+      "shared_golden_identity",
+      "container_e2e_oracle",
+      "gzip_at_rest"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Pins the exact artifact bytes for a mid-size real replay; catches aggregation/ordering drift the tiny fixtures miss.",
+      "server_2": "Guarantees server-2 keeps consuming identical artifact bytes for real replays through the v1.1 refactor; no contract change.",
+      "web": "No direct UI behavior; public stats flow through server-2 APIs over the unchanged artifact."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/golden/real/0053d62b12624e974c8a19a54816a08661dda35d12ed0462ca5f616bbbc9a3e6.ocap.gz",
+    "fixture_strategy": "linked_existing_focused_fixture",
+    "category": "normal",
+    "source": {
+      "artifact": ".planning/quick/260617-v7d-golden-container-e2e-regression-oracle-f/260617-v7d-PLAN.md",
+      "source_file": "tests/fixtures/golden/expected/real-large-success.expected.json",
+      "notes": "committed-gzipped-real-corpus: LARGE-entity (~1.07 MB raw) byte-exact REAL OCAP replay from Timeweb S3 sg-replays raw/sha256/<hash>.ocap, sha256-verified, pulled 2026-06-18. The high-entity case that catches allocation/ordering drift the small fixtures miss. Gzipped at rest, gunzipped at runtime; baseline real-large-success.expected.json is the exact worker output consumed byte-for-byte by BOTH the container e2e (S3 bytes) and the fast in-process golden_artifact_bytes.rs, sharing the pinned golden identity."
+    },
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
+    "expected_status": "success",
+    "expected_features": [
+      "byte_exact_artifact_baseline",
+      "real_corpus_replay",
+      "large_entity_replay",
+      "deterministic_serialization",
+      "shared_golden_identity",
+      "container_e2e_oracle",
+      "gzip_at_rest"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Pins the exact artifact bytes for a large high-entity real replay; the strongest guard against aggregation/ordering/allocation drift in the parser core.",
+      "server_2": "Guarantees server-2 keeps consuming identical artifact bytes for large real replays through the v1.1 refactor; no contract change.",
+      "web": "No direct UI behavior; public stats flow through server-2 APIs over the unchanged artifact."
+    }
+  },
+  {
+    "fixture": "tests/fixtures/golden/real/00085e0394ad4125a822e703ea41228bf7b48495d8e0877a235a6d7b88014b9f.ocap.gz",
+    "fixture_strategy": "linked_existing_focused_fixture",
+    "category": "partial_schema_drift",
+    "source": {
+      "artifact": ".planning/quick/260617-v7d-golden-container-e2e-regression-oracle-f/260617-v7d-PLAN.md",
+      "source_file": "tests/fixtures/golden/expected/real-partial-schema-drift.expected.json",
+      "notes": "committed-gzipped-real-corpus: REAL (~273 KB raw) OCAP replay exhibiting real schema-drift -> status=partial, from Timeweb S3 sg-replays raw/sha256/<hash>.ocap, sha256-verified, pulled 2026-06-18. The committed baseline real-partial-schema-drift.expected.json carries status=partial AND its diagnostics, so the byte-exact compare proves the partial path and its diagnostics survive. Gzipped at rest, gunzipped at runtime; consumed byte-for-byte by BOTH the container e2e (S3 bytes) and the fast in-process golden_artifact_bytes.rs, sharing the pinned golden identity."
+    },
+    "requirements": [
+      "TEST-01",
+      "TEST-08",
+      "TEST-09",
+      "TEST-10",
+      "TEST-11"
+    ],
+    "decisions": [
+      "D-08",
+      "D-13"
+    ],
+    "expected_status": "partial",
+    "expected_features": [
+      "byte_exact_artifact_baseline",
+      "real_corpus_replay",
+      "schema_drift_diagnostic",
+      "partial_status_preserved",
+      "deterministic_serialization",
+      "shared_golden_identity",
+      "container_e2e_oracle",
+      "gzip_at_rest"
+    ],
+    "cross_app_impact": {
+      "parser_artifact": "Pins the exact partial artifact bytes (status=partial + diagnostics) for a real schema-drift replay; any drift in how partials or diagnostics serialize fails the golden compare immediately.",
+      "server_2": "Lets server-2 keep distinguishing partial artifacts from hard failures on real data through the v1.1 refactor; no contract change.",
+      "web": "No direct UI behavior; public display can later hide or label incomplete fields through server-2."
     }
   }
 ]

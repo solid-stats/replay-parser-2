@@ -16,5 +16,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 thiserror = "2"
 
+[dev-dependencies]
+# Gunzip the committed real-corpus golden fixtures (gzip-at-rest) at test time.
+# Default `rust_backend` (pure-Rust miniz) — no C toolchain / system zlib dependency.
+flate2 = "1.1.9"
+
 [lints]
 workspace = true
