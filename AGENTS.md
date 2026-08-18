@@ -1,4 +1,3 @@
-<!-- GSD:shared-header-start -->
 **replay-parser-2** is the Rust OCAP replay parser for Solid Stats: it turns OCAP JSON
 replays into deterministic, versioned parser artifacts for `server-2`.
 
@@ -8,20 +7,16 @@ write parser results into `server-2` business tables, does not own or assign can
 player identity (`server-2` matches players), and does not discover or fetch external
 replays (`replays-fetcher` does). See the cross-app boundary map in `solidstats-shared-project-standards` §D.
 
-**Shared standards** for every SolidStats repo live in the `solid-stats/skills` repo
-(`solidstats-shared-project-standards` and the `solidstats-parser-rust-*` skills). Read them
-before working here.
+Cross-repo rules (skills-first, git, security, docs language, MCP lookup) live in
+`solid-stats/agent-instructions`, imported below. Stack-specific skills live in the
+`solid-stats/skills` repo (`solidstats-shared-project-standards` and the
+`solidstats-parser-rust-*` skills).
+
+@.agent-instructions/AGENTS.md
 
 ---
-<!-- GSD:shared-header-end -->
 
 # AGENTS instructions
-
-## Skills First
-
-Before acting on any user request in this repository, scan available skills by name and description. If any skill has even a small chance of helping any part of the task, use it and read only the relevant instructions before proceeding.
-
-When in doubt, prefer enabling the skill briefly and filtering it out over skipping it.
 
 ## Project
 
